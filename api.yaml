@@ -1,0 +1,320 @@
+swagger: "2.0"
+info:
+  description: "REST API descrition of the ElasTest User-emulator Service (EUS)"
+  version: "1.0.0"
+  title: "ElasTest User-emulator Service REST API"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+basePath: "/v1"
+schemes:
+- "http"
+paths:
+  /session/{sessionId}/element/{elementId}/event:
+    post:
+      description: "Subscribe to a given event within an element"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Event name to be subscribed"
+        required: true
+        schema:
+          $ref: "#/definitions/Event"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/EventSubscription"
+        400:
+          description: "Invalid session identifier"
+        403:
+          description: "Forbidden"
+        404:
+          description: "No such element"
+  /session/{sessionId}/event/{subscriptionId}:
+    get:
+      description: "Read the value of event for a given subscription"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "subscriptionId"
+        in: "path"
+        description: "Subscription identifier (previously subscribed)"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/EventValue"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such subscription"
+    delete:
+      description: "Remove a subscription"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "subscriptionId"
+        in: "path"
+        description: "Subscription identifier (previously subscribed)"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "Subscription not found"
+  /session/{sessionId}/element/{elementId}/color:
+    get:
+      description: "Read the RGB color of the coordinates of a given element"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ColorValue"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such element"
+  /session/{sessionId}/element/{elementId}/audio:
+    get:
+      description: "Read the audio level of a given element (audio|video tag)"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/AudioLevel"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such element"
+  /session/{sessionId}/element/{elementId}/usermedia:
+    post:
+      description: "Set user media for WebRTC"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Media URL to take WebRTC user media"
+        required: true
+        schema:
+          $ref: "#/definitions/UserMedia"
+      responses:
+        200:
+          description: "Successful operation"
+        400:
+          description: "Invalid media"
+        404:
+          description: "URL not found"
+  /session/{sessionId}/element/{elementId}/quality:
+    post:
+      description: "Subscribe to a quality events comparing a video element with other"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)"
+        required: true
+        schema:
+          $ref: "#/definitions/Quality"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/EventSubscription"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such element"
+  /session/{sessionId}/element/{elementId}/latency:
+    post:
+      description: "Calculate end-to-end latency of a video element compared with other one (presenter-viewer comparison)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "elementId"
+        in: "path"
+        description: "Element identifier (previously located)"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Definition of WebRTC producer (presenter) and sample rate (in ms)"
+        required: true
+        schema:
+          $ref: "#/definitions/Latency"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/EventSubscription"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such element"
+definitions:
+  Event:
+    type: "object"
+    properties:
+      event:
+        type: "string"
+        description: "Event name"
+  EventSubscription:
+    type: "object"
+    properties:
+      subscriptionId:
+        type: "string"
+        description: "Subscription identifier"
+  EventValue:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+        description: "Event value"
+  ColorValue:
+    type: "object"
+    properties:
+      color:
+        type: "string"
+        description: "RGB color"
+  AudioLevel:
+    type: "object"
+    properties:
+      audio:
+        type: "string"
+        description: "Audio level"
+  UserMedia:
+    type: "object"
+    properties:
+      mediaUrl:
+        type: "string"
+        description: "URL of media (video, audio, or both) to fake WebRTC user media"
+      video:
+        type: "boolean"
+        description: "Flag that indicates whether or not the video should be faked"
+        default: true
+      audio:
+        type: "boolean"
+        description: "Flag that indicates whether or not the audio should be faked"
+        default: true
+  Quality:
+    type: "object"
+    properties:
+      senderSessionId:
+        type: "string"
+        description: "Session identifier of the WebRTC media peer producer"
+      senderElementId:
+        type: "string"
+        description: "Element identifier of the video tag producer"
+      algorithm:
+        type: "string"
+        description: "QoE algorithm (full-reference) to be used"
+        enum:
+        - "pesq"
+        - "ssim"
+        - "psnr"
+      sampleRate:
+        type: "integer"
+        format: "int32"
+        description: "Sample rate for the quality evaluation (in milliseconds)"
+        default: 1000
+  Latency:
+    type: "object"
+    properties:
+      senderSessionId:
+        type: "string"
+        description: "Session identifier of the WebRTC media peer producer"
+      senderElementId:
+        type: "string"
+        description: "Element identifier of the video tag producer"
+      sampleRate:
+        type: "integer"
+        format: "int32"
+        description: "Sample rate for the quality evaluation (in milliseconds)"
+        default: 1000
+externalDocs:
+  description: "An elastic platform to ease end to end testing"
+  url: "http://elastest.io/"
