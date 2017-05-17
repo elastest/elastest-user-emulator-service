@@ -13,12 +13,12 @@ What is ElasTest
 This repository is part of [ElasTest], which is an open source elastic platform
 aimed to simplify end-to-end testing. ElasTest platform is based on three
 principles: i) Test orchestration: Combining intelligently testing units for
-creating a more complete test suite following the “divide and conquer” principle;
+creating a more complete test suite following the “divide and conquer” principle.
 ii) Instrumentation and monitoring: Customizing the SuT (Subject under Test)
 infrastructure so that it reproduces real-world operational behavior and allowing
-to gather relevant information during testing; iii) Test recommendation Using machine
+to gather relevant information during testing. iii) Test recommendation: Using machine
 learning and cognitive computing for recommending testing actions and providing
-testers with friendly interactive facilities for decision taking
+testers with friendly interactive facilities for decision taking.
 
 Documentation
 -------------
