@@ -244,6 +244,33 @@ paths:
           description: "Invalid session identifier"
         404:
           description: "No such element"
+  /session/{sessionId}/stats:
+    get:
+      description: "Read the WebRTC stats"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "peerconnectionId"
+        in: "query"
+        description: "Identifier of peerconnection"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/StatsValue"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such subscription"
 definitions:
   Event:
     type: "object"
@@ -275,6 +302,15 @@ definitions:
       audio:
         type: "string"
         description: "Audio level"
+  StatsValue:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "Peerconnection identifier"
+      stats:
+        type: "string"
+        description: "All Peerconnection stats"
   UserMedia:
     type: "object"
     properties:
