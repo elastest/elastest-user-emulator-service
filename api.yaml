@@ -106,6 +106,20 @@ paths:
         description: "Element identifier (previously located)"
         required: true
         type: "string"
+      - name: "x"
+        in: "query"
+        description: "Coordinate in x-axis"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 0
+      - name: "y"
+        in: "query"
+        description: "Coordinate in y-axis"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 0
       responses:
         200:
           description: "Successful operation"
@@ -140,7 +154,7 @@ paths:
           description: "Invalid session identifier"
         404:
           description: "No such element"
-  /session/{sessionId}/element/{elementId}/usermedia:
+  /session/{sessionId}/usermedia:
     post:
       description: "Set user media for WebRTC"
       consumes:
@@ -149,11 +163,6 @@ paths:
       - name: "sessionId"
         in: "path"
         description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
         required: true
         type: "string"
       - in: "body"
