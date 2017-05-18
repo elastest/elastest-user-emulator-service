@@ -12,7 +12,7 @@ schemes:
 paths:
   /session/{sessionId}/element/{elementId}/event:
     post:
-      description: "Subscribe to a given event within an element"
+      summary: "Subscribe to a given event within an element"
       consumes:
       - "application/json"
       produces:
@@ -47,7 +47,7 @@ paths:
           description: "No such element"
   /session/{sessionId}/event/{subscriptionId}:
     get:
-      description: "Read the value of event for a given subscription"
+      summary: "Read the value of event for a given subscription"
       produces:
       - "application/json"
       parameters:
@@ -71,7 +71,7 @@ paths:
         404:
           description: "No such subscription"
     delete:
-      description: "Remove a subscription"
+      summary: "Remove a subscription"
       parameters:
       - name: "sessionId"
         in: "path"
@@ -92,7 +92,7 @@ paths:
           description: "Subscription not found"
   /session/{sessionId}/element/{elementId}/color:
     get:
-      description: "Read the RGB color of the coordinates of a given element"
+      summary: "Read the RGB color of the coordinates of a given element"
       produces:
       - "application/json"
       parameters:
@@ -131,7 +131,7 @@ paths:
           description: "No such element"
   /session/{sessionId}/element/{elementId}/audio:
     get:
-      description: "Read the audio level of a given element (audio|video tag)"
+      summary: "Read the audio level of a given element (audio|video tag)"
       produces:
       - "application/json"
       parameters:
@@ -156,7 +156,7 @@ paths:
           description: "No such element"
   /session/{sessionId}/usermedia:
     post:
-      description: "Set user media for WebRTC"
+      summary: "Set user media for WebRTC"
       consumes:
       - "application/json"
       parameters:
@@ -180,7 +180,8 @@ paths:
           description: "URL not found"
   /session/{sessionId}/element/{elementId}/quality:
     post:
-      description: "Subscribe to a quality events comparing a video element with other"
+      summary: "Measure quality (audio|video) of a WebRTC session"
+      description: "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)"
       consumes:
       - "application/json"
       produces:
@@ -213,7 +214,8 @@ paths:
           description: "No such element"
   /session/{sessionId}/element/{elementId}/latency:
     post:
-      description: "Calculate end-to-end latency of a video element compared with other one (presenter-viewer comparison)"
+      summary: "Measure end-to-end latency of a WebRTC session"
+      description: "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)"
       consumes:
       - "application/json"
       produces:
@@ -246,7 +248,7 @@ paths:
           description: "No such element"
   /session/{sessionId}/stats:
     get:
-      description: "Read the WebRTC stats"
+      summary: "Read the WebRTC stats"
       produces:
       - "application/json"
       parameters:
