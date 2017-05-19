@@ -1,3 +1,6 @@
+[![License badge](https://img.shields.io/badge/license-Apache2-orange.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Documentation badge](https://img.shields.io/badge/docs-latest-brightgreen.svg)](http://elastest.io/docs/)
+
 [![][ElasTest Logo]][ElasTest]
 
 Copyright © 2017-2019 [ElasTest]. Licensed under [Apache 2.0 License].
