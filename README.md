@@ -23,8 +23,8 @@ testers with friendly interactive facilities for decision taking.
 Documentation
 -------------
 
-The [ElasTest] project provides detailed documentation including tutorials,
-installation and development guide.
+The [ElasTest] project provides detailed [documentation][ElasTest Doc] including
+tutorials, installation and development guide.
 
 Source
 ------
@@ -77,6 +77,7 @@ following guidelines
 
 [Apache 2.0 License]: http://www.apache.org/licenses/LICENSE-2.0
 [ElasTest]: http://elastest.io/
+[ElasTest Doc]: http://elastest.io/docs/
 [ElasTest Logo]: http://elastest.io/images/logos_elastest/elastest-logo-gray-small.png
 [ElasTest Twitter]: https://twitter.com/elastestio
 [GitHub ElasTest Group]: https://github.com/elastest
