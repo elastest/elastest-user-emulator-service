@@ -38,7 +38,7 @@ Group].
 News
 ----
 
-Check the [ElasTest Blog] and follow us on Twitter @[ElasTest Twitter].
+Check the [ElasTest Blog] and follow us on Twitter [@elastestio][ElasTest Twitter].
 
 Issue tracker
 -------------
