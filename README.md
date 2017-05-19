@@ -3,7 +3,7 @@
 
 [![][ElasTest Logo]][ElasTest]
 
-Copyright © 2017-2019 [ElasTest]. Licensed under [Apache 2.0 License].
+Copyright © 2017-2019 [Universidad Rey Juan Carlos (URJC)]. Licensed under [Apache 2.0 License].
 
 elastest-user-emulator-service
 ==============================
@@ -26,7 +26,7 @@ testers with friendly interactive facilities for decision taking.
 Documentation
 -------------
 
-The [ElasTest] project provides detailed [documentation][ElasTest Doc] including
+The ElasTest project provides detailed [documentation][ElasTest Doc] including
 tutorials, installation and development guide.
 
 Source
@@ -84,3 +84,4 @@ following guidelines
 [ElasTest Logo]: http://elastest.io/images/logos_elastest/elastest-logo-gray-small.png
 [ElasTest Twitter]: https://twitter.com/elastestio
 [GitHub ElasTest Group]: https://github.com/elastest
+[Universidad Rey Juan Carlos (URJC)]: https://www.urjc.es/
