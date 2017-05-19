@@ -3,7 +3,7 @@
 
 [![][ElasTest Logo]][ElasTest]
 
-Copyright © 2017-2019 [Universidad Rey Juan Carlos (URJC)]. Licensed under
+Copyright © 2017-2019 [Universidad Rey Juan Carlos]. Licensed under
 [Apache 2.0 License].
 
 elastest-user-emulator-service
@@ -16,8 +16,7 @@ What is ElasTest
 
 This repository is part of [ElasTest], which is a flexible open source testing
 platform aimed to simplify the end-to-end testing processes for different types
-of applications, including web, mobile, real-time video communications, and
-Internet-of-Things.
+of applications, including web and mobile, among others.
 
 The objective of ElasTest is to provide advance testing capabilities aimed to
 increase the scalability, robustness, security and quality of experience of
@@ -79,10 +78,23 @@ following guidelines
   before it being incorporated into the ElasTest code-base. You must be ready
   to addressing all these kind of concerns before having your code approved.
 
+Support
+-------
+
+The ElasTest project provides community support through the [StackOverflow]
+using the tag *ElasTest*.
+
+
+<p align="center">
+  <img src="http://elastest.io/images/logos_elastest/ue_logo-small.png"><br>
+  Funded by the European Union
+</p>
+
 [Apache 2.0 License]: http://www.apache.org/licenses/LICENSE-2.0
 [ElasTest]: http://elastest.io/
 [ElasTest Doc]: http://elastest.io/docs/
 [ElasTest Logo]: http://elastest.io/images/logos_elastest/elastest-logo-gray-small.png
 [ElasTest Twitter]: https://twitter.com/elastestio
 [GitHub ElasTest Group]: https://github.com/elastest
-[Universidad Rey Juan Carlos (URJC)]: https://www.urjc.es/
+[StackOverflow]: http://stackoverflow.com/search?q=elastest
+[Universidad Rey Juan Carlos]: https://www.urjc.es/
