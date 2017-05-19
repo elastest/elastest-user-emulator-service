@@ -3,7 +3,8 @@
 
 [![][ElasTest Logo]][ElasTest]
 
-Copyright © 2017-2019 [Universidad Rey Juan Carlos (URJC)]. Licensed under [Apache 2.0 License].
+Copyright © 2017-2019 [Universidad Rey Juan Carlos (URJC)]. Licensed under
+[Apache 2.0 License].
 
 elastest-user-emulator-service
 ==============================
@@ -13,15 +14,15 @@ ElasTest User-emulator Service (EUS) REST API.
 What is ElasTest
 -----------------
 
-This repository is part of [ElasTest], which is an open source elastic platform
-aimed to simplify end-to-end testing. ElasTest platform is based on three
-principles: i) Test orchestration: Combining intelligently testing units for
-creating a more complete test suite following the “divide and conquer” principle.
-ii) Instrumentation and monitoring: Customizing the SuT (Subject under Test)
-infrastructure so that it reproduces real-world operational behavior and allowing
-to gather relevant information during testing. iii) Test recommendation: Using machine
-learning and cognitive computing for recommending testing actions and providing
-testers with friendly interactive facilities for decision taking.
+This repository is part of [ElasTest], which is a flexible open source testing
+platform aimed to simplify the end-to-end testing processes for different types
+of applications, including web, mobile, real-time video communications, and
+Internet-of-Things.
+
+The objective of ElasTest is to provide advance testing capabilities aimed to
+increase the scalability, robustness, security and quality of experience of
+large distributed systems. All in all, ElasTest will make any software
+development team capable of delivering software faster and with fewer defects.
 
 Documentation
 -------------
