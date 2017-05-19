@@ -86,7 +86,7 @@ Support
 -------
 
 The ElasTest project provides community support through the [ElasTest Public
-Mailing List] and through [StackOverflow] using the tags *elastest*.
+Mailing List] and through [StackOverflow] using the tag *elastest*.
 
 
 <p align="center">
