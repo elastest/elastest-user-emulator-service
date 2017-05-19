@@ -38,7 +38,12 @@ Group].
 News
 ----
 
-Follow us on Twitter @[ElasTest Twitter].
+Check the [ElasTest Blog] and follow us on Twitter @[ElasTest Twitter].
+
+Issue tracker
+-------------
+
+Issues and bug reports should be posted to the [GitHub ElasTest Bugtracker].
 
 Licensing and distribution
 --------------------------
@@ -60,9 +65,8 @@ Contribution policy
 
 You can contribute to the ElasTest community through bug-reports, bug-fixes,
 new code or new documentation. For contributing to the ElasTest community,
-you can use the issue support of GitHub providing full information about your
-contribution and its value. In your contributions, you must comply with the
-following guidelines
+you can use GitHub, providing full information about your contribution and its
+value. In your contributions, you must comply with the following guidelines
 
 * You must specify the specific contents of your contribution either through a
   detailed bug description, through a pull-request or through a patch.
@@ -81,8 +85,8 @@ following guidelines
 Support
 -------
 
-The ElasTest project provides community support through the [StackOverflow]
-using the tag *ElasTest*.
+The ElasTest project provides community support through the [ElasTest Public
+Mailing List] and through [StackOverflow] using the tags *elastest*.
 
 
 <p align="center">
@@ -92,9 +96,12 @@ using the tag *ElasTest*.
 
 [Apache 2.0 License]: http://www.apache.org/licenses/LICENSE-2.0
 [ElasTest]: http://elastest.io/
+[ElasTest Blog]: http://elastest.io/blog/
 [ElasTest Doc]: http://elastest.io/docs/
 [ElasTest Logo]: http://elastest.io/images/logos_elastest/elastest-logo-gray-small.png
+[ElasTest Public Mailing List]: https://groups.google.com/forum/#!forum/elastest-users
 [ElasTest Twitter]: https://twitter.com/elastestio
 [GitHub ElasTest Group]: https://github.com/elastest
-[StackOverflow]: http://stackoverflow.com/search?q=elastest
+[GitHub ElasTest Bugtracker]: https://github.com/elastest/bugtracker
+[StackOverflow]: http://stackoverflow.com/questions/tagged/elastest
 [Universidad Rey Juan Carlos]: https://www.urjc.es/
