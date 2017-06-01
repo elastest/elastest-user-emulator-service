@@ -12,6 +12,8 @@ schemes:
 paths:
   /session/{sessionId}/element/{elementId}/event:
     post:
+      tags:
+      - "event subscription"
       summary: "Subscribe to a given event within an element"
       consumes:
       - "application/json"
@@ -47,6 +49,8 @@ paths:
           description: "No such element"
   /session/{sessionId}/event/{subscriptionId}:
     get:
+      tags:
+      - "event subscription"
       summary: "Read the value of event for a given subscription"
       produces:
       - "application/json"
@@ -71,6 +75,8 @@ paths:
         404:
           description: "No such subscription"
     delete:
+      tags:
+      - "event subscription"
       summary: "Remove a subscription"
       parameters:
       - name: "sessionId"
@@ -90,8 +96,65 @@ paths:
           description: "Invalid session identifier"
         404:
           description: "Subscription not found"
+  /session/{sessionId}/usermedia:
+    post:
+      tags:
+      - "user media"
+      summary: "Set user media for WebRTC"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Media URL to take WebRTC user media"
+        required: true
+        schema:
+          $ref: "#/definitions/UserMedia"
+      responses:
+        200:
+          description: "Successful operation"
+        400:
+          description: "Invalid media"
+        404:
+          description: "URL not found"
+  /session/{sessionId}/stats:
+    get:
+      tags:
+      - "WebRTC stats"
+      summary: "Read the WebRTC stats"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Session identifier (previously established)"
+        required: true
+        type: "string"
+      - name: "peerconnectionId"
+        in: "query"
+        description: "Identifier of peerconnection"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/StatsValue"
+        400:
+          description: "Invalid session identifier"
+        404:
+          description: "No such subscription"
   /session/{sessionId}/element/{elementId}/color:
     get:
+      tags:
+      - "basic media evaluation"
       summary: "Read the RGB color of the coordinates of a given element"
       produces:
       - "application/json"
@@ -131,6 +194,8 @@ paths:
           description: "No such element"
   /session/{sessionId}/element/{elementId}/audio:
     get:
+      tags:
+      - "basic media evaluation"
       summary: "Read the audio level of a given element (audio|video tag)"
       produces:
       - "application/json"
@@ -154,32 +219,11 @@ paths:
           description: "Invalid session identifier"
         404:
           description: "No such element"
-  /session/{sessionId}/usermedia:
-    post:
-      summary: "Set user media for WebRTC"
-      consumes:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Media URL to take WebRTC user media"
-        required: true
-        schema:
-          $ref: "#/definitions/UserMedia"
-      responses:
-        200:
-          description: "Successful operation"
-        400:
-          description: "Invalid media"
-        404:
-          description: "URL not found"
+
   /session/{sessionId}/element/{elementId}/quality:
     post:
+      tags:
+      - "advance media evaluation"
       summary: "Measure quality (audio|video) of a WebRTC session"
       description: "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)"
       consumes:
@@ -214,6 +258,8 @@ paths:
           description: "No such element"
   /session/{sessionId}/element/{elementId}/latency:
     post:
+      tags:
+      - "advance media evaluation"
       summary: "Measure end-to-end latency of a WebRTC session"
       description: "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)"
       consumes:
@@ -246,33 +292,6 @@ paths:
           description: "Invalid session identifier"
         404:
           description: "No such element"
-  /session/{sessionId}/stats:
-    get:
-      summary: "Read the WebRTC stats"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "peerconnectionId"
-        in: "query"
-        description: "Identifier of peerconnection"
-        required: false
-        type: "string"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/StatsValue"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such subscription"
 definitions:
   Event:
     type: "object"
