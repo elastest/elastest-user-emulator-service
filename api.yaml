@@ -6,7 +6,7 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-basePath: "/v1"
+basePath: "/v2"
 schemes:
 - "http"
 paths:
@@ -15,6 +15,7 @@ paths:
       tags:
       - "event subscription"
       summary: "Subscribe to a given event within an element"
+      operationId: "subscribeToEvent"
       consumes:
       - "application/json"
       produces:
@@ -52,6 +53,7 @@ paths:
       tags:
       - "event subscription"
       summary: "Read the value of event for a given subscription"
+      operationId: "getSubscriptionValue"
       produces:
       - "application/json"
       parameters:
@@ -78,6 +80,7 @@ paths:
       tags:
       - "event subscription"
       summary: "Remove a subscription"
+      operationId: "deleteSubscription"
       parameters:
       - name: "sessionId"
         in: "path"
@@ -101,6 +104,7 @@ paths:
       tags:
       - "user media"
       summary: "Set user media for WebRTC"
+      operationId: "setUserMedia"
       consumes:
       - "application/json"
       parameters:
@@ -127,6 +131,7 @@ paths:
       tags:
       - "WebRTC stats"
       summary: "Read the WebRTC stats"
+      operationId: "getStats"
       produces:
       - "application/json"
       parameters:
@@ -156,6 +161,7 @@ paths:
       tags:
       - "basic media evaluation"
       summary: "Read the RGB color of the coordinates of a given element"
+      operationId: "getColorByCoordinates"
       produces:
       - "application/json"
       parameters:
@@ -197,6 +203,7 @@ paths:
       tags:
       - "basic media evaluation"
       summary: "Read the audio level of a given element (audio|video tag)"
+      operationId: "getAudioLevel"
       produces:
       - "application/json"
       parameters:
@@ -225,6 +232,7 @@ paths:
       tags:
       - "advance media evaluation"
       summary: "Measure quality (audio|video) of a WebRTC session"
+      operationId: "subscribeToQuality"
       description: "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)"
       consumes:
       - "application/json"
@@ -262,6 +270,7 @@ paths:
       - "advance media evaluation"
       summary: "Measure end-to-end latency of a WebRTC session"
       description: "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)"
+      operationId: "subscribeToLatency",
       consumes:
       - "application/json"
       produces:
