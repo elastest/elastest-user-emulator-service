@@ -9,14 +9,13 @@
     </parent>
 
     <groupId>io.elastest</groupId>
-    <artifactId>eus</artifactId>
+    <artifactId>user-emulator-service</artifactId>
     <packaging>jar</packaging>
     <version>0.0.1-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>This artifact contains the Elastest EUS project, part of the Elastest platform.</description>
+    <description>ElasTest User Emulator Service (EUS): This service enables the impersonation of end-users’ in their tests through GUI instrumentation and through mechanisms for QoS and QoE evaluation.</description>
     <url>https://github.com/elastest/elastest-eus</url>
-
 
     <!-- Organization & developers -->
     <organization>
@@ -175,8 +174,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- Maven source plugin required for Central deploy -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
