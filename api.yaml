@@ -1,395 +1,478 @@
-swagger: "2.0"
+swagger: '2.0'
 info:
-  description: "REST API descrition of the ElasTest User-emulator Service (EUS)"
-  version: "1.0.0"
-  title: "ElasTest User-emulator Service REST API"
+  description: REST API descrition of the ElasTest User-emulator Service (EUS)
+  version: 1.0.0
+  title: ElasTest User-emulator Service REST API
+  contact: {}
   license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-basePath: "/eus/v1"
-schemes:
-- "http"
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: 'localhost:8080'
+basePath: /eus/v1
+tags:
+  - name: session-api-controller
+    description: the session API
 paths:
-  /session/{sessionId}/element/{elementId}/event:
-    post:
-      tags:
-      - "event subscription"
-      summary: "Subscribe to a given event within an element"
-      operationId: "subscribeToEvent"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Event name to be subscribed"
-        required: true
-        schema:
-          $ref: "#/definitions/Event"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/EventSubscription"
-        400:
-          description: "Invalid session identifier"
-        403:
-          description: "Forbidden"
-        404:
-          description: "No such element"
-  /session/{sessionId}/event/{subscriptionId}:
+  '/session/{sessionId}/element/{elementId}/audio':
     get:
       tags:
-      - "event subscription"
-      summary: "Read the value of event for a given subscription"
-      operationId: "getSubscriptionValue"
+        - basic media evaluation
+      summary: Read the audio level of a given element (audio|video tag)
+      operationId: getAudioLevelUsingGET
+      consumes:
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "subscriptionId"
-        in: "path"
-        description: "Subscription identifier (previously subscribed)"
-        required: true
-        type: "string"
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: elementId
+          in: path
+          description: Element identifier (previously located)
+          required: true
+          type: string
       responses:
-        200:
-          description: "Successful operation"
+        '200':
+          description: Successful operation
           schema:
-            $ref: "#/definitions/EventValue"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such subscription"
+            $ref: '#/definitions/AudioLevel'
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/AudioLevel'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+          schema:
+            $ref: '#/definitions/AudioLevel'
+  '/session/{sessionId}/element/{elementId}/color':
+    get:
+      tags:
+        - basic media evaluation
+      summary: Read the RGB color of the coordinates of a given element
+      operationId: getColorByCoordinatesUsingGET
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: elementId
+          in: path
+          description: Element identifier (previously located)
+          required: true
+          type: string
+        - name: x
+          in: query
+          description: Coordinate in x-axis
+          required: false
+          type: integer
+          default: 0
+          format: int32
+        - name: 'y'
+          in: query
+          description: Coordinate in y-axis
+          required: false
+          type: integer
+          default: 0
+          format: int32
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/ColorValue'
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/ColorValue'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+          schema:
+            $ref: '#/definitions/ColorValue'
+  '/session/{sessionId}/element/{elementId}/event':
+    post:
+      tags:
+        - event subscription
+      summary: Subscribe to a given event within an element
+      operationId: subscribeToQualityUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: elementId
+          in: path
+          description: Element identifier (previously located)
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Event name to be subscribed
+          required: true
+          schema:
+            $ref: '#/definitions/Event'
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '201':
+          description: Created
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '404':
+          description: No such element
+          schema:
+            $ref: '#/definitions/EventSubscription'
+  '/session/{sessionId}/element/{elementId}/latency':
+    post:
+      tags:
+        - advance media evaluation
+      summary: Measure end-to-end latency of a WebRTC session
+      description: The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)
+      operationId: subscribeToEventUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: elementId
+          in: path
+          description: Element identifier (previously located)
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Definition of WebRTC producer (presenter) and sample rate (in ms)
+          required: true
+          schema:
+            $ref: '#/definitions/Latency'
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '201':
+          description: Created
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+          schema:
+            $ref: '#/definitions/EventSubscription'
+  '/session/{sessionId}/element/{elementId}/quality':
+    post:
+      tags:
+        - advance media evaluation
+      summary: Measure quality (audio|video) of a WebRTC session
+      description: The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)
+      operationId: subscribeToLatencyUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: elementId
+          in: path
+          description: Element identifier (previously located)
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: 'Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)'
+          required: true
+          schema:
+            $ref: '#/definitions/Quality'
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '201':
+          description: Created
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/EventSubscription'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+          schema:
+            $ref: '#/definitions/EventSubscription'
+  '/session/{sessionId}/event/{subscriptionId}':
+    get:
+      tags:
+        - event subscription
+      summary: Read the value of event for a given subscription
+      operationId: getStatsUsingGET
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: subscriptionId
+          in: path
+          description: Subscription identifier (previously subscribed)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/EventValue'
+        '400':
+          description: Invalid session identifier
+          schema:
+            $ref: '#/definitions/EventValue'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such subscription
+          schema:
+            $ref: '#/definitions/EventValue'
     delete:
       tags:
-      - "event subscription"
-      summary: "Remove a subscription"
-      operationId: "deleteSubscription"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "subscriptionId"
-        in: "path"
-        description: "Subscription identifier (previously subscribed)"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "Successful operation"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "Subscription not found"
-  /session/{sessionId}/usermedia:
-    post:
-      tags:
-      - "user media"
-      summary: "Set user media for WebRTC"
-      operationId: "setUserMedia"
+        - event subscription
+      summary: Remove a subscription
+      operationId: deleteSubscriptionUsingDELETE
       consumes:
-      - "application/json"
+        - application/json
+      produces:
+        - '*/*'
       parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Media URL to take WebRTC user media"
-        required: true
-        schema:
-          $ref: "#/definitions/UserMedia"
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: subscriptionId
+          in: path
+          description: Subscription identifier (previously subscribed)
+          required: true
+          type: string
       responses:
-        200:
-          description: "Successful operation"
-        400:
-          description: "Invalid media"
-        404:
-          description: "URL not found"
-  /session/{sessionId}/stats:
+        '200':
+          description: Successful operation
+        '204':
+          description: No Content
+        '400':
+          description: Invalid session identifier
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Subscription not found
+  '/session/{sessionId}/stats':
     get:
       tags:
-      - "WebRTC stats"
-      summary: "Read the WebRTC stats"
-      operationId: "getStats"
+        - WebRTC stats
+      summary: Read the WebRTC stats
+      operationId: getSubscriptionValueUsingGET
+      consumes:
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "peerconnectionId"
-        in: "query"
-        description: "Identifier of peerconnection"
-        required: false
-        type: "string"
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - name: peerconnectionId
+          in: query
+          description: Identifier of peerconnection
+          required: false
+          type: string
       responses:
-        200:
-          description: "Successful operation"
+        '200':
+          description: Successful operation
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/StatsValue"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such subscription"
-  /session/{sessionId}/element/{elementId}/color:
-    get:
-      tags:
-      - "basic media evaluation"
-      summary: "Read the RGB color of the coordinates of a given element"
-      operationId: "getColorByCoordinates"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
-        required: true
-        type: "string"
-      - name: "x"
-        in: "query"
-        description: "Coordinate in x-axis"
-        required: false
-        type: "integer"
-        format: "int32"
-        default: 0
-      - name: "y"
-        in: "query"
-        description: "Coordinate in y-axis"
-        required: false
-        type: "integer"
-        format: "int32"
-        default: 0
-      responses:
-        200:
-          description: "Successful operation"
+            $ref: '#/definitions/StatsValue'
+        '400':
+          description: Invalid session identifier
           schema:
-            $ref: "#/definitions/ColorValue"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such element"
-  /session/{sessionId}/element/{elementId}/audio:
-    get:
-      tags:
-      - "basic media evaluation"
-      summary: "Read the audio level of a given element (audio|video tag)"
-      operationId: "getAudioLevel"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "Successful operation"
+            $ref: '#/definitions/StatsValue'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such subscription
           schema:
-            $ref: "#/definitions/AudioLevel"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such element"
-
-  /session/{sessionId}/element/{elementId}/quality:
+            $ref: '#/definitions/StatsValue'
+  '/session/{sessionId}/usermedia':
     post:
       tags:
-      - "advance media evaluation"
-      summary: "Measure quality (audio|video) of a WebRTC session"
-      operationId: "subscribeToQuality"
-      description: "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)"
+        - user media
+      summary: Set user media for WebRTC
+      operationId: setUserMediaUsingPOST
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - '*/*'
       parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)"
-        required: true
-        schema:
-          $ref: "#/definitions/Quality"
-      responses:
-        200:
-          description: "Successful operation"
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Media URL to take WebRTC user media
+          required: true
           schema:
-            $ref: "#/definitions/EventSubscription"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such element"
-  /session/{sessionId}/element/{elementId}/latency:
-    post:
-      tags:
-      - "advance media evaluation"
-      summary: "Measure end-to-end latency of a WebRTC session"
-      description: "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)"
-      operationId: "subscribeToLatency"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "sessionId"
-        in: "path"
-        description: "Session identifier (previously established)"
-        required: true
-        type: "string"
-      - name: "elementId"
-        in: "path"
-        description: "Element identifier (previously located)"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Definition of WebRTC producer (presenter) and sample rate (in ms)"
-        required: true
-        schema:
-          $ref: "#/definitions/Latency"
+            $ref: '#/definitions/UserMedia'
       responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/EventSubscription"
-        400:
-          description: "Invalid session identifier"
-        404:
-          description: "No such element"
+        '200':
+          description: Successful operation
+        '201':
+          description: Created
+        '400':
+          description: Invalid media
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: URL not found
 definitions:
-  Event:
-    type: "object"
-    properties:
-      event:
-        type: "string"
-        description: "Event name"
-  EventSubscription:
-    type: "object"
-    properties:
-      subscriptionId:
-        type: "string"
-        description: "Subscription identifier"
   EventValue:
-    type: "object"
+    type: object
     properties:
       value:
-        type: "string"
-        description: "Event value"
+        type: string
+        description: Event value
+  UserMedia:
+    type: object
+    properties:
+      audio:
+        type: boolean
+        example: false
+        description: Flag that indicates whether or not the audio should be faked
+      mediaUrl:
+        type: string
+        description: 'URL of media (video, audio, or both) to fake WebRTC user media'
+      video:
+        type: boolean
+        example: false
+        description: Flag that indicates whether or not the video should be faked
+  EventSubscription:
+    type: object
+    properties:
+      subscriptionId:
+        type: string
+        description: Subscription identifier
+  AudioLevel:
+    type: object
+    properties:
+      audio:
+        type: string
+        description: Audio level
+  Quality:
+    type: object
+    properties:
+      algorithm:
+        type: string
+        description: QoE algorithm (full-reference) to be used
+        enum:
+          - pesq
+          - ssim
+          - psnr
+      sampleRate:
+        type: integer
+        format: int32
+        description: Sample rate for the quality evaluation (in milliseconds)
+      senderElementId:
+        type: string
+        description: Element identifier of the video tag producer
+      senderSessionId:
+        type: string
+        description: Session identifier of the WebRTC media peer producer
   ColorValue:
-    type: "object"
+    type: object
     properties:
       color:
-        type: "string"
-        description: "RGB color"
-  AudioLevel:
-    type: "object"
+        type: string
+        description: RGB color
+  Event:
+    type: object
     properties:
-      audio:
-        type: "string"
-        description: "Audio level"
+      event:
+        type: string
+        description: Event name
   StatsValue:
-    type: "object"
+    type: object
     properties:
       id:
-        type: "string"
-        description: "Peerconnection identifier"
+        type: string
+        description: Peerconnection identifier
       stats:
-        type: "string"
-        description: "All Peerconnection stats"
-  UserMedia:
-    type: "object"
-    properties:
-      mediaUrl:
-        type: "string"
-        description: "URL of media (video, audio, or both) to fake WebRTC user media"
-      video:
-        type: "boolean"
-        description: "Flag that indicates whether or not the video should be faked"
-        default: true
-      audio:
-        type: "boolean"
-        description: "Flag that indicates whether or not the audio should be faked"
-        default: true
-  Quality:
-    type: "object"
-    properties:
-      senderSessionId:
-        type: "string"
-        description: "Session identifier of the WebRTC media peer producer"
-      senderElementId:
-        type: "string"
-        description: "Element identifier of the video tag producer"
-      algorithm:
-        type: "string"
-        description: "QoE algorithm (full-reference) to be used"
-        enum:
-        - "pesq"
-        - "ssim"
-        - "psnr"
-      sampleRate:
-        type: "integer"
-        format: "int32"
-        description: "Sample rate for the quality evaluation (in milliseconds)"
-        default: 1000
+        type: string
+        description: All Peerconnection stats
   Latency:
-    type: "object"
+    type: object
     properties:
-      senderSessionId:
-        type: "string"
-        description: "Session identifier of the WebRTC media peer producer"
-      senderElementId:
-        type: "string"
-        description: "Element identifier of the video tag producer"
       sampleRate:
-        type: "integer"
-        format: "int32"
-        description: "Sample rate for the quality evaluation (in milliseconds)"
-        default: 1000
-externalDocs:
-  description: "An elastic platform to ease end to end testing"
-  url: "http://elastest.io/"
+        type: integer
+        format: int32
+        description: Sample rate for the quality evaluation (in milliseconds)
+      senderElementId:
+        type: string
+        description: Element identifier of the video tag producer
+      senderSessionId:
+        type: string
+        description: Session identifier of the WebRTC media peer producer
