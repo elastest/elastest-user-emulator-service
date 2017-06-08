@@ -17,24 +17,25 @@ public class SwaggerDocumentationConfig {
 
     ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-            .title("ElasTest User-emulator Service REST API")
-            .description("REST API descrition of the ElasTest User-emulator Service (EUS)")
-            .license("Apache 2.0")
-            .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
-            .termsOfServiceUrl("")
-            .version("1.0.0")
-            .contact(new Contact("","", ""))
-            .build();
+                .title("ElasTest User-emulator Service REST API")
+                .description(
+                        "REST API descrition of the ElasTest User-emulator Service (EUS)")
+                .license("Apache 2.0")
+                .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
+                .termsOfServiceUrl("").version("1.0.0")
+                .contact(new Contact("", "", "")).build();
     }
 
     @Bean
-    public Docket customImplementation(){
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                    .apis(RequestHandlerSelectors.basePackage("io.elastest.eus.api"))
-                    .build()
-                .directModelSubstitute(org.joda.time.LocalDate.class, java.sql.Date.class)
-                .directModelSubstitute(org.joda.time.DateTime.class, java.util.Date.class)
+    public Docket customImplementation() {
+        return new Docket(DocumentationType.SWAGGER_2).select()
+                .apis(RequestHandlerSelectors
+                        .basePackage("io.elastest.eus.api"))
+                .build()
+                .directModelSubstitute(org.joda.time.LocalDate.class,
+                        java.sql.Date.class)
+                .directModelSubstitute(org.joda.time.DateTime.class,
+                        java.util.Date.class)
                 .apiInfo(apiInfo());
     }
 
