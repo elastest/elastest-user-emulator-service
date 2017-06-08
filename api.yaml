@@ -270,7 +270,7 @@ paths:
       - "advance media evaluation"
       summary: "Measure end-to-end latency of a WebRTC session"
       description: "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)"
-      operationId: "subscribeToLatency",
+      operationId: "subscribeToLatency"
       consumes:
       - "application/json"
       produces:
