@@ -1,4 +1,4 @@
-package io.elastest.eus.swagger.configuration;
+package io.elastest.eus.config;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

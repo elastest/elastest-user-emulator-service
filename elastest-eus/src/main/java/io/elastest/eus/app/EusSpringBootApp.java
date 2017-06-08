@@ -1,4 +1,4 @@
-package io.swagger;
+package io.elastest.eus.app;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
@@ -11,7 +11,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableSwagger2
 @ComponentScan(basePackages = "io.elastest.eus")
-public class Swagger2SpringBoot implements CommandLineRunner {
+public class EusSpringBootApp implements CommandLineRunner {
 
     @Override
     public void run(String... arg0) throws Exception {
@@ -21,7 +21,7 @@ public class Swagger2SpringBoot implements CommandLineRunner {
     }
 
     public static void main(String[] args) throws Exception {
-        new SpringApplication(Swagger2SpringBoot.class).run(args);
+        new SpringApplication(EusSpringBootApp.class).run(args);
     }
 
     class ExitException extends RuntimeException implements ExitCodeGenerator {
@@ -31,6 +31,5 @@ public class Swagger2SpringBoot implements CommandLineRunner {
         public int getExitCode() {
             return 10;
         }
-
     }
 }

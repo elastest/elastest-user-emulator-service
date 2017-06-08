@@ -8,18 +8,17 @@
         <version>1.5.2.RELEASE</version>
     </parent>
 
-    <groupId>io.elastest.eus</groupId>
-    <artifactId>elastest-eus</artifactId>
+    <groupId>io.elastest</groupId>
+    <artifactId>eus</artifactId>
     <packaging>jar</packaging>
     <version>0.0.1-SNAPSHOT</version>
-
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>This artifact contains the Elastest EUS project, part of the Elastest platform.</description>
     <url>https://github.com/elastest/elastest-eus</url>
 
 
-    <!-- organization & developers -->
+    <!-- Organization & developers -->
     <organization>
         <name>Elastest</name>
         <url>http://elastest.io</url>
@@ -28,34 +27,37 @@
     <developers>
         <developer>
             <id>URJC</id>
-            <name>URJC</name>
-            <organization>URJC</organization>
+            <organization>Universidad Rey Juan Carlos</organization>
             <organizationUrl>https://www.urjc.es/</organizationUrl>
         </developer>
     </developers>
 
     <properties>
+        <!-- Java 8 -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
-        <junit.platform.version>1.0.0-M4</junit.platform.version>
-        <springfox-version>2.6.1</springfox-version>
-        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
 
-        <!-- Cross plugins settings -->
+        <!-- Encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- plugins versions -->
+        <!-- Dependencies version -->
+        <springfox.version>2.7.0</springfox.version>
+
+        <!-- Test dependencies version -->
+        <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
+        <junit.platform.version>1.0.0-M4</junit.platform.version>
+
+        <!-- Plugins versions -->
         <maven.source.plugin.version>2.2.1</maven.source.plugin.version>
         <maven.javadoc.plugin.version>2.9.1</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <nexus.staging.maven.plugin.version>1.6.7</nexus.staging.maven.plugin.version>
-
+        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
     </properties>
 
-    <!-- as agreed Public Artifacts will be under Apache Software License -->
+    <!-- Apache Software License -->
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -71,8 +73,7 @@
         <tag>develop</tag>
     </scm>
 
-    <!-- Distribution management (all elastest public artifacts should set 
-        this configuration) -->
+    <!-- Distribution management -->
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
@@ -84,49 +85,29 @@
         </repository>
     </distributionManagement>
 
+    <!-- Dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${springfox.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${springfox.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!--SpringFox dependencies -->
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <version>${springfox-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
-            <version>${springfox-version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-joda</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.maven.surefire</groupId>
-            <artifactId>surefire-report-parser</artifactId>
-            <version>2.20</version>
-        </dependency>
-
-        <!-- Junit 5 dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -140,13 +121,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-runner</artifactId>
-            <version>1.0.0-M4</version>
+            <version>${junit.platform.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -155,13 +132,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.github.sbrannen</groupId>
-            <artifactId>spring-test-junit5</artifactId>
-            <version>1.0.0.M4</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -193,7 +163,6 @@
                     </dependency>
                 </dependencies>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -207,7 +176,7 @@
                 </executions>
             </plugin>
 
-            <!-- maven source plugin required for Central deploy -->
+            <!-- Maven source plugin required for Central deploy -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -259,13 +228,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
 
 </project>

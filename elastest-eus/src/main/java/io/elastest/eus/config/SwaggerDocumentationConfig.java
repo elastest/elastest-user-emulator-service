@@ -1,4 +1,4 @@
-package io.elastest.eus.swagger.configuration;
+package io.elastest.eus.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,12 +31,7 @@ public class SwaggerDocumentationConfig {
         return new Docket(DocumentationType.SWAGGER_2).select()
                 .apis(RequestHandlerSelectors
                         .basePackage("io.elastest.eus.api"))
-                .build()
-                .directModelSubstitute(org.joda.time.LocalDate.class,
-                        java.sql.Date.class)
-                .directModelSubstitute(org.joda.time.DateTime.class,
-                        java.util.Date.class)
-                .apiInfo(apiInfo());
+                .build().apiInfo(apiInfo());
     }
 
 }
