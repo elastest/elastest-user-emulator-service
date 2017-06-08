@@ -20,8 +20,6 @@ import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
 import io.swagger.annotations.ApiParam;
 
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2017-06-01T16:29:27.571+02:00")
-
 @Controller
 public class SessionApiController implements SessionApi {
 

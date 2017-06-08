@@ -1,10 +1,9 @@
 package io.elastest.eus.api;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2017-06-01T16:29:27.571+02:00")
-
-@javax.xml.bind.annotation.XmlRootElement
+@XmlRootElement
 public class ApiResponseMessage {
     public static final int ERROR = 1;
     public static final int WARNING = 2;

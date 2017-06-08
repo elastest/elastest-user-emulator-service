@@ -7,8 +7,6 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * StatsValue
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2017-06-01T16:29:27.571+02:00")
-
 public class StatsValue {
     private String id = null;
 
