@@ -54,7 +54,7 @@ public interface SessionApi {
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/audio",
         produces = { "application/json" }, 
         method = RequestMethod.GET)
-    ResponseEntity<AudioLevel> getAudioLevelByElement(
+    ResponseEntity<AudioLevel> getAudioLevel(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -73,7 +73,7 @@ public interface SessionApi {
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/color",
         produces = { "application/json" }, 
         method = RequestMethod.GET)
-    ResponseEntity<ColorValue> getRGBColorByCoordinates(
+    ResponseEntity<ColorValue> getColorByCoordinates(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -100,7 +100,7 @@ public interface SessionApi {
     @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}",
         produces = { "application/json" }, 
         method = RequestMethod.GET)
-    ResponseEntity<EventValue> getSubscriptionValue(
+    ResponseEntity<List<StatsValue>> getStats(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -119,7 +119,7 @@ public interface SessionApi {
     @RequestMapping(value = "/session/{sessionId}/stats",
         produces = { "application/json" }, 
         method = RequestMethod.GET)
-    ResponseEntity<List<StatsValue>> getWebRTCStats(
+    ResponseEntity<EventValue> getSubscriptionValue(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -138,7 +138,7 @@ public interface SessionApi {
     @RequestMapping(value = "/session/{sessionId}/usermedia",
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    ResponseEntity<Void> seetUserMediaForWebRTC(
+    ResponseEntity<Void> setUserMedia(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -158,7 +158,7 @@ public interface SessionApi {
         produces = { "application/json" }, 
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    ResponseEntity<EventSubscription> setE2ELatencyOfWebRTCSession(
+    ResponseEntity<EventSubscription> subscribeToEvent(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -182,7 +182,7 @@ public interface SessionApi {
         produces = { "application/json" }, 
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    ResponseEntity<EventSubscription> setMeasureQAOfWebRTCSession(
+    ResponseEntity<EventSubscription> subscribeToLatency(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -207,7 +207,7 @@ public interface SessionApi {
         produces = { "application/json" }, 
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    ResponseEntity<EventSubscription> subscribeToEvent(
+    ResponseEntity<EventSubscription> subscribeToQuality(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 

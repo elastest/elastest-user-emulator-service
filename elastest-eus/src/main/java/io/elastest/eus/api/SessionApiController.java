@@ -44,7 +44,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
-    public ResponseEntity<AudioLevel> getAudioLevelByElement(
+    public ResponseEntity<AudioLevel> getAudioLevel(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -58,7 +58,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<AudioLevel>(HttpStatus.OK);
     }
 
-    public ResponseEntity<ColorValue> getRGBColorByCoordinates(
+    public ResponseEntity<ColorValue> getColorByCoordinates(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -82,7 +82,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<ColorValue>(HttpStatus.OK);
     }
 
-    public ResponseEntity<EventValue> getSubscriptionValue(
+    public ResponseEntity<List<StatsValue>> getStats(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -93,10 +93,10 @@ public class SessionApiController implements SessionApi {
 
 ) {
         // do some magic!
-        return new ResponseEntity<EventValue>(HttpStatus.OK);
+        return new ResponseEntity<List<StatsValue>>(HttpStatus.OK);
     }
 
-    public ResponseEntity<List<StatsValue>> getWebRTCStats(
+    public ResponseEntity<EventValue> getSubscriptionValue(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -107,10 +107,10 @@ public class SessionApiController implements SessionApi {
 
 ) {
         // do some magic!
-        return new ResponseEntity<List<StatsValue>>(HttpStatus.OK);
+        return new ResponseEntity<EventValue>(HttpStatus.OK);
     }
 
-    public ResponseEntity<Void> seetUserMediaForWebRTC(
+    public ResponseEntity<Void> setUserMedia(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -124,7 +124,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
-    public ResponseEntity<EventSubscription> setE2ELatencyOfWebRTCSession(
+    public ResponseEntity<EventSubscription> subscribeToEvent(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -143,7 +143,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
-    public ResponseEntity<EventSubscription> setMeasureQAOfWebRTCSession(
+    public ResponseEntity<EventSubscription> subscribeToLatency(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
@@ -162,7 +162,7 @@ public class SessionApiController implements SessionApi {
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
-    public ResponseEntity<EventSubscription> subscribeToEvent(
+    public ResponseEntity<EventSubscription> subscribeToQuality(
 @ApiParam(value = "Session identifier (previously established)",required=true ) @PathVariable("sessionId") String sessionId
 
 
