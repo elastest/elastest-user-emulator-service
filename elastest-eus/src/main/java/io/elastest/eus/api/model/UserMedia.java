@@ -28,9 +28,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class UserMedia {
     private String mediaUrl = null;
-
     private Boolean video = true;
-
     private Boolean audio = true;
 
     public UserMedia mediaUrl(String mediaUrl) {

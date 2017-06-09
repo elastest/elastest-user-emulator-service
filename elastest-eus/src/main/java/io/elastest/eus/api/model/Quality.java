@@ -28,7 +28,6 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class Quality {
     private String senderSessionId = null;
-
     private String senderElementId = null;
 
     /**

@@ -41,29 +41,31 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
- * API description (RequestMapping, ApiResponses, ApiOperation).
+ * API interface.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@Api(value = "session", description = "the session API")
+@Api(value = "session")
 public interface SessionApi {
 
+    /**
+     * DELETE /session/{sessionId}/event/{subscriptionId}
+     */
     @ApiOperation(value = "Remove a subscription", notes = "", response = Void.class, tags = {
             "event subscription", })
-
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = Void.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = Void.class),
             @ApiResponse(code = 404, message = "Subscription not found", response = Void.class) })
-
     @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", method = RequestMethod.DELETE)
     ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId
+            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
 
-    );
-
+    /**
+     * GET /session/{sessionId}/element/{elementId}/audio
+     */
     @ApiOperation(value = "Read the audio level of a given element (audio|video tag)", notes = "", response = AudioLevel.class, tags = {
             "basic media evaluation", })
     @ApiResponses(value = {
@@ -74,27 +76,28 @@ public interface SessionApi {
             "application/json" }, method = RequestMethod.GET)
     ResponseEntity<AudioLevel> getAudioLevel(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId
+            @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId);
 
-    );
-
+    /**
+     * GET /session/{sessionId}/element/{elementId}/color
+     */
     @ApiOperation(value = "Read the RGB color of the coordinates of a given element", notes = "", response = ColorValue.class, tags = {
             "basic media evaluation", })
-
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = ColorValue.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = ColorValue.class),
             @ApiResponse(code = 404, message = "No such element", response = ColorValue.class) })
-
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/color", produces = {
             "application/json" }, method = RequestMethod.GET)
-
     ResponseEntity<ColorValue> getColorByCoordinates(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Coordinate in x-axis", defaultValue = "0") @RequestParam(value = "x", required = false, defaultValue = "0") Integer x,
             @ApiParam(value = "Coordinate in y-axis", defaultValue = "0") @RequestParam(value = "y", required = false, defaultValue = "0") Integer y);
 
+    /**
+     * GET /session/{sessionId}/event/{subscriptionId}
+     */
     @ApiOperation(value = "Read the value of event for a given subscription", notes = "", response = EventValue.class, tags = {
             "event subscription", })
     @ApiResponses(value = {
@@ -107,6 +110,9 @@ public interface SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
 
+    /**
+     * GET /session/{sessionId}/stats
+     */
     @ApiOperation(value = "Read the WebRTC stats", notes = "", response = StatsValue.class, responseContainer = "List", tags = {
             "WebRTC stats", })
     @ApiResponses(value = {
@@ -117,10 +123,11 @@ public interface SessionApi {
             "application/json" }, method = RequestMethod.GET)
     ResponseEntity<EventValue> getSubscriptionValue(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId
+            @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId);
 
-    );
-
+    /**
+     * POST /session/{sessionId}/usermedia
+     */
     @ApiOperation(value = "Set user media for WebRTC", notes = "", response = Void.class, tags = {
             "user media", })
     @ApiResponses(value = {
@@ -133,6 +140,9 @@ public interface SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body);
 
+    /**
+     * POST /session/{sessionId}/element/{elementId}/latenc
+     */
     @ApiOperation(value = "Measure end-to-end latency of a WebRTC session", notes = "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)", response = EventSubscription.class, tags = {
             "advance media evaluation", })
     @ApiResponses(value = {
@@ -145,10 +155,11 @@ public interface SessionApi {
     ResponseEntity<EventSubscription> subscribeToEvent(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
-            @ApiParam(value = "Definition of WebRTC producer (presenter) and sample rate (in ms)", required = true) @RequestBody Latency body
+            @ApiParam(value = "Definition of WebRTC producer (presenter) and sample rate (in ms)", required = true) @RequestBody Latency body);
 
-    );
-
+    /**
+     * POST /session/{sessionId}/element/{elementId}/quality
+     */
     @ApiOperation(value = "Measure quality (audio|video) of a WebRTC session", notes = "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)", response = EventSubscription.class, tags = {
             "advance media evaluation", })
     @ApiResponses(value = {
@@ -161,10 +172,11 @@ public interface SessionApi {
     ResponseEntity<EventSubscription> subscribeToLatency(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
-            @ApiParam(value = "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)", required = true) @RequestBody Quality body
+            @ApiParam(value = "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)", required = true) @RequestBody Quality body);
 
-    );
-
+    /**
+     * POST /session/{sessionId}/element/{elementId}/event
+     */
     @ApiOperation(value = "Subscribe to a given event within an element", notes = "", response = EventSubscription.class, tags = {
             "event subscription", })
     @ApiResponses(value = {

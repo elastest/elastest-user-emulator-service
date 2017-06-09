@@ -18,6 +18,7 @@ package io.elastest.eus.api;
 
 import java.io.IOException;
 
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
@@ -31,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class ApiOriginFilter implements javax.servlet.Filter {
+public class ApiOriginFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException {

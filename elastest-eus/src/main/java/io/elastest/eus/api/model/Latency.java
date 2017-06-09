@@ -28,9 +28,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class Latency {
     private String senderSessionId = null;
-
     private String senderElementId = null;
-
     private Integer sampleRate = 1000;
 
     public Latency senderSessionId(String senderSessionId) {

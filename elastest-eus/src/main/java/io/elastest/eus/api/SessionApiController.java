@@ -48,14 +48,14 @@ public class SessionApiController implements SessionApi {
     public ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId) {
-        // do some magic!
+        // TODO implementation
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     public ResponseEntity<AudioLevel> getAudioLevel(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId) {
-        // do some magic!
+        // TODO implementation
         return new ResponseEntity<AudioLevel>(HttpStatus.OK);
     }
 
@@ -64,64 +64,52 @@ public class SessionApiController implements SessionApi {
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Coordinate in x-axis", defaultValue = "0") @RequestParam(value = "x", required = false, defaultValue = "0") Integer x,
             @ApiParam(value = "Coordinate in y-axis", defaultValue = "0") @RequestParam(value = "y", required = false, defaultValue = "0") Integer y) {
-        // do some magic!
+        // TODO implementation
         return new ResponseEntity<ColorValue>(HttpStatus.OK);
     }
 
     public ResponseEntity<List<StatsValue>> getStats(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId) {
+        // TODO implementation
         return new ResponseEntity<List<StatsValue>>(HttpStatus.OK);
     }
 
     public ResponseEntity<EventValue> getSubscriptionValue(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId) {
+        // TODO implementation
         return new ResponseEntity<EventValue>(HttpStatus.OK);
     }
 
     public ResponseEntity<Void> setUserMedia(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body) {
+        // TODO implementation
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToEvent(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
-            @ApiParam(value = "Definition of WebRTC producer (presenter) and sample rate (in ms)", required = true) @RequestBody Latency body
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Definition of WebRTC producer (presenter) and sample rate (in ms)", required = true) @RequestBody Latency body) {
+        // TODO implementation
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToLatency(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
-            @ApiParam(value = "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)", required = true) @RequestBody Quality body
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)", required = true) @RequestBody Quality body) {
+        // TODO implementation
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToQuality(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
-            @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body
-
-    ) {
-        // do some magic!
+            @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body) {
+        // TODO implementation
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 

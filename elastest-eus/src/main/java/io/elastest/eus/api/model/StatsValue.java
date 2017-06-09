@@ -28,7 +28,6 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class StatsValue {
     private String id = null;
-
     private String stats = null;
 
     public StatsValue id(String id) {
