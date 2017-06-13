@@ -18,7 +18,14 @@ node('docker') {
             stage "Archive atifacts"
                 archiveArtifacts artifacts: 'elastest-eus/target/*.jar'
 
-            stage "publish"
+            stage "Build image - Package"
+                echo ("building..")
+                def myimage = docker.build 'elastest/elastest-user-emulator-service'
+
+            stage "Run image"
+                myimage.run()
+
+            stage "Publish"
                 echo ("Publishing")
                 def myimage = docker.image('elastest/elastest-user-emulator-service')
                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
