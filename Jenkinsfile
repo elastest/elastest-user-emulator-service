@@ -5,6 +5,7 @@ node('docker') {
         mycontainer.pull()
         mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
             git 'https://github.com/elastest/elastest-user-emulator-service.git'
+            sh 'cd elastest-eus'
 
             stage "Tests"
                 echo ("Starting tests")
