@@ -16,11 +16,9 @@
  */
 package io.elastest.eus.test.dummy;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 
 /**
  * Dummy test.
@@ -28,7 +26,6 @@ import org.junit.runner.RunWith;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@RunWith(JUnitPlatform.class)
 public class DummyTest {
 
     @Test

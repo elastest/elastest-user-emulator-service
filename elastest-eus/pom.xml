@@ -2,12 +2,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.2.RELEASE</version>
-    </parent>
-
+    <!-- Project coordinates & description -->
     <groupId>io.elastest</groupId>
     <artifactId>user-emulator-service</artifactId>
     <packaging>jar</packaging>
@@ -16,6 +11,13 @@
     <name>${project.groupId}:${project.artifactId}</name>
     <description>ElasTest User Emulator Service (EUS): This service enables the impersonation of end-users’ in their tests through GUI instrumentation and through mechanisms for QoS and QoE evaluation.</description>
     <url>https://github.com/elastest/elastest-eus</url>
+
+    <!-- Parent (Spring Boot) -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.2.RELEASE</version>
+    </parent>
 
     <!-- Organization & developers -->
     <organization>
@@ -64,7 +66,7 @@
         </license>
     </licenses>
 
-    <!-- Source Code Manager -->
+    <!-- Source code manager -->
     <scm>
         <url>https://github.com/elastest/elastest-eus</url>
         <connection>scm:git:https://github.com/elastest/elastest-eus</connection>
@@ -84,8 +86,8 @@
         </repository>
     </distributionManagement>
 
-    <!-- Dependencies -->
     <dependencies>
+        <!-- Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -103,36 +105,14 @@
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-runner</artifactId>
-            <version>${junit.platform.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
 
+    <!-- Plugins -->
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
@@ -161,18 +141,6 @@
                         <version>${junit.jupiter.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
