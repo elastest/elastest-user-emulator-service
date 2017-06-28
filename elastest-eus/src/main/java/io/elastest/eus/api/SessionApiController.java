@@ -18,6 +18,8 @@ package io.elastest.eus.api;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -45,17 +47,28 @@ import io.swagger.annotations.ApiParam;
 @Controller
 public class SessionApiController implements SessionApi {
 
+    private final Logger log = LoggerFactory
+            .getLogger(SessionApiController.class);
+
     public ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId) {
+        log.debug("[deleteSubscription] sessionId={} subscriptionId={}",
+                sessionId, subscriptionId);
+
         // TODO implementation
+
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     public ResponseEntity<AudioLevel> getAudioLevel(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId) {
+        log.debug("[getAudioLevel] sessionId={} elementId={}", sessionId,
+                elementId);
+
         // TODO implementation
+
         return new ResponseEntity<AudioLevel>(HttpStatus.OK);
     }
 
@@ -64,28 +77,43 @@ public class SessionApiController implements SessionApi {
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Coordinate in x-axis", defaultValue = "0") @RequestParam(value = "x", required = false, defaultValue = "0") Integer x,
             @ApiParam(value = "Coordinate in y-axis", defaultValue = "0") @RequestParam(value = "y", required = false, defaultValue = "0") Integer y) {
+        log.debug("[getColorByCoordinates] sessionId={} elementId={} x={} y={}",
+                sessionId, elementId, x, y);
+
         // TODO implementation
+
         return new ResponseEntity<ColorValue>(HttpStatus.OK);
     }
 
     public ResponseEntity<List<StatsValue>> getStats(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId) {
+        log.debug("[getStats] sessionId={} subscriptionId={}", sessionId,
+                subscriptionId);
+
         // TODO implementation
+
         return new ResponseEntity<List<StatsValue>>(HttpStatus.OK);
     }
 
     public ResponseEntity<EventValue> getSubscriptionValue(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId) {
+        log.debug("[getSubscriptionValue] sessionId={} peerconnectionId={}",
+                sessionId, peerconnectionId);
+
         // TODO implementation
+
         return new ResponseEntity<EventValue>(HttpStatus.OK);
     }
 
     public ResponseEntity<Void> setUserMedia(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body) {
+        log.debug("[setUserMedia] sessionId={} userMedia={}", sessionId, body);
+
         // TODO implementation
+
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
@@ -93,7 +121,11 @@ public class SessionApiController implements SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Definition of WebRTC producer (presenter) and sample rate (in ms)", required = true) @RequestBody Latency body) {
+        log.debug("[subscribeToEvent] sessionId={} elementId={} latency={}",
+                sessionId, elementId, body);
+
         // TODO implementation
+
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
@@ -101,7 +133,11 @@ public class SessionApiController implements SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Definition of WebRTC producer (presenter), selection of QoE algorithm, and sample rate (in ms)", required = true) @RequestBody Quality body) {
+        log.debug("[subscribeToLatency] sessionId={} elementId={} quality={}",
+                sessionId, elementId, body);
+
         // TODO implementation
+
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
@@ -109,7 +145,11 @@ public class SessionApiController implements SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body) {
+        log.debug("[subscribeToQuality] sessionId={} elementId={} event={}",
+                sessionId, elementId, body);
+
         // TODO implementation
+
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
     }
 
