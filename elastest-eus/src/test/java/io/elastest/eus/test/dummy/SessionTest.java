@@ -17,6 +17,8 @@
 package io.elastest.eus.test.dummy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -30,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -43,7 +44,7 @@ import io.elastest.eus.app.EusSpringBootApp;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 public class SessionTest {
 
     final Logger log = LoggerFactory.getLogger(SessionTest.class);
@@ -69,7 +70,7 @@ public class SessionTest {
                 .getForEntity("/session/" + sessionId + "/stats", Object.class);
         log.debug("Response {}", response.getStatusCode());
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(OK, response.getStatusCode());
     }
 
 }
