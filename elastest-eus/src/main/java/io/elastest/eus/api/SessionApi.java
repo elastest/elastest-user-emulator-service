@@ -18,6 +18,9 @@ package io.elastest.eus.api;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -191,5 +194,18 @@ public interface SessionApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body);
+
+    /**
+     * W3C WebDriver operations
+     */
+    @ApiOperation(value = "W3C WebDriver operations", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation"),
+            @ApiResponse(code = 404, message = "No such element") })
+    @RequestMapping(value = "/**", produces = { "application/json" }, method = {
+            RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE })
+    ResponseEntity<String> webdriverProtocol(HttpEntity<String> httpEntity,
+            HttpServletRequest request);
 
 }

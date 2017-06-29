@@ -18,14 +18,20 @@ package io.elastest.eus.api;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
 
 import io.elastest.eus.api.model.AudioLevel;
 import io.elastest.eus.api.model.ColorValue;
@@ -49,6 +55,9 @@ public class SessionApiController implements SessionApi {
 
     private final Logger log = LoggerFactory
             .getLogger(SessionApiController.class);
+
+    @Value("${server.contextPath}")
+    private String contextPath;
 
     public ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
@@ -151,6 +160,50 @@ public class SessionApiController implements SessionApi {
         // TODO implementation
 
         return new ResponseEntity<EventSubscription>(HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<String> webdriverProtocol(
+            HttpEntity<String> httpEntity, HttpServletRequest request) {
+        final String methodName = new Object() {
+        }.getClass().getEnclosingMethod().getName();
+
+        StringBuffer requestUrl = request.getRequestURL();
+        String bypassUrl = requestUrl.substring(
+                requestUrl.lastIndexOf(contextPath) + contextPath.length());
+        HttpMethod method = HttpMethod.resolve(request.getMethod());
+        log.debug("[{}] {} {}", methodName, method, bypassUrl);
+
+        // TODO Use Docker instead of local Selenium Server
+        String newUrl = "http://localhost:4444/wd/hub" + bypassUrl;
+        log.trace("[{}] >> Request : {}", methodName, httpEntity.getBody());
+
+        RestTemplate restTemplate = new RestTemplate();
+        String response = "";
+
+        switch (method) {
+        case GET:
+            response = restTemplate.getForObject(newUrl, String.class);
+            break;
+
+        case DELETE:
+            restTemplate.delete(newUrl);
+            break;
+
+        default:
+        case POST:
+            response = restTemplate.postForObject(newUrl, httpEntity.getBody(),
+                    String.class);
+            break;
+        }
+        log.trace("[{}] << Response: {}", methodName, response);
+
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
+                HttpStatus.OK);
+
+        log.debug("[{}] response {}", methodName, responseEntity);
+
+        return responseEntity;
     }
 
 }
