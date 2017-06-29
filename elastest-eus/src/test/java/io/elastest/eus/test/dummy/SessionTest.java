@@ -23,7 +23,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ public class SessionTest {
     @LocalServerPort
     int serverPort;
 
-    @Before
+    @BeforeEach
     void setup() {
         log.debug("[@Before] app started on port {}", serverPort);
     }
