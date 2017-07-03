@@ -179,23 +179,10 @@ public class SessionApiController implements SessionApi {
         log.trace("[{}] >> Request : {}", methodName, httpEntity.getBody());
 
         RestTemplate restTemplate = new RestTemplate();
-        String response = "";
+        ResponseEntity<String> exchange = restTemplate.exchange(newUrl, method,
+                httpEntity, String.class);
+        String response = exchange.getBody();
 
-        switch (method) {
-        case GET:
-            response = restTemplate.getForObject(newUrl, String.class);
-            break;
-
-        case DELETE:
-            restTemplate.delete(newUrl);
-            break;
-
-        default:
-        case POST:
-            response = restTemplate.postForObject(newUrl, httpEntity.getBody(),
-                    String.class);
-            break;
-        }
         log.trace("[{}] << Response: {}", methodName, response);
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
