@@ -33,9 +33,6 @@ import org.springframework.web.client.RestTemplate;
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
- * @see <a href="https://www.w3.org/TR/webdriver/">W3C WebDriver</a>
- * @see <a href=
- *      "https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol">JsonWireProtocol/a>
  */
 @Service
 public class WebDriverService {
