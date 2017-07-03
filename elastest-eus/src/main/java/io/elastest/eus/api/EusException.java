@@ -17,23 +17,17 @@
 package io.elastest.eus.api;
 
 /**
- * Not found exception.
+ * EUS exception.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class NotFoundException extends ApiException {
+public class EusException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
-    private int code;
 
-    public NotFoundException(int code, String msg) {
-        super(code, msg);
-        this.code = code;
-    }
-
-    public int getCode() {
-        return code;
+    public EusException(String msg) {
+        super(msg);
     }
 
 }
