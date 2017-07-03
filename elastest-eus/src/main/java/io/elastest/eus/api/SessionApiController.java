@@ -22,16 +22,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestTemplate;
 
 import io.elastest.eus.api.model.AudioLevel;
 import io.elastest.eus.api.model.ColorValue;
@@ -42,6 +40,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
+import io.elastest.eus.api.service.WebDriverService;
 import io.swagger.annotations.ApiParam;
 
 /**
@@ -56,8 +55,12 @@ public class SessionApiController implements SessionApi {
     private final Logger log = LoggerFactory
             .getLogger(SessionApiController.class);
 
-    @Value("${server.contextPath}")
-    private String contextPath;
+    private WebDriverService webDriverService;
+
+    @Autowired
+    public SessionApiController(WebDriverService webDriverService) {
+        this.webDriverService = webDriverService;
+    }
 
     public ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
@@ -165,32 +168,7 @@ public class SessionApiController implements SessionApi {
     @Override
     public ResponseEntity<String> webdriverProtocol(
             HttpEntity<String> httpEntity, HttpServletRequest request) {
-        final String methodName = new Object() {
-        }.getClass().getEnclosingMethod().getName();
-
-        StringBuffer requestUrl = request.getRequestURL();
-        String bypassUrl = requestUrl.substring(
-                requestUrl.lastIndexOf(contextPath) + contextPath.length());
-        HttpMethod method = HttpMethod.resolve(request.getMethod());
-        log.debug("[{}] {} {}", methodName, method, bypassUrl);
-
-        // TODO Use Docker instead of local Selenium Server
-        String newUrl = "http://localhost:4444/wd/hub" + bypassUrl;
-        log.trace("[{}] >> Request : {}", methodName, httpEntity.getBody());
-
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> exchange = restTemplate.exchange(newUrl, method,
-                httpEntity, String.class);
-        String response = exchange.getBody();
-
-        log.trace("[{}] << Response: {}", methodName, response);
-
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
-                HttpStatus.OK);
-
-        log.debug("[{}] response {}", methodName, responseEntity);
-
-        return responseEntity;
+        return webDriverService.process(httpEntity, request);
     }
 
 }
