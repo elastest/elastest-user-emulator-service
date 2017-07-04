@@ -45,28 +45,24 @@ public class EpmTest {
     private EpmService epmService;
 
     @Test
-    void testJson() {
+    void test() {
         // Test data (input)
-        String jsonMessage = "{\n" + " \"desiredCapabilities\": {\n"
-                + " \"browserName\": \"chrome\",\n" + " \"version\": \"59\",\n"
-                + " \"platform\": \"LINUX\"\n" + " },\n"
-                + " \"requiredCapabilities\": {},\n" + " \"capabilities\": {\n"
-                + " \"desiredCapabilities\": {\n"
-                + " \"browserName\": \"chrome\",\n" + " \"version\": \"59\",\n"
-                + " \"platform\": \"LINUX\"\n" + " },\n"
-                + " \"requiredCapabilities\": {},\n" + " \"alwaysMatch\": {},\n"
-                + " \"firstMatch\": [\n" + " {\n"
-                + " \"browserName\": \"chrome\"\n" + " }\n" + " ]\n" + " }\n"
-                + "}";
+        String jsonMessage = "{\n" + "    \"desiredCapabilities\": {\n"
+                + "        \"browserName\": \"chrome\",\n"
+                + "        \"version\": \"\",\n"
+                + "        \"platform\": \"ANY\"\n" + "    }\n" + "}";
 
         // Exercise
+        log.debug("Starting Hub URL from JSON message {}", jsonMessage);
         String hubUrl = epmService
                 .starHubInDockerFromJsonCapabilities(jsonMessage);
 
         // Assertions
+        log.debug("Hub URL {}", hubUrl);
         assertNotNull(hubUrl);
 
         // Tear down
+        log.debug("Stoping Hub");
         epmService.stopHubInDocker();
     }
 
