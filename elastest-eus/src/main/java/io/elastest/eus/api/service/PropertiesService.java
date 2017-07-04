@@ -135,13 +135,17 @@ public class PropertiesService {
                     && key.contains(platform)) {
                 out = key;
             } else if (key.contains(browserName) && version != null
-                    && key.contains(version) && platform == null) {
+                    && key.contains(version)
+                    && (platform == null || platform.equals(""))) {
                 out = key;
-            } else if (key.contains(browserName) && version == null
+            } else if (key.contains(browserName)
+                    && (version == null || version.equals(""))
                     && platform != null && key.contains(platform)) {
                 out = key;
-            } else if (key.contains(browserName) && version == null
-                    && platform == null) {
+            } else if (key.contains(browserName)
+                    && (version == null || version.equals(""))
+                    && (platform == null || platform.equals("")
+                            || platform.equalsIgnoreCase("ANY"))) {
                 out = key;
             }
             if (out != null) {

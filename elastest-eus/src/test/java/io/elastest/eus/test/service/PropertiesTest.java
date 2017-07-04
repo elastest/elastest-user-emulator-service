@@ -63,7 +63,11 @@ public class PropertiesTest {
                 create("chrome", null, null, "chrome_59_LINUX"),
                 create("firefox", null, null, "firefox_54_LINUX"),
                 create("chrome", "58", null, "chrome_58_LINUX"),
-                create("firefox", "53", null, "firefox_53_LINUX"));
+                create("firefox", "53", null, "firefox_53_LINUX"),
+                create("chrome", "", "", "chrome_59_LINUX"),
+                create("chrome", "", "ANY", "chrome_59_LINUX"),
+                create("firefox", "", "", "firefox_54_LINUX"),
+                create("firefox", "", "ANY", "firefox_54_LINUX"));
     }
 
     static Stream<Arguments> dockerProvider() {
