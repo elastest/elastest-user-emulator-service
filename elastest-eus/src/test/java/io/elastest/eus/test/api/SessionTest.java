@@ -14,14 +14,12 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.dummy;
+package io.elastest.eus.test.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
-
-import java.math.BigInteger;
-import java.security.SecureRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.app.EusSpringBootApp;
 
 /**
@@ -52,25 +52,44 @@ public class SessionTest {
     @Autowired
     TestRestTemplate restTemplate;
 
+    @Autowired
+    JsonService jsonService;
+
     @LocalServerPort
     int serverPort;
 
     @BeforeEach
     void setup() {
-        log.debug("[@Before] app started on port {}", serverPort);
+        log.debug("App started on port {}", serverPort);
     }
 
     @Test
-    void test() {
-        log.debug("[@Test] GET /session/{sessionId}/stats");
+    void createAndDestroySession() {
+        log.debug("POST /session");
 
-        String sessionId = new BigInteger(130, new SecureRandom()).toString(32);
+        // Test data (input)
+        String jsonMessage = "{\n" + "    \"desiredCapabilities\": {\n"
+                + "        \"browserName\": \"chrome\",\n"
+                + "        \"version\": \"\",\n"
+                + "        \"platform\": \"ANY\"\n" + "    }\n" + "}";
 
-        ResponseEntity<Object> response = restTemplate
-                .getForEntity("/session/" + sessionId + "/stats", Object.class);
-        log.debug("Response {}", response.getStatusCode());
+        ResponseEntity<String> response = restTemplate.postForEntity("/session",
+                jsonMessage, String.class);
 
+        HttpStatus statusCode = response.getStatusCode();
+        String responseBody = response.getBody();
+        String sessionId = jsonService.getSessionId(responseBody);
+
+        log.debug("Status code {}", statusCode);
+        log.debug("Response {}", responseBody);
+        log.debug("sessionId {}", sessionId);
+
+        // Assertions
         assertEquals(OK, response.getStatusCode());
+        assertNotNull(sessionId);
+
+        log.debug("DELETE /session/{}", sessionId);
+        restTemplate.delete("/session/" + sessionId);
     }
 
 }

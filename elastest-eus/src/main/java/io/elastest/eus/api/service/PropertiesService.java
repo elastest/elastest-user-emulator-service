@@ -16,6 +16,10 @@
  */
 package io.elastest.eus.api.service;
 
+import static io.elastest.eus.api.service.JsonService.BROWSERNAME;
+import static io.elastest.eus.api.service.JsonService.PLATFORM;
+import static io.elastest.eus.api.service.JsonService.VERSION;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -27,9 +31,9 @@ import java.util.TreeMap;
 
 import javax.annotation.PostConstruct;
 
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.EusException;
@@ -52,10 +56,14 @@ public class PropertiesService {
 
     private static final String SEPARATOR_CHAR = "_";
 
-    private static final String BROWSERNAME_KEY = "browserName";
-    private static final String VERSON_KEY = "version";
-    private static final String PLATFORM_KEY = "platform";
     private static final String DOCKER_IMAGE = "dockerImage";
+
+    private JsonService jsonService;
+
+    @Autowired
+    public PropertiesService(JsonService jsonService) {
+        this.jsonService = jsonService;
+    }
 
     @PostConstruct
     public void postConstruct() throws IOException {
@@ -82,9 +90,9 @@ public class PropertiesService {
         Map<String, String> entry = new HashMap<>();
 
         String[] split = ((String) key).split(SEPARATOR_CHAR);
-        entry.put(BROWSERNAME_KEY, split[0]);
-        entry.put(VERSON_KEY, split[1]);
-        entry.put(PLATFORM_KEY, split[2]);
+        entry.put(BROWSERNAME, split[0]);
+        entry.put(VERSION, split[1]);
+        entry.put(PLATFORM, split[2]);
         entry.put(DOCKER_IMAGE, dockerImage);
 
         return entry;
@@ -102,13 +110,9 @@ public class PropertiesService {
     }
 
     public String getKeyFromJson(String jsonMessage) {
-        JSONObject jsonObj = new JSONObject(jsonMessage);
-        JSONObject desiredCapabilities = (JSONObject) jsonObj
-                .get("desiredCapabilities");
-
-        String browserName = (String) desiredCapabilities.get("browserName");
-        String version = (String) desiredCapabilities.get("version");
-        String platform = (String) desiredCapabilities.get("platform");
+        String browserName = jsonService.getBrowser(jsonMessage);
+        String version = jsonService.getVersion(jsonMessage);
+        String platform = jsonService.getPlatform(jsonMessage);
 
         String keyFromCapabilities = getKeyFromCapabilities(browserName,
                 version, platform);
