@@ -51,6 +51,7 @@
         <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
         <junit.platform.version>1.0.0-M4</junit.platform.version>
         <spring-test-junit5.version>1.0.0.M4</spring-test-junit5.version>
+        <selenium-java.version>3.4.0</selenium-java.version>
 
         <!-- Plugins versions -->
         <maven.source.plugin.version>2.2.1</maven.source.plugin.version>
@@ -136,6 +137,12 @@
             <groupId>com.github.sbrannen</groupId>
             <artifactId>spring-test-junit5</artifactId>
             <version>${spring-test-junit5.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>${selenium-java.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
