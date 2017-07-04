@@ -18,13 +18,16 @@ package io.elastest.eus.test.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
@@ -41,7 +44,7 @@ import io.elastest.eus.app.EusSpringBootApp;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class)
+@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 public class SessionTest {
 
     final Logger log = LoggerFactory.getLogger(SessionTest.class);
@@ -51,6 +54,14 @@ public class SessionTest {
 
     @Autowired
     JsonService jsonService;
+
+    @LocalServerPort
+    int serverPort;
+
+    @BeforeEach
+    void setup() {
+        log.debug("App started on port {}", serverPort);
+    }
 
     @Test
     void createAndDestroySession() {
