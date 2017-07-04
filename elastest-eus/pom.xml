@@ -45,6 +45,7 @@
 
         <!-- Dependencies version -->
         <springfox.version>2.7.0</springfox.version>
+        <docker-java.version>3.0.11</docker-java.version>
 
         <!-- Test dependencies version -->
         <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
@@ -106,6 +107,11 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java</artifactId>
+            <version>${docker-java.version}</version>
         </dependency>
 
         <!-- Test dependencies -->

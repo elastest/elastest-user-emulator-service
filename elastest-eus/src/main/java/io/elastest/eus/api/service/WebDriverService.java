@@ -16,10 +16,14 @@
  */
 package io.elastest.eus.api.service;
 
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.POST;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -39,8 +43,17 @@ public class WebDriverService {
 
     private final Logger log = LoggerFactory.getLogger(WebDriverService.class);
 
+    private EpmService epmService;
+
     @Value("${server.contextPath}")
     private String contextPath;
+
+    private String hubUrl;
+
+    @Autowired
+    public WebDriverService(EpmService epmService) {
+        this.epmService = epmService;
+    }
 
     public ResponseEntity<String> process(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
@@ -49,25 +62,52 @@ public class WebDriverService {
         String bypassUrl = requestUrl.substring(
                 requestUrl.lastIndexOf(contextPath) + contextPath.length());
         HttpMethod method = HttpMethod.resolve(request.getMethod());
-        log.debug("[WebDriverService] {} {}", method, bypassUrl);
+        log.debug("{} {}", method, bypassUrl);
 
-        // TODO Use Docker instead of local Selenium Server
-        String newUrl = "http://localhost:4444/wd/hub" + bypassUrl;
-        log.trace("[WebDriverService] >> Request : {}", httpEntity.getBody());
+        log.trace(">> Request : {}", httpEntity.getBody());
+
+        // Intercept create session
+        if (method == POST && bypassUrl.equals("/session")) {
+            log.trace("Intercepted POST session");
+            hubUrl = epmService
+                    .starHubInDockerFromJsonCapabilities(httpEntity.getBody());
+            log.trace("Hub URL: {}", hubUrl);
+        }
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> exchange = restTemplate.exchange(newUrl, method,
-                httpEntity, String.class);
+        ResponseEntity<String> exchange = restTemplate
+                .exchange(hubUrl + bypassUrl, method, httpEntity, String.class);
         String response = exchange.getBody();
 
-        log.trace("[WebDriverService] << Response: {}", response);
+        log.trace("<< Response: {}", response);
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
                 HttpStatus.OK);
 
-        log.debug("[WebDriverService] response {}", responseEntity);
+        log.debug("ResponseEntity {}", responseEntity);
+
+        // Intercept destroy session
+        if (method == DELETE && bypassUrl.startsWith("/session")
+                && countCharsInString(bypassUrl, '/') == 2) {
+            log.trace("Intercepted DELETE session");
+
+            epmService.stopHubInDocker();
+
+            // TODO: Implement a timeout mechanism just in case this command is
+            // never invoked
+        }
 
         return responseEntity;
+    }
+
+    private int countCharsInString(String string, char c) {
+        int count = 0;
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) == c) {
+                count++;
+            }
+        }
+        return count;
     }
 
 }
