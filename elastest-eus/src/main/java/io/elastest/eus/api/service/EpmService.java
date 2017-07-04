@@ -299,15 +299,15 @@ public class EpmService {
             }
 
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                log.trace("URL " + url + " not reachable. Response code="
-                        + responseCode);
+                log.trace("URL {} not reachable. Response code: {}", url,
+                        responseCode);
+            } else {
+                log.trace("URL {} already reachable", url);
             }
         } catch (Exception e) {
             throw new EusException("URL " + url + " not reachable in "
                     + WAIT_TIMEOUT + " seconds", e);
         }
-
-        log.debug("URL {} already reachable", url);
     }
 
 }
