@@ -25,6 +25,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.net.ssl.HostnameVerifier;
@@ -94,18 +95,29 @@ public class EpmService {
         dockerClient.pullImageCmd(imageId).exec(new PullImageResultCallback())
                 .awaitSuccess();
 
-        Ports portBindings = new Ports();
-        int bindPort = getFreePort();
-        portBindings.bind(ExposedPort.tcp(CONTAINER_HUB_PORT),
-                Binding.bindPort(bindPort));
+        int hubPort = 0;
+        ExposedPort exposedHubPort = ExposedPort.tcp(CONTAINER_HUB_PORT);
 
-        dockerClient.createContainerCmd(imageId).withPortBindings(portBindings)
-                .withName(CONTAINER_NAME).exec();
+        if (!isRunningContainer(CONTAINER_NAME)) {
+            Ports portBindings = new Ports();
+            hubPort = getFreePort();
+            portBindings.bind(exposedHubPort, Binding.bindPort(hubPort));
 
-        dockerClient.startContainerCmd(CONTAINER_NAME).exec();
-        waitForContainer(CONTAINER_NAME);
+            dockerClient.createContainerCmd(imageId)
+                    .withPortBindings(portBindings).withName(CONTAINER_NAME)
+                    .exec();
 
-        String hubUrl = "http://" + dockerHostIp + ":" + bindPort + "/wd/hub";
+            dockerClient.startContainerCmd(CONTAINER_NAME).exec();
+            waitForContainer(CONTAINER_NAME);
+        } else {
+            Map<ExposedPort, Binding[]> bindings = inspectContainer(
+                    CONTAINER_NAME).getNetworkSettings().getPorts()
+                            .getBindings();
+            hubPort = Integer.parseInt(
+                    bindings.get(exposedHubPort)[0].getHostPortSpec());
+        }
+
+        String hubUrl = "http://" + dockerHostIp + ":" + hubPort + "/wd/hub";
         waitForHostIsReachable(hubUrl);
 
         return hubUrl;
