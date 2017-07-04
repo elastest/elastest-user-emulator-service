@@ -3,5 +3,5 @@
 	<include resource="org/springframework/boot/logging/logback/base.xml" />
 	<logger name="org" level="WARN" />
 	<logger name="springfox" level="WARN" />
-	<logger name="io.elastest" level="DEBUG" />
+	<logger name="io.elastest" level="TRACE" />
 </configuration>
