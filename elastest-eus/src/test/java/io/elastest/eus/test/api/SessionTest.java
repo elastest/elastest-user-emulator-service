@@ -65,31 +65,35 @@ public class SessionTest {
 
     @Test
     void createAndDestroySession() {
-        log.debug("POST /session");
-
         // Test data (input)
         String jsonMessage = "{\n" + "    \"desiredCapabilities\": {\n"
                 + "        \"browserName\": \"chrome\",\n"
                 + "        \"version\": \"\",\n"
                 + "        \"platform\": \"ANY\"\n" + "    }\n" + "}";
 
+        // Exercise #1 (create session)
+        log.debug("POST /session");
         ResponseEntity<String> response = restTemplate.postForEntity("/session",
                 jsonMessage, String.class);
 
+        // Test outcome (output)
         HttpStatus statusCode = response.getStatusCode();
         String responseBody = response.getBody();
-        String sessionId = jsonService.getSessionId(responseBody);
-
         log.debug("Status code {}", statusCode);
         log.debug("Response {}", responseBody);
+
+        String sessionId = jsonService.getSessionId(responseBody);
         log.debug("sessionId {}", sessionId);
 
         // Assertions
         assertEquals(OK, response.getStatusCode());
         assertNotNull(sessionId);
 
+        // Exercise #2 (destroy session)
         log.debug("DELETE /session/{}", sessionId);
         restTemplate.delete("/session/" + sessionId);
+
+        // TODO this can be done as an scenario test when available (JUnit 5 M6)
     }
 
 }
