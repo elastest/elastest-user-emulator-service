@@ -19,9 +19,7 @@ package io.elastest.eus.api.service;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.X509Certificate;
@@ -39,15 +37,12 @@ import javax.net.ssl.X509TrustManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
-import com.github.dockerjava.api.model.Ports.Binding;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
@@ -69,9 +64,6 @@ public class EpmService {
     private static final int POLL_TIME = 200; // milliseconds
     private static final int REMOVE_CONTAINER_RETRIES = 10;
     private static final int CONTAINER_HUB_PORT = 4444;
-
-    @Value("${docker.host.ip}")
-    private String dockerHostIp;
 
     private PropertiesService propertiesService;
 
@@ -95,42 +87,26 @@ public class EpmService {
         dockerClient.pullImageCmd(imageId).exec(new PullImageResultCallback())
                 .awaitSuccess();
 
-        int hubPort = 0;
-        ExposedPort exposedHubPort = ExposedPort.tcp(CONTAINER_HUB_PORT);
-
+        // Start container
         if (!isRunningContainer(CONTAINER_NAME)) {
-            Ports portBindings = new Ports();
-            hubPort = getFreePort();
-            portBindings.bind(exposedHubPort, Binding.bindPort(hubPort));
-
-            dockerClient.createContainerCmd(imageId)
-                    .withPortBindings(portBindings).withName(CONTAINER_NAME)
+            dockerClient.createContainerCmd(imageId).withName(CONTAINER_NAME)
                     .exec();
 
             dockerClient.startContainerCmd(CONTAINER_NAME).exec();
             waitForContainer(CONTAINER_NAME);
-        } else {
-            Map<ExposedPort, Binding[]> bindings = inspectContainer(
-                    CONTAINER_NAME).getNetworkSettings().getPorts()
-                            .getBindings();
-            hubPort = Integer.parseInt(
-                    bindings.get(exposedHubPort)[0].getHostPortSpec());
         }
+
+        // Container IP and port
+        Map<String, ContainerNetwork> networks = inspectContainer(
+                CONTAINER_NAME).getNetworkSettings().getNetworks();
+        String dockerHostIp = networks.values().iterator().next()
+                .getIpAddress();
+        int hubPort = CONTAINER_HUB_PORT;
 
         String hubUrl = "http://" + dockerHostIp + ":" + hubPort + "/wd/hub";
         waitForHostIsReachable(hubUrl);
 
         return hubUrl;
-    }
-
-    private int getFreePort() {
-        int port = CONTAINER_HUB_PORT;
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            port = serverSocket.getLocalPort();
-        } catch (IOException e) {
-            log.warn("Exception looking for a free port", e);
-        }
-        return port;
     }
 
     public void stopHubInDocker() {
