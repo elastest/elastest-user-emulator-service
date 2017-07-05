@@ -271,14 +271,13 @@ public class EpmService {
                     Thread.sleep(POLL_TIME);
                 }
                 if (System.currentTimeMillis() > endTimeMillis) {
-                    break;
+                    throw new EusException(errorMessage);
                 }
             }
 
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 log.trace("URL {} not reachable. Response code: {}", url,
                         responseCode);
-                throw new EusException(errorMessage);
 
             } else {
                 log.trace("URL {} already reachable", url);
