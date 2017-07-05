@@ -218,7 +218,8 @@ public class EpmService {
 
         log.debug("Waiting for {} to be reachable (timeout {} seconds)", url,
                 WAIT_TIMEOUT);
-
+        String errorMessage = "URL " + url + " not reachable in " + WAIT_TIMEOUT
+                + " seconds";
         try {
             TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
@@ -277,12 +278,13 @@ public class EpmService {
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 log.trace("URL {} not reachable. Response code: {}", url,
                         responseCode);
+                throw new EusException(errorMessage);
+
             } else {
                 log.trace("URL {} already reachable", url);
             }
         } catch (Exception e) {
-            throw new EusException("URL " + url + " not reachable in "
-                    + WAIT_TIMEOUT + " seconds", e);
+            throw new EusException(errorMessage, e);
         }
     }
 
