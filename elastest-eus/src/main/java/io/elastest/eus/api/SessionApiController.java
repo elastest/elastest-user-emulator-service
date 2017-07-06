@@ -27,6 +27,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +51,7 @@ import io.swagger.annotations.ApiParam;
  * @since 0.0.1
  */
 @Controller
+@CrossOrigin
 public class SessionApiController implements SessionApi {
 
     private final Logger log = LoggerFactory
