@@ -64,6 +64,9 @@ public class WebDriverService {
     @Value("${hub.port}")
     private int hubPort;
 
+    @Value("${hub.vnc.port}")
+    private int hubVncPort;
+
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
 
@@ -145,14 +148,29 @@ public class WebDriverService {
         if (jsonService.isDeleteSessionRequest(method, requestContext)) {
             log.trace("Intercepted DELETE session");
 
-            String hubContainerName = sessionInfo.getHubContainerName();
-            dockerService.stopAndRemoveContainer(hubContainerName);
+            stopAllContainerOfSession(sessionInfo);
 
             // TODO: Implement a timeout mechanism just in case this command is
             // never invoked
         }
 
         return responseEntity;
+    }
+
+    public void stopAllContainerOfSession(String sessionId) {
+        stopAllContainerOfSession(sessionRegistry.get(sessionId));
+    }
+
+    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
+        String hubContainerName = sessionInfo.getHubContainerName();
+        if (hubContainerName != null) {
+            dockerService.stopAndRemoveContainer(hubContainerName);
+        }
+
+        String vncContainerName = sessionInfo.getVncContainerName();
+        if (vncContainerName != null) {
+            dockerService.stopAndRemoveContainer(vncContainerName);
+        }
     }
 
     public SessionInfo starBrowser(String jsonCapabilities) {
@@ -187,20 +205,28 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> getVncUrl(String sessionId) {
-        dockerService.startAndWaitContainer(noVncImageId,
-                eusContainerPrefix + noVncContainerSufix);
-        String vncContainerIp = dockerService.getContainerIpAddress(
+
+        String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
-        String hubContainerIp = dockerService.getContainerIpAddress(
-                sessionRegistry.get(sessionId).getHubContainerName());
-        String response = "http://" + vncContainerIp + ":" + noVncPort
-                + "/vnc.html?host=" + hubContainerIp + "&port=" + hubPort
+        dockerService.startAndWaitContainer(noVncImageId, vncContainerName);
+        String vncContainerIp = dockerService
+                .getContainerIpAddress(vncContainerName);
+
+        SessionInfo sessionInfo = sessionRegistry.get(sessionId);
+
+        String hubContainerIp = dockerService
+                .getContainerIpAddress(sessionInfo.getHubContainerName());
+        String vncUrl = "http://" + vncContainerIp + ":" + noVncPort
+                + "/vnc.html?host=" + hubContainerIp + "&port=" + hubVncPort
                 + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
 
-        log.trace("VNC URL: {}", response);
+        log.trace("VNC URL: {}", vncUrl);
 
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
+        sessionInfo.setVncContainerName(vncContainerName);
+        sessionInfo.setVncUrl(vncUrl);
+
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(vncUrl,
                 HttpStatus.OK);
         return responseEntity;
     }

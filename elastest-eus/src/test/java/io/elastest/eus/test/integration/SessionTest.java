@@ -38,7 +38,7 @@ import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.app.EusSpringBootApp;
 
 /**
- * Session test.
+ * Session test (including VNC).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
@@ -76,20 +76,40 @@ public class SessionTest {
         ResponseEntity<String> response = restTemplate.postForEntity("/session",
                 jsonMessage, String.class);
 
-        // Test outcome (output)
+        // Test outcome #1 (output)
         HttpStatus statusCode = response.getStatusCode();
         String responseBody = response.getBody();
-        log.debug("Status code {}", statusCode);
-        log.debug("Response {}", responseBody);
+        log.debug("[POST /session] Status code {}", statusCode);
+        log.debug("[POST /session] Response {}", responseBody);
 
         String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         log.debug("sessionId {}", sessionId);
 
-        // Assertions
+        // Assertions #1
         assertEquals(OK, response.getStatusCode());
         assertNotNull(sessionId);
 
-        // Exercise #2 (destroy session)
+        // ---------------
+
+        // Exercise #2 (get VNC session)
+        log.debug("GET /session/{}/vnc", sessionId);
+        response = restTemplate.getForEntity("/session/" + sessionId + "/vnc",
+                String.class);
+
+        // Test outcome #2 (output)
+        statusCode = response.getStatusCode();
+        responseBody = response.getBody();
+        log.debug("[GET /session/{}/vnc] Status code {}", sessionId,
+                statusCode);
+        log.debug("[GET /session/{}/vnc] Response {}", sessionId, responseBody);
+
+        // ---------------
+
+        // Assertions #2
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(sessionId);
+
+        // Exercise #3 (destroy session)
         log.debug("DELETE /session/{}", sessionId);
         restTemplate.delete("/session/" + sessionId);
 
