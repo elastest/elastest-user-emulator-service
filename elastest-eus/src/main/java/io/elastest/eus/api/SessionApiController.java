@@ -171,4 +171,10 @@ public class SessionApiController implements SessionApi {
         return webDriverService.process(httpEntity, request);
     }
 
+    @Override
+    public ResponseEntity<String> getVnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId) {
+        return webDriverService.getVncUrl(sessionId);
+    }
+
 }

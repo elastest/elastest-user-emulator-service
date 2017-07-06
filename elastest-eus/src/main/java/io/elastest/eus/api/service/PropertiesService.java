@@ -33,7 +33,6 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.EusException;
@@ -57,13 +56,6 @@ public class PropertiesService {
     private static final String SEPARATOR_CHAR = "_";
 
     private static final String DOCKER_IMAGE = "dockerImage";
-
-    private JsonService jsonService;
-
-    @Autowired
-    public PropertiesService(JsonService jsonService) {
-        this.jsonService = jsonService;
-    }
 
     @PostConstruct
     public void postConstruct() throws IOException {
@@ -98,27 +90,10 @@ public class PropertiesService {
         return entry;
     }
 
-    public String getDockerImageFromJson(String jsonMessage) {
-        String key = getKeyFromJson(jsonMessage);
-        return browsers.get(key).get(DOCKER_IMAGE);
-    }
-
     public String getDockerImageFromCapabilities(String browserName,
             String version, String platform) {
         String key = getKeyFromCapabilities(browserName, version, platform);
         return browsers.get(key).get(DOCKER_IMAGE);
-    }
-
-    public String getKeyFromJson(String jsonMessage) {
-        String browserName = jsonService.getBrowser(jsonMessage);
-        String version = jsonService.getVersion(jsonMessage);
-        String platform = jsonService.getPlatform(jsonMessage);
-
-        String keyFromCapabilities = getKeyFromCapabilities(browserName,
-                version, platform);
-
-        log.debug("keyFromCapabilities={}", keyFromCapabilities);
-        return keyFromCapabilities;
     }
 
     public String getKeyFromCapabilities(String browserName, String version,

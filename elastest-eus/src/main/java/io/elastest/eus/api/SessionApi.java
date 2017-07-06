@@ -208,4 +208,17 @@ public interface SessionApi {
     ResponseEntity<String> webdriverProtocol(HttpEntity<String> httpEntity,
             HttpServletRequest request);
 
+    /**
+     * Get VNC session
+     */
+    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
+            "VNC" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/vnc", produces = {
+            "text/plain" }, method = { RequestMethod.GET })
+    ResponseEntity<String> getVnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
+
 }

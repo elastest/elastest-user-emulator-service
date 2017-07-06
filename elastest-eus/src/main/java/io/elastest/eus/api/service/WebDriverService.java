@@ -16,8 +16,9 @@
  */
 package io.elastest.eus.api.service;
 
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.POST;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,6 +33,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import io.elastest.eus.api.EusException;
+
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
  *
@@ -43,43 +46,87 @@ public class WebDriverService {
 
     private final Logger log = LoggerFactory.getLogger(WebDriverService.class);
 
-    private EpmService epmService;
+    private static final String EUS_CONTAINER_PREFIX = "eus-";
+
+    private static final String NOVNC_CONTAINER_PREFIX = EUS_CONTAINER_PREFIX
+            + "novnc-";
+    private static final String NOVNC_IMAGE_ID = "psharkey/novnc";
+    private static final String NOVNC_PASSWORD = "secret";
+    private static final int NOVNC_PORT = 8080;
+
+    private static final String HUB_CONTAINER_PREFIX = EUS_CONTAINER_PREFIX
+            + "hub-";
+    private static final int HUB_PORT = 4444;
+
+    private DockerService dockerService;
+    private PropertiesService propertiesService;
+    private JsonService jsonService;
+
+    private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
     @Value("${server.contextPath}")
     private String contextPath;
 
-    private String hubUrl;
-
     @Autowired
-    public WebDriverService(EpmService epmService) {
-        this.epmService = epmService;
+    public WebDriverService(DockerService dockerService,
+            PropertiesService propertiesService, JsonService jsonService) {
+        this.dockerService = dockerService;
+        this.propertiesService = propertiesService;
+        this.jsonService = jsonService;
     }
 
     public ResponseEntity<String> process(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
 
         StringBuffer requestUrl = request.getRequestURL();
-        String bypassUrl = requestUrl.substring(
+        String requestContext = requestUrl.substring(
                 requestUrl.lastIndexOf(contextPath) + contextPath.length());
         HttpMethod method = HttpMethod.resolve(request.getMethod());
-        log.debug("{} {}", method, bypassUrl);
+        log.debug("{} {}", method, requestContext);
 
         log.trace(">> Request : {}", httpEntity.getBody());
 
+        SessionInfo sessionInfo;
+
         // Intercept create session
-        if (method == POST && bypassUrl.equals("/session")) {
-            log.trace("Intercepted POST session");
-            hubUrl = epmService
-                    .starHubInDockerFromJsonCapabilities(httpEntity.getBody());
-            log.trace("Hub URL: {}", hubUrl);
+        if (jsonService.isPostSessionRequest(method, requestContext)) {
+            sessionInfo = starBrowser(httpEntity.getBody());
+
+        } else {
+            Optional<String> sessionIdFromPath = jsonService
+                    .getSessionIdFromPath(requestContext);
+            if (sessionIdFromPath.isPresent()) {
+                String sessionId = sessionIdFromPath.get();
+                log.trace("sessionId: {} -- sessionRegistry: {}", sessionId,
+                        sessionRegistry);
+                sessionInfo = sessionRegistry.get(sessionId);
+
+            } else {
+                // This is a special case that it is very unlikely to happen (in
+                // theory, clients should only call a different operation of
+                // POST /session after the first time. The only regular case out
+                // of this rule is the command GET /status, which is meaningless
+                // in EUS
+                String errorMessage = "Command " + method + " " + requestContext
+                        + " not valid";
+                log.error(errorMessage);
+                throw new EusException(errorMessage);
+            }
         }
 
+        String hubUrl = sessionInfo.getHubUrl();
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> exchange = restTemplate
-                .exchange(hubUrl + bypassUrl, method, httpEntity, String.class);
+        ResponseEntity<String> exchange = restTemplate.exchange(
+                hubUrl + requestContext, method, httpEntity, String.class);
         String response = exchange.getBody();
 
         log.trace("<< Response: {}", response);
+
+        // Intercept again create session
+        if (jsonService.isPostSessionRequest(method, requestContext)) {
+            String sessionId = jsonService.getSessionIdFromResponse(response);
+            sessionRegistry.put(sessionId, sessionInfo);
+        }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
                 HttpStatus.OK);
@@ -87,11 +134,11 @@ public class WebDriverService {
         log.debug("ResponseEntity {}", responseEntity);
 
         // Intercept destroy session
-        if (method == DELETE && bypassUrl.startsWith("/session")
-                && countCharsInString(bypassUrl, '/') == 2) {
+        if (jsonService.isDeleteSessionRequest(method, requestContext)) {
             log.trace("Intercepted DELETE session");
 
-            epmService.stopHubInDocker();
+            String hubContainerName = sessionInfo.getHubContainerName();
+            dockerService.stopAndRemoveContainer(hubContainerName);
 
             // TODO: Implement a timeout mechanism just in case this command is
             // never invoked
@@ -100,14 +147,104 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private int countCharsInString(String string, char c) {
-        int count = 0;
-        for (int i = 0; i < string.length(); i++) {
-            if (string.charAt(i) == c) {
-                count++;
-            }
+    public SessionInfo starBrowser(String jsonCapabilities) {
+        String browserName = jsonService.getBrowser(jsonCapabilities);
+        String version = jsonService.getVersion(jsonCapabilities);
+        String platform = jsonService.getPlatform(jsonCapabilities);
+        String imageId = propertiesService
+                .getDockerImageFromCapabilities(browserName, version, platform);
+
+        String hubContainerName = dockerService
+                .generateContainerName(HUB_CONTAINER_PREFIX);
+
+        log.debug("Starting browser with container name {}", hubContainerName);
+
+        dockerService.startAndWaitContainer(imageId, hubContainerName);
+
+        String hubUrl = getHubUrl(hubContainerName);
+        dockerService.waitForHostIsReachable(hubUrl);
+
+        log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
+
+        SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setHubUrl(hubUrl);
+        sessionInfo.setHubContainerName(hubContainerName);
+
+        return sessionInfo;
+    }
+
+    public String getHubUrl(String containerName) {
+        return "http://" + dockerService.getContainerIpAddress(containerName)
+                + ":" + HUB_PORT + "/wd/hub";
+    }
+
+    public ResponseEntity<String> getVncUrl(String sessionId) {
+        dockerService.startAndWaitContainer(NOVNC_IMAGE_ID,
+                NOVNC_CONTAINER_PREFIX);
+        String vncContainerIp = dockerService
+                .getContainerIpAddress(NOVNC_CONTAINER_PREFIX);
+
+        String hubContainerIp = dockerService.getContainerIpAddress(
+                sessionRegistry.get(sessionId).getHubContainerName());
+        int hubContainerPort = HUB_PORT;
+
+        String response = "http://" + vncContainerIp + ":" + NOVNC_PORT
+                + "/vnc.html?host=" + hubContainerIp + "&port="
+                + hubContainerPort + "&resize=scale&autoconnect=true&password="
+                + NOVNC_PASSWORD;
+
+        log.trace("VNC URL: {}", response);
+
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
+                HttpStatus.OK);
+        return responseEntity;
+    }
+
+    class SessionInfo {
+        private String hubUrl;
+        private String hubContainerName;
+        private String vncUrl;
+        private String vncContainerName;
+
+        public String getHubUrl() {
+            return hubUrl;
         }
-        return count;
+
+        public void setHubUrl(String hubUrl) {
+            this.hubUrl = hubUrl;
+        }
+
+        public String getHubContainerName() {
+            return hubContainerName;
+        }
+
+        public void setHubContainerName(String hubContainerName) {
+            this.hubContainerName = hubContainerName;
+        }
+
+        public String getVncUrl() {
+            return vncUrl;
+        }
+
+        public void setVncUrl(String vncUrl) {
+            this.vncUrl = vncUrl;
+        }
+
+        public String getVncContainerName() {
+            return vncContainerName;
+        }
+
+        public void setVncContainerName(String vncContainerName) {
+            this.vncContainerName = vncContainerName;
+        }
+
+        @Override
+        public String toString() {
+            return "SessionInfo [hubUrl=" + hubUrl + ", hubContainerName="
+                    + hubContainerName + ", vncUrl=" + vncUrl
+                    + ", vncContainerName=" + vncContainerName + "]";
+        }
+
     }
 
 }

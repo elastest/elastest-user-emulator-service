@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.api;
+package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -82,7 +82,7 @@ public class SessionTest {
         log.debug("Status code {}", statusCode);
         log.debug("Response {}", responseBody);
 
-        String sessionId = jsonService.getSessionId(responseBody);
+        String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         log.debug("sessionId {}", sessionId);
 
         // Assertions

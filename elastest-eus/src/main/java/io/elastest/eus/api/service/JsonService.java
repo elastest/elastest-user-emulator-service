@@ -16,7 +16,15 @@
  */
 package io.elastest.eus.api.service;
 
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.POST;
+
+import java.util.Optional;
+
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 /**
@@ -28,11 +36,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class JsonService {
 
+    private final Logger log = LoggerFactory.getLogger(JsonService.class);
+
     public static final String CAPABILITES = "desiredCapabilities";
     public static final String BROWSERNAME = "browserName";
     public static final String VERSION = "version";
     public static final String PLATFORM = "platform";
     public static final String SESSION_ID = "sessionId";
+
+    private static final String SESSION_MESSAGE = "/session";
 
     private JSONObject getCapabilities(String jsonMessage) {
         return (JSONObject) string2Json(jsonMessage).get(CAPABILITES);
@@ -42,7 +54,7 @@ public class JsonService {
         return (String) getCapabilities(jsonMessage).get(BROWSERNAME);
     }
 
-    public String getSessionId(String jsonMessage) {
+    public String getSessionIdFromResponse(String jsonMessage) {
         return (String) ((JSONObject) string2Json(jsonMessage)).get(SESSION_ID);
     }
 
@@ -56,6 +68,49 @@ public class JsonService {
 
     private JSONObject string2Json(String jsonMessage) {
         return new JSONObject(jsonMessage);
+    }
+
+    public Optional<String> getSessionIdFromPath(String path) {
+        Optional<String> out = Optional.empty();
+        int i = path.indexOf(SESSION_MESSAGE);
+
+        if (i != -1) {
+            int j = path.indexOf('/', i + SESSION_MESSAGE.length());
+            if (j != -1) {
+                int k = path.indexOf('/', j + 1);
+                int cut = (k == -1) ? path.length() : k;
+
+                String sessionId = path.substring(j + 1, cut);
+                out = Optional.of(sessionId);
+            }
+        }
+
+        log.trace("getSessionIdFromPath -- path: {} sessionId {}", path, out);
+
+        return out;
+    }
+
+    public static String getSessionMessage() {
+        return SESSION_MESSAGE;
+    }
+
+    public boolean isPostSessionRequest(HttpMethod method, String context) {
+        return method == POST && context.equals(SESSION_MESSAGE);
+    }
+
+    public boolean isDeleteSessionRequest(HttpMethod method, String context) {
+        return method == DELETE && context.startsWith(SESSION_MESSAGE)
+                && countCharsInString(context, '/') == 2;
+    }
+
+    public int countCharsInString(String string, char c) {
+        int count = 0;
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) == c) {
+                count++;
+            }
+        }
+        return count;
     }
 
 }

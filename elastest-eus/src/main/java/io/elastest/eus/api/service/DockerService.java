@@ -19,9 +19,11 @@ package io.elastest.eus.api.service;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 
@@ -36,11 +38,9 @@ import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -49,72 +49,58 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import io.elastest.eus.api.EusException;
 
 /**
- * Service implementation simulating EPM (ElasTest Platform Manager)
+ * Service implementation simulating EPM (ElasTest Platform Manager) with
+ * Docker.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
 @Service
-public class EpmService {
+public class DockerService {
 
-    private final Logger log = LoggerFactory.getLogger(EpmService.class);
+    private final Logger log = LoggerFactory.getLogger(DockerService.class);
 
-    private static final String CONTAINER_NAME = "browser-in-docker";
     private static final int WAIT_TIMEOUT = 10; // seconds
     private static final int POLL_TIME = 200; // milliseconds
     private static final int REMOVE_CONTAINER_RETRIES = 10;
-    private static final int CONTAINER_HUB_PORT = 4444;
-
-    private PropertiesService propertiesService;
 
     private DockerClient dockerClient;
-
-    @Autowired
-    public EpmService(PropertiesService propertiesService) {
-        this.propertiesService = propertiesService;
-    }
 
     @PostConstruct
     public void postConstruct() {
         dockerClient = DockerClientBuilder.getInstance().build();
     }
 
-    public String starHubInDockerFromJsonCapabilities(String jsonMessage) {
-        String imageId = propertiesService.getDockerImageFromJson(jsonMessage);
+    public void startAndWaitContainer(String imageId, String containerName) {
+        if (!isRunningContainer(containerName)) {
+            log.info("Pulling image {} ... please wait", imageId);
 
-        log.info("Pulling image {} ... please wait", imageId);
+            dockerClient.pullImageCmd(imageId)
+                    .exec(new PullImageResultCallback()).awaitSuccess();
 
-        dockerClient.pullImageCmd(imageId).exec(new PullImageResultCallback())
-                .awaitSuccess();
-
-        // Start container
-        if (!isRunningContainer(CONTAINER_NAME)) {
-            dockerClient.createContainerCmd(imageId).withName(CONTAINER_NAME)
+            dockerClient.createContainerCmd(imageId).withName(containerName)
                     .exec();
 
-            dockerClient.startContainerCmd(CONTAINER_NAME).exec();
-            waitForContainer(CONTAINER_NAME);
+            dockerClient.startContainerCmd(containerName).exec();
+            waitForContainer(containerName);
+        } else {
+            log.warn("Container {} already running", containerName);
         }
-
-        // Container IP and port
-        Map<String, ContainerNetwork> networks = inspectContainer(
-                CONTAINER_NAME).getNetworkSettings().getNetworks();
-        String dockerHostIp = networks.values().iterator().next()
-                .getIpAddress();
-        int hubPort = CONTAINER_HUB_PORT;
-
-        String hubUrl = "http://" + dockerHostIp + ":" + hubPort + "/wd/hub";
-        waitForHostIsReachable(hubUrl);
-
-        return hubUrl;
     }
 
-    public void stopHubInDocker() {
-        stopContainer(CONTAINER_NAME);
-        removeContainer(CONTAINER_NAME);
+    public String getContainerIpAddress(String containerName) {
+        Map<String, ContainerNetwork> networks = dockerClient
+                .inspectContainerCmd(containerName).exec().getNetworkSettings()
+                .getNetworks();
+        return networks.values().iterator().next().getIpAddress();
     }
 
-    private void stopContainer(String containerName) {
+    public void stopAndRemoveContainer(String containerName) {
+        stopContainer(containerName);
+        removeContainer(containerName);
+    }
+
+    public void stopContainer(String containerName) {
         if (isRunningContainer(containerName)) {
             log.trace("Stopping container {}", containerName);
             dockerClient.stopContainerCmd(containerName).exec();
@@ -124,7 +110,7 @@ public class EpmService {
         }
     }
 
-    private void removeContainer(String containerName) {
+    public void removeContainer(String containerName) {
         if (existsContainer(containerName)) {
             log.trace("Removing container {}", containerName);
             boolean removed = false;
@@ -154,7 +140,7 @@ public class EpmService {
         }
     }
 
-    private void waitForContainer(String containerName) {
+    public void waitForContainer(String containerName) {
         boolean isRunning = false;
 
         long timeoutMs = System.currentTimeMillis()
@@ -185,17 +171,18 @@ public class EpmService {
         } while (!isRunning);
     }
 
-    private boolean isRunningContainer(String containerName) {
+    public boolean isRunningContainer(String containerName) {
         boolean isRunning = false;
         if (existsContainer(containerName)) {
-            isRunning = inspectContainer(containerName).getState().getRunning();
+            isRunning = dockerClient.inspectContainerCmd(containerName).exec()
+                    .getState().getRunning();
             log.trace("Container {} is running: {}", containerName, isRunning);
         }
 
         return isRunning;
     }
 
-    private boolean existsContainer(String containerName) {
+    public boolean existsContainer(String containerName) {
         boolean exists = true;
         try {
             dockerClient.inspectContainerCmd(containerName).exec();
@@ -206,10 +193,6 @@ public class EpmService {
             exists = false;
         }
         return exists;
-    }
-
-    private InspectContainerResponse inspectContainer(String containerName) {
-        return dockerClient.inspectContainerCmd(containerName).exec();
     }
 
     public void waitForHostIsReachable(String url) {
@@ -285,6 +268,12 @@ public class EpmService {
         } catch (Exception e) {
             throw new EusException(errorMessage, e);
         }
+    }
+
+    public String generateContainerName(String prefix) {
+        String randomSufix = new BigInteger(130, new SecureRandom())
+                .toString(32);
+        return prefix + randomSufix;
     }
 
 }

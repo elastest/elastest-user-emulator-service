@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.service;
+package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,6 +35,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.api.EusException;
+import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.api.service.PropertiesService;
 import io.elastest.eus.app.EusSpringBootApp;
 
@@ -52,6 +53,9 @@ public class PropertiesTest {
 
     @Autowired
     private PropertiesService propertiesService;
+
+    @Autowired
+    private JsonService jsonService;
 
     static Stream<Arguments> keyProvider() {
         return Stream.of(create("chrome", "59", "LINUX", "chrome_59_LINUX"),
@@ -138,7 +142,7 @@ public class PropertiesTest {
     @Test
     void testJson() {
         // Test data (input)
-        String jsonMessage = "{\n" + " \"desiredCapabilities\": {\n"
+        String jsonCapabilities = "{\n" + " \"desiredCapabilities\": {\n"
                 + " \"browserName\": \"chrome\",\n" + " \"version\": \"59\",\n"
                 + " \"platform\": \"LINUX\"\n" + " },\n"
                 + " \"requiredCapabilities\": {},\n" + " \"capabilities\": {\n"
@@ -155,9 +159,14 @@ public class PropertiesTest {
         String expectedDocker = "selenium/standalone-chrome-debug:3.4.0-einsteinium";
 
         // Exercise
-        String realKey = propertiesService.getKeyFromJson(jsonMessage);
+        String browserName = jsonService.getBrowser(jsonCapabilities);
+        String version = jsonService.getVersion(jsonCapabilities);
+        String platform = jsonService.getPlatform(jsonCapabilities);
+
+        String realKey = propertiesService.getKeyFromCapabilities(browserName,
+                version, platform);
         String realDocker = propertiesService
-                .getDockerImageFromJson(jsonMessage);
+                .getDockerImageFromCapabilities(browserName, version, platform);
 
         // Assertions
         assertEquals(expectedKey, realKey);
