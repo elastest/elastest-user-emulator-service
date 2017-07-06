@@ -73,7 +73,7 @@ public class DockerService {
     private DockerClient dockerClient;
 
     @PostConstruct
-    public void postConstruct() {
+    private void postConstruct() {
         dockerClient = DockerClientBuilder.getInstance().build();
     }
 

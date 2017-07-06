@@ -70,7 +70,7 @@ public class PropertiesService {
     private String propertiesDockerImageKey;
 
     @PostConstruct
-    public void postConstruct() throws IOException {
+    private void postConstruct() throws IOException {
         log.debug("Getting existing browsers from {}", propertiesFilename);
         Properties properties = new Properties();
 
