@@ -24,6 +24,7 @@ import java.util.Optional;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -38,32 +39,43 @@ public class JsonService {
 
     private final Logger log = LoggerFactory.getLogger(JsonService.class);
 
-    public static final String CAPABILITES = "desiredCapabilities";
-    public static final String BROWSERNAME = "browserName";
-    public static final String VERSION = "version";
-    public static final String PLATFORM = "platform";
-    public static final String SESSION_ID = "sessionId";
+    @Value("${webdriver.capabilities}")
+    private String webdriverCapabilities;
 
-    private static final String SESSION_MESSAGE = "/session";
+    @Value("${webdriver.browserName}")
+    private String webdriverBrowserName;
+
+    @Value("${webdriver.version}")
+    private String webdriverVersion;
+
+    @Value("${webdriver.platform}")
+    private String webdriverPlatform;
+
+    @Value("${webdriver.sessionId}")
+    private String webdriverSessionId;
+
+    @Value("${webdriver.session.message}")
+    private String webdriverSessionMessage;
 
     private JSONObject getCapabilities(String jsonMessage) {
-        return (JSONObject) string2Json(jsonMessage).get(CAPABILITES);
+        return (JSONObject) string2Json(jsonMessage).get(webdriverCapabilities);
     }
 
     public String getBrowser(String jsonMessage) {
-        return (String) getCapabilities(jsonMessage).get(BROWSERNAME);
+        return (String) getCapabilities(jsonMessage).get(webdriverBrowserName);
     }
 
     public String getSessionIdFromResponse(String jsonMessage) {
-        return (String) ((JSONObject) string2Json(jsonMessage)).get(SESSION_ID);
+        return (String) ((JSONObject) string2Json(jsonMessage))
+                .get(webdriverSessionId);
     }
 
     public String getVersion(String jsonMessage) {
-        return (String) getCapabilities(jsonMessage).get(VERSION);
+        return (String) getCapabilities(jsonMessage).get(webdriverVersion);
     }
 
     public String getPlatform(String jsonMessage) {
-        return (String) getCapabilities(jsonMessage).get(PLATFORM);
+        return (String) getCapabilities(jsonMessage).get(webdriverPlatform);
     }
 
     private JSONObject string2Json(String jsonMessage) {
@@ -72,10 +84,10 @@ public class JsonService {
 
     public Optional<String> getSessionIdFromPath(String path) {
         Optional<String> out = Optional.empty();
-        int i = path.indexOf(SESSION_MESSAGE);
+        int i = path.indexOf(webdriverSessionMessage);
 
         if (i != -1) {
-            int j = path.indexOf('/', i + SESSION_MESSAGE.length());
+            int j = path.indexOf('/', i + webdriverSessionMessage.length());
             if (j != -1) {
                 int k = path.indexOf('/', j + 1);
                 int cut = (k == -1) ? path.length() : k;
@@ -90,16 +102,12 @@ public class JsonService {
         return out;
     }
 
-    public static String getSessionMessage() {
-        return SESSION_MESSAGE;
-    }
-
     public boolean isPostSessionRequest(HttpMethod method, String context) {
-        return method == POST && context.equals(SESSION_MESSAGE);
+        return method == POST && context.equals(webdriverSessionMessage);
     }
 
     public boolean isDeleteSessionRequest(HttpMethod method, String context) {
-        return method == DELETE && context.startsWith(SESSION_MESSAGE)
+        return method == DELETE && context.startsWith(webdriverSessionMessage)
                 && countCharsInString(context, '/') == 2;
     }
 

@@ -46,26 +46,34 @@ public class WebDriverService {
 
     private final Logger log = LoggerFactory.getLogger(WebDriverService.class);
 
-    private static final String EUS_CONTAINER_PREFIX = "eus-";
+    @Value("${server.contextPath}")
+    private String contextPath;
 
-    private static final String NOVNC_CONTAINER_PREFIX = EUS_CONTAINER_PREFIX
-            + "novnc-";
-    private static final String NOVNC_IMAGE_ID = "psharkey/novnc";
-    private static final String NOVNC_PASSWORD = "secret";
-    private static final int NOVNC_PORT = 8080;
+    @Value("${eus.container.prefix}")
+    private String eusContainerPrefix;
 
-    private static final String HUB_CONTAINER_PREFIX = EUS_CONTAINER_PREFIX
-            + "hub-";
-    private static final int HUB_PORT = 4444;
+    @Value("${novnc.image.id}")
+    private String noVncImageId;
+
+    @Value("${novnc.port}")
+    private int noVncPort;
+
+    @Value("${novnc.container.sufix}")
+    private String noVncContainerSufix;
+
+    @Value("${hub.port}")
+    private int hubPort;
+
+    @Value("${hub.container.sufix}")
+    private String hubContainerSufix;
+
+    @Value("${hub.vnc.password}")
+    private String hubVncPassword;
 
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
-
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
-
-    @Value("${server.contextPath}")
-    private String contextPath;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
@@ -155,7 +163,7 @@ public class WebDriverService {
                 .getDockerImageFromCapabilities(browserName, version, platform);
 
         String hubContainerName = dockerService
-                .generateContainerName(HUB_CONTAINER_PREFIX);
+                .generateContainerName(eusContainerPrefix + hubContainerSufix);
 
         log.debug("Starting browser with container name {}", hubContainerName);
 
@@ -175,23 +183,20 @@ public class WebDriverService {
 
     public String getHubUrl(String containerName) {
         return "http://" + dockerService.getContainerIpAddress(containerName)
-                + ":" + HUB_PORT + "/wd/hub";
+                + ":" + hubPort + "/wd/hub";
     }
 
     public ResponseEntity<String> getVncUrl(String sessionId) {
-        dockerService.startAndWaitContainer(NOVNC_IMAGE_ID,
-                NOVNC_CONTAINER_PREFIX);
-        String vncContainerIp = dockerService
-                .getContainerIpAddress(NOVNC_CONTAINER_PREFIX);
+        dockerService.startAndWaitContainer(noVncImageId,
+                eusContainerPrefix + noVncContainerSufix);
+        String vncContainerIp = dockerService.getContainerIpAddress(
+                eusContainerPrefix + noVncContainerSufix);
 
         String hubContainerIp = dockerService.getContainerIpAddress(
                 sessionRegistry.get(sessionId).getHubContainerName());
-        int hubContainerPort = HUB_PORT;
-
-        String response = "http://" + vncContainerIp + ":" + NOVNC_PORT
-                + "/vnc.html?host=" + hubContainerIp + "&port="
-                + hubContainerPort + "&resize=scale&autoconnect=true&password="
-                + NOVNC_PASSWORD;
+        String response = "http://" + vncContainerIp + ":" + noVncPort
+                + "/vnc.html?host=" + hubContainerIp + "&port=" + hubPort
+                + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
 
         log.trace("VNC URL: {}", response);
 

@@ -16,10 +16,6 @@
  */
 package io.elastest.eus.api.service;
 
-import static io.elastest.eus.api.service.JsonService.BROWSERNAME;
-import static io.elastest.eus.api.service.JsonService.PLATFORM;
-import static io.elastest.eus.api.service.JsonService.VERSION;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -33,6 +29,7 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.EusException;
@@ -51,19 +48,34 @@ public class PropertiesService {
     private Map<String, Map<String, String>> browsers = new TreeMap<>(
             Collections.reverseOrder());
 
-    private static final String DOCKER_BROWSER_FILENAME = "docker-browser.properties";
+    @Value("${properties.filename}")
+    private String propertiesFilename;
 
-    private static final String SEPARATOR_CHAR = "_";
+    @Value("${properties.separator.char}")
+    private String propertiesSeparatorChar;
 
-    private static final String DOCKER_IMAGE = "dockerImage";
+    @Value("${webdriver.any.platform}")
+    private String webdriverAnyPlatform;
+
+    @Value("${webdriver.browserName}")
+    private String webdriverBrowserName;
+
+    @Value("${webdriver.version}")
+    private String webdriverVersion;
+
+    @Value("${webdriver.platform}")
+    private String webdriverPlatform;
+
+    @Value("${properties.docker.image.key}")
+    private String propertiesDockerImageKey;
 
     @PostConstruct
     public void postConstruct() throws IOException {
-        log.debug("Getting existing browsers from {}", DOCKER_BROWSER_FILENAME);
+        log.debug("Getting existing browsers from {}", propertiesFilename);
         Properties properties = new Properties();
 
         try (final InputStream stream = this.getClass().getClassLoader()
-                .getResourceAsStream(DOCKER_BROWSER_FILENAME)) {
+                .getResourceAsStream(propertiesFilename)) {
 
             properties.load(stream);
 
@@ -81,11 +93,11 @@ public class PropertiesService {
             String dockerImage) {
         Map<String, String> entry = new HashMap<>();
 
-        String[] split = ((String) key).split(SEPARATOR_CHAR);
-        entry.put(BROWSERNAME, split[0]);
-        entry.put(VERSION, split[1]);
-        entry.put(PLATFORM, split[2]);
-        entry.put(DOCKER_IMAGE, dockerImage);
+        String[] split = ((String) key).split(propertiesSeparatorChar);
+        entry.put(webdriverBrowserName, split[0]);
+        entry.put(webdriverVersion, split[1]);
+        entry.put(webdriverPlatform, split[2]);
+        entry.put(propertiesDockerImageKey, dockerImage);
 
         return entry;
     }
@@ -93,7 +105,7 @@ public class PropertiesService {
     public String getDockerImageFromCapabilities(String browserName,
             String version, String platform) {
         String key = getKeyFromCapabilities(browserName, version, platform);
-        return browsers.get(key).get(DOCKER_IMAGE);
+        return browsers.get(key).get(propertiesDockerImageKey);
     }
 
     public String getKeyFromCapabilities(String browserName, String version,
@@ -123,8 +135,8 @@ public class PropertiesService {
                 out = key;
             } else if (key.contains(browserName)
                     && (version == null || version.equals(""))
-                    && (platform == null || platform.equals("")
-                            || platform.equalsIgnoreCase("ANY"))) {
+                    && (platform == null || platform.equals("") || platform
+                            .equalsIgnoreCase(webdriverAnyPlatform))) {
                 out = key;
             }
             if (out != null) {

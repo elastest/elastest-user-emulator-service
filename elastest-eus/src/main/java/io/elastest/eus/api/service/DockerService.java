@@ -38,6 +38,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -60,9 +61,14 @@ public class DockerService {
 
     private final Logger log = LoggerFactory.getLogger(DockerService.class);
 
-    private static final int WAIT_TIMEOUT = 10; // seconds
-    private static final int POLL_TIME = 200; // milliseconds
-    private static final int REMOVE_CONTAINER_RETRIES = 10;
+    @Value("${docker.wait.timeout.sec}")
+    private int dockerWaitTimeoutSec;
+
+    @Value("${docker.poll.time.ms}")
+    private int dockerPollTimeMs;
+
+    @Value("${docker.remove.container.retries}")
+    private int dockerRemoveContainersRetries;
 
     private DockerClient dockerClient;
 
@@ -124,19 +130,19 @@ public class DockerService {
                     removed = true;
 
                 } catch (Throwable e) {
-                    if (count == REMOVE_CONTAINER_RETRIES) {
+                    if (count == dockerRemoveContainersRetries) {
                         log.error("Exception removing container {}",
                                 containerName, e);
                     }
                     try {
                         log.trace("Waiting for removing {} ({} retries)",
                                 containerName, count);
-                        Thread.sleep(WAIT_TIMEOUT);
+                        Thread.sleep(dockerWaitTimeoutSec);
                     } catch (InterruptedException e1) {
                         log.warn("Exception waiting to remove container", e1);
                     }
                 }
-            } while (!removed && count <= REMOVE_CONTAINER_RETRIES);
+            } while (!removed && count <= dockerRemoveContainersRetries);
         }
     }
 
@@ -144,14 +150,14 @@ public class DockerService {
         boolean isRunning = false;
 
         long timeoutMs = System.currentTimeMillis()
-                + SECONDS.toMillis(WAIT_TIMEOUT);
+                + SECONDS.toMillis(dockerWaitTimeoutSec);
         do {
             isRunning = isRunningContainer(containerName);
             if (!isRunning) {
 
                 // Check timeout
                 if (System.currentTimeMillis() > timeoutMs) {
-                    throw new EusException("Timeout of " + WAIT_TIMEOUT
+                    throw new EusException("Timeout of " + dockerWaitTimeoutSec
                             + " seconds waiting for container "
                             + containerName);
                 }
@@ -160,8 +166,8 @@ public class DockerService {
                     // Wait poll time
                     log.trace(
                             "Container {} is not still running ... waiting {} ms",
-                            containerName, POLL_TIME);
-                    Thread.sleep(POLL_TIME);
+                            containerName, dockerPollTimeMs);
+                    Thread.sleep(dockerPollTimeMs);
 
                 } catch (InterruptedException e) {
                     log.warn("Exception waiting for hub", e);
@@ -196,13 +202,14 @@ public class DockerService {
     }
 
     public void waitForHostIsReachable(String url) {
-        long timeoutMillis = MILLISECONDS.convert(WAIT_TIMEOUT, SECONDS);
+        long timeoutMillis = MILLISECONDS.convert(dockerWaitTimeoutSec,
+                SECONDS);
         long endTimeMillis = System.currentTimeMillis() + timeoutMillis;
 
         log.debug("Waiting for {} to be reachable (timeout {} seconds)", url,
-                WAIT_TIMEOUT);
-        String errorMessage = "URL " + url + " not reachable in " + WAIT_TIMEOUT
-                + " seconds";
+                dockerWaitTimeoutSec);
+        String errorMessage = "URL " + url + " not reachable in "
+                + dockerWaitTimeoutSec + " seconds";
         try {
             TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
@@ -248,10 +255,10 @@ public class DockerService {
                     break;
                 } catch (SSLHandshakeException | SocketException e) {
                     log.trace("Error {} waiting URL {}, trying again in {} ms",
-                            e.getMessage(), url, POLL_TIME);
+                            e.getMessage(), url, dockerPollTimeMs);
 
                     // Polling to wait a consistent state
-                    Thread.sleep(POLL_TIME);
+                    Thread.sleep(dockerPollTimeMs);
                 }
                 if (System.currentTimeMillis() > endTimeMillis) {
                     throw new EusException(errorMessage);
