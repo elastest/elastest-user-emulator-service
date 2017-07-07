@@ -33,6 +33,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Volume;
+
 import io.elastest.eus.api.EusException;
 
 /**
@@ -60,6 +64,9 @@ public class WebDriverService {
 
     @Value("${novnc.container.sufix}")
     private String noVncContainerSufix;
+
+    @Value("${novnc.autofocus.html}")
+    private String vncAutoFocusHtml;
 
     @Value("${hub.port}")
     private int hubPort;
@@ -205,11 +212,19 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> getVncUrl(String sessionId) {
-
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
-        dockerService.startAndWaitContainer(noVncImageId, vncContainerName);
+        String originPath = ClassLoader.getSystemResource(vncAutoFocusHtml)
+                .getFile();
+        String targetPath = "/root/noVNC/" + vncAutoFocusHtml;
+        Volume[] volumes = { new Volume(targetPath) };
+        Bind[] binds = { new Bind(originPath, volumes[0], AccessMode.rw) };
+
+        log.trace("Mounting volume {} from {}", targetPath, originPath);
+
+        dockerService.startAndWaitContainerWithVolumes(noVncImageId,
+                vncContainerName, volumes, binds);
         String vncContainerIp = dockerService
                 .getContainerIpAddress(vncContainerName);
 
@@ -217,11 +232,12 @@ public class WebDriverService {
 
         String hubContainerIp = dockerService
                 .getContainerIpAddress(sessionInfo.getHubContainerName());
-        String vncUrl = "http://" + vncContainerIp + ":" + noVncPort
-                + "/vnc.html?host=" + hubContainerIp + "&port=" + hubVncPort
-                + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
+        String vncUrl = "http://" + vncContainerIp + ":" + noVncPort + "/"
+                + vncAutoFocusHtml + "?host=" + hubContainerIp + "&port="
+                + hubVncPort + "&resize=scale&autoconnect=true&password="
+                + hubVncPassword;
 
-        log.trace("VNC URL: {}", vncUrl);
+        dockerService.waitForHostIsReachable(vncUrl);
 
         sessionInfo.setVncContainerName(vncContainerName);
         sessionInfo.setVncUrl(vncUrl);

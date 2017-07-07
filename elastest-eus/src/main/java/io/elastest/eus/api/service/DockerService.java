@@ -42,8 +42,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
@@ -83,9 +86,33 @@ public class DockerService {
 
             dockerClient.pullImageCmd(imageId)
                     .exec(new PullImageResultCallback()).awaitSuccess();
-
             dockerClient.createContainerCmd(imageId).withName(containerName)
                     .exec();
+
+            dockerClient.startContainerCmd(containerName).exec();
+            waitForContainer(containerName);
+        } else {
+            log.warn("Container {} already running", containerName);
+        }
+    }
+
+    public void startAndWaitContainerWithVolumes(String imageId,
+            String containerName, Volume[] volumes, Bind[] binds) {
+        if (!isRunningContainer(containerName)) {
+            log.info("Pulling image {} ... please wait", imageId);
+
+            dockerClient.pullImageCmd(imageId)
+                    .exec(new PullImageResultCallback()).awaitSuccess();
+
+            CreateContainerCmd containerCmd = dockerClient
+                    .createContainerCmd(imageId).withName(containerName);
+            if (volumes != null) {
+                containerCmd.withVolumes(volumes);
+            }
+            if (binds != null) {
+                containerCmd.withBinds(binds);
+            }
+            containerCmd.exec();
 
             dockerClient.startContainerCmd(containerName).exec();
             waitForContainer(containerName);
