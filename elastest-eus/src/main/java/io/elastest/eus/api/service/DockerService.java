@@ -276,29 +276,33 @@ public class DockerService {
                             url).openConnection();
                     connection.setConnectTimeout((int) timeoutMillis);
                     connection.setReadTimeout((int) timeoutMillis);
-                    connection.setRequestMethod("HEAD");
+                    connection.setRequestMethod("GET");
                     responseCode = connection.getResponseCode();
 
-                    break;
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        log.trace("URL {} already reachable", url);
+                        break;
+                    } else {
+                        log.trace(
+                                "URL {} not reachable. Response code: {}, "
+                                        + "trying again in {} ms",
+                                url, responseCode, dockerPollTimeMs);
+                    }
+
                 } catch (SSLHandshakeException | SocketException e) {
                     log.trace("Error {} waiting URL {}, trying again in {} ms",
                             e.getMessage(), url, dockerPollTimeMs);
 
+                } finally {
                     // Polling to wait a consistent state
                     Thread.sleep(dockerPollTimeMs);
                 }
+
                 if (System.currentTimeMillis() > endTimeMillis) {
                     throw new EusException(errorMessage);
                 }
             }
 
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                log.trace("URL {} not reachable. Response code: {}", url,
-                        responseCode);
-
-            } else {
-                log.trace("URL {} already reachable", url);
-            }
         } catch (Exception e) {
             throw new EusException(errorMessage, e);
         }
