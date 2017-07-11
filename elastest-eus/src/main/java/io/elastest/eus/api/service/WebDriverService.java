@@ -110,6 +110,24 @@ public class WebDriverService {
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             sessionInfo = starBrowser(httpEntity.getBody());
 
+            // -------------
+            // FIXME: Workaround due to bug of selenium-server 3.4.0
+            // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
+            String browserName = jsonService.getBrowser(httpEntity.getBody());
+            String version = jsonService.getVersion(httpEntity.getBody());
+            if (browserName.equalsIgnoreCase("firefox")
+                    && !version.equals("")) {
+                version = "";
+                log.warn(
+                        "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
+                httpEntity = new HttpEntity<String>("{\n"
+                        + "  \"desiredCapabilities\": {\n"
+                        + "    \"browserName\": \"firefox\",\n"
+                        + "    \"version\": \"\",\n"
+                        + "    \"platform\": \"ANY\"\n" + "  }\n" + "}");
+            }
+            // -------------
+
         } else {
             Optional<String> sessionIdFromPath = jsonService
                     .getSessionIdFromPath(requestContext);
