@@ -58,11 +58,11 @@ public class PropertiesTest {
     private JsonService jsonService;
 
     static Stream<Arguments> keyProvider() {
-        return Stream.of(create("chrome", "59", "LINUX", "chrome_59_LINUX"),
+        return Stream.of(create("chrome", "59", "ANY", "chrome_59_LINUX"),
                 create("chrome", "58", "LINUX", "chrome_58_LINUX"),
-                create("chrome", "57", "LINUX", "chrome_57_LINUX"),
+                create("chrome", "57", "ANY", "chrome_57_LINUX"),
                 create("firefox", "54", "LINUX", "firefox_54_LINUX"),
-                create("firefox", "53", "LINUX", "firefox_53_LINUX"),
+                create("firefox", "53", "ANY", "firefox_53_LINUX"),
                 create("firefox", "52", "LINUX", "firefox_52_LINUX"),
                 create("chrome", null, null, "chrome_59_LINUX"),
                 create("firefox", null, null, "firefox_54_LINUX"),

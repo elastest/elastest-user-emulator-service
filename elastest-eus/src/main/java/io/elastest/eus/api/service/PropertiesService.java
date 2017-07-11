@@ -127,7 +127,8 @@ public class PropertiesService {
                 out = key;
             } else if (key.contains(browserName) && version != null
                     && key.contains(version)
-                    && (platform == null || platform.equals(""))) {
+                    && (platform == null || platform.equals("") || platform
+                            .equalsIgnoreCase(webdriverAnyPlatform))) {
                 out = key;
             } else if (key.contains(browserName)
                     && (version == null || version.equals(""))
