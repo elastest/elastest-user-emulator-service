@@ -168,9 +168,9 @@ public class SessionApiController implements SessionApi {
     }
 
     @Override
-    public ResponseEntity<String> webdriverProtocol(
+    public ResponseEntity<String> session(
             HttpEntity<String> httpEntity, HttpServletRequest request) {
-        return webDriverService.process(httpEntity, request);
+        return webDriverService.session(httpEntity, request);
     }
 
     @Override

@@ -93,7 +93,7 @@ public class WebDriverService {
         this.jsonService = jsonService;
     }
 
-    public ResponseEntity<String> process(HttpEntity<String> httpEntity,
+    public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
 
         StringBuffer requestUrl = request.getRequestURL();

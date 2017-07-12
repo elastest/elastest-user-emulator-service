@@ -196,16 +196,17 @@ public interface SessionApi {
             @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body);
 
     /**
-     * W3C WebDriver operations
+     * W3C WebDriver operations for sessions
      */
     @ApiOperation(value = "W3C WebDriver operations", notes = "", response = String.class, tags = {
             "W3C WebDriver" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation"),
             @ApiResponse(code = 404, message = "No such element") })
-    @RequestMapping(value = "/**", produces = { "application/json" }, method = {
-            RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE })
-    ResponseEntity<String> webdriverProtocol(HttpEntity<String> httpEntity,
+    @RequestMapping(value = "/session/**", produces = {
+            "application/json" }, method = { RequestMethod.GET,
+                    RequestMethod.POST, RequestMethod.DELETE })
+    ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request);
 
     /**
