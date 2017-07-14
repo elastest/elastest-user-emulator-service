@@ -19,7 +19,7 @@ cd elastest-eus
 mvn spring-boot:run
 ```
 
-At this point the EUS should be up an running on the localhost, and thus we can use its URL (http://localhost:8080/eus/v1" by default) in Selenium tests. For example, as a JUnit test:
+At this point the EUS should be up an running on the localhost, and thus we can use its URL (http://localhost:8080/eus/v1 by default) in Selenium tests. For example, as a JUnit test:
 
 
 ```java
