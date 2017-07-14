@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.unit;
+package io.elastest.eus.test.util;
 
 import java.net.URI;
 

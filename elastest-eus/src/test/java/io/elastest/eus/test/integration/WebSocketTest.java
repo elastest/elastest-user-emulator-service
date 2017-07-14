@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.unit;
+package io.elastest.eus.test.integration;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,7 +37,8 @@ import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.api.service.RegistryService;
 import io.elastest.eus.api.service.SessionInfo;
 import io.elastest.eus.app.EusSpringBootApp;
-import io.elastest.eus.test.unit.WebSocketClient.MessageHandler;
+import io.elastest.eus.test.util.WebSocketClient;
+import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
 /**
  * Tests for properties WebSocket.

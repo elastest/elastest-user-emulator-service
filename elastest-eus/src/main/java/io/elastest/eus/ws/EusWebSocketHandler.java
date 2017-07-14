@@ -68,6 +68,8 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
         if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
             log.debug("{} received", payload);
             sendAllSessionsInfoToAllClients();
+        } else {
+            log.warn("Non recognized message {}", payload);
         }
     }
 
