@@ -1,7 +1,10 @@
 language: java
 
+services:
+  - docker
+
 script:
-    - mvn test
-    - mvn cobertura:cobertura
-    - bash <(curl -s https://codecov.io/bash)
+    - cd elastest-eus && mvn test
+    - cd elastest-eus && mvn cobertura:cobertura
+    - cd elastest-eus && bash <(curl -s https://codecov.io/bash)
 
