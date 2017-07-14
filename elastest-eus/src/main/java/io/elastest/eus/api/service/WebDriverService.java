@@ -16,9 +16,9 @@
  */
 package io.elastest.eus.api.service;
 
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -38,6 +38,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.api.EusException;
+import io.elastest.eus.ws.EusWebSocketHandler;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -80,17 +81,26 @@ public class WebDriverService {
     @Value("${hub.vnc.password}")
     private String hubVncPassword;
 
+    @Value("${ws.dateformat}")
+    private String wsDateFormat;
+
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
-    private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
+    private RegistryService registryService;
+    private EusWebSocketHandler webSocketHandler;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
-            PropertiesService propertiesService, JsonService jsonService) {
+            PropertiesService propertiesService, JsonService jsonService,
+            RegistryService registryService,
+            EusWebSocketHandler webSocketHandler) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
+        this.registryService = registryService;
+        this.webSocketHandler = webSocketHandler;
+
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -106,9 +116,12 @@ public class WebDriverService {
 
         SessionInfo sessionInfo;
 
+        boolean isLive = false;
+
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             sessionInfo = starBrowser(httpEntity.getBody());
+            isLive = jsonService.isLive(httpEntity.getBody());
 
             // -------------
             // FIXME: Workaround due to bug of selenium-server 3.4.0
@@ -133,9 +146,7 @@ public class WebDriverService {
                     .getSessionIdFromPath(requestContext);
             if (sessionIdFromPath.isPresent()) {
                 String sessionId = sessionIdFromPath.get();
-                log.trace("sessionId: {} -- sessionRegistry: {}", sessionId,
-                        sessionRegistry);
-                sessionInfo = sessionRegistry.get(sessionId);
+                sessionInfo = registryService.getSession(sessionId);
 
             } else {
                 // This is a special case that it is very unlikely to happen (in
@@ -161,7 +172,16 @@ public class WebDriverService {
         // Intercept again create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             String sessionId = jsonService.getSessionIdFromResponse(response);
-            sessionRegistry.put(sessionId, sessionInfo);
+            sessionInfo.setSessionId(sessionId);
+            registryService.putSession(sessionId, sessionInfo);
+
+            if (!isLive) {
+                if (webSocketHandler.isActiveSessions()
+                        && sessionInfo.getVncUrl() == null) {
+                    getVncUrl(sessionId);
+                }
+                webSocketHandler.sendSessionInfoToAllClients(sessionInfo);
+            }
         }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
@@ -183,7 +203,7 @@ public class WebDriverService {
     }
 
     public void stopAllContainerOfSession(String sessionId) {
-        stopAllContainerOfSession(sessionRegistry.get(sessionId));
+        stopAllContainerOfSession(registryService.getSession(sessionId));
     }
 
     public void stopAllContainerOfSession(SessionInfo sessionInfo) {
@@ -202,8 +222,10 @@ public class WebDriverService {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);
-        String imageId = propertiesService
-                .getDockerImageFromCapabilities(browserName, version, platform);
+
+        String propertiesKey = propertiesService
+                .getKeyFromCapabilities(browserName, version, platform);
+        String imageId = propertiesService.getDockerImageFromKey(propertiesKey);
 
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
@@ -220,6 +242,11 @@ public class WebDriverService {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setHubUrl(hubUrl);
         sessionInfo.setHubContainerName(hubContainerName);
+        sessionInfo.setBrowser(browserName);
+        sessionInfo
+                .setVersion(propertiesService.getVersionFromKey(propertiesKey));
+        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
+        sessionInfo.setCreationTime(dateFormat.format(new Date()));
 
         return sessionInfo;
     }
@@ -246,7 +273,7 @@ public class WebDriverService {
         String vncContainerIp = dockerService
                 .getContainerIpAddress(vncContainerName);
 
-        SessionInfo sessionInfo = sessionRegistry.get(sessionId);
+        SessionInfo sessionInfo = registryService.getSession(sessionId);
 
         String hubContainerIp = dockerService
                 .getContainerIpAddress(sessionInfo.getHubContainerName());
@@ -263,53 +290,6 @@ public class WebDriverService {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(vncUrl,
                 HttpStatus.OK);
         return responseEntity;
-    }
-
-    class SessionInfo {
-        private String hubUrl;
-        private String hubContainerName;
-        private String vncUrl;
-        private String vncContainerName;
-
-        public String getHubUrl() {
-            return hubUrl;
-        }
-
-        public void setHubUrl(String hubUrl) {
-            this.hubUrl = hubUrl;
-        }
-
-        public String getHubContainerName() {
-            return hubContainerName;
-        }
-
-        public void setHubContainerName(String hubContainerName) {
-            this.hubContainerName = hubContainerName;
-        }
-
-        public String getVncUrl() {
-            return vncUrl;
-        }
-
-        public void setVncUrl(String vncUrl) {
-            this.vncUrl = vncUrl;
-        }
-
-        public String getVncContainerName() {
-            return vncContainerName;
-        }
-
-        public void setVncContainerName(String vncContainerName) {
-            this.vncContainerName = vncContainerName;
-        }
-
-        @Override
-        public String toString() {
-            return "SessionInfo [hubUrl=" + hubUrl + ", hubContainerName="
-                    + hubContainerName + ", vncUrl=" + vncUrl
-                    + ", vncContainerName=" + vncContainerName + "]";
-        }
-
     }
 
 }

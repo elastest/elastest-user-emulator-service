@@ -51,6 +51,9 @@ public class JsonService {
     @Value("${webdriver.platform}")
     private String webdriverPlatform;
 
+    @Value("${webdriver.live}")
+    private String webdriverLive;
+
     @Value("${webdriver.sessionId}")
     private String webdriverSessionId;
 
@@ -119,6 +122,17 @@ public class JsonService {
             }
         }
         return count;
+    }
+
+    public boolean isLive(String jsonMessage) {
+        boolean out = false;
+        try {
+            out = (Boolean) getCapabilities(jsonMessage).get(webdriverLive);
+            log.trace("Received message from a live session");
+        } catch (Exception e) {
+            log.trace("Received message from a regular session (non-live)");
+        }
+        return out;
     }
 
 }

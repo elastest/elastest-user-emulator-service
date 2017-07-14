@@ -102,10 +102,14 @@ public class PropertiesService {
         return entry;
     }
 
+    public String getDockerImageFromKey(String key) {
+        return browsers.get(key).get(propertiesDockerImageKey);
+    }
+
     public String getDockerImageFromCapabilities(String browserName,
             String version, String platform) {
         String key = getKeyFromCapabilities(browserName, version, platform);
-        return browsers.get(key).get(propertiesDockerImageKey);
+        return getDockerImageFromKey(key);
     }
 
     public String getKeyFromCapabilities(String browserName, String version,
@@ -146,6 +150,10 @@ public class PropertiesService {
         }
 
         return out;
+    }
+
+    public String getVersionFromKey(String key) {
+        return key.split(propertiesSeparatorChar)[1];
     }
 
 }
