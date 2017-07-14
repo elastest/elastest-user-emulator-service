@@ -60,6 +60,30 @@ public class JsonService {
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
 
+    @Value("${ws.protocol.newSession}")
+    private String wsProtocolNewSession;
+
+    @Value("${ws.protocol.removeSession}")
+    private String wsProtocolRemoveSession;
+
+    @Value("${ws.protocol.sessionId}")
+    private String wsProtocolSessionId;
+
+    @Value("${ws.protocol.id}")
+    private String wsProtocolId;
+
+    @Value("${ws.protocol.url}")
+    private String wsProtocolUrl;
+
+    @Value("${ws.protocol.browser}")
+    private String wsProtocolBrowser;
+
+    @Value("${ws.protocol.version}")
+    private String wsProtocolVersion;
+
+    @Value("${ws.protocol.creationTime}")
+    private String wsProtocolCreationTime;
+
     private JSONObject getCapabilities(String jsonMessage) {
         return (JSONObject) string2Json(jsonMessage).get(webdriverCapabilities);
     }
@@ -133,6 +157,28 @@ public class JsonService {
             log.trace("Received message from a regular session (non-live)");
         }
         return out;
+    }
+
+    public JSONObject newSessionJson(SessionInfo sessionInfo) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(wsProtocolNewSession, sessionInfoToJson(sessionInfo));
+        return jsonObject;
+    }
+
+    public JSONObject removeSessionJson(SessionInfo sessionInfo) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(wsProtocolRemoveSession, sessionInfoToJson(sessionInfo));
+        return jsonObject;
+    }
+
+    public JSONObject sessionInfoToJson(SessionInfo sessionInfo) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(wsProtocolId, sessionInfo.getSessionId());
+        jsonObject.put(wsProtocolUrl, sessionInfo.getVncUrl());
+        jsonObject.put(wsProtocolBrowser, sessionInfo.getBrowser());
+        jsonObject.put(wsProtocolVersion, sessionInfo.getVersion());
+        jsonObject.put(wsProtocolCreationTime, sessionInfo.getCreationTime());
+        return jsonObject;
     }
 
 }

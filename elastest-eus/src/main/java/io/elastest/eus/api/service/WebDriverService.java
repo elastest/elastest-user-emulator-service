@@ -180,7 +180,7 @@ public class WebDriverService {
                         && sessionInfo.getVncUrl() == null) {
                     getVncUrl(sessionId);
                 }
-                webSocketHandler.sendSessionInfoToAllClients(sessionInfo);
+                webSocketHandler.sendNewSessionToAllClients(sessionInfo);
             }
         }
 
@@ -194,6 +194,11 @@ public class WebDriverService {
             log.trace("Intercepted DELETE session");
 
             stopAllContainerOfSession(sessionInfo);
+            registryService.removeSession(sessionInfo.getSessionId());
+
+            if (!isLive) {
+                webSocketHandler.sendRemoveSessionToAllClients(sessionInfo);
+            }
 
             // TODO: Implement a timeout mechanism just in case this command is
             // never invoked

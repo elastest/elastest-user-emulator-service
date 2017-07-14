@@ -22,11 +22,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.elastest.eus.api.service.JsonService;
+import io.elastest.eus.api.service.RegistryService;
 import io.elastest.eus.api.service.SessionInfo;
 
 /**
@@ -40,9 +43,20 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
     private final Logger log = LoggerFactory
             .getLogger(EusWebSocketHandler.class);
 
+    @Value("${ws.protocol.getSessions}")
+    private String wsProtocolGetSessions;
+
+    private RegistryService registryService;
+
+    private JsonService jsonService;
+
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
 
-    private static final String GET_SESSIONS_MESSAGE = "getSessions";
+    public EusWebSocketHandler(RegistryService registryService,
+            JsonService jsonService) {
+        this.registryService = registryService;
+        this.jsonService = jsonService;
+    }
 
     @Override
     public void handleTextMessage(WebSocketSession session,
@@ -51,16 +65,9 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         log.debug("Incomming message {} from session {}", payload, sessionId);
 
-        switch (payload) {
-        case GET_SESSIONS_MESSAGE:
+        if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
             log.debug("{} received", payload);
-            // TODO send proper response
-            break;
-
-        default:
-            // TODO: so far, it responses with the same message
-            sendTextMessage(session, payload);
-            break;
+            sendAllSessionsInfoToAllClients();
         }
     }
 
@@ -87,6 +94,7 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
     public void sendTextMessage(WebSocketSession session, String message) {
         TextMessage textMessage = new TextMessage(message);
         try {
+            log.trace("Sending {} to session {}", message, session.getId());
             session.sendMessage(textMessage);
         } catch (IOException e) {
             log.warn("Error sending message {} in session {}", message,
@@ -94,9 +102,27 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public void sendSessionInfoToAllClients(SessionInfo sessionInfo) {
+    public void sendAllSessionsInfoToAllClients() {
         for (WebSocketSession session : activeSessions.values()) {
-            sendTextMessage(session, sessionInfo.toJson());
+            for (SessionInfo sessionInfo : registryService.getSessionRegistry()
+                    .values()) {
+                sendTextMessage(session,
+                        jsonService.newSessionJson(sessionInfo).toString());
+            }
+        }
+    }
+
+    public void sendNewSessionToAllClients(SessionInfo sessionInfo) {
+        for (WebSocketSession session : activeSessions.values()) {
+            sendTextMessage(session,
+                    jsonService.newSessionJson(sessionInfo).toString());
+        }
+    }
+
+    public void sendRemoveSessionToAllClients(SessionInfo sessionInfo) {
+        for (WebSocketSession session : activeSessions.values()) {
+            sendTextMessage(session,
+                    jsonService.removeSessionJson(sessionInfo).toString());
         }
     }
 

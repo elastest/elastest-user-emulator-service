@@ -18,6 +18,7 @@ package io.elastest.eus.ws;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,9 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+import io.elastest.eus.api.service.JsonService;
+import io.elastest.eus.api.service.RegistryService;
 
 /**
  * EUS WebSocket configuration.
@@ -36,7 +40,19 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class EusWebSocketConfig implements WebSocketConfigurer {
 
-    private final Logger log = LoggerFactory.getLogger(EusWebSocketConfig.class);
+    private final Logger log = LoggerFactory
+            .getLogger(EusWebSocketConfig.class);
+
+    private RegistryService registryService;
+
+    private JsonService jsonService;
+
+    @Autowired
+    public EusWebSocketConfig(RegistryService registryService,
+            JsonService jsonService) {
+        this.registryService = registryService;
+        this.jsonService = jsonService;
+    }
 
     @Value("${ws.path}")
     private String wsPath;
@@ -50,7 +66,7 @@ public class EusWebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public EusWebSocketHandler webSocketHandler() {
-        return new EusWebSocketHandler();
+        return new EusWebSocketHandler(registryService, jsonService);
     }
 
 }

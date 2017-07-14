@@ -16,7 +16,7 @@
  */
 package io.elastest.eus.api.service;
 
-import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Session information.
@@ -33,6 +33,9 @@ public class SessionInfo {
     private String creationTime;
     private String browser;
     private String version;
+
+    @Value("${ws.protocol.newSession}")
+    private String newSession;
 
     public String getHubUrl() {
         return hubUrl;
@@ -96,16 +99,6 @@ public class SessionInfo {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public String toJson() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", sessionId);
-        jsonObject.put("url", vncUrl);
-        jsonObject.put("browser", browser);
-        jsonObject.put("version", version);
-        jsonObject.put("creationTime", creationTime);
-        return jsonObject.toString();
     }
 
 }

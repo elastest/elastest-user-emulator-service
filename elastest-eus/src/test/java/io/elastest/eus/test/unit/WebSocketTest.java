@@ -16,19 +16,26 @@
  */
 package io.elastest.eus.test.unit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.elastest.eus.api.service.JsonService;
+import io.elastest.eus.api.service.RegistryService;
+import io.elastest.eus.api.service.SessionInfo;
 import io.elastest.eus.app.EusSpringBootApp;
 import io.elastest.eus.test.unit.WebSocketClient.MessageHandler;
 
@@ -53,8 +60,25 @@ public class WebSocketTest {
     @Value("${server.contextPath}")
     private String contextPath;
 
+    @Value("${ws.protocol.getSessions}")
+    private String wsProtocolGetSessions;
+
+    @Autowired
+    private RegistryService registryService;
+
+    @Autowired
+    private JsonService jsonService;
+
+    private String jsonMessage;
+
     @BeforeEach
     void setup() {
+        SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setBrowser("chrome");
+        sessionInfo.setVersion("59");
+        registryService.putSession("my-session-id", sessionInfo);
+        jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
+
         log.debug("App started on port {}", serverPort);
     }
 
@@ -63,19 +87,24 @@ public class WebSocketTest {
         String wsUrl = "ws://localhost:" + serverPort + "/" + contextPath
                 + wsPath;
 
-        final String sentMessage = "foo";
+        final String sentMessage = wsProtocolGetSessions;
 
+        CountDownLatch latch = new CountDownLatch(1);
         WebSocketClient webSocketClient = new WebSocketClient(wsUrl);
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override
             public void handleMessage(String receivedMessage) {
-                log.debug("Sent message: {} --- received message: {}",
+                log.debug("Sent message: {} -- received message: {}",
                         sentMessage, receivedMessage);
-                assertEquals(sentMessage, receivedMessage);
+
+                assertEquals(jsonMessage, receivedMessage);
+                latch.countDown();
             }
         });
 
         webSocketClient.sendMessage(sentMessage);
+
+        latch.await(5, SECONDS);
     }
 
 }

@@ -32,12 +32,20 @@ public class RegistryService {
 
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
+    public void removeSession(String sessionId) {
+        sessionRegistry.remove(sessionId);
+    }
+
     public void putSession(String sessionId, SessionInfo sessionEntry) {
         sessionRegistry.put(sessionId, sessionEntry);
     }
 
     public SessionInfo getSession(String sessionId) {
         return sessionRegistry.get(sessionId);
+    }
+
+    public Map<String, SessionInfo> getSessionRegistry() {
+        return sessionRegistry;
     }
 
 }
