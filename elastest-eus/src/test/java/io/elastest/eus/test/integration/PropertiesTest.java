@@ -19,7 +19,6 @@ package io.elastest.eus.test.integration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.params.provider.ObjectArrayArguments.create;
 
 import java.util.stream.Stream;
 
@@ -58,48 +57,48 @@ public class PropertiesTest {
     private JsonService jsonService;
 
     static Stream<Arguments> keyProvider() {
-        return Stream.of(create("chrome", "59", "ANY", "chrome_59_LINUX"),
-                create("chrome", "58", "LINUX", "chrome_58_LINUX"),
-                create("chrome", "57", "ANY", "chrome_57_LINUX"),
-                create("firefox", "54", "LINUX", "firefox_54_LINUX"),
-                create("firefox", "53", "ANY", "firefox_53_LINUX"),
-                create("firefox", "52", "LINUX", "firefox_52_LINUX"),
-                create("chrome", null, null, "chrome_59_LINUX"),
-                create("firefox", null, null, "firefox_54_LINUX"),
-                create("chrome", "58", null, "chrome_58_LINUX"),
-                create("firefox", "53", null, "firefox_53_LINUX"),
-                create("chrome", "", "", "chrome_59_LINUX"),
-                create("chrome", "", "ANY", "chrome_59_LINUX"),
-                create("firefox", "", "", "firefox_54_LINUX"),
-                create("firefox", "", "ANY", "firefox_54_LINUX"));
+        return Stream.of(Arguments.of("chrome", "59", "ANY", "chrome_59_LINUX"),
+                Arguments.of("chrome", "58", "LINUX", "chrome_58_LINUX"),
+                Arguments.of("chrome", "57", "ANY", "chrome_57_LINUX"),
+                Arguments.of("firefox", "54", "LINUX", "firefox_54_LINUX"),
+                Arguments.of("firefox", "53", "ANY", "firefox_53_LINUX"),
+                Arguments.of("firefox", "52", "LINUX", "firefox_52_LINUX"),
+                Arguments.of("chrome", null, null, "chrome_59_LINUX"),
+                Arguments.of("firefox", null, null, "firefox_54_LINUX"),
+                Arguments.of("chrome", "58", null, "chrome_58_LINUX"),
+                Arguments.of("firefox", "53", null, "firefox_53_LINUX"),
+                Arguments.of("chrome", "", "", "chrome_59_LINUX"),
+                Arguments.of("chrome", "", "ANY", "chrome_59_LINUX"),
+                Arguments.of("firefox", "", "", "firefox_54_LINUX"),
+                Arguments.of("firefox", "", "ANY", "firefox_54_LINUX"));
     }
 
     static Stream<Arguments> dockerProvider() {
         return Stream.of(
-                create("chrome", "59", "LINUX",
+                Arguments.of("chrome", "59", "LINUX",
                         "selenium/standalone-chrome-debug:3.4.0-einsteinium"),
-                create("chrome", "58", "LINUX",
+                Arguments.of("chrome", "58", "LINUX",
                         "selenium/standalone-chrome-debug:3.4.0-chromium"),
-                create("chrome", "57", "LINUX",
+                Arguments.of("chrome", "57", "LINUX",
                         "selenium/standalone-chrome-debug:3.3.1"),
-                create("firefox", "54", "LINUX",
+                Arguments.of("firefox", "54", "LINUX",
                         "selenium/standalone-firefox-debug:3.4.0-einsteinium"),
-                create("firefox", "53", "LINUX",
+                Arguments.of("firefox", "53", "LINUX",
                         "selenium/standalone-firefox-debug:3.4.0-dysprosium"),
-                create("firefox", "52", "LINUX",
+                Arguments.of("firefox", "52", "LINUX",
                         "selenium/standalone-firefox-debug:3.4.0-actinium"),
-                create("chrome", null, null,
+                Arguments.of("chrome", null, null,
                         "selenium/standalone-chrome-debug:3.4.0-einsteinium"),
-                create("firefox", null, null,
+                Arguments.of("firefox", null, null,
                         "selenium/standalone-firefox-debug:3.4.0-einsteinium"),
-                create("chrome", "58", null,
+                Arguments.of("chrome", "58", null,
                         "selenium/standalone-chrome-debug:3.4.0-chromium"),
-                create("firefox", "53", null,
+                Arguments.of("firefox", "53", null,
                         "selenium/standalone-firefox-debug:3.4.0-dysprosium"));
     }
 
     @ParameterizedTest
-    @MethodSource(names = "keyProvider")
+    @MethodSource("keyProvider")
     void testKey(String browserName, String version, String platform,
             String expectedKey) {
         // Exercise service
@@ -111,7 +110,7 @@ public class PropertiesTest {
     }
 
     @ParameterizedTest
-    @MethodSource(names = "dockerProvider")
+    @MethodSource("dockerProvider")
     void testDocker(String browserName, String version, String platform,
             String expectedDocker) {
         // Exercise service

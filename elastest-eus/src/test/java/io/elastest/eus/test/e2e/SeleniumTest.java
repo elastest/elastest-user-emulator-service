@@ -18,7 +18,6 @@ package io.elastest.eus.test.e2e;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.params.provider.ObjectArrayArguments.create;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.MalformedURLException;
@@ -64,12 +63,12 @@ public class SeleniumTest {
     private String contextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
-        return Stream.of(create(DesiredCapabilities.chrome(), "chrome"),
-                create(DesiredCapabilities.firefox(), "firefox"));
+        return Stream.of(Arguments.of(DesiredCapabilities.chrome(), "chrome"),
+                Arguments.of(DesiredCapabilities.firefox(), "firefox"));
     }
 
     @ParameterizedTest
-    @MethodSource(names = "capabilitiesProvider")
+    @MethodSource("capabilitiesProvider")
     void test(DesiredCapabilities capability, String expectedBrowserName)
             throws MalformedURLException {
         String eusUrl = "http://localhost:" + serverPort + contextPath;
