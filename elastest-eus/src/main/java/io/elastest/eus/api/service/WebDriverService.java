@@ -152,6 +152,7 @@ public class WebDriverService {
             if (sessionIdFromPath.isPresent()) {
                 String sessionId = sessionIdFromPath.get();
                 sessionInfo = registryService.getSession(sessionId);
+                isLive = sessionInfo.isLiveSession();
 
             } else {
                 // This is a special case that it is very unlikely to happen (in
@@ -178,6 +179,8 @@ public class WebDriverService {
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             String sessionId = jsonService.getSessionIdFromResponse(response);
             sessionInfo.setSessionId(sessionId);
+            sessionInfo.setLiveSession(isLive);
+
             registryService.putSession(sessionId, sessionInfo);
 
             if (!isLive) {

@@ -33,6 +33,7 @@ public class SessionInfo {
     private String creationTime;
     private String browser;
     private String version;
+    private boolean liveSession;
 
     @Value("${ws.protocol.newSession}")
     private String newSession;
@@ -99,6 +100,14 @@ public class SessionInfo {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public boolean isLiveSession() {
+        return liveSession;
+    }
+
+    public void setLiveSession(boolean liveSession) {
+        this.liveSession = liveSession;
     }
 
 }
