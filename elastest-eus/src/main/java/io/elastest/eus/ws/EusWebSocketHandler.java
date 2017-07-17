@@ -66,7 +66,7 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
         log.debug("Incomming message {} from session {}", payload, sessionId);
 
         if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
-            log.debug("{} received", payload);
+            log.trace("{} received", payload);
             sendAllSessionsInfoToAllClients();
         } else {
             log.warn("Non recognized message {}", payload);
@@ -78,7 +78,7 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
             throws Exception {
         super.afterConnectionEstablished(session);
         String sessionId = session.getId();
-        log.trace("WebSocket connection {} established ", sessionId);
+        log.debug("WebSocket connection {} established ", sessionId);
 
         activeSessions.put(sessionId, session);
     }
@@ -88,7 +88,7 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
             CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
         String sessionId = session.getId();
-        log.trace("WebSocket connection {} closed ", sessionId);
+        log.debug("WebSocket connection {} closed ", sessionId);
 
         activeSessions.remove(sessionId);
     }

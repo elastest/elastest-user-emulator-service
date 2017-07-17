@@ -120,8 +120,8 @@ public class PropertiesService {
                     "At least the type of browser must be honored");
         }
 
-        log.debug("browserName={}, version={}, platform={}", browserName,
-                version, platform);
+        log.debug("Capabilities: browserName={}, version={}, platform={}",
+                browserName, version, platform);
 
         String out = null;
         for (String key : browsers.keySet()) {

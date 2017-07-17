@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.api.service;
 
+import static org.springframework.http.HttpStatus.OK;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -115,9 +117,10 @@ public class WebDriverService {
         String requestContext = requestUrl.substring(
                 requestUrl.lastIndexOf(contextPath) + contextPath.length());
         HttpMethod method = HttpMethod.resolve(request.getMethod());
-        log.debug("{} {}", method, requestContext);
+        String requestBody = sanitizeMessage(httpEntity.getBody());
 
-        log.trace(">> Request : {}", httpEntity.getBody());
+        log.debug(">> Request: {} {} -- body: {}", method, requestContext,
+                requestBody);
 
         SessionInfo sessionInfo;
 
@@ -125,14 +128,14 @@ public class WebDriverService {
 
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
-            sessionInfo = starBrowser(httpEntity.getBody());
-            isLive = jsonService.isLive(httpEntity.getBody());
+            sessionInfo = starBrowser(requestBody);
+            isLive = jsonService.isLive(requestBody);
 
             // -------------
             // FIXME: Workaround due to bug of selenium-server 3.4.0
             // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-            String browserName = jsonService.getBrowser(httpEntity.getBody());
-            String version = jsonService.getVersion(httpEntity.getBody());
+            String browserName = jsonService.getBrowser(requestBody);
+            String version = jsonService.getVersion(requestBody);
             if (browserName.equalsIgnoreCase("firefox")
                     && !version.equals("")) {
                 version = "";
@@ -171,13 +174,12 @@ public class WebDriverService {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> exchange = restTemplate.exchange(
                 hubUrl + requestContext, method, httpEntity, String.class);
-        String response = exchange.getBody();
-
-        log.trace("<< Response: {}", response);
+        String responseBody = exchange.getBody();
 
         // Intercept again create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
-            String sessionId = jsonService.getSessionIdFromResponse(response);
+            String sessionId = jsonService
+                    .getSessionIdFromResponse(responseBody);
             sessionInfo.setSessionId(sessionId);
             sessionInfo.setLiveSession(isLive);
 
@@ -192,10 +194,12 @@ public class WebDriverService {
             }
         }
 
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(response,
-                HttpStatus.OK);
+        HttpStatus responseStatusOk = OK;
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                responseBody, responseStatusOk);
 
-        log.debug("ResponseEntity {}", responseEntity);
+        log.debug("<< Response: {} -- body: {}", responseStatusOk,
+                responseBody);
 
         // Intercept destroy session
         if (jsonService.isDeleteSessionRequest(method, requestContext)) {
@@ -314,6 +318,13 @@ public class WebDriverService {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(vncUrl,
                 HttpStatus.OK);
         return responseEntity;
+    }
+
+    private String sanitizeMessage(String message) {
+        return message != null
+                ? message.trim().replaceAll(" +", " ").replaceAll("\\r", "")
+                        .replaceAll("\\n", "").replaceAll("\\t", "")
+                : message;
     }
 
 }
