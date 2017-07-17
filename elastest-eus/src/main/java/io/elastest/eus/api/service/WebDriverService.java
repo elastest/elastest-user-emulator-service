@@ -16,12 +16,17 @@
  */
 package io.elastest.eus.api.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -265,8 +270,19 @@ public class WebDriverService {
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
-        String originPath = ClassLoader.getSystemResource(vncAutoFocusHtml)
-                .getFile();
+        InputStream inputStream = this.getClass()
+                .getResourceAsStream("/" + vncAutoFocusHtml);
+        String originPath;
+        try {
+            Path tempFile = Files.createTempFile("eus", "autofocus");
+            FileUtils.copyInputStreamToFile(inputStream, tempFile.toFile());
+            originPath = tempFile.toFile().getAbsolutePath();
+        } catch (IOException e) {
+            String errorMessage = "There was a problem reading "
+                    + vncAutoFocusHtml + " due to " + e.getMessage();
+            throw new EusException(errorMessage, e);
+        }
+
         String targetPath = "/root/noVNC/" + vncAutoFocusHtml;
         Volume[] volumes = { new Volume(targetPath) };
         Bind[] binds = { new Bind(originPath, volumes[0], AccessMode.rw) };
