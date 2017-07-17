@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import io.elastest.eus.api.session.SessionInfo;
+
 /**
  * Service implementation for JSON utilities.
  *

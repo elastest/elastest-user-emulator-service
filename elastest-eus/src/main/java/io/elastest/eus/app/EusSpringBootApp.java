@@ -16,12 +16,21 @@
  */
 package io.elastest.eus.app;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.ExitCodeGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import io.elastest.eus.api.service.JsonService;
+import io.elastest.eus.api.service.RegistryService;
+import io.elastest.eus.api.service.WebSocketService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
@@ -32,26 +41,39 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  */
 @SpringBootApplication
 @EnableSwagger2
+@EnableWebSocket
 @ComponentScan(basePackages = "io.elastest.eus")
-public class EusSpringBootApp implements CommandLineRunner {
+public class EusSpringBootApp implements WebSocketConfigurer {
+
+    private final Logger log = LoggerFactory.getLogger(EusSpringBootApp.class);
+
+    private RegistryService registryService;
+
+    private JsonService jsonService;
+
+    @Autowired
+    public EusSpringBootApp(RegistryService registryService,
+            JsonService jsonService) {
+        this.registryService = registryService;
+        this.jsonService = jsonService;
+    }
+
+    @Value("${ws.path}")
+    private String wsPath;
 
     @Override
-    public void run(String... arg0) throws Exception {
-        if (arg0.length > 0 && arg0[0].equals("exitcode")) {
-            throw new ExitException();
-        }
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(webSocketService(), wsPath).setAllowedOrigins("*");
+        log.debug("Registering WebSocker handler at {}", wsPath);
+    }
+
+    @Bean
+    public WebSocketService webSocketService() {
+        return new WebSocketService(registryService, jsonService);
     }
 
     public static void main(String[] args) throws Exception {
         new SpringApplication(EusSpringBootApp.class).run(args);
     }
 
-    class ExitException extends RuntimeException implements ExitCodeGenerator {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public int getExitCode() {
-            return 10;
-        }
-    }
 }

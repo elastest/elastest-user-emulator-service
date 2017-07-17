@@ -28,6 +28,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.elastest.eus.api.session.SessionInfo;
+
 /**
  * WebSocket service.
  *

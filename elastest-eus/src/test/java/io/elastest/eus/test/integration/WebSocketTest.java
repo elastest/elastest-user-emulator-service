@@ -35,7 +35,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.api.service.RegistryService;
-import io.elastest.eus.api.service.SessionInfo;
+import io.elastest.eus.api.session.SessionInfo;
 import io.elastest.eus.app.EusSpringBootApp;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;

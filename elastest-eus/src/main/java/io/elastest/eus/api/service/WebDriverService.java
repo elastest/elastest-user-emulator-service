@@ -45,6 +45,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.api.EusException;
+import io.elastest.eus.api.session.SessionInfo;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.

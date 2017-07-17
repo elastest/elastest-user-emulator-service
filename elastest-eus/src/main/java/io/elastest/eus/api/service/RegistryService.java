@@ -21,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import io.elastest.eus.api.session.SessionInfo;
+
 /**
  * Service implementation session registry.
  *

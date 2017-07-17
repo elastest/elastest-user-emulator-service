@@ -14,9 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
-
-import org.springframework.beans.factory.annotation.Value;
+package io.elastest.eus.api.session;
 
 /**
  * Session information.
@@ -34,9 +32,6 @@ public class SessionInfo {
     private String browser;
     private String version;
     private boolean liveSession;
-
-    @Value("${ws.protocol.newSession}")
-    private String newSession;
 
     public String getHubUrl() {
         return hubUrl;
