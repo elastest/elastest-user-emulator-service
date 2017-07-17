@@ -59,9 +59,9 @@ public class DockerTest {
     @Test
     void test() {
         // Test data (input)
-        String jsonCapabilities = "{\n" + " \"desiredCapabilities\": {\n"
-                + " \"browserName\": \"chrome\",\n" + " \"version\": \"\",\n"
-                + " \"platform\": \"ANY\"\n" + " }\n" + "}";
+        String jsonCapabilities = "{ \"desiredCapabilities\": {"
+                + "\"browserName\": \"chrome\"," + " \"version\": \"\","
+                + "\"platform\": \"ANY\"" + " }" + "}";
 
         // Exercise
         String browserName = jsonService.getBrowser(jsonCapabilities);

@@ -141,17 +141,15 @@ public class PropertiesTest {
     @Test
     void testJson() {
         // Test data (input)
-        String jsonCapabilities = "{\n" + " \"desiredCapabilities\": {\n"
-                + " \"browserName\": \"chrome\",\n" + " \"version\": \"59\",\n"
-                + " \"platform\": \"LINUX\"\n" + " },\n"
-                + " \"requiredCapabilities\": {},\n" + " \"capabilities\": {\n"
-                + " \"desiredCapabilities\": {\n"
-                + " \"browserName\": \"chrome\",\n" + " \"version\": \"59\",\n"
-                + " \"platform\": \"LINUX\"\n" + " },\n"
-                + " \"requiredCapabilities\": {},\n" + " \"alwaysMatch\": {},\n"
-                + " \"firstMatch\": [\n" + " {\n"
-                + " \"browserName\": \"chrome\"\n" + " }\n" + " ]\n" + " }\n"
-                + "}";
+        String jsonCapabilities = "{" + " \"desiredCapabilities\": {"
+                + "\"browserName\": \"chrome\"," + " \"version\": \"59\","
+                + "\"platform\": \"LINUX\"" + " },"
+                + "\"requiredCapabilities\": {}," + " \"capabilities\": {"
+                + "\"desiredCapabilities\": {" + "\"browserName\": \"chrome\","
+                + " \"version\": \"59\"," + "\"platform\": \"LINUX\"" + " },"
+                + "\"requiredCapabilities\": {}," + " \"alwaysMatch\": {},"
+                + "\"firstMatch\": [" + " {" + "\"browserName\": \"chrome\""
+                + " }" + " ]" + " }" + "}";
 
         // Expected data (outcome)
         String expectedKey = "chrome_59_LINUX";

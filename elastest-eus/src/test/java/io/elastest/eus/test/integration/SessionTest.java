@@ -66,10 +66,9 @@ public class SessionTest {
     @Test
     void createAndDestroySession() {
         // Test data (input)
-        String jsonMessage = "{\n" + "    \"desiredCapabilities\": {\n"
-                + "        \"browserName\": \"chrome\",\n"
-                + "        \"version\": \"\",\n"
-                + "        \"platform\": \"ANY\"\n" + "    }\n" + "}";
+        String jsonMessage = "{\"desiredCapabilities\": {"
+                + "\"browserName\": \"chrome\"," + "\"version\": \"\","
+                + "\"platform\": \"ANY\"" + "}" + "}";
 
         // Exercise #1 (create session)
         log.debug("POST /session");

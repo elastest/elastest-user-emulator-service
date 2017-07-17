@@ -89,16 +89,16 @@ public class WebSocketTest {
                 + wsPath;
 
         final String sentMessage = wsProtocolGetSessions;
+        final String[] receivedMessage = { "" };
 
         CountDownLatch latch = new CountDownLatch(1);
         WebSocketClient webSocketClient = new WebSocketClient(wsUrl);
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override
-            public void handleMessage(String receivedMessage) {
+            public void handleMessage(String message) {
                 log.debug("Sent message: {} -- received message: {}",
-                        sentMessage, receivedMessage);
-
-                assertEquals(jsonMessage, receivedMessage);
+                        sentMessage, message);
+                receivedMessage[0] = message;
                 latch.countDown();
             }
         });
@@ -106,6 +106,8 @@ public class WebSocketTest {
         webSocketClient.sendMessage(sentMessage);
 
         latch.await(5, SECONDS);
+
+        assertEquals(jsonMessage, receivedMessage[0]);
     }
 
 }
