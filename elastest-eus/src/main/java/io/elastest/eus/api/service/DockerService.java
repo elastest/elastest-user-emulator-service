@@ -120,21 +120,18 @@ public class DockerService {
             log.info("Pulling Docker image {} ... please wait", imageId);
             dockerClient.pullImageCmd(imageId)
                     .exec(new PullImageResultCallback()).awaitSuccess();
-            log.debug("Image {} downloaded", imageId);
-
-        } else {
-            log.debug("Image {} already exists", imageId);
+            log.debug("Docker image {} downloaded", imageId);
         }
     }
 
-    public boolean existsImage(String imageName) {
+    public boolean existsImage(String imageId) {
         boolean exists = true;
         try {
-            dockerClient.inspectImageCmd(imageName).exec();
-            log.trace("Image {} exists", imageName);
+            dockerClient.inspectImageCmd(imageId).exec();
+            log.debug("Docker image {} already exists", imageId);
 
         } catch (NotFoundException e) {
-            log.trace("Image {} does not exist", imageName);
+            log.trace("Image {} does not exist", imageId);
             exists = false;
         }
         return exists;
