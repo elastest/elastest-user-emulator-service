@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.ws;
+package io.elastest.eus.api.service;
 
 import java.io.IOException;
 import java.util.Map;
@@ -28,20 +28,15 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import io.elastest.eus.api.service.JsonService;
-import io.elastest.eus.api.service.RegistryService;
-import io.elastest.eus.api.service.SessionInfo;
-
 /**
- * EUS WebSocket handler.
+ * WebSocket service.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class EusWebSocketHandler extends TextWebSocketHandler {
+public class WebSocketService extends TextWebSocketHandler {
 
-    private final Logger log = LoggerFactory
-            .getLogger(EusWebSocketHandler.class);
+    private final Logger log = LoggerFactory.getLogger(WebSocketService.class);
 
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
@@ -52,7 +47,7 @@ public class EusWebSocketHandler extends TextWebSocketHandler {
 
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
 
-    public EusWebSocketHandler(RegistryService registryService,
+    public WebSocketService(RegistryService registryService,
             JsonService jsonService) {
         this.registryService = registryService;
         this.jsonService = jsonService;

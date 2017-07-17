@@ -191,13 +191,11 @@ public class DockerService {
 
     public void waitForContainer(String containerName) {
         boolean isRunning = false;
-
         long timeoutMs = System.currentTimeMillis()
                 + SECONDS.toMillis(dockerWaitTimeoutSec);
         do {
             isRunning = isRunningContainer(containerName);
             if (!isRunning) {
-
                 // Check timeout
                 if (System.currentTimeMillis() > timeoutMs) {
                     throw new EusException("Timeout of " + dockerWaitTimeoutSec
@@ -215,7 +213,6 @@ public class DockerService {
                 } catch (InterruptedException e) {
                     log.warn("Exception waiting for hub", e);
                 }
-
             }
         } while (!isRunning);
     }

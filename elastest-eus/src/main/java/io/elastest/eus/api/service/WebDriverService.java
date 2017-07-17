@@ -45,7 +45,6 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.api.EusException;
-import io.elastest.eus.ws.EusWebSocketHandler;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -95,13 +94,13 @@ public class WebDriverService {
     private PropertiesService propertiesService;
     private JsonService jsonService;
     private RegistryService registryService;
-    private EusWebSocketHandler webSocketHandler;
+    private WebSocketService webSocketHandler;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
             RegistryService registryService,
-            EusWebSocketHandler webSocketHandler) {
+            WebSocketService webSocketHandler) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;

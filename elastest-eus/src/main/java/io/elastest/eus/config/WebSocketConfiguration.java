@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.ws;
+package io.elastest.eus.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,33 +22,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.api.service.RegistryService;
+import io.elastest.eus.api.service.WebSocketService;
 
 /**
- * EUS WebSocket configuration.
+ * WebSocket configuration.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
 @Configuration
 @EnableWebSocket
-public class EusWebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfiguration implements WebSocketConfigurer {
 
     private final Logger log = LoggerFactory
-            .getLogger(EusWebSocketConfig.class);
+            .getLogger(WebSocketConfiguration.class);
 
     private RegistryService registryService;
 
     private JsonService jsonService;
 
     @Autowired
-    public EusWebSocketConfig(RegistryService registryService,
+    public WebSocketConfiguration(RegistryService registryService,
             JsonService jsonService) {
         this.registryService = registryService;
         this.jsonService = jsonService;
@@ -59,14 +59,13 @@ public class EusWebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        WebSocketHandler myHandler = webSocketHandler();
-        registry.addHandler(myHandler, wsPath).setAllowedOrigins("*");
+        registry.addHandler(webSocketService(), wsPath).setAllowedOrigins("*");
         log.debug("Registering WebSocker handler at {}", wsPath);
     }
 
     @Bean
-    public EusWebSocketHandler webSocketHandler() {
-        return new EusWebSocketHandler(registryService, jsonService);
+    public WebSocketService webSocketService() {
+        return new WebSocketService(registryService, jsonService);
     }
 
 }
