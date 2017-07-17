@@ -82,13 +82,10 @@ public class DockerService {
 
     public void startAndWaitContainer(String imageId, String containerName) {
         if (!isRunningContainer(containerName)) {
-            log.info("Pulling image {} ... please wait", imageId);
+            pullImageIfNecessary(imageId);
 
-            dockerClient.pullImageCmd(imageId)
-                    .exec(new PullImageResultCallback()).awaitSuccess();
             dockerClient.createContainerCmd(imageId).withName(containerName)
                     .exec();
-
             dockerClient.startContainerCmd(containerName).exec();
             waitForContainer(containerName);
         } else {
@@ -99,10 +96,7 @@ public class DockerService {
     public void startAndWaitContainerWithVolumes(String imageId,
             String containerName, Volume[] volumes, Bind[] binds) {
         if (!isRunningContainer(containerName)) {
-            log.info("Pulling image {} ... please wait", imageId);
-
-            dockerClient.pullImageCmd(imageId)
-                    .exec(new PullImageResultCallback()).awaitSuccess();
+            pullImageIfNecessary(imageId);
 
             CreateContainerCmd containerCmd = dockerClient
                     .createContainerCmd(imageId).withName(containerName);
@@ -119,6 +113,31 @@ public class DockerService {
         } else {
             log.warn("Container {} already running", containerName);
         }
+    }
+
+    public void pullImageIfNecessary(String imageId) {
+        if (!existsImage(imageId)) {
+            log.info("Pulling Docker image {} ... please wait", imageId);
+            dockerClient.pullImageCmd(imageId)
+                    .exec(new PullImageResultCallback()).awaitSuccess();
+            log.debug("Image {} downloaded", imageId);
+
+        } else {
+            log.debug("Image {} already exists", imageId);
+        }
+    }
+
+    public boolean existsImage(String imageName) {
+        boolean exists = true;
+        try {
+            dockerClient.inspectImageCmd(imageName).exec();
+            log.trace("Image {} exists", imageName);
+
+        } catch (NotFoundException e) {
+            log.trace("Image {} does not exist", imageName);
+            exists = false;
+        }
+        return exists;
     }
 
     public String getContainerIpAddress(String containerName) {
