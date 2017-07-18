@@ -56,7 +56,7 @@ public interface SessionApi {
      * DELETE /session/{sessionId}/event/{subscriptionId}
      */
     @ApiOperation(value = "Remove a subscription", notes = "", response = Void.class, tags = {
-            "event subscription", })
+            "Event subscription", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = Void.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = Void.class),
@@ -70,7 +70,7 @@ public interface SessionApi {
      * GET /session/{sessionId}/element/{elementId}/audio
      */
     @ApiOperation(value = "Read the audio level of a given element (audio|video tag)", notes = "", response = AudioLevel.class, tags = {
-            "basic media evaluation", })
+            "Basic media evaluation", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = AudioLevel.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = AudioLevel.class),
@@ -102,7 +102,7 @@ public interface SessionApi {
      * GET /session/{sessionId}/event/{subscriptionId}
      */
     @ApiOperation(value = "Read the value of event for a given subscription", notes = "", response = EventValue.class, tags = {
-            "event subscription", })
+            "Event subscription", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = EventValue.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventValue.class),
@@ -132,7 +132,7 @@ public interface SessionApi {
      * POST /session/{sessionId}/usermedia
      */
     @ApiOperation(value = "Set user media for WebRTC", notes = "", response = Void.class, tags = {
-            "user media", })
+            "WebRTC user media", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = Void.class),
             @ApiResponse(code = 400, message = "Invalid media", response = Void.class),
@@ -147,7 +147,7 @@ public interface SessionApi {
      * POST /session/{sessionId}/element/{elementId}/latenc
      */
     @ApiOperation(value = "Measure end-to-end latency of a WebRTC session", notes = "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)", response = EventSubscription.class, tags = {
-            "advance media evaluation", })
+            "Advance media evaluation", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = EventSubscription.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventSubscription.class),
@@ -164,7 +164,7 @@ public interface SessionApi {
      * POST /session/{sessionId}/element/{elementId}/quality
      */
     @ApiOperation(value = "Measure quality (audio|video) of a WebRTC session", notes = "The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)", response = EventSubscription.class, tags = {
-            "advance media evaluation", })
+            "Advance media evaluation", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = EventSubscription.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventSubscription.class),
@@ -181,7 +181,7 @@ public interface SessionApi {
      * POST /session/{sessionId}/element/{elementId}/event
      */
     @ApiOperation(value = "Subscribe to a given event within an element", notes = "", response = EventSubscription.class, tags = {
-            "event subscription", })
+            "Event subscription", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = EventSubscription.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventSubscription.class),
@@ -200,7 +200,7 @@ public interface SessionApi {
      *
      * W3C WebDriver operations for sessions
      */
-    @ApiOperation(value = "W3C WebDriver operations", notes = "", response = String.class, tags = {
+    @ApiOperation(value = "W3C WebDriver standard sessions operations", notes = "", response = String.class, tags = {
             "W3C WebDriver" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation"),
@@ -217,7 +217,7 @@ public interface SessionApi {
      * W3C WebDriver operations for status
      */
     @ApiOperation(value = "Get status", notes = "", response = String.class, tags = {
-            "W3C WebDriver" })
+            "W3C WebDriver standard get status operation" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class) })
     @RequestMapping(value = "/status", produces = {
