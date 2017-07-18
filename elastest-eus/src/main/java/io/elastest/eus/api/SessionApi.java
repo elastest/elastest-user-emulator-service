@@ -216,8 +216,8 @@ public interface SessionApi {
      *
      * W3C WebDriver operations for status
      */
-    @ApiOperation(value = "Get status", notes = "", response = String.class, tags = {
-            "W3C WebDriver standard get status operation" })
+    @ApiOperation(value = "W3C WebDriver standard get status operation", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class) })
     @RequestMapping(value = "/status", produces = {
