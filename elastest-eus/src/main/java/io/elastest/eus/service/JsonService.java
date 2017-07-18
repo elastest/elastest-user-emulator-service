@@ -86,6 +86,12 @@ public class JsonService {
     @Value("${ws.protocol.creationTime}")
     private String wsProtocolCreationTime;
 
+    @Value("${ws.protocol.ready}")
+    private String wsProtocolReady;
+
+    @Value("${ws.protocol.message}")
+    private String wsProtocolMessage;
+
     private JSONObject getCapabilities(String jsonMessage) {
         return (JSONObject) string2Json(jsonMessage).get(webdriverCapabilities);
     }
@@ -180,6 +186,13 @@ public class JsonService {
         jsonObject.put(wsProtocolBrowser, sessionInfo.getBrowser());
         jsonObject.put(wsProtocolVersion, sessionInfo.getVersion());
         jsonObject.put(wsProtocolCreationTime, sessionInfo.getCreationTime());
+        return jsonObject;
+    }
+
+    public JSONObject getStatus() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(wsProtocolReady, true);
+        jsonObject.put(wsProtocolMessage, "EUS ready");
         return jsonObject;
     }
 

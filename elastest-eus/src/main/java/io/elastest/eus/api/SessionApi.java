@@ -196,6 +196,8 @@ public interface SessionApi {
             @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body);
 
     /**
+     * GET/POST/DELETE /session/**
+     *
      * W3C WebDriver operations for sessions
      */
     @ApiOperation(value = "W3C WebDriver operations", notes = "", response = String.class, tags = {
@@ -210,10 +212,25 @@ public interface SessionApi {
             HttpServletRequest request);
 
     /**
+     * GET /status
+     *
+     * W3C WebDriver operations for status
+     */
+    @ApiOperation(value = "Get status", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class) })
+    @RequestMapping(value = "/status", produces = {
+            "application/json" }, method = { RequestMethod.GET })
+    ResponseEntity<String> getStatus();
+
+    /**
+     * GET /session/{sessionId}/vnc
+     *
      * Get VNC session
      */
     @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
-            "VNC" })
+            "Remote control" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class) })

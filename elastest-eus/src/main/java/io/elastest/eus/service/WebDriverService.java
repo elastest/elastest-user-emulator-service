@@ -152,35 +152,22 @@ public class WebDriverService {
         } else {
             Optional<String> sessionIdFromPath = jsonService
                     .getSessionIdFromPath(requestContext);
-            if (sessionIdFromPath.isPresent()) {
-                String sessionId = sessionIdFromPath.get();
-                sessionInfo = sessionService.getSession(sessionId);
-                if (sessionInfo == null) {
-                    // Occurs if the given session id is not in the list of
-                    // active sessions, meaning the session either does not
-                    // exist or that it’s not active.
+            String sessionId = sessionIdFromPath.get();
+            sessionInfo = sessionService.getSession(sessionId);
+            if (sessionInfo == null) {
+                // Occurs if the given session id is not in the list of
+                // active sessions, meaning the session either does not
+                // exist or that it’s not active.
 
-                    HttpStatus responseStatusNotFound = NOT_FOUND;
-                    ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                            responseStatusNotFound);
+                HttpStatus responseStatusNotFound = NOT_FOUND;
+                ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                        responseStatusNotFound);
 
-                    log.debug("<< Response: {} ", responseStatusNotFound);
+                log.debug("<< Response: {} ", responseStatusNotFound);
 
-                    return responseEntity;
-                }
-                isLive = sessionInfo.isLiveSession();
-
-            } else {
-                // This is a special case that it is very unlikely to happen (in
-                // theory, clients should only call a different operation of
-                // POST /session after the first time. The only regular case out
-                // of this rule is the command GET /status, which is meaningless
-                // in EUS
-                String errorMessage = "Command " + method + " " + requestContext
-                        + " not valid";
-                log.error(errorMessage);
-                throw new EusException(errorMessage);
+                return responseEntity;
             }
+            isLive = sessionInfo.isLiveSession();
         }
 
         sessionService.shutdownSessionTimer(sessionInfo);
@@ -311,6 +298,10 @@ public class WebDriverService {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(vncUrl,
                 HttpStatus.OK);
         return responseEntity;
+    }
+
+    public String getStatus() {
+        return jsonService.getStatus().toString();
     }
 
     private String sanitizeMessage(String message) {
