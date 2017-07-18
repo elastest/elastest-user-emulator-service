@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
+package io.elastest.eus.service;
 
 import java.io.IOException;
 import java.util.Map;
@@ -28,7 +28,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import io.elastest.eus.api.session.SessionInfo;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * WebSocket service.

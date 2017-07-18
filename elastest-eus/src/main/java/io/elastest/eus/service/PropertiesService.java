@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
+package io.elastest.eus.service;
 
 import java.io.IOException;
 import java.io.InputStream;

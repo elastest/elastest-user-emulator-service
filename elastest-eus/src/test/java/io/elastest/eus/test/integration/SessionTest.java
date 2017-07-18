@@ -34,8 +34,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.app.EusSpringBootApp;
+import io.elastest.eus.service.JsonService;
 
 /**
  * Session test (including VNC).

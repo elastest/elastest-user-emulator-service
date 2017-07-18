@@ -14,14 +14,14 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
+package io.elastest.eus.service;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.api.session.SessionInfo;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * Service implementation session registry.

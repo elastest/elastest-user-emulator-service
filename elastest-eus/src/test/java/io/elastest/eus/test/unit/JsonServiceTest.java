@@ -29,8 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.api.service.JsonService;
 import io.elastest.eus.app.EusSpringBootApp;
+import io.elastest.eus.service.JsonService;
 
 /**
  * Tests for properties JSON service.

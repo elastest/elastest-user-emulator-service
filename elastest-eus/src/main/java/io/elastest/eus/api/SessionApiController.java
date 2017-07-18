@@ -41,7 +41,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
-import io.elastest.eus.api.service.WebDriverService;
+import io.elastest.eus.service.WebDriverService;
 import io.swagger.annotations.ApiParam;
 
 /**

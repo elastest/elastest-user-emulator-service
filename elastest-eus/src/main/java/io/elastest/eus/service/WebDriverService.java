@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
+package io.elastest.eus.service;
 
 import static org.springframework.http.HttpStatus.OK;
 
@@ -45,7 +45,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.api.EusException;
-import io.elastest.eus.api.session.SessionInfo;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.

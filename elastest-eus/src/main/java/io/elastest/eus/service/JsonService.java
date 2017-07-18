@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.service;
+package io.elastest.eus.service;
 
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.api.session.SessionInfo;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * Service implementation for JSON utilities.

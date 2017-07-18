@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api.session;
+package io.elastest.eus.session;
 
 /**
  * Session information.

@@ -28,9 +28,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.elastest.eus.api.service.JsonService;
-import io.elastest.eus.api.service.RegistryService;
-import io.elastest.eus.api.service.WebSocketService;
+import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.RegistryService;
+import io.elastest.eus.service.WebSocketService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
