@@ -206,8 +206,7 @@ public class WebDriverService {
             sessionService.putSession(sessionId, sessionInfo);
 
             if (!isLive) {
-                if (sessionService.isActiveSessions()
-                        && sessionInfo.getVncUrl() == null) {
+                if (sessionInfo.getVncUrl() == null) {
                     getVncUrl(sessionId);
                 }
                 sessionService.sendNewSessionToAllClients(sessionInfo);

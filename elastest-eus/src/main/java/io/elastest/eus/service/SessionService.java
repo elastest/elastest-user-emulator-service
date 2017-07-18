@@ -134,10 +134,6 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    public boolean isActiveSessions() {
-        return !activeSessions.isEmpty();
-    }
-
     public void removeSession(String sessionId) {
         sessionRegistry.remove(sessionId);
     }
