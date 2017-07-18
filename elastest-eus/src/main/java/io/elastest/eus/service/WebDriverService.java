@@ -192,10 +192,6 @@ public class WebDriverService {
                 hubUrl + requestContext, method, httpEntity, String.class);
         String responseBody = exchange.getBody();
 
-        // TODO handle exception
-        // org.springframework.web.client.HttpServerErrorException: 500 Server
-        // Error
-
         // Intercept again create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             String sessionId = jsonService
