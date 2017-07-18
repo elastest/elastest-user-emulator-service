@@ -1,9 +1,8 @@
 swagger: '2.0'
 info:
-  description: REST API descrition of the ElasTest User-emulator Service (EUS)
+  description: API description of the ElasTest User-emulator Service (EUS)
   version: 1.0.0
   title: ElasTest User-emulator Service REST API
-  contact: {}
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -11,12 +10,95 @@ host: 'localhost:8080'
 basePath: /eus/v1
 tags:
   - name: session-api-controller
-    description: the session API
+    description: Session Api Controller
 paths:
+  /session/**:
+    get:
+      tags:
+        - W3C WebDriver
+      summary: W3C WebDriver standard sessions operations
+      operationId: sessionUsingGET
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: httpEntity
+          in: query
+          description: httpEntity
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+    post:
+      tags:
+        - W3C WebDriver
+      summary: W3C WebDriver standard sessions operations
+      operationId: sessionUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: httpEntity
+          in: query
+          description: httpEntity
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
+    delete:
+      tags:
+        - W3C WebDriver
+      summary: W3C WebDriver standard sessions operations
+      operationId: sessionUsingDELETE
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: httpEntity
+          in: query
+          description: httpEntity
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: No such element
   '/session/{sessionId}/element/{elementId}/audio':
     get:
       tags:
-        - basic media evaluation
+        - Basic media evaluation
       summary: Read the audio level of a given element (audio|video tag)
       operationId: getAudioLevelUsingGET
       consumes:
@@ -106,7 +188,7 @@ paths:
   '/session/{sessionId}/element/{elementId}/event':
     post:
       tags:
-        - event subscription
+        - Event subscription
       summary: Subscribe to a given event within an element
       operationId: subscribeToQualityUsingPOST
       consumes:
@@ -154,7 +236,7 @@ paths:
   '/session/{sessionId}/element/{elementId}/latency':
     post:
       tags:
-        - advance media evaluation
+        - Advance media evaluation
       summary: Measure end-to-end latency of a WebRTC session
       description: The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)
       operationId: subscribeToEventUsingPOST
@@ -201,7 +283,7 @@ paths:
   '/session/{sessionId}/element/{elementId}/quality':
     post:
       tags:
-        - advance media evaluation
+        - Advance media evaluation
       summary: Measure quality (audio|video) of a WebRTC session
       description: The quality indicator is calculated comparing the media in P2P WebRTC communication (presenter-viewer)
       operationId: subscribeToLatencyUsingPOST
@@ -248,7 +330,7 @@ paths:
   '/session/{sessionId}/event/{subscriptionId}':
     get:
       tags:
-        - event subscription
+        - Event subscription
       summary: Read the value of event for a given subscription
       operationId: getStatsUsingGET
       consumes:
@@ -285,7 +367,7 @@ paths:
             $ref: '#/definitions/EventValue'
     delete:
       tags:
-        - event subscription
+        - Event subscription
       summary: Remove a subscription
       operationId: deleteSubscriptionUsingDELETE
       consumes:
@@ -357,7 +439,7 @@ paths:
   '/session/{sessionId}/usermedia':
     post:
       tags:
-        - user media
+        - WebRTC user media
       summary: Set user media for WebRTC
       operationId: setUserMediaUsingPOST
       consumes:
@@ -389,39 +471,102 @@ paths:
           description: Forbidden
         '404':
           description: URL not found
+  '/session/{sessionId}/vnc':
+    get:
+      tags:
+        - Remote control
+      summary: Get VNC session
+      operationId: getVncUsingGET
+      consumes:
+        - application/json
+      produces:
+        - text/plain
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '400':
+          description: Invalid session identifier
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /status:
+    get:
+      tags:
+        - W3C WebDriver
+      summary: W3C WebDriver standard get status operation
+      operationId: getStatusUsingGET
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
 definitions:
-  EventValue:
-    type: object
-    properties:
-      value:
-        type: string
-        description: Event value
-  UserMedia:
-    type: object
-    properties:
-      audio:
-        type: boolean
-        example: false
-        description: Flag that indicates whether or not the audio should be faked
-      mediaUrl:
-        type: string
-        description: 'URL of media (video, audio, or both) to fake WebRTC user media'
-      video:
-        type: boolean
-        example: false
-        description: Flag that indicates whether or not the video should be faked
-  EventSubscription:
-    type: object
-    properties:
-      subscriptionId:
-        type: string
-        description: Subscription identifier
   AudioLevel:
     type: object
     properties:
       audio:
         type: string
         description: Audio level
+  ColorValue:
+    type: object
+    properties:
+      color:
+        type: string
+        description: RGB color
+  Event:
+    type: object
+    properties:
+      event:
+        type: string
+        description: Event name
+  EventSubscription:
+    type: object
+    properties:
+      subscriptionId:
+        type: string
+        description: Subscription identifier
+  EventValue:
+    type: object
+    properties:
+      value:
+        type: string
+        description: Event value
+  Latency:
+    type: object
+    properties:
+      sampleRate:
+        type: integer
+        format: int32
+        description: Sample rate for the quality evaluation (in milliseconds)
+      senderElementId:
+        type: string
+        description: Element identifier of the video tag producer
+      senderSessionId:
+        type: string
+        description: Session identifier of the WebRTC media peer producer
   Quality:
     type: object
     properties:
@@ -442,18 +587,6 @@ definitions:
       senderSessionId:
         type: string
         description: Session identifier of the WebRTC media peer producer
-  ColorValue:
-    type: object
-    properties:
-      color:
-        type: string
-        description: RGB color
-  Event:
-    type: object
-    properties:
-      event:
-        type: string
-        description: Event name
   StatsValue:
     type: object
     properties:
@@ -463,16 +596,18 @@ definitions:
       stats:
         type: string
         description: All Peerconnection stats
-  Latency:
+  UserMedia:
     type: object
     properties:
-      sampleRate:
-        type: integer
-        format: int32
-        description: Sample rate for the quality evaluation (in milliseconds)
-      senderElementId:
+      audio:
+        type: boolean
+        example: false
+        description: Flag that indicates whether or not the audio should be faked
+      mediaUrl:
         type: string
-        description: Element identifier of the video tag producer
-      senderSessionId:
-        type: string
-        description: Session identifier of the WebRTC media peer producer
+        description: 'URL of media (video, audio, or both) to fake WebRTC user media'
+      video:
+        type: boolean
+        example: false
+        description: Flag that indicates whether or not the video should be faked
+
