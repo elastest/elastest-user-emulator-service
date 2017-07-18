@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.session;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 /**
  * Session information.
  *
@@ -32,6 +35,8 @@ public class SessionInfo {
     private String browser;
     private String version;
     private boolean liveSession;
+    private ExecutorService timeoutExecutor;
+    private Future<?> timeoutFuture;
 
     public String getHubUrl() {
         return hubUrl;
@@ -103,6 +108,22 @@ public class SessionInfo {
 
     public void setLiveSession(boolean liveSession) {
         this.liveSession = liveSession;
+    }
+
+    public ExecutorService getTimeoutExecutor() {
+        return timeoutExecutor;
+    }
+
+    public void setTimeoutExecutor(ExecutorService timeoutExecutor) {
+        this.timeoutExecutor = timeoutExecutor;
+    }
+
+    public Future<?> getTimeoutFuture() {
+        return timeoutFuture;
+    }
+
+    public void setTimeoutFuture(Future<?> timeoutFuture) {
+        this.timeoutFuture = timeoutFuture;
     }
 
 }

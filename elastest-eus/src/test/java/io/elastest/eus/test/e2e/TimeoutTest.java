@@ -16,21 +16,19 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
@@ -38,21 +36,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.app.EusSpringBootApp;
 
 /**
- * Selenium test.
+ * Timeout test.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
-public class SeleniumTest {
+@TestPropertySource(properties = { "hub.timeout=3" })
+public class TimeoutTest {
 
-    final Logger log = LoggerFactory.getLogger(SeleniumTest.class);
+    final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
 
     WebDriver driver;
 
@@ -62,36 +62,24 @@ public class SeleniumTest {
     @Value("${server.contextPath}")
     String contextPath;
 
-    static Stream<Arguments> capabilitiesProvider() {
-        return Stream.of(Arguments.of(DesiredCapabilities.chrome(), "chrome"),
-                Arguments.of(DesiredCapabilities.firefox(), "firefox"));
+    @BeforeEach
+    void setup() throws MalformedURLException {
+        String eusUrl = "http://localhost:" + serverPort + contextPath;
+        Capabilities capabilities = DesiredCapabilities.chrome();
+        driver = new RemoteWebDriver(new URL(eusUrl), capabilities);
+        log.debug("EUS URL: {}", eusUrl);
     }
 
-    @ParameterizedTest
-    @MethodSource("capabilitiesProvider")
-    void test(DesiredCapabilities capability, String expectedBrowserName)
-            throws MalformedURLException {
-        String eusUrl = "http://localhost:" + serverPort + contextPath;
-        String sutUrl = "https://en.wikipedia.org/wiki/Main_Page";
+    @Test
+    void test() throws InterruptedException {
+        // Do nothing a period of time > hub.timeout
+        Thread.sleep(5000);
 
-        log.debug("EUS URL: {}", eusUrl);
-        log.debug("SUT URL: {}", sutUrl);
+        Throwable exception = assertThrows(WebDriverException.class,
+                () -> driver.get("http://elastest.io/"));
 
-        driver = new RemoteWebDriver(new URL(eusUrl), capability);
-        driver.get(sutUrl);
-
-        String title = driver.getTitle();
-        log.debug("SUT title: {}", title);
-
-        assertNotNull(title);
-
-        Capabilities caps = ((RemoteWebDriver) driver).getCapabilities();
-        String realBrowserName = caps.getBrowserName();
-
-        log.debug("Expected browser: {} -- Real browser: {}",
-                expectedBrowserName, realBrowserName);
-
-        assertEquals(expectedBrowserName, realBrowserName);
+        log.debug("Exception {} -- due to timeout", exception.getMessage());
+        driver = null;
     }
 
     @AfterEach

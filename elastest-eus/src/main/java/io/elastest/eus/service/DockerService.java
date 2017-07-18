@@ -80,12 +80,17 @@ public class DockerService {
         dockerClient = DockerClientBuilder.getInstance().build();
     }
 
-    public void startAndWaitContainer(String imageId, String containerName) {
+    public void startAndWaitContainer(String imageId, String containerName,
+            String... env) {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
-            dockerClient.createContainerCmd(imageId).withName(containerName)
-                    .exec();
+            CreateContainerCmd createContainer = dockerClient
+                    .createContainerCmd(imageId).withName(containerName);
+            if (env != null) {
+                createContainer.withEnv(env);
+            }
+            createContainer.exec();
             dockerClient.startContainerCmd(containerName).exec();
             waitForContainer(containerName);
         } else {

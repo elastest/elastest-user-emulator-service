@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.service;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
@@ -88,26 +89,25 @@ public class WebDriverService {
     @Value("${hub.vnc.password}")
     private String hubVncPassword;
 
+    @Value("${hub.timeout}")
+    private String hubTimeout;
+
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
-    private RegistryService registryService;
-    private WebSocketService webSocketHandler;
+    private SessionService sessionService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
-            RegistryService registryService,
-            WebSocketService webSocketHandler) {
+            SessionService sessionService) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
-        this.registryService = registryService;
-        this.webSocketHandler = webSocketHandler;
-
+        this.sessionService = sessionService;
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -128,7 +128,7 @@ public class WebDriverService {
 
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
-            sessionInfo = starBrowser(requestBody);
+            sessionInfo = starBrowser(requestBody, hubTimeout);
             isLive = jsonService.isLive(requestBody);
 
             // -------------
@@ -154,7 +154,20 @@ public class WebDriverService {
                     .getSessionIdFromPath(requestContext);
             if (sessionIdFromPath.isPresent()) {
                 String sessionId = sessionIdFromPath.get();
-                sessionInfo = registryService.getSession(sessionId);
+                sessionInfo = sessionService.getSession(sessionId);
+                if (sessionInfo == null) {
+                    // Occurs if the given session id is not in the list of
+                    // active sessions, meaning the session either does not
+                    // exist or that it’s not active.
+
+                    HttpStatus responseStatusNotFound = NOT_FOUND;
+                    ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                            responseStatusNotFound);
+
+                    log.debug("<< Response: {} ", responseStatusNotFound);
+
+                    return responseEntity;
+                }
                 isLive = sessionInfo.isLiveSession();
 
             } else {
@@ -170,11 +183,18 @@ public class WebDriverService {
             }
         }
 
+        sessionService.shutdownSessionTimer(sessionInfo);
+        sessionService.startSessionTimer(sessionInfo);
+
         String hubUrl = sessionInfo.getHubUrl();
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> exchange = restTemplate.exchange(
                 hubUrl + requestContext, method, httpEntity, String.class);
         String responseBody = exchange.getBody();
+
+        // TODO handle exception
+        // org.springframework.web.client.HttpServerErrorException: 500 Server
+        // Error
 
         // Intercept again create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
@@ -183,14 +203,14 @@ public class WebDriverService {
             sessionInfo.setSessionId(sessionId);
             sessionInfo.setLiveSession(isLive);
 
-            registryService.putSession(sessionId, sessionInfo);
+            sessionService.putSession(sessionId, sessionInfo);
 
             if (!isLive) {
-                if (webSocketHandler.isActiveSessions()
+                if (sessionService.isActiveSessions()
                         && sessionInfo.getVncUrl() == null) {
                     getVncUrl(sessionId);
                 }
-                webSocketHandler.sendNewSessionToAllClients(sessionInfo);
+                sessionService.sendNewSessionToAllClients(sessionInfo);
             }
         }
 
@@ -205,37 +225,13 @@ public class WebDriverService {
         if (jsonService.isDeleteSessionRequest(method, requestContext)) {
             log.trace("Intercepted DELETE session");
 
-            stopAllContainerOfSession(sessionInfo);
-            registryService.removeSession(sessionInfo.getSessionId());
-
-            if (!isLive) {
-                webSocketHandler.sendRemoveSessionToAllClients(sessionInfo);
-            }
-
-            // TODO: Implement a timeout mechanism just in case this command is
-            // never invoked
+            sessionService.deleteSession(sessionInfo, false);
         }
 
         return responseEntity;
     }
 
-    public void stopAllContainerOfSession(String sessionId) {
-        stopAllContainerOfSession(registryService.getSession(sessionId));
-    }
-
-    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
-        String hubContainerName = sessionInfo.getHubContainerName();
-        if (hubContainerName != null) {
-            dockerService.stopAndRemoveContainer(hubContainerName);
-        }
-
-        String vncContainerName = sessionInfo.getVncContainerName();
-        if (vncContainerName != null) {
-            dockerService.stopAndRemoveContainer(vncContainerName);
-        }
-    }
-
-    public SessionInfo starBrowser(String jsonCapabilities) {
+    public SessionInfo starBrowser(String jsonCapabilities, String timeout) {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);
@@ -243,13 +239,15 @@ public class WebDriverService {
         String propertiesKey = propertiesService
                 .getKeyFromCapabilities(browserName, version, platform);
         String imageId = propertiesService.getDockerImageFromKey(propertiesKey);
-
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
+        String[] env = {
+                "SE_OPTS=-timeout " + timeout + " -browserTimeout " + timeout };
+        log.debug(
+                "Starting browser with container name {} and environment variables {}",
+                hubContainerName, env);
 
-        log.debug("Starting browser with container name {}", hubContainerName);
-
-        dockerService.startAndWaitContainer(imageId, hubContainerName);
+        dockerService.startAndWaitContainer(imageId, hubContainerName, env);
 
         String hubUrl = getHubUrl(hubContainerName);
         dockerService.waitForHostIsReachable(hubUrl);
@@ -301,7 +299,7 @@ public class WebDriverService {
         String vncContainerIp = dockerService
                 .getContainerIpAddress(vncContainerName);
 
-        SessionInfo sessionInfo = registryService.getSession(sessionId);
+        SessionInfo sessionInfo = sessionService.getSession(sessionId);
 
         String hubContainerIp = dockerService
                 .getContainerIpAddress(sessionInfo.getHubContainerName());

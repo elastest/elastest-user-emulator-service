@@ -35,7 +35,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.app.EusSpringBootApp;
 import io.elastest.eus.service.JsonService;
-import io.elastest.eus.service.RegistryService;
+import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
@@ -65,7 +65,7 @@ public class WebSocketTest {
     private String wsProtocolGetSessions;
 
     @Autowired
-    private RegistryService registryService;
+    private SessionService sessionService;
 
     @Autowired
     private JsonService jsonService;
@@ -77,7 +77,7 @@ public class WebSocketTest {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
-        registryService.putSession("my-session-id", sessionInfo);
+        sessionService.putSession("my-session-id", sessionInfo);
         jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
 
         log.debug("App started on port {}", serverPort);

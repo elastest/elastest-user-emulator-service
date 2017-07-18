@@ -19,6 +19,11 @@ package io.elastest.eus.service;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,27 +36,32 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import io.elastest.eus.session.SessionInfo;
 
 /**
- * WebSocket service.
+ * Session service (WebSocket and session registry).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class WebSocketService extends TextWebSocketHandler {
+public class SessionService extends TextWebSocketHandler {
 
-    private final Logger log = LoggerFactory.getLogger(WebSocketService.class);
+    private final Logger log = LoggerFactory.getLogger(SessionService.class);
 
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
 
-    private RegistryService registryService;
+    @Value("${hub.timeout}")
+    private String hubTimeout;
+
+    private DockerService dockerService;
 
     private JsonService jsonService;
 
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
 
-    public WebSocketService(RegistryService registryService,
+    private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
+
+    public SessionService(DockerService dockerService,
             JsonService jsonService) {
-        this.registryService = registryService;
+        this.dockerService = dockerService;
         this.jsonService = jsonService;
     }
 
@@ -103,8 +113,7 @@ public class WebSocketService extends TextWebSocketHandler {
 
     public void sendAllSessionsInfoToAllClients() {
         for (WebSocketSession session : activeSessions.values()) {
-            for (SessionInfo sessionInfo : registryService.getSessionRegistry()
-                    .values()) {
+            for (SessionInfo sessionInfo : sessionRegistry.values()) {
                 sendTextMessage(session,
                         jsonService.newSessionJson(sessionInfo).toString());
             }
@@ -127,6 +136,75 @@ public class WebSocketService extends TextWebSocketHandler {
 
     public boolean isActiveSessions() {
         return !activeSessions.isEmpty();
+    }
+
+    public void removeSession(String sessionId) {
+        sessionRegistry.remove(sessionId);
+    }
+
+    public void putSession(String sessionId, SessionInfo sessionEntry) {
+        sessionRegistry.put(sessionId, sessionEntry);
+    }
+
+    public SessionInfo getSession(String sessionId) {
+        return sessionRegistry.get(sessionId);
+    }
+
+    public Map<String, SessionInfo> getSessionRegistry() {
+        return sessionRegistry;
+    }
+
+    public void startSessionTimer(SessionInfo sessionInfo) {
+        Runnable deleteSession = () -> deleteSession(sessionInfo, true);
+        ScheduledExecutorService timeoutExecutor = Executors
+                .newScheduledThreadPool(1);
+        int timeout = Integer.parseInt(hubTimeout);
+        Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
+                timeout, TimeUnit.SECONDS);
+
+        sessionInfo.setTimeoutExecutor(timeoutExecutor);
+        sessionInfo.setTimeoutFuture(timeoutFuture);
+    }
+
+    public void shutdownSessionTimer(SessionInfo sessionInfo) {
+        Future<?> timeoutFuture = sessionInfo.getTimeoutFuture();
+        if (timeoutFuture != null) {
+            timeoutFuture.cancel(true);
+        }
+
+        ExecutorService timeoutExecutor = sessionInfo.getTimeoutExecutor();
+        if (timeoutExecutor != null) {
+            timeoutExecutor.shutdownNow();
+        }
+    }
+
+    public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
+        shutdownSessionTimer(sessionInfo);
+
+        if (timeout) {
+            log.info("Deleting session {} due to timeout of {} seconds",
+                    sessionInfo.getSessionId(), hubTimeout);
+        } else {
+            log.info("Deleting session {}", sessionInfo.getSessionId());
+        }
+
+        stopAllContainerOfSession(sessionInfo);
+        removeSession(sessionInfo.getSessionId());
+        if (!sessionInfo.isLiveSession()) {
+            sendRemoveSessionToAllClients(sessionInfo);
+        }
+    }
+
+    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
+        String hubContainerName = sessionInfo.getHubContainerName();
+        if (hubContainerName != null) {
+            dockerService.stopAndRemoveContainer(hubContainerName);
+        }
+
+        String vncContainerName = sessionInfo.getVncContainerName();
+        if (vncContainerName != null) {
+            dockerService.stopAndRemoveContainer(vncContainerName);
+        }
     }
 
 }

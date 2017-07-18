@@ -28,9 +28,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
-import io.elastest.eus.service.RegistryService;
-import io.elastest.eus.service.WebSocketService;
+import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
@@ -47,14 +47,14 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     private final Logger log = LoggerFactory.getLogger(EusSpringBootApp.class);
 
-    private RegistryService registryService;
+    private DockerService dockerService;
 
     private JsonService jsonService;
 
     @Autowired
-    public EusSpringBootApp(RegistryService registryService,
+    public EusSpringBootApp(DockerService dockerService,
             JsonService jsonService) {
-        this.registryService = registryService;
+        this.dockerService = dockerService;
         this.jsonService = jsonService;
     }
 
@@ -63,13 +63,13 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketService(), wsPath).setAllowedOrigins("*");
+        registry.addHandler(sessionService(), wsPath).setAllowedOrigins("*");
         log.debug("Registering WebSocker handler at {}", wsPath);
     }
 
     @Bean
-    public WebSocketService webSocketService() {
-        return new WebSocketService(registryService, jsonService);
+    public SessionService sessionService() {
+        return new SessionService(dockerService, jsonService);
     }
 
     public static void main(String[] args) throws Exception {
