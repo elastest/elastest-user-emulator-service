@@ -6,6 +6,6 @@ services:
 script:
     - cd elastest-eus
     - mvn test -Ddocker.server.url=unix:///var/run/docker.sock
-    - mvn cobertura:cobertura
+    - mvn cobertura:cobertura -Ddocker.server.url=unix:///var/run/docker.sock
     - bash <(curl -s https://codecov.io/bash)
 
