@@ -85,7 +85,7 @@ public interface SessionApi {
      * GET /session/{sessionId}/element/{elementId}/color
      */
     @ApiOperation(value = "Read the RGB color of the coordinates of a given element", notes = "", response = ColorValue.class, tags = {
-            "basic media evaluation", })
+            "Basic media evaluation", })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = ColorValue.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = ColorValue.class),

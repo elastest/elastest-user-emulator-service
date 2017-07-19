@@ -136,7 +136,7 @@ paths:
   '/session/{sessionId}/element/{elementId}/color':
     get:
       tags:
-        - basic media evaluation
+        - Basic media evaluation
       summary: Read the RGB color of the coordinates of a given element
       operationId: getColorByCoordinatesUsingGET
       consumes:
