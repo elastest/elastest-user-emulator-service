@@ -18,11 +18,18 @@ package io.elastest.eus.service;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Map;
@@ -38,6 +45,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -73,11 +81,80 @@ public class DockerService {
     @Value("${docker.remove.container.retries}")
     private int dockerRemoveContainersRetries;
 
+    @Value("${docker.server.port}")
+    private int dockerServerPort;
+
+    private ShellService shellService;
+
     private DockerClient dockerClient;
+
+    private String dockerServerIp;
+
+    private Boolean isRunningInContainer;
+
+    @Autowired
+    public DockerService(ShellService shellService) {
+        this.shellService = shellService;
+    }
 
     @PostConstruct
     private void postConstruct() {
-        dockerClient = DockerClientBuilder.getInstance().build();
+        dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())
+                .build();
+    }
+
+    public String getDockerServerUrl() {
+        String dockerServerUrl = "tcp://" + getDockerServerIp() + ":"
+                + dockerServerPort;
+        log.debug("Docker server URL: {}", dockerServerUrl);
+        return dockerServerUrl;
+    }
+
+    public String getDockerServerIp() {
+        if (dockerServerIp == null) {
+            try {
+                if (isRunningInContainer()) {
+                    String ipRoute = shellService.runAndWait("sh", "-c",
+                            "/sbin/ip route");
+                    String[] tokens = ipRoute.split("\\s");
+                    dockerServerIp = tokens[2];
+
+                } else if (IS_OS_WINDOWS) {
+                    dockerServerIp = shellService.runAndWait("docker-machine",
+                            "ip");
+
+                } else {
+                    dockerServerIp = InetAddress.getLocalHost()
+                            .getHostAddress();
+                }
+                log.trace("Docker server IP: {}", dockerServerIp);
+
+            } catch (Exception e) {
+                throw new EusException("Exception getting docker server IP", e);
+            }
+        }
+
+        return dockerServerIp;
+    }
+
+    private boolean isRunningInContainer() {
+        if (isRunningInContainer == null) {
+            try (BufferedReader br = Files.newBufferedReader(
+                    Paths.get("/proc/1/cgroup"), StandardCharsets.UTF_8)) {
+
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    if (line.contains("/docker")) {
+                        return true;
+                    }
+                }
+                isRunningInContainer = false;
+
+            } catch (IOException e) {
+                isRunningInContainer = false;
+            }
+        }
+        return isRunningInContainer;
     }
 
     public void startAndWaitContainer(String imageId, String containerName,
