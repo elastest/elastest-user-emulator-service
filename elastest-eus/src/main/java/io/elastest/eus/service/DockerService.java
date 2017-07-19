@@ -127,8 +127,9 @@ public class DockerService {
                     dockerServerIp = tokens[2];
 
                 } else if (IS_OS_WINDOWS) {
-                    dockerServerIp = shellService.runAndWait("docker-machine",
-                            "ip");
+                    dockerServerIp = shellService
+                            .runAndWait("docker-machine", "ip")
+                            .replaceAll("\\r", "").replaceAll("\\n", "");
 
                 } else {
                     dockerServerIp = InetAddress.getLocalHost()
