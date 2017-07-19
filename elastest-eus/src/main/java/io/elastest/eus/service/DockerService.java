@@ -81,6 +81,9 @@ public class DockerService {
     @Value("${docker.remove.container.retries}")
     private int dockerRemoveContainersRetries;
 
+    @Value("${docker.server.url}")
+    private String dockerServerUrl;
+
     @Value("${docker.server.port}")
     private int dockerServerPort;
 
@@ -104,10 +107,14 @@ public class DockerService {
     }
 
     public String getDockerServerUrl() {
-        String dockerServerUrl = "tcp://" + getDockerServerIp() + ":"
-                + dockerServerPort;
-        log.debug("Docker server URL: {}", dockerServerUrl);
-        return dockerServerUrl;
+        String out;
+        if (dockerServerUrl != null && !dockerServerUrl.equals("")) {
+            out = dockerServerUrl;
+        } else {
+            out = "tcp://" + getDockerServerIp() + ":" + dockerServerPort;
+        }
+        log.debug("Docker server URL: {}", out);
+        return out;
     }
 
     public String getDockerServerIp() {
