@@ -86,6 +86,9 @@ public class DockerService {
 
     @Value("${docker.server.port}")
     private int dockerServerPort;
+    
+    @Value("${docker.network}")
+    private String dockerNetwork;
 
     private ShellService shellService;
 
@@ -170,7 +173,7 @@ public class DockerService {
             pullImageIfNecessary(imageId);
 
             CreateContainerCmd createContainer = dockerClient
-                    .createContainerCmd(imageId).withName(containerName);
+                    .createContainerCmd(imageId).withName(containerName).withNetworkMode(dockerNetwork);
             if (env != null) {
                 createContainer.withEnv(env);
             }
@@ -188,7 +191,7 @@ public class DockerService {
             pullImageIfNecessary(imageId);
 
             CreateContainerCmd containerCmd = dockerClient
-                    .createContainerCmd(imageId).withName(containerName);
+                    .createContainerCmd(imageId).withName(containerName).withNetworkMode(dockerNetwork);
             if (volumes != null) {
                 containerCmd.withVolumes(volumes);
             }
