@@ -141,11 +141,11 @@ public class WebDriverService {
                 version = "";
                 log.warn(
                         "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
-                httpEntity = new HttpEntity<String>("{\n"
-                        + "  \"desiredCapabilities\": {\n"
-                        + "    \"browserName\": \"firefox\",\n"
-                        + "    \"version\": \"\",\n"
-                        + "    \"platform\": \"ANY\"\n" + "  }\n" + "}");
+                httpEntity = new HttpEntity<String>(
+                        "{ \"desiredCapabilities\": {"
+                                + "\"browserName\": \"firefox\","
+                                + "\"version\": \"\","
+                                + "\"platform\": \"ANY\" } }");
             }
             // -------------
 
@@ -159,18 +159,11 @@ public class WebDriverService {
                 // active sessions, meaning the session either does not
                 // exist or that it’s not active.
 
-                HttpStatus responseStatusNotFound = NOT_FOUND;
-                ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                        responseStatusNotFound);
-
-                log.debug("<< Response: {} ", responseStatusNotFound);
-
-                return responseEntity;
+                return sessionNotFound();
             }
             isLive = sessionInfo.isLiveSession();
         }
 
-        sessionService.shutdownSessionTimer(sessionInfo);
         sessionService.startSessionTimer(sessionInfo);
 
         String hubUrl = sessionInfo.getHubUrl();
@@ -188,9 +181,9 @@ public class WebDriverService {
 
             sessionService.putSession(sessionId, sessionInfo);
 
-            if (!isLive) {
-                if (sessionInfo.getVncUrl() == null) {
-                    getVncUrl(sessionId);
+            if (sessionService.activeWebSocketSessions()) {
+                if (!isLive && sessionInfo.getVncUrl() == null) {
+                    startVncContainer(sessionInfo);
                 }
                 sessionService.sendNewSessionToAllClients(sessionInfo);
             }
@@ -209,6 +202,16 @@ public class WebDriverService {
 
             sessionService.deleteSession(sessionInfo, false);
         }
+
+        return responseEntity;
+    }
+
+    private ResponseEntity<String> sessionNotFound() {
+        HttpStatus responseStatusNotFound = NOT_FOUND;
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                responseStatusNotFound);
+
+        log.debug("<< Response: {} ", responseStatusNotFound);
 
         return responseEntity;
     }
@@ -254,6 +257,18 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> getVncUrl(String sessionId) {
+        SessionInfo sessionInfo = sessionService.getSession(sessionId);
+        if (sessionInfo == null) {
+            return sessionNotFound();
+        }
+        startVncContainer(sessionInfo);
+
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                sessionInfo.getVncUrl(), HttpStatus.OK);
+        return responseEntity;
+    }
+
+    private void startVncContainer(SessionInfo sessionInfo) {
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
@@ -281,8 +296,6 @@ public class WebDriverService {
         String vncContainerIp = dockerService
                 .getContainerIpAddress(vncContainerName);
 
-        SessionInfo sessionInfo = sessionService.getSession(sessionId);
-
         String hubContainerIp = dockerService
                 .getContainerIpAddress(sessionInfo.getHubContainerName());
         String vncUrl = "http://" + vncContainerIp + ":" + noVncPort + "/"
@@ -294,10 +307,6 @@ public class WebDriverService {
 
         sessionInfo.setVncContainerName(vncContainerName);
         sessionInfo.setVncUrl(vncUrl);
-
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(vncUrl,
-                HttpStatus.OK);
-        return responseEntity;
     }
 
     public String getStatus() {

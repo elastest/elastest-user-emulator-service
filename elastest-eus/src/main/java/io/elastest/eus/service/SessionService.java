@@ -19,7 +19,6 @@ package io.elastest.eus.service;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,6 +57,9 @@ public class SessionService extends TextWebSocketHandler {
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
 
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
+
+    private ScheduledExecutorService timeoutExecutor = Executors
+            .newScheduledThreadPool(1);
 
     public SessionService(DockerService dockerService,
             JsonService jsonService) {
@@ -127,6 +129,10 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    public boolean activeWebSocketSessions() {
+        return !activeSessions.isEmpty();
+    }
+
     public void sendRemoveSessionToAllClients(SessionInfo sessionInfo) {
         for (WebSocketSession session : activeSessions.values()) {
             sendTextMessage(session,
@@ -143,6 +149,11 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public SessionInfo getSession(String sessionId) {
+        SessionInfo sessionInfo = sessionRegistry.get(sessionId);
+
+        shutdownSessionTimer(sessionInfo);
+        startSessionTimer(sessionInfo);
+
         return sessionRegistry.get(sessionId);
     }
 
@@ -151,26 +162,23 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public void startSessionTimer(SessionInfo sessionInfo) {
-        Runnable deleteSession = () -> deleteSession(sessionInfo, true);
-        ScheduledExecutorService timeoutExecutor = Executors
-                .newScheduledThreadPool(1);
-        int timeout = Integer.parseInt(hubTimeout);
-        Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
-                timeout, TimeUnit.SECONDS);
+        if (sessionInfo != null) {
+            Runnable deleteSession = () -> deleteSession(sessionInfo, true);
 
-        sessionInfo.setTimeoutExecutor(timeoutExecutor);
-        sessionInfo.setTimeoutFuture(timeoutFuture);
+            int timeout = Integer.parseInt(hubTimeout);
+            Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
+                    timeout, TimeUnit.SECONDS);
+
+            sessionInfo.setTimeoutFuture(timeoutFuture);
+        }
     }
 
     public void shutdownSessionTimer(SessionInfo sessionInfo) {
-        Future<?> timeoutFuture = sessionInfo.getTimeoutFuture();
-        if (timeoutFuture != null) {
-            timeoutFuture.cancel(true);
-        }
-
-        ExecutorService timeoutExecutor = sessionInfo.getTimeoutExecutor();
-        if (timeoutExecutor != null) {
-            timeoutExecutor.shutdownNow();
+        if (sessionInfo != null) {
+            Future<?> timeoutFuture = sessionInfo.getTimeoutFuture();
+            if (timeoutFuture != null) {
+                timeoutFuture.cancel(true);
+            }
         }
     }
 
