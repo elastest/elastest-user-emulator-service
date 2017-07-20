@@ -129,6 +129,8 @@ public class WebDriverService {
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
             sessionInfo = starBrowser(requestBody, hubTimeout);
+            sessionService.startSessionTimer(sessionInfo);
+
             isLive = jsonService.isLive(requestBody);
 
             // -------------
@@ -163,8 +165,6 @@ public class WebDriverService {
             }
             isLive = sessionInfo.isLiveSession();
         }
-
-        sessionService.startSessionTimer(sessionInfo);
 
         String hubUrl = sessionInfo.getHubUrl();
         RestTemplate restTemplate = new RestTemplate();

@@ -49,7 +49,7 @@ import io.elastest.eus.app.EusSpringBootApp;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "hub.timeout=8" })
+@TestPropertySource(properties = { "hub.timeout=10" })
 public class TimeoutTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
@@ -73,7 +73,7 @@ public class TimeoutTest {
     @Test
     void test() throws InterruptedException {
         // Do nothing a period of time > hub.timeout
-        Thread.sleep(10000);
+        Thread.sleep(12000);
 
         Throwable exception = assertThrows(WebDriverException.class,
                 () -> driver.get("http://elastest.io/"));
