@@ -19,17 +19,12 @@ package io.elastest.eus.service;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +36,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.github.dockerjava.api.model.AccessMode;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Volume;
-
-import io.elastest.eus.api.EusException;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -272,27 +262,7 @@ public class WebDriverService {
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
-        InputStream inputStream = this.getClass()
-                .getResourceAsStream("/" + vncAutoFocusHtml);
-        String originPath;
-        try {
-            Path tempFile = Files.createTempFile("eus", "autofocus");
-            FileUtils.copyInputStreamToFile(inputStream, tempFile.toFile());
-            originPath = tempFile.toFile().getAbsolutePath();
-        } catch (IOException e) {
-            String errorMessage = "There was a problem reading "
-                    + vncAutoFocusHtml + " due to " + e.getMessage();
-            throw new EusException(errorMessage, e);
-        }
-
-        String targetPath = "/root/noVNC/" + vncAutoFocusHtml;
-        Volume[] volumes = { new Volume(targetPath) };
-        Bind[] binds = { new Bind(originPath, volumes[0], AccessMode.rw) };
-
-        log.trace("Mounting volume {} from {}", targetPath, originPath);
-
-        dockerService.startAndWaitContainerWithVolumes(noVncImageId,
-                vncContainerName, volumes, binds);
+        dockerService.startAndWaitContainer(noVncImageId, vncContainerName);
         String vncContainerIp = dockerService
                 .getContainerIpAddress(vncContainerName);
 
