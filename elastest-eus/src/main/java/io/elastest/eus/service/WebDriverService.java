@@ -171,8 +171,8 @@ public class WebDriverService {
 
             sessionService.putSession(sessionId, sessionInfo);
 
-            if (sessionService.activeWebSocketSessions()) {
-                if (!isLive && sessionInfo.getVncUrl() == null) {
+            if (sessionService.activeWebSocketSessions() && !isLive) {
+                if (sessionInfo.getVncUrl() == null) {
                     startVncContainer(sessionInfo);
                 }
                 sessionService.sendNewSessionToAllClients(sessionInfo);
