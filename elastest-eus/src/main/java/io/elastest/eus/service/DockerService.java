@@ -82,8 +82,14 @@ public class DockerService {
     @Value("${docker.server.url}")
     private String dockerServerUrl;
 
+    @Value("${docker.network}")
+    private String dockerNetwork;
+
     @Value("${docker.server.port}")
     private int dockerServerPort;
+
+    @Value("${use.torm}")
+    private boolean useTorm;
 
     private ShellService shellService;
 
@@ -168,8 +174,12 @@ public class DockerService {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
+            log.debug("Using TORM: {}", useTorm);
             CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName);
+            if (useTorm) {
+                createContainer.withNetworkMode(dockerNetwork);
+            }
             if (env != null) {
                 createContainer.withEnv(env);
             }
