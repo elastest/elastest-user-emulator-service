@@ -17,6 +17,7 @@
 package io.elastest.eus.service;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -32,6 +33,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.elastest.eus.api.EusException;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -149,11 +151,6 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public SessionInfo getSession(String sessionId) {
-        SessionInfo sessionInfo = sessionRegistry.get(sessionId);
-
-        shutdownSessionTimer(sessionInfo);
-        startSessionTimer(sessionInfo);
-
         return sessionRegistry.get(sessionId);
     }
 
@@ -170,6 +167,8 @@ public class SessionService extends TextWebSocketHandler {
                     timeout, TimeUnit.SECONDS);
 
             sessionInfo.setTimeoutFuture(timeoutFuture);
+
+            log.trace("Starting timer of {} seconds", hubTimeout);
         }
     }
 
@@ -208,6 +207,14 @@ public class SessionService extends TextWebSocketHandler {
         String vncContainerName = sessionInfo.getVncContainerName();
         if (vncContainerName != null) {
             dockerService.stopAndRemoveContainer(vncContainerName);
+        }
+    }
+
+    public Integer findRandomOpenPort() {
+        try (ServerSocket socket = new ServerSocket(0);) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new EusException("Exception looking for a free port", e);
         }
     }
 

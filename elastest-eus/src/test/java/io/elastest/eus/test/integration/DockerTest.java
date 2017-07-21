@@ -16,21 +16,27 @@
  */
 package io.elastest.eus.test.integration;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.app.EusSpringBootApp;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
-import io.elastest.eus.service.WebDriverService;
+import io.elastest.eus.service.SessionService;
 
 /**
  * Tests for Docker service.
@@ -54,7 +60,13 @@ public class DockerTest {
     private JsonService jsonService;
 
     @Autowired
-    private WebDriverService webDriverService;
+    private SessionService sessionService;
+
+    @Value("${hub.bindport}")
+    private int hubBindPort;
+
+    @Value("${hub.vnc.bindport}")
+    private int hubVncBindPort;
 
     @Test
     void test() {
@@ -76,13 +88,22 @@ public class DockerTest {
         String containerName = dockerService
                 .generateContainerName("eus-hub-for-test-");
 
-        dockerService.startAndWaitContainer(imageId, containerName);
+        int hubExposedPort = sessionService.findRandomOpenPort();
+        Binding bindPort = Ports.Binding.bindPort(hubBindPort);
+        ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
 
-        String hubUrl = webDriverService.getHubUrl(containerName);
+        int hubVncExposedPort = sessionService.findRandomOpenPort();
+        Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
+        ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
+
+        PortBinding[] portBindings = { new PortBinding(bindPort, exposedPort),
+                new PortBinding(bindHubVncPort, exposedHubVncPort) };
+
+        dockerService.startAndWaitContainer(imageId, containerName,
+                portBindings);
 
         // Assertions
-        log.debug("Hub URL {}", hubUrl);
-        assertNotNull(hubUrl);
+        assertTrue(dockerService.existsContainer(containerName));
 
         // Tear down
         log.debug("Stoping Hub");

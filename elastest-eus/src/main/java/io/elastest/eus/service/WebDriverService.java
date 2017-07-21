@@ -36,6 +36,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Ports.Binding;
+
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -58,8 +63,8 @@ public class WebDriverService {
     @Value("${novnc.image.id}")
     private String noVncImageId;
 
-    @Value("${novnc.port}")
-    private int noVncPort;
+    @Value("${novnc.exposedport}")
+    private int noVncExposedPort;
 
     @Value("${novnc.container.sufix}")
     private String noVncContainerSufix;
@@ -67,11 +72,11 @@ public class WebDriverService {
     @Value("${novnc.autofocus.html}")
     private String vncAutoFocusHtml;
 
-    @Value("${hub.port}")
-    private int hubPort;
+    @Value("${hub.exposedport}")
+    private int hubExposedPort;
 
-    @Value("${hub.vnc.port}")
-    private int hubVncPort;
+    @Value("${hub.vnc.exposedport}")
+    private int hubVncExposedPort;
 
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
@@ -79,6 +84,8 @@ public class WebDriverService {
     @Value("${hub.vnc.password}")
     private String hubVncPassword;
 
+    // Defined as String instead of integer for testing purposes (inject with
+    // @TestPropertySource)
     @Value("${hub.timeout}")
     private String hubTimeout;
 
@@ -118,10 +125,13 @@ public class WebDriverService {
 
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
-            sessionInfo = starBrowser(requestBody, hubTimeout);
-            sessionService.startSessionTimer(sessionInfo);
-
             isLive = jsonService.isLive(requestBody);
+
+            // If live, no timeout
+            if (isLive) {
+                hubTimeout = "0";
+            }
+            sessionInfo = starBrowser(requestBody, hubTimeout);
 
             // -------------
             // FIXME: Workaround due to bug of selenium-server 3.4.0
@@ -154,6 +164,12 @@ public class WebDriverService {
                 return sessionNotFound();
             }
             isLive = sessionInfo.isLiveSession();
+        }
+
+        // Only using timer for non-live sessions
+        if (!isLive) {
+            sessionService.shutdownSessionTimer(sessionInfo);
+            sessionService.startSessionTimer(sessionInfo);
         }
 
         String hubUrl = sessionInfo.getHubUrl();
@@ -222,9 +238,23 @@ public class WebDriverService {
                 "Starting browser with container name {} and environment variables {}",
                 hubContainerName, env);
 
-        dockerService.startAndWaitContainer(imageId, hubContainerName, env);
+        // Port binding
+        int hubBindPort = sessionService.findRandomOpenPort();
+        Binding bindPort = Ports.Binding.bindPort(hubBindPort);
+        ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
 
-        String hubUrl = getHubUrl(hubContainerName);
+        int hubVncBindPort = sessionService.findRandomOpenPort();
+        Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
+        ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
+
+        PortBinding[] portBindings = { new PortBinding(bindPort, exposedPort),
+                new PortBinding(bindHubVncPort, exposedHubVncPort) };
+
+        dockerService.startAndWaitContainer(imageId, hubContainerName,
+                portBindings, env);
+
+        String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
+                + hubBindPort + "/wd/hub";
         dockerService.waitForHostIsReachable(hubUrl);
 
         log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
@@ -237,13 +267,10 @@ public class WebDriverService {
                 .setVersion(propertiesService.getVersionFromKey(propertiesKey));
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
+        sessionInfo.setHubBindPort(hubBindPort);
+        sessionInfo.setHubVncBindPort(hubVncBindPort);
 
         return sessionInfo;
-    }
-
-    public String getHubUrl(String containerName) {
-        return "http://" + dockerService.getContainerIpAddress(containerName)
-                + ":" + hubPort + "/wd/hub";
     }
 
     public ResponseEntity<String> getVncUrl(String sessionId) {
@@ -262,21 +289,29 @@ public class WebDriverService {
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
-        dockerService.startAndWaitContainer(noVncImageId, vncContainerName);
-        String vncContainerIp = dockerService
-                .getContainerIpAddress(vncContainerName);
+        // Port binding
+        int noVncBindPort = sessionService.findRandomOpenPort();
+        Binding bindNoVncPort = Ports.Binding.bindPort(noVncBindPort);
+        ExposedPort exposedNoVncPort = ExposedPort.tcp(noVncExposedPort);
 
-        String hubContainerIp = dockerService
-                .getContainerIpAddress(sessionInfo.getHubContainerName());
-        String vncUrl = "http://" + vncContainerIp + ":" + noVncPort + "/"
+        PortBinding[] portBindings = {
+                new PortBinding(bindNoVncPort, exposedNoVncPort) };
+
+        dockerService.startAndWaitContainer(noVncImageId, vncContainerName,
+                portBindings);
+        String vncContainerIp = dockerService.getDockerServerIp();
+        String hubContainerIp = dockerService.getDockerServerIp();
+
+        String vncUrl = "http://" + vncContainerIp + ":" + noVncBindPort + "/"
                 + vncAutoFocusHtml + "?host=" + hubContainerIp + "&port="
-                + hubVncPort + "&resize=scale&autoconnect=true&password="
-                + hubVncPassword;
+                + sessionInfo.getHubVncBindPort()
+                + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
 
         dockerService.waitForHostIsReachable(vncUrl);
 
         sessionInfo.setVncContainerName(vncContainerName);
         sessionInfo.setVncUrl(vncUrl);
+        sessionInfo.setNoVncBindPort(noVncBindPort);
     }
 
     public String getStatus() {

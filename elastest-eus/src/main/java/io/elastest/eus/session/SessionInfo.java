@@ -35,6 +35,9 @@ public class SessionInfo {
     private String version;
     private boolean liveSession;
     private Future<?> timeoutFuture;
+    private int hubBindPort;
+    private int hubVncBindPort;
+    private int noVncBindPort;
 
     public String getHubUrl() {
         return hubUrl;
@@ -114,6 +117,30 @@ public class SessionInfo {
 
     public void setTimeoutFuture(Future<?> timeoutFuture) {
         this.timeoutFuture = timeoutFuture;
+    }
+
+    public int getHubBindPort() {
+        return hubBindPort;
+    }
+
+    public void setHubBindPort(int hubBindPort) {
+        this.hubBindPort = hubBindPort;
+    }
+
+    public int getHubVncBindPort() {
+        return hubVncBindPort;
+    }
+
+    public void setHubVncBindPort(int hubVncBindPort) {
+        this.hubVncBindPort = hubVncBindPort;
+    }
+
+    public int getNoVncBindPort() {
+        return noVncBindPort;
+    }
+
+    public void setNoVncBindPort(int noVncBindPort) {
+        this.noVncBindPort = noVncBindPort;
     }
 
 }

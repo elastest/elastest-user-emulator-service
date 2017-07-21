@@ -53,6 +53,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
@@ -131,9 +132,7 @@ public class DockerService {
                     dockerServerIp = tokens[2];
 
                 } else if (IS_OS_WINDOWS) {
-                    dockerServerIp = shellService
-                            .runAndWait("docker-machine", "ip")
-                            .replaceAll("\\r", "").replaceAll("\\n", "");
+                    dockerServerIp = getDockerMachineIp();
 
                 } else {
                     dockerServerIp = InetAddress.getLocalHost()
@@ -147,6 +146,11 @@ public class DockerService {
         }
 
         return dockerServerIp;
+    }
+
+    public String getDockerMachineIp() {
+        return shellService.runAndWait("docker-machine", "ip")
+                .replaceAll("\\r", "").replaceAll("\\n", "");
     }
 
     private boolean isRunningInContainer() {
@@ -170,7 +174,7 @@ public class DockerService {
     }
 
     public void startAndWaitContainer(String imageId, String containerName,
-            String... env) {
+            PortBinding[] portBindings, String... env) {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
@@ -180,6 +184,18 @@ public class DockerService {
             if (useTorm) {
                 createContainer.withNetworkMode(dockerNetwork);
             }
+
+            if (portBindings != null) {
+                if (log.isDebugEnabled()) {
+                    for (PortBinding p : portBindings) {
+                        log.debug("Using port binding {} -> {}",
+                                p.getExposedPort().getPort(),
+                                p.getBinding().getHostPortSpec());
+                    }
+                }
+                createContainer.withPortBindings(portBindings);
+            }
+
             if (env != null) {
                 createContainer.withEnv(env);
             }
@@ -214,10 +230,16 @@ public class DockerService {
     }
 
     public String getContainerIpAddress(String containerName) {
-        Map<String, ContainerNetwork> networks = dockerClient
-                .inspectContainerCmd(containerName).exec().getNetworkSettings()
-                .getNetworks();
-        return networks.values().iterator().next().getIpAddress();
+        String ipAddress;
+        if (IS_OS_WINDOWS) {
+            ipAddress = getDockerServerIp();
+        } else {
+            Map<String, ContainerNetwork> networks = dockerClient
+                    .inspectContainerCmd(containerName).exec()
+                    .getNetworkSettings().getNetworks();
+            ipAddress = networks.values().iterator().next().getIpAddress();
+        }
+        return ipAddress;
     }
 
     public void stopAndRemoveContainer(String containerName) {
