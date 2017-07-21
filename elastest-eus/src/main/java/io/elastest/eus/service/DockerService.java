@@ -125,14 +125,11 @@ public class DockerService {
     public String getDockerServerIp() {
         if (dockerServerIp == null) {
             try {
-                if (isRunningInContainer()) {
-                    String ipRoute = shellService.runAndWait("sh", "-c",
-                            "/sbin/ip route");
-                    String[] tokens = ipRoute.split("\\s");
-                    dockerServerIp = tokens[2];
-
-                } else if (IS_OS_WINDOWS) {
+                if (IS_OS_WINDOWS) {
                     dockerServerIp = getDockerMachineIp();
+
+                } else if (isRunningInContainer()) {
+                    dockerServerIp = getContainerIp();
 
                 } else {
                     dockerServerIp = InetAddress.getLocalHost()
@@ -146,6 +143,12 @@ public class DockerService {
         }
 
         return dockerServerIp;
+    }
+
+    public String getContainerIp() {
+        String ipRoute = shellService.runAndWait("sh", "-c", "/sbin/ip route");
+        String[] tokens = ipRoute.split("\\s");
+        return tokens[2];
     }
 
     public String getDockerMachineIp() {
