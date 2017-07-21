@@ -62,11 +62,11 @@ public class DockerTest {
     @Autowired
     private SessionService sessionService;
 
-    @Value("${hub.bindport}")
-    private int hubBindPort;
+    @Value("${hub.exposedport}")
+    private int hubExposedPort;
 
-    @Value("${hub.vnc.bindport}")
-    private int hubVncBindPort;
+    @Value("${hub.vnc.exposedport}")
+    private int hubVncExposedPort;
 
     @Test
     void test() {
@@ -88,11 +88,11 @@ public class DockerTest {
         String containerName = dockerService
                 .generateContainerName("eus-hub-for-test-");
 
-        int hubExposedPort = sessionService.findRandomOpenPort();
+        int hubBindPort = sessionService.findRandomOpenPort();
         Binding bindPort = Ports.Binding.bindPort(hubBindPort);
         ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
 
-        int hubVncExposedPort = sessionService.findRandomOpenPort();
+        int hubVncBindPort = sessionService.findRandomOpenPort();
         Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
         ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
 
