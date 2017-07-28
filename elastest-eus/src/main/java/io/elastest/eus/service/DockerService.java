@@ -23,6 +23,7 @@ import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
@@ -299,6 +300,10 @@ public class DockerService {
             String... command) {
         String output = null;
         if (existsContainer(containerName)) {
+            log.trace(
+                    "Executing command {} in container {} (await completion {})",
+                    Arrays.toString(command), containerName, awaitCompletion);
+
             ExecCreateCmdResponse exec = dockerClient
                     .execCreateCmd(containerName).withCmd(command)
                     .withTty(false).withAttachStdin(true).withAttachStdout(true)
@@ -316,24 +321,33 @@ public class DockerService {
             } catch (InterruptedException e) {
                 log.warn("Exception executing command {} on container {}",
                         Arrays.toString(command), containerName, e);
+            } finally {
+                log.trace("{} ... done", Arrays.toString(command));
             }
         }
         return output;
     }
 
-    public void copyFileFromContainer(String containerName, String fileName,
-            String target) {
-        if (existsContainer(containerName)) {
-            shellService.runAndWait("docker", "cp",
-                    containerName + ":" + fileName, target);
-        }
-    }
-
     public void copyFileToContainer(String containerName, String fileName) {
         if (existsContainer(containerName)) {
+            log.trace("Copying {} to container {}", fileName, containerName);
+
             dockerClient.copyArchiveToContainerCmd(containerName)
                     .withHostResource(fileName).exec();
         }
+    }
+
+    public InputStream getFileFromContainer(String containerName,
+            String fileName) {
+        InputStream inputStream = null;
+        if (existsContainer(containerName)) {
+            log.trace("Copying {} from container {}", fileName, containerName);
+
+            inputStream = dockerClient
+                    .copyArchiveFromContainerCmd(containerName, fileName)
+                    .exec();
+        }
+        return inputStream;
     }
 
     public void waitForContainer(String containerName) {

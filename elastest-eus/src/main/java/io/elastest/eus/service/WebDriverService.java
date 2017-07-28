@@ -21,14 +21,17 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,19 +316,43 @@ public class WebDriverService {
                 sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
                 "experimental", recordingFileName);
 
-        String target = registryFolder + recordingFileName;
-        dockerService.copyFileFromContainer(noNvcContainerName,
-                recordingFileName, target);
-
         try {
+            String target = registryFolder + recordingFileName;
+
+            InputStream inputStream = dockerService.getFileFromContainer(
+                    noNvcContainerName, recordingFileName);
+
+            // -------------
+            // FIXME: Workaround due to strange behavior of docker-java
+            // it seems that copyArchiveFromContainerCmd not works correctly
+
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+
+            int i = 0;
+            for (; i < bytes.length; i++) {
+                char c1 = (char) bytes[i];
+                if (c1 == 'f') {
+                    char c2 = (char) bytes[i + 1];
+                    char c3 = (char) bytes[i + 2];
+                    if (c2 == 't' && c3 == 'y') {
+                        break;
+                    }
+                }
+            }
+
+            FileUtils.writeByteArrayToFile(new File(target),
+                    Arrays.copyOfRange(bytes, i - 4, bytes.length));
+
+            // -------------
+
             JSONObject sessionInfoToJson = jsonService
                     .sessionInfoToJson(sessionInfo);
             FileUtils.writeStringToFile(new File(registryFolder + jsonFileName),
                     sessionInfoToJson.toString(), Charset.defaultCharset());
+
         } catch (IOException e) {
-            log.error(
-                    "Exception writing session metadata (sessiodId {}) to file {}",
-                    sessionInfo.getSessionId(), jsonFileName, e);
+            log.error("Exception getting recording (sessiodId {})",
+                    sessionInfo.getSessionId(), e);
         }
     }
 
