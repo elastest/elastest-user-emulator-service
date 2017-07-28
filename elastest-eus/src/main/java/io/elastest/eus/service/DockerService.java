@@ -23,7 +23,6 @@ import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
@@ -324,20 +323,17 @@ public class DockerService {
 
     public void copyFileFromContainer(String containerName, String fileName,
             String target) {
-        shellService.runAndWait("docker", "cp", containerName + ":" + fileName,
-                target);
+        if (existsContainer(containerName)) {
+            shellService.runAndWait("docker", "cp",
+                    containerName + ":" + fileName, target);
+        }
     }
 
     public void copyFileToContainer(String containerName, String fileName) {
-        dockerClient.copyArchiveToContainerCmd(containerName)
-                .withHostResource(fileName).exec();
-    }
-
-    // FIXME: copyArchiveFromContainerCmd not working
-    public InputStream getFileFromContainer(String containerName,
-            String fileName) {
-        return dockerClient.copyArchiveFromContainerCmd(containerName, fileName)
-                .exec();
+        if (existsContainer(containerName)) {
+            dockerClient.copyArchiveToContainerCmd(containerName)
+                    .withHostResource(fileName).exec();
+        }
     }
 
     public void waitForContainer(String containerName) {
