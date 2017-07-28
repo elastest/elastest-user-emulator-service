@@ -301,24 +301,27 @@ public class DockerService {
         String output = null;
         log.trace("Executing command {} in container {} (await completion {})",
                 Arrays.toString(command), containerName, awaitCompletion);
-        ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerName)
-                .withCmd(command).withTty(false).withAttachStdin(true)
-                .withAttachStdout(true).withAttachStderr(true).exec();
-        OutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            ExecStartResultCallback startResultCallback = dockerClient
-                    .execStartCmd(exec.getId()).withDetach(false).withTty(true)
-                    .exec(new ExecStartResultCallback(outputStream,
-                            System.err));
-            if (awaitCompletion) {
-                startResultCallback.awaitCompletion();
+        if (existsContainer(containerName)) {
+            ExecCreateCmdResponse exec = dockerClient
+                    .execCreateCmd(containerName).withCmd(command)
+                    .withTty(false).withAttachStdin(true).withAttachStdout(true)
+                    .withAttachStderr(true).exec();
+            OutputStream outputStream = new ByteArrayOutputStream();
+            try {
+                ExecStartResultCallback startResultCallback = dockerClient
+                        .execStartCmd(exec.getId()).withDetach(false)
+                        .withTty(true).exec(new ExecStartResultCallback(
+                                outputStream, System.err));
+                if (awaitCompletion) {
+                    startResultCallback.awaitCompletion();
+                }
+                output = outputStream.toString();
+            } catch (InterruptedException e) {
+                log.warn("Exception executing command {} on container {}",
+                        Arrays.toString(command), containerName, e);
+            } finally {
+                log.trace("{} ... done", Arrays.toString(command));
             }
-            output = outputStream.toString();
-        } catch (InterruptedException e) {
-            log.warn("Exception executing command {} on container {}",
-                    Arrays.toString(command), containerName, e);
-        } finally {
-            log.trace("{} ... done", Arrays.toString(command));
         }
         return output;
     }
