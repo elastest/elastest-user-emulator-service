@@ -306,7 +306,7 @@ public class WebDriverService {
 
     private void stopRecording(String noNvcContainerName) {
         log.trace("Stopping recording of container {}", noNvcContainerName);
-        dockerService.execCommand(noNvcContainerName, false, "killall",
+        dockerService.execCommand(noNvcContainerName, true, "killall",
                 "flvrec.py");
     }
 

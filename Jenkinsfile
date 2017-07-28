@@ -1,4 +1,4 @@
-node('TESTDOCKER') {
+node('docker') {
     stage "Container Prep"
         echo("The node is up")
         def mycontainer = docker.image('elastest/docker-in-docker:latest')
@@ -8,7 +8,7 @@ node('TESTDOCKER') {
 
             stage "Tests"
                 echo ("Starting tests")
-                sh 'cd elastest-eus; mvn clean test'
+                sh 'cd elastest-eus; mvn clean test -Ddocker.server.url=unix:///var/run/docker.sock'
                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
 
             stage "Package"
