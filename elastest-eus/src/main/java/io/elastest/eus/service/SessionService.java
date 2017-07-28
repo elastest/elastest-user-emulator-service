@@ -16,8 +16,11 @@
  */
 package io.elastest.eus.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -49,8 +52,17 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
 
+    @Value("${ws.protocol.getRecordings}")
+    private String wsProtocolGetRecordings;
+
     @Value("${hub.timeout}")
     private String hubTimeout;
+
+    @Value("${registry.folder}")
+    private String registryFolder;
+
+    @Value("${registry.metadata.extension}")
+    private String registryMetadataExtension;
 
     private DockerService dockerService;
 
@@ -79,6 +91,9 @@ public class SessionService extends TextWebSocketHandler {
         if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
             log.trace("{} received", payload);
             sendAllSessionsInfoToAllClients();
+        } else if (payload.equalsIgnoreCase(wsProtocolGetRecordings)) {
+            log.trace("{} received", payload);
+            sendAllRecordingsToAllClients();
         } else {
             log.warn("Non recognized message {}", payload);
         }
@@ -121,6 +136,31 @@ public class SessionService extends TextWebSocketHandler {
                 sendTextMessage(session,
                         jsonService.newSessionJson(sessionInfo).toString());
             }
+        }
+    }
+
+    public void sendAllRecordingsToAllClients() {
+        File[] metadataFiles = new File(registryFolder)
+                .listFiles((dir, name) -> {
+                    return name.toLowerCase()
+                            .endsWith(registryMetadataExtension);
+                });
+        for (WebSocketSession session : activeSessions.values()) {
+            for (File file : metadataFiles) {
+                try {
+                    sendTextMessage(session, new String(Files
+                            .readAllBytes(Paths.get(file.getAbsolutePath()))));
+                } catch (IOException e) {
+                    log.error("Error reading file {}", file, e);
+                }
+            }
+        }
+    }
+
+    public void sendRecordingToAllClients(SessionInfo sessionInfo) {
+        for (WebSocketSession session : activeSessions.values()) {
+            sendTextMessage(session,
+                    jsonService.registryJson(sessionInfo).toString());
         }
     }
 

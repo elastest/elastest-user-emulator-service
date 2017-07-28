@@ -103,6 +103,12 @@ public class WebDriverService {
     @Value("${registry.folder}")
     private String registryFolder;
 
+    @Value("${registry.contextPath}")
+    private String registryContextPath;
+
+    @Value("${registry.metadata.extension}")
+    private String registryMetadataExtension;
+
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
@@ -224,9 +230,8 @@ public class WebDriverService {
     }
 
     private void stopBrowser(SessionInfo sessionInfo) {
-        String vncContainerName = sessionInfo.getVncContainerName();
-        if (vncContainerName != null) {
-            stopRecording(vncContainerName);
+        if (sessionInfo.getVncContainerName() != null) {
+            stopRecording(sessionInfo);
             getRecordingInMp4Format(sessionInfo);
         }
         sessionService.deleteSession(sessionInfo, false);
@@ -304,7 +309,8 @@ public class WebDriverService {
                 String.valueOf(hubVncExposedPort));
     }
 
-    private void stopRecording(String noNvcContainerName) {
+    private void stopRecording(SessionInfo sessionInfo) {
+        String noNvcContainerName = sessionInfo.getVncContainerName();
         log.trace("Stopping recording of container {}", noNvcContainerName);
         dockerService.execCommand(noNvcContainerName, true, "killall",
                 "flvrec.py");
@@ -314,7 +320,7 @@ public class WebDriverService {
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionId + ".mp4";
-        String jsonFileName = sessionId + ".json";
+        String jsonFileName = sessionId + registryMetadataExtension;
 
         dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
                 sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
@@ -349,8 +355,13 @@ public class WebDriverService {
 
             // -------------
 
+            sessionInfo.setRecordingPath(contextPath + registryContextPath + "/"
+                    + recordingFileName);
+
+            sessionService.sendRecordingToAllClients(sessionInfo);
+
             JSONObject sessionInfoToJson = jsonService
-                    .sessionInfoToJson(sessionInfo);
+                    .registryJson(sessionInfo);
             FileUtils.writeStringToFile(new File(registryFolder + jsonFileName),
                     sessionInfoToJson.toString(), Charset.defaultCharset());
 
