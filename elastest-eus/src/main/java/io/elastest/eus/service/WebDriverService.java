@@ -224,8 +224,11 @@ public class WebDriverService {
     }
 
     private void stopBrowser(SessionInfo sessionInfo) {
-        stopRecording(sessionInfo.getVncContainerName());
-        getRecordingInMp4Format(sessionInfo);
+        String vncContainerName = sessionInfo.getVncContainerName();
+        if (vncContainerName != null) {
+            stopRecording(vncContainerName);
+            getRecordingInMp4Format(sessionInfo);
+        }
         sessionService.deleteSession(sessionInfo, false);
     }
 
@@ -302,6 +305,7 @@ public class WebDriverService {
     }
 
     private void stopRecording(String noNvcContainerName) {
+        log.trace("Stopping recording of container {}", noNvcContainerName);
         dockerService.execCommand(noNvcContainerName, true, "killall",
                 "flvrec.py");
     }
