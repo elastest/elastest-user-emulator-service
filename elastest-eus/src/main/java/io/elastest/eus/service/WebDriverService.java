@@ -19,12 +19,17 @@ package io.elastest.eus.service;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +96,9 @@ public class WebDriverService {
 
     @Value("${ws.dateformat}")
     private String wsDateFormat;
+
+    @Value("${registry.folder}")
+    private String registryFolder;
 
     private DockerService dockerService;
     private PropertiesService propertiesService;
@@ -206,10 +214,16 @@ public class WebDriverService {
         if (jsonService.isDeleteSessionRequest(method, requestContext)) {
             log.trace("Intercepted DELETE session");
 
-            sessionService.deleteSession(sessionInfo, false);
+            stopBrowser(sessionInfo);
         }
 
         return responseEntity;
+    }
+
+    private void stopBrowser(SessionInfo sessionInfo) {
+        stopRecording(sessionInfo.getVncContainerName());
+        getRecordingInMp4Format(sessionInfo);
+        sessionService.deleteSession(sessionInfo, false);
     }
 
     private ResponseEntity<String> sessionNotFound() {
@@ -273,6 +287,48 @@ public class WebDriverService {
         return sessionInfo;
     }
 
+    private void startRecording(String noNvcContainerName,
+            String hubContainerName, String sessionId) {
+        String hubContainerIp = dockerService
+                .getContainerIpAddress(hubContainerName);
+        log.debug("Recording session {} in {}:{}", sessionId, hubContainerIp,
+                hubVncExposedPort);
+        dockerService.execCommand(noNvcContainerName, false, "flvrec.py", "-P",
+                "passwd_file", "-o", sessionId + ".flv", hubContainerIp,
+                String.valueOf(hubVncExposedPort));
+    }
+
+    private void stopRecording(String noNvcContainerName) {
+        dockerService.execCommand(noNvcContainerName, true, "killall",
+                "flvrec.py");
+    }
+
+    private void getRecordingInMp4Format(SessionInfo sessionInfo) {
+        String sessionId = sessionInfo.getSessionId();
+        String noNvcContainerName = sessionInfo.getVncContainerName();
+        String recordingFileName = sessionId + ".mp4";
+        String jsonFileName = sessionId + ".json";
+
+        dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
+                sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
+                "experimental", recordingFileName);
+
+        String target = registryFolder + recordingFileName;
+        dockerService.copyFileFromContainer(noNvcContainerName,
+                recordingFileName, target);
+
+        try {
+            JSONObject sessionInfoToJson = jsonService
+                    .sessionInfoToJson(sessionInfo);
+            FileUtils.writeStringToFile(new File(registryFolder + jsonFileName),
+                    sessionInfoToJson.toString(), Charset.defaultCharset());
+        } catch (IOException e) {
+            log.error(
+                    "Exception writing session metadata (sessiodId {}) to file {}",
+                    sessionInfo.getSessionId(), jsonFileName, e);
+        }
+    }
+
     public ResponseEntity<String> getVncUrl(String sessionId) {
         SessionInfo sessionInfo = sessionService.getSession(sessionId);
         if (sessionInfo == null) {
@@ -299,6 +355,7 @@ public class WebDriverService {
 
         dockerService.startAndWaitContainer(noVncImageId, vncContainerName,
                 portBindings);
+
         String vncContainerIp = dockerService.getDockerServerIp();
         String hubContainerIp = dockerService.getDockerServerIp();
 
@@ -312,6 +369,9 @@ public class WebDriverService {
         sessionInfo.setVncContainerName(vncContainerName);
         sessionInfo.setVncUrl(vncUrl);
         sessionInfo.setNoVncBindPort(noVncBindPort);
+
+        startRecording(vncContainerName, sessionInfo.getHubContainerName(),
+                sessionInfo.getSessionId());
     }
 
     public String getStatus() {

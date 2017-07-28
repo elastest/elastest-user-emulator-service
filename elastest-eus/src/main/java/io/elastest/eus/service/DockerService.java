@@ -21,7 +21,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -32,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -51,10 +55,12 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
 import io.elastest.eus.api.EusException;
@@ -288,6 +294,50 @@ public class DockerService {
                 }
             } while (!removed && count <= dockerRemoveContainersRetries);
         }
+    }
+
+    public String execCommand(String containerName, boolean awaitCompletion,
+            String... command) {
+        String output = null;
+        if (existsContainer(containerName)) {
+            ExecCreateCmdResponse exec = dockerClient
+                    .execCreateCmd(containerName).withCmd(command)
+                    .withTty(false).withAttachStdin(true).withAttachStdout(true)
+                    .withAttachStderr(true).exec();
+            OutputStream outputStream = new ByteArrayOutputStream();
+            try {
+                ExecStartResultCallback startResultCallback = dockerClient
+                        .execStartCmd(exec.getId()).withDetach(false)
+                        .withTty(true).exec(new ExecStartResultCallback(
+                                outputStream, System.err));
+                if (awaitCompletion) {
+                    startResultCallback.awaitCompletion();
+                }
+                output = outputStream.toString();
+            } catch (InterruptedException e) {
+                log.warn("Exception executing command {} on container {}",
+                        Arrays.toString(command), containerName, e);
+            }
+        }
+        return output;
+    }
+
+    public void copyFileFromContainer(String containerName, String fileName,
+            String target) {
+        shellService.runAndWait("docker", "cp", containerName + ":" + fileName,
+                target);
+    }
+
+    public void copyFileToContainer(String containerName, String fileName) {
+        dockerClient.copyArchiveToContainerCmd(containerName)
+                .withHostResource(fileName).exec();
+    }
+
+    // FIXME: copyArchiveFromContainerCmd not working
+    public InputStream getFileFromContainer(String containerName,
+            String fileName) {
+        return dockerClient.copyArchiveFromContainerCmd(containerName, fileName)
+                .exec();
     }
 
     public void waitForContainer(String containerName) {
