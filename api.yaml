@@ -6,7 +6,7 @@ info:
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-host: 'localhost:8080'
+host: 'localhost:8040'
 basePath: /eus/v1
 tags:
   - name: session-api-controller
@@ -476,7 +476,7 @@ paths:
       tags:
         - Remote control
       summary: Get VNC session
-      operationId: getVncUsingGET
+      operationId: vncUsingGET
       consumes:
         - application/json
       produces:
@@ -502,6 +502,44 @@ paths:
           description: Forbidden
         '404':
           description: Not Found
+        '500':
+          description: Internal server error
+          schema:
+            type: string
+    delete:
+      tags:
+        - Remote control
+      summary: Get VNC session
+      operationId: vncUsingDELETE
+      consumes:
+        - application/json
+      produces:
+        - text/plain
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '204':
+          description: No Content
+        '400':
+          description: Invalid session identifier
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+          schema:
+            type: string
   /status:
     get:
       tags:
