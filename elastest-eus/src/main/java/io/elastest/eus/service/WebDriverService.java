@@ -298,15 +298,19 @@ public class WebDriverService {
         return sessionInfo;
     }
 
-    private void startRecording(String noNvcContainerName,
-            String hubContainerName, String sessionId) {
-        String hubContainerIp = dockerService
-                .getContainerIpAddress(hubContainerName);
+    private void startRecording(SessionInfo sessionInfo) {
+        String sessionId = sessionInfo.getSessionId();
+        String noNvcContainerName = sessionInfo.getVncContainerName();
+        String hubContainerIp = dockerService.getDockerServerIp();
+        String hubContainerPort = String
+                .valueOf(sessionInfo.getHubVncBindPort());
+
         log.debug("Recording session {} in {}:{}", sessionId, hubContainerIp,
                 hubVncExposedPort);
+
         dockerService.execCommand(noNvcContainerName, false, "flvrec.py", "-P",
                 "passwd_file", "-o", sessionId + ".flv", hubContainerIp,
-                String.valueOf(hubVncExposedPort));
+                hubContainerPort);
     }
 
     private void stopRecording(SessionInfo sessionInfo) {
@@ -411,8 +415,7 @@ public class WebDriverService {
         sessionInfo.setVncUrl(vncUrl);
         sessionInfo.setNoVncBindPort(noVncBindPort);
 
-        startRecording(vncContainerName, sessionInfo.getHubContainerName(),
-                sessionInfo.getSessionId());
+        startRecording(sessionInfo);
     }
 
     public String getStatus() {

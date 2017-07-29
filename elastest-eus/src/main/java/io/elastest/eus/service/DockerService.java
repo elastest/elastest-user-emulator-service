@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -92,6 +91,9 @@ public class DockerService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
+    @Value("${docker.default.host.ip}")
+    private String dockerDefaultHostIp;
+
     @Value("${docker.server.port}")
     private int dockerServerPort;
 
@@ -138,8 +140,7 @@ public class DockerService {
                     dockerServerIp = getContainerIp();
 
                 } else {
-                    dockerServerIp = InetAddress.getLocalHost()
-                            .getHostAddress();
+                    dockerServerIp = dockerDefaultHostIp;
                 }
                 log.trace("Docker server IP: {}", dockerServerIp);
 
