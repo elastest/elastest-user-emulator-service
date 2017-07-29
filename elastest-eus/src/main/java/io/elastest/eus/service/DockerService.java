@@ -307,6 +307,8 @@ public class DockerService {
                     .execCreateCmd(containerName).withCmd(command)
                     .withTty(false).withAttachStdin(true).withAttachStdout(true)
                     .withAttachStderr(true).exec();
+
+            log.trace("Command executed. Exec id: {}", exec.getId());
             OutputStream outputStream = new ByteArrayOutputStream();
             try {
                 ExecStartResultCallback startResultCallback = dockerClient
@@ -321,7 +323,7 @@ public class DockerService {
                 log.warn("Exception executing command {} on container {}",
                         Arrays.toString(command), containerName, e);
             } finally {
-                log.trace("{} ... done", Arrays.toString(command));
+                log.trace("Callback terminated. Result: {}", output);
             }
         }
         return output;
