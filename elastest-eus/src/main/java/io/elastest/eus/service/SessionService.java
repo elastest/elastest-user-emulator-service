@@ -160,7 +160,7 @@ public class SessionService extends TextWebSocketHandler {
     public void sendRecordingToAllClients(SessionInfo sessionInfo) {
         for (WebSocketSession session : activeSessions.values()) {
             sendTextMessage(session,
-                    jsonService.registryJson(sessionInfo).toString());
+                    jsonService.recordedSessionJson(sessionInfo).toString());
         }
     }
 

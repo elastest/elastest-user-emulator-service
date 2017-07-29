@@ -352,7 +352,6 @@ public class WebDriverService {
 
             FileUtils.writeByteArrayToFile(new File(target),
                     Arrays.copyOfRange(bytes, i - 4, bytes.length));
-
             // -------------
 
             sessionInfo.setRecordingPath(contextPath + registryContextPath + "/"
@@ -361,7 +360,7 @@ public class WebDriverService {
             sessionService.sendRecordingToAllClients(sessionInfo);
 
             JSONObject sessionInfoToJson = jsonService
-                    .registryJson(sessionInfo);
+                    .recordedSessionJson(sessionInfo);
             FileUtils.writeStringToFile(new File(registryFolder + jsonFileName),
                     sessionInfoToJson.toString(), Charset.defaultCharset());
 

@@ -65,6 +65,9 @@ public class JsonService {
     @Value("${ws.protocol.newSession}")
     private String wsProtocolNewSession;
 
+    @Value("${ws.protocol.recordedSession}")
+    private String wsProtocolRecordedSession;
+
     @Value("${ws.protocol.removeSession}")
     private String wsProtocolRemoveSession;
 
@@ -173,6 +176,12 @@ public class JsonService {
     public JSONObject newSessionJson(SessionInfo sessionInfo) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(wsProtocolNewSession, sessionInfoToJson(sessionInfo));
+        return jsonObject;
+    }
+
+    public JSONObject recordedSessionJson(SessionInfo sessionInfo) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(wsProtocolRecordedSession, registryJson(sessionInfo));
         return jsonObject;
     }
 
