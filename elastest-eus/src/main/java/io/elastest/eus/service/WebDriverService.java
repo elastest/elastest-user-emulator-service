@@ -204,10 +204,9 @@ public class WebDriverService {
 
             sessionService.putSession(sessionId, sessionInfo);
 
+            startVncContainer(sessionInfo);
+
             if (sessionService.activeWebSocketSessions() && !isLive) {
-                if (sessionInfo.getVncUrl() == null) {
-                    startVncContainer(sessionInfo);
-                }
                 sessionService.sendNewSessionToAllClients(sessionInfo);
             }
         }
@@ -379,7 +378,6 @@ public class WebDriverService {
         if (sessionInfo == null) {
             return sessionNotFound();
         }
-        startVncContainer(sessionInfo);
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(
                 sessionInfo.getVncUrl(), HttpStatus.OK);
@@ -387,6 +385,9 @@ public class WebDriverService {
     }
 
     private void startVncContainer(SessionInfo sessionInfo) {
+        log.debug("Starting VNC container in session {}",
+                sessionInfo.getSessionId());
+
         String vncContainerName = dockerService.generateContainerName(
                 eusContainerPrefix + noVncContainerSufix);
 
