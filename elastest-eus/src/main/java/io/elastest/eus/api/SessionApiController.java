@@ -16,6 +16,10 @@
  */
 package io.elastest.eus.api;
 
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpStatus.OK;
+
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -72,7 +76,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<Void>(HttpStatus.OK);
+        return new ResponseEntity<Void>(OK);
     }
 
     public ResponseEntity<AudioLevel> getAudioLevel(
@@ -83,7 +87,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<AudioLevel>(HttpStatus.OK);
+        return new ResponseEntity<AudioLevel>(OK);
     }
 
     public ResponseEntity<ColorValue> getColorByCoordinates(
@@ -96,7 +100,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<ColorValue>(HttpStatus.OK);
+        return new ResponseEntity<ColorValue>(OK);
     }
 
     public ResponseEntity<List<StatsValue>> getStats(
@@ -107,7 +111,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<List<StatsValue>>(HttpStatus.OK);
+        return new ResponseEntity<List<StatsValue>>(OK);
     }
 
     public ResponseEntity<EventValue> getSubscriptionValue(
@@ -118,7 +122,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<EventValue>(HttpStatus.OK);
+        return new ResponseEntity<EventValue>(OK);
     }
 
     public ResponseEntity<Void> setUserMedia(
@@ -128,7 +132,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<Void>(HttpStatus.OK);
+        return new ResponseEntity<Void>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToEvent(
@@ -140,7 +144,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<EventSubscription>(HttpStatus.OK);
+        return new ResponseEntity<EventSubscription>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToLatency(
@@ -152,7 +156,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<EventSubscription>(HttpStatus.OK);
+        return new ResponseEntity<EventSubscription>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToQuality(
@@ -164,7 +168,7 @@ public class SessionApiController implements SessionApi {
 
         // TODO implementation
 
-        return new ResponseEntity<EventSubscription>(HttpStatus.OK);
+        return new ResponseEntity<EventSubscription>(OK);
     }
 
     @Override
@@ -177,14 +181,24 @@ public class SessionApiController implements SessionApi {
     public ResponseEntity<String> getStatus() {
         String statusBody = webDriverService.getStatus();
         ResponseEntity<String> responseEntity = new ResponseEntity<String>(
-                statusBody, HttpStatus.OK);
+                statusBody, OK);
         return responseEntity;
     }
 
     @Override
-    public ResponseEntity<String> getVnc(
-            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId) {
-        return webDriverService.getVncUrl(sessionId);
+    public ResponseEntity<String> vnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request) {
+
+        ResponseEntity<String> response = null;
+        HttpMethod method = HttpMethod.resolve(request.getMethod());
+        if (method == GET) {
+            response = webDriverService.getVnc(sessionId);
+        } else if (method == DELETE) {
+            response = webDriverService.deleteVnc(sessionId);
+        }
+        return response;
+
     }
 
 }

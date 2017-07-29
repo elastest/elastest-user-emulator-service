@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.service;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -108,6 +109,9 @@ public class WebDriverService {
 
     @Value("${registry.metadata.extension}")
     private String registryMetadataExtension;
+
+    @Value("${registry.recording.extension}")
+    private String registryRecordingExtension;
 
     private DockerService dockerService;
     private PropertiesService propertiesService;
@@ -322,8 +326,8 @@ public class WebDriverService {
     private void getRecordingInMp4Format(SessionInfo sessionInfo) {
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
-        String recordingFileName = sessionId + ".mp4";
-        String jsonFileName = sessionId + registryMetadataExtension;
+        String recordingFileName = sessionId + registryRecordingExtension;
+        String metadataFileName = sessionId + registryMetadataExtension;
 
         dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
                 sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
@@ -364,7 +368,8 @@ public class WebDriverService {
 
             JSONObject sessionInfoToJson = jsonService
                     .recordedSessionJson(sessionInfo);
-            FileUtils.writeStringToFile(new File(registryFolder + jsonFileName),
+            FileUtils.writeStringToFile(
+                    new File(registryFolder + metadataFileName),
                     sessionInfoToJson.toString(), Charset.defaultCharset());
 
         } catch (IOException e) {
@@ -373,14 +378,31 @@ public class WebDriverService {
         }
     }
 
-    public ResponseEntity<String> getVncUrl(String sessionId) {
+    public ResponseEntity<String> getVnc(String sessionId) {
         SessionInfo sessionInfo = sessionService.getSession(sessionId);
         if (sessionInfo == null) {
             return sessionNotFound();
         }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                sessionInfo.getVncUrl(), HttpStatus.OK);
+                sessionInfo.getVncUrl(), OK);
+        return responseEntity;
+    }
+
+    public ResponseEntity<String> deleteVnc(String sessionId) {
+        log.debug("Deleting VNC recording of session {}", sessionId);
+        String recordingFileName = sessionId + registryRecordingExtension;
+        String metadataFileName = sessionId + registryMetadataExtension;
+
+        boolean deleteRecording = new File(registryFolder + recordingFileName)
+                .delete();
+        boolean deleteMetadata = new File(registryFolder + metadataFileName)
+                .delete();
+
+        HttpStatus status = deleteRecording && deleteMetadata ? OK
+                : INTERNAL_SERVER_ERROR;
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
+        log.debug("... response {}", status);
         return responseEntity;
     }
 

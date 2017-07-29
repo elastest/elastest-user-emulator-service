@@ -16,6 +16,10 @@
  */
 package io.elastest.eus.api;
 
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -61,7 +65,7 @@ public interface SessionApi {
             @ApiResponse(code = 200, message = "Successful operation", response = Void.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = Void.class),
             @ApiResponse(code = 404, message = "Subscription not found", response = Void.class) })
-    @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", method = DELETE)
     ResponseEntity<Void> deleteSubscription(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
@@ -76,7 +80,7 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = AudioLevel.class),
             @ApiResponse(code = 404, message = "No such element", response = AudioLevel.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/audio", produces = {
-            "application/json" }, method = RequestMethod.GET)
+            "application/json" }, method = GET)
     ResponseEntity<AudioLevel> getAudioLevel(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId);
@@ -91,7 +95,7 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = ColorValue.class),
             @ApiResponse(code = 404, message = "No such element", response = ColorValue.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/color", produces = {
-            "application/json" }, method = RequestMethod.GET)
+            "application/json" }, method = GET)
     ResponseEntity<ColorValue> getColorByCoordinates(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -108,7 +112,7 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventValue.class),
             @ApiResponse(code = 404, message = "No such subscription", response = EventValue.class) })
     @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", produces = {
-            "application/json" }, method = RequestMethod.GET)
+            "application/json" }, method = GET)
     ResponseEntity<List<StatsValue>> getStats(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
@@ -123,7 +127,7 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = StatsValue.class),
             @ApiResponse(code = 404, message = "No such subscription", response = StatsValue.class) })
     @RequestMapping(value = "/session/{sessionId}/stats", produces = {
-            "application/json" }, method = RequestMethod.GET)
+            "application/json" }, method = GET)
     ResponseEntity<EventValue> getSubscriptionValue(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Identifier of peerconnection") @RequestParam(value = "peerconnectionId", required = false) String peerconnectionId);
@@ -138,7 +142,7 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid media", response = Void.class),
             @ApiResponse(code = 404, message = "URL not found", response = Void.class) })
     @RequestMapping(value = "/session/{sessionId}/usermedia", consumes = {
-            "application/json" }, method = RequestMethod.POST)
+            "application/json" }, method = POST)
     ResponseEntity<Void> setUserMedia(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body);
@@ -154,7 +158,7 @@ public interface SessionApi {
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/latency", produces = {
             "application/json" }, consumes = {
-                    "application/json" }, method = RequestMethod.POST)
+                    "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToEvent(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -171,7 +175,7 @@ public interface SessionApi {
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/quality", produces = {
             "application/json" }, consumes = {
-                    "application/json" }, method = RequestMethod.POST)
+                    "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToLatency(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -189,7 +193,7 @@ public interface SessionApi {
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/event", produces = {
             "application/json" }, consumes = {
-                    "application/json" }, method = RequestMethod.POST)
+                    "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToQuality(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -206,8 +210,7 @@ public interface SessionApi {
             @ApiResponse(code = 200, message = "Successful operation"),
             @ApiResponse(code = 404, message = "No such element") })
     @RequestMapping(value = "/session/**", produces = {
-            "application/json" }, method = { RequestMethod.GET,
-                    RequestMethod.POST, RequestMethod.DELETE })
+            "application/json" }, method = { GET, POST, DELETE })
     ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request);
 
@@ -221,11 +224,11 @@ public interface SessionApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class) })
     @RequestMapping(value = "/status", produces = {
-            "application/json" }, method = { RequestMethod.GET })
+            "application/json" }, method = { GET })
     ResponseEntity<String> getStatus();
 
     /**
-     * GET /session/{sessionId}/vnc
+     * GET/DELETE /session/{sessionId}/vnc
      *
      * Get VNC session
      */
@@ -233,10 +236,12 @@ public interface SessionApi {
             "Remote control" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class) })
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/session/{sessionId}/vnc", produces = {
-            "text/plain" }, method = { RequestMethod.GET })
-    ResponseEntity<String> getVnc(
-            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
+            "text/plain" }, method = { RequestMethod.GET, DELETE })
+    ResponseEntity<String> vnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request);
 
 }
