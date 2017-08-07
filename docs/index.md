@@ -145,7 +145,7 @@ You can develop EUS Server Application using and editor and the command line or 
   * Load project in the IDE: 
     * Import *elastest-eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `/git/elastest-eus/elastest-eus` folder.
   * Compile and execute the project:
-    * Right click over the project and select `Run as Java Application`
+    * Right click over the project and select `Run as..> Java Application` and select `EusSpringBootApp` class.
 
 * Using editor and console:
     * Compile and execute the project: 
