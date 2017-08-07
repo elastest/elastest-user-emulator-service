@@ -128,44 +128,53 @@ Then, install the following development tools:
 - [Visual Studio Code](https://code.visualstudio.com/) or similar for Angular development.
 - [Angular CLI](https://cli.angular.io/) 
 
-Last, clone the repositories in a local folder (for example, `git-elastest`):
+Last, clone the repositories in a local folder (for example, `/git`):
 
 ```
-cd git-elastest
+cd /git
 git clone https://github.com/elastest/elastest-user-emulator-service
 git clone https://github.com/elastest/elastest-torm
 ```
 
 ### Development procedure
 
-#### Start EUS Server Application
+#### EUS Server Application
 
-You can execute EUS Server Application from command line or from Eclipse IDE:
-* From *Eclipse IDE*: 
-  * Import *elastest-eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `git-elastest\elastest-eus\elastest-eus` folder.
-  * Right click over the project and select `Run as Java Application`
+You can develop EUS Server Application using and editor and the command line or using Eclipse IDE:
+* Using *Eclipse IDE*: 
+  * Load project in the IDE: 
+    * Import *elastest-eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `/git/elastest-eus/elastest-eus` folder.
+  * Compile and execute the project:
+    * Right click over the project and select `Run as Java Application`
 
-* From console:
-    * Go to the root directory of the project with `cd git-elastest\elastest-eus\elastest-eus`
-    * Execute command `mvn spring-boot:run`
+* Using editor and console:
+    * Compile and execute the project: 
+      * Go to the root directory of the project with `cd /git/elastest-eus/elastest-eus`
+      * Execute command `mvn spring-boot:run`
+
+The server application can be used from the web interface (see next section). The remote webdriver endpoint is located in URL http://localhost:8080/eus/v1.
 
 If you change any source file, you need to stop the service and start it again.
 
-#### Start EUS Web Client Application
+#### EUS Web Client Application
 
-* From *Visual Studio Code*:
-  * Open the project folder using `File > Open folder` option and select the `elastest-torm-gui` folder, within the git repositoy folder.
-  * Open the integrated terminal with `View > Integrated Terminal`
-  * Execute in integrated terminal:
-    * `npm install`
-    * `npm start`
+You can develop EUS Web Client Application using and editor and the command line or using Visual Studio Code:
 
-* From console:
-  * Go to the root directory of the project with `cd <git-repository>\elastest-torm-gui`
-  * Execute:
-    * `npm install`
-    * `npm start`
+* Using *Visual Studio Code*:
+  * Load project in the IDE:
+    * Open the project folder using `File > Open folder` option and select the `/git/elastest-torm/elastest-torm-gui`.
+    * Open the integrated terminal with `View > Integrated Terminal`
+    * Execute `npm install` to download the libraries
+  * Compile and execute the project:    
+    * Execute `npm start`
 
-The client application will be accessible at http://localhost:4200.
+* Using editor and console:
+  * Prepare the project:
+    * Go to the project folder with `cd /git/elastest-torm/elastest-torm-gui`
+    * Execute `npm install` to download the libraries
+  * Compile and execute the project:    
+    * Execute `npm start`
+
+The client application can be used loading the URL http://localhost:4200 in a browser.
 
 If you change any source file, the client will be restarted automatically on save.
