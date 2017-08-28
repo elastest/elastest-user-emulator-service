@@ -20,8 +20,8 @@ node('docker') {
 
             stage "Build Docker images"
                 echo ("Building")
-                def eusImage = docker.build -f eus/Dockerfile 'elastest/eus'
-                def novncImage = docker.build -f novnc/Dockerfile 'elastest/novnc'
+                def eusImage = docker.build 'elastest/eus' -f eus/Dockerfile
+                def novncImage = docker.build 'elastest/novnc' -f novnc/Dockerfile
 
             stage "Run images"
                 eusImage.run()
