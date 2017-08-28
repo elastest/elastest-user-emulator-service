@@ -4,7 +4,7 @@ services:
   - docker
 
 script:
-    - cd elastest-eus
+    - cd eus
     - mvn test -Ddocker.server.url=unix:///var/run/docker.sock
     - bash <(curl -s https://codecov.io/bash)
 
