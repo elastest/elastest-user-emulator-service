@@ -33,10 +33,6 @@ node('TESTDOCKER') {
                     usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
                     eusImage.push()
-                }
-                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
-                    usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                    sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
                     novncImage.push()
                 }
         }
