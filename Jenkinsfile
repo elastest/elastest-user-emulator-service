@@ -1,4 +1,4 @@
-node('TESTDOCKER') {
+node('docker') {
     stage "Container Prep"
         echo("The node is up")
         def mycontainer = docker.image('elastest/docker-in-docker:latest')
@@ -15,22 +15,25 @@ node('TESTDOCKER') {
                 echo ("Packaging")
                 sh 'cd elastest-eus; mvn package -DskipTests'
 
-            stage "Archive atifacts"
-                archiveArtifacts artifacts: 'elastest-eus/target/*.jar'
+            stage "Archive artifacts"
+                archiveArtifacts artifacts: 'eus/target/*.jar'
 
-            stage "Build image - Package"
+            stage "Build Docker images"
                 echo ("Building")
-                def myimage = docker.build 'elastest/elastest-user-emulator-service'
+                def eusImage = docker.build -f eus/Dockerfile 'elastest/eus'
+                def novncImage = docker.build -f novnc/Dockerfile 'elastest/novnc'
 
-            stage "Run image"
-                myimage.run()
+            stage "Run images"
+                eusImage.run()
+                novncImage.run()
 
             stage "Publish"
                 echo ("Publishing")
                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
                     usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
-                    myimage.push()
+                    eusImage.push()
+                    novncImage.push()
                 }
         }
 }
