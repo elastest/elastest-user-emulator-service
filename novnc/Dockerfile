@@ -1,6 +1,6 @@
 FROM psharkey/novnc
 
-COPY vnc-autofocus.html /root/noVNC
+COPY novnc/vnc-autofocus.html /root/noVNC
 
 RUN sed -i '/http:\/\/dl-6.alpinelinux.org\/alpine\/edge\/testing/d' /etc/apk/repositories
 
