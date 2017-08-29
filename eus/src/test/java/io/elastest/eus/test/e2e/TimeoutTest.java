@@ -24,7 +24,6 @@ import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.Capabilities;
@@ -48,7 +47,6 @@ import io.elastest.eus.app.EusSpringBootApp;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@Disabled
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "hub.timeout=10" })
