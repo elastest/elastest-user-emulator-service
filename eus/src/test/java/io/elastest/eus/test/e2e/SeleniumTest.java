@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -48,6 +49,7 @@ import io.elastest.eus.app.EusSpringBootApp;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
+@Disabled
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 public class SeleniumTest {
