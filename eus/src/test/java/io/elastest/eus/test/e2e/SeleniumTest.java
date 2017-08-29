@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.app.EusSpringBootApp;
@@ -50,6 +51,7 @@ import io.elastest.eus.app.EusSpringBootApp;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
+@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
 public class SeleniumTest {
 
     final Logger log = LoggerFactory.getLogger(SeleniumTest.class);

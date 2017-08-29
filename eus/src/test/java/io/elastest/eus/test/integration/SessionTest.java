@@ -32,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.app.EusSpringBootApp;
@@ -45,6 +46,7 @@ import io.elastest.eus.service.JsonService;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
+@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
 public class SessionTest {
 
     final Logger log = LoggerFactory.getLogger(SessionTest.class);
