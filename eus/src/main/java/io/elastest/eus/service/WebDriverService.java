@@ -235,7 +235,8 @@ public class WebDriverService {
     private void stopBrowser(SessionInfo sessionInfo) {
         if (sessionInfo.getVncContainerName() != null) {
             stopRecording(sessionInfo);
-            getRecordingInMp4Format(sessionInfo);
+            storeRecording(sessionInfo);
+            storeMetadata(sessionInfo);
         }
         sessionService.deleteSession(sessionInfo, false);
     }
@@ -323,17 +324,19 @@ public class WebDriverService {
                 "flvrec.py");
     }
 
-    private void getRecordingInMp4Format(SessionInfo sessionInfo) {
+    private void storeRecording(SessionInfo sessionInfo) {
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionId + registryRecordingExtension;
-        String metadataFileName = sessionId + registryMetadataExtension;
-
-        dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
-                sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
-                "experimental", recordingFileName);
 
         try {
+            // Create recording in container
+            dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
+                    sessionId + ".flv", "-c:v", "libx264", "-crf", "19",
+                    "-strict", "experimental", recordingFileName);
+
+            // TODO send recording also to alluxio
+
             String target = registryFolder + recordingFileName;
 
             InputStream inputStream = dockerService.getFileFromContainer(
@@ -366,14 +369,27 @@ public class WebDriverService {
 
             sessionService.sendRecordingToAllClients(sessionInfo);
 
+        } catch (IOException e) {
+            log.error("Exception storing recording (sessiodId {})",
+                    sessionInfo.getSessionId(), e);
+        }
+    }
+
+    private void storeMetadata(SessionInfo sessionInfo) {
+        String sessionId = sessionInfo.getSessionId();
+        String metadataFileName = sessionId + registryMetadataExtension;
+
+        try {
             JSONObject sessionInfoToJson = jsonService
                     .recordedSessionJson(sessionInfo);
             FileUtils.writeStringToFile(
                     new File(registryFolder + metadataFileName),
                     sessionInfoToJson.toString(), Charset.defaultCharset());
 
+            // TODO send also to alluxio
+
         } catch (IOException e) {
-            log.error("Exception getting recording (sessiodId {})",
+            log.error("Exception storing metadata (sessiodId {})",
                     sessionInfo.getSessionId(), e);
         }
     }
@@ -398,6 +414,8 @@ public class WebDriverService {
                 .delete();
         boolean deleteMetadata = new File(registryFolder + metadataFileName)
                 .delete();
+
+        // TODO delete also from alluxio
 
         HttpStatus status = deleteRecording && deleteMetadata ? OK
                 : INTERNAL_SERVER_ERROR;
