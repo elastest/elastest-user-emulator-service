@@ -124,7 +124,7 @@ First, be sure you can execute EUS in production integrated in ElasTest TORM fol
 Then, install the following development tools:
 - [Java JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 - [Maven 3.3.9](https://maven.apache.org/download.cgi)
-- [Eclipse IDE](https://eclipse.org/ide/) or similar for Javan development.
+- [Eclipse IDE](https://eclipse.org/ide/) or similar for Java development.
 - [Visual Studio Code](https://code.visualstudio.com/) or similar for Angular development.
 - [Angular CLI](https://cli.angular.io/) 
 
@@ -141,15 +141,29 @@ git clone https://github.com/elastest/elastest-torm
 #### EUS Server Application
 
 You can develop EUS Server Application using and editor and the command line or using Eclipse IDE:
+
 * Using *Eclipse IDE*: 
   * Load project in the IDE: 
-    * Import *elastest-eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `/git/elastest-eus/elastest-eus` folder.
+    * Import *eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `elastest-user-emulator-service/eus` folder.
   * Compile and execute the project:
     * Right click over the project and select `Run as..> Java Application` and select `EusSpringBootApp` class.
 
+---
+**_Note_**
+
+EUS implements a REST service accessed by HTTP. In addition, it publishes the description of the service in [OpenAPI](https://www.openapis.org/) format in the URL `/eus/v1/api.yaml`. The description of the API is stored in the file [api.yaml](https://github.com/elastest/elastest-user-emulator-service/blob/master/api.yaml) contained in this repository.
+
+In order to avoid the duplicity of this file, we use the `maven-resources-plugin` to copy that file from the root of the repository to the Maven project (located in the [eus](https://github.com/elastest/elastest-user-emulator-service/tree/master/eus) folder). All in all, if you are using Eclipse IDE, you would to invoke this Maven plugin, for example using the command line as follows:
+
+```
+cd eus
+mvn clean package -DskipTests
+```
+---
+
 * Using editor and console:
     * Compile and execute the project: 
-      * Go to the root directory of the project with `cd /git/elastest-eus/elastest-eus`
+      * Go to the root directory of the project with `cd elastest-user-emulator-service/eus`
       * Execute command `mvn spring-boot:run`
 
 The server application can be used from the web interface (see next section). The remote webdriver endpoint is located in URL http://localhost:8080/eus/v1.
@@ -162,7 +176,7 @@ You can develop EUS Web Client Application using and editor and the command line
 
 * Using *Visual Studio Code*:
   * Load project in the IDE:
-    * Open the project folder using `File > Open folder` option and select the `/git/elastest-torm/elastest-torm-gui`.
+    * Open the project folder using `File > Open folder` option and select the `elastest-torm/elastest-torm-gui`.
     * Open the integrated terminal with `View > Integrated Terminal`
     * Execute `npm install` to download the libraries
   * Compile and execute the project:    
@@ -170,7 +184,7 @@ You can develop EUS Web Client Application using and editor and the command line
 
 * Using editor and console:
   * Prepare the project:
-    * Go to the project folder with `cd /git/elastest-torm/elastest-torm-gui`
+    * Go to the project folder with `cd elastest-torm/elastest-torm-gui`
     * Execute `npm install` to download the libraries
   * Compile and execute the project:    
     * Execute `npm start`
