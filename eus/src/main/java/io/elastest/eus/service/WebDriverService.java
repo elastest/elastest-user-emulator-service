@@ -63,7 +63,7 @@ public class WebDriverService {
 
     private final Logger log = LoggerFactory.getLogger(WebDriverService.class);
 
-    @Value("${server.contextPath}")
+    @Value("${server.servlet.context-path}")
     private String contextPath;
 
     @Value("${eus.container.prefix}")
