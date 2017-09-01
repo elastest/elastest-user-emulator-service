@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -487,6 +488,14 @@ public class DockerService {
         String randomSufix = new BigInteger(130, new SecureRandom())
                 .toString(32);
         return prefix + randomSufix;
+    }
+
+    public Integer findRandomOpenPort() {
+        try (ServerSocket socket = new ServerSocket(0);) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new EusException("Exception looking for a free port", e);
+        }
     }
 
 }

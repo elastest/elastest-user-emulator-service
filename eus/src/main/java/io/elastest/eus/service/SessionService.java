@@ -16,9 +16,10 @@
  */
 package io.elastest.eus.service;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+
 import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -31,12 +32,13 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import io.elastest.eus.api.EusException;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -250,12 +252,14 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    public Integer findRandomOpenPort() {
-        try (ServerSocket socket = new ServerSocket(0);) {
-            return socket.getLocalPort();
-        } catch (IOException e) {
-            throw new EusException("Exception looking for a free port", e);
-        }
+    public ResponseEntity<String> sessionNotFound() {
+        HttpStatus responseStatusNotFound = NOT_FOUND;
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                responseStatusNotFound);
+
+        log.debug("<< Response: {} ", responseStatusNotFound);
+
+        return responseEntity;
     }
 
 }

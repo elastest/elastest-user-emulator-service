@@ -45,6 +45,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
+import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.WebDriverService;
 import io.swagger.annotations.ApiParam;
 
@@ -62,10 +63,13 @@ public class SessionApiController implements SessionApi {
             .getLogger(SessionApiController.class);
 
     private WebDriverService webDriverService;
+    private RecordingService recordingService;
 
     @Autowired
-    public SessionApiController(WebDriverService webDriverService) {
+    public SessionApiController(WebDriverService webDriverService,
+            RecordingService recordingService) {
         this.webDriverService = webDriverService;
+        this.recordingService = recordingService;
     }
 
     public ResponseEntity<Void> deleteSubscription(
@@ -193,9 +197,9 @@ public class SessionApiController implements SessionApi {
         ResponseEntity<String> response = null;
         HttpMethod method = HttpMethod.resolve(request.getMethod());
         if (method == GET) {
-            response = webDriverService.getVnc(sessionId);
+            response = recordingService.getVnc(sessionId);
         } else if (method == DELETE) {
-            response = webDriverService.deleteVnc(sessionId);
+            response = recordingService.deleteVnc(sessionId);
         }
         return response;
 

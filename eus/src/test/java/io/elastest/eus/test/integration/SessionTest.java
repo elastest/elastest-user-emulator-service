@@ -114,7 +114,7 @@ public class SessionTest {
         log.debug("DELETE /session/{}", sessionId);
         restTemplate.delete("/session/" + sessionId);
 
-        // TODO this can be done as an scenario test when available (JUnit 5 M6)
+        // TODO this can be done as an scenario test when available (JUnit 5.1)
     }
 
 }

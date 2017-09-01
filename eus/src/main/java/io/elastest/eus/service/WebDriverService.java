@@ -16,24 +16,14 @@
  */
 package io.elastest.eus.service;
 
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,18 +59,6 @@ public class WebDriverService {
     @Value("${eus.container.prefix}")
     private String eusContainerPrefix;
 
-    @Value("${novnc.image.id}")
-    private String noVncImageId;
-
-    @Value("${novnc.exposedport}")
-    private int noVncExposedPort;
-
-    @Value("${novnc.container.sufix}")
-    private String noVncContainerSufix;
-
-    @Value("${novnc.autofocus.html}")
-    private String vncAutoFocusHtml;
-
     @Value("${hub.exposedport}")
     private int hubExposedPort;
 
@@ -90,9 +68,6 @@ public class WebDriverService {
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
 
-    @Value("${hub.vnc.password}")
-    private String hubVncPassword;
-
     // Defined as String instead of integer for testing purposes (inject with
     // @TestPropertySource)
     @Value("${hub.timeout}")
@@ -101,31 +76,21 @@ public class WebDriverService {
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
-    @Value("${registry.folder}")
-    private String registryFolder;
-
-    @Value("${registry.contextPath}")
-    private String registryContextPath;
-
-    @Value("${registry.metadata.extension}")
-    private String registryMetadataExtension;
-
-    @Value("${registry.recording.extension}")
-    private String registryRecordingExtension;
-
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
     private SessionService sessionService;
+    private RecordingService recordingService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
-            SessionService sessionService) {
+            SessionService sessionService, RecordingService recordingService) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
+        this.recordingService = recordingService;
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -182,7 +147,7 @@ public class WebDriverService {
                 // active sessions, meaning the session either does not
                 // exist or that it’s not active.
 
-                return sessionNotFound();
+                return sessionService.sessionNotFound();
             }
             isLive = sessionInfo.isLiveSession();
         }
@@ -208,7 +173,7 @@ public class WebDriverService {
 
             sessionService.putSession(sessionId, sessionInfo);
 
-            startVncContainer(sessionInfo);
+            recordingService.startVncContainer(sessionInfo);
 
             if (sessionService.activeWebSocketSessions() && !isLive) {
                 sessionService.sendNewSessionToAllClients(sessionInfo);
@@ -232,26 +197,11 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private void stopBrowser(SessionInfo sessionInfo) {
-        if (sessionInfo.getVncContainerName() != null) {
-            stopRecording(sessionInfo);
-            storeRecording(sessionInfo);
-            storeMetadata(sessionInfo);
-        }
-        sessionService.deleteSession(sessionInfo, false);
+    public String getStatus() {
+        return jsonService.getStatus().toString();
     }
 
-    private ResponseEntity<String> sessionNotFound() {
-        HttpStatus responseStatusNotFound = NOT_FOUND;
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                responseStatusNotFound);
-
-        log.debug("<< Response: {} ", responseStatusNotFound);
-
-        return responseEntity;
-    }
-
-    public SessionInfo starBrowser(String jsonCapabilities, String timeout) {
+    private SessionInfo starBrowser(String jsonCapabilities, String timeout) {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);
@@ -268,11 +218,11 @@ public class WebDriverService {
                 hubContainerName, env);
 
         // Port binding
-        int hubBindPort = sessionService.findRandomOpenPort();
+        int hubBindPort = dockerService.findRandomOpenPort();
         Binding bindPort = Ports.Binding.bindPort(hubBindPort);
         ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
 
-        int hubVncBindPort = sessionService.findRandomOpenPort();
+        int hubVncBindPort = dockerService.findRandomOpenPort();
         Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
         ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
 
@@ -302,165 +252,15 @@ public class WebDriverService {
         return sessionInfo;
     }
 
-    private void startRecording(SessionInfo sessionInfo) {
-        String sessionId = sessionInfo.getSessionId();
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        String hubContainerIp = dockerService.getDockerServerIp();
-        String hubContainerPort = String
-                .valueOf(sessionInfo.getHubVncBindPort());
-
-        log.debug("Recording session {} in {}:{}", sessionId, hubContainerIp,
-                hubVncExposedPort);
-
-        dockerService.execCommand(noNvcContainerName, false, "flvrec.py", "-P",
-                "passwd_file", "-o", sessionId + ".flv", hubContainerIp,
-                hubContainerPort);
-    }
-
-    private void stopRecording(SessionInfo sessionInfo) {
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        log.trace("Stopping recording of container {}", noNvcContainerName);
-        dockerService.execCommand(noNvcContainerName, false, "killall",
-                "flvrec.py");
-    }
-
-    private void storeRecording(SessionInfo sessionInfo) {
-        String sessionId = sessionInfo.getSessionId();
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        String recordingFileName = sessionId + registryRecordingExtension;
-
-        try {
-            // Create recording in container
-            dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
-                    sessionId + ".flv", "-c:v", "libx264", "-crf", "19",
-                    "-strict", "experimental", recordingFileName);
-
-            // TODO send recording also to alluxio
-
-            String target = registryFolder + recordingFileName;
-
-            InputStream inputStream = dockerService.getFileFromContainer(
-                    noNvcContainerName, recordingFileName);
-
-            // -------------
-            // FIXME: Workaround due to strange behavior of docker-java
-            // it seems that copyArchiveFromContainerCmd not works correctly
-
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-
-            int i = 0;
-            for (; i < bytes.length; i++) {
-                char c1 = (char) bytes[i];
-                if (c1 == 'f') {
-                    char c2 = (char) bytes[i + 1];
-                    char c3 = (char) bytes[i + 2];
-                    if (c2 == 't' && c3 == 'y') {
-                        break;
-                    }
-                }
-            }
-
-            FileUtils.writeByteArrayToFile(new File(target),
-                    Arrays.copyOfRange(bytes, i - 4, bytes.length));
-            // -------------
-
-            sessionInfo.setRecordingPath(contextPath + registryContextPath + "/"
-                    + recordingFileName);
+    private void stopBrowser(SessionInfo sessionInfo) {
+        if (sessionInfo.getVncContainerName() != null) {
+            recordingService.stopRecording(sessionInfo);
+            recordingService.storeRecording(sessionInfo);
+            recordingService.storeMetadata(sessionInfo);
 
             sessionService.sendRecordingToAllClients(sessionInfo);
-
-        } catch (IOException e) {
-            log.error("Exception storing recording (sessiodId {})",
-                    sessionInfo.getSessionId(), e);
         }
-    }
-
-    private void storeMetadata(SessionInfo sessionInfo) {
-        String sessionId = sessionInfo.getSessionId();
-        String metadataFileName = sessionId + registryMetadataExtension;
-
-        try {
-            JSONObject sessionInfoToJson = jsonService
-                    .recordedSessionJson(sessionInfo);
-            FileUtils.writeStringToFile(
-                    new File(registryFolder + metadataFileName),
-                    sessionInfoToJson.toString(), Charset.defaultCharset());
-
-            // TODO send also to alluxio
-
-        } catch (IOException e) {
-            log.error("Exception storing metadata (sessiodId {})",
-                    sessionInfo.getSessionId(), e);
-        }
-    }
-
-    public ResponseEntity<String> getVnc(String sessionId) {
-        SessionInfo sessionInfo = sessionService.getSession(sessionId);
-        if (sessionInfo == null) {
-            return sessionNotFound();
-        }
-
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                sessionInfo.getVncUrl(), OK);
-        return responseEntity;
-    }
-
-    public ResponseEntity<String> deleteVnc(String sessionId) {
-        log.debug("Deleting VNC recording of session {}", sessionId);
-        String recordingFileName = sessionId + registryRecordingExtension;
-        String metadataFileName = sessionId + registryMetadataExtension;
-
-        boolean deleteRecording = new File(registryFolder + recordingFileName)
-                .delete();
-        boolean deleteMetadata = new File(registryFolder + metadataFileName)
-                .delete();
-
-        // TODO delete also from alluxio
-
-        HttpStatus status = deleteRecording && deleteMetadata ? OK
-                : INTERNAL_SERVER_ERROR;
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
-        log.debug("... response {}", status);
-        return responseEntity;
-    }
-
-    private void startVncContainer(SessionInfo sessionInfo) {
-        log.debug("Starting VNC container in session {}",
-                sessionInfo.getSessionId());
-
-        String vncContainerName = dockerService.generateContainerName(
-                eusContainerPrefix + noVncContainerSufix);
-
-        // Port binding
-        int noVncBindPort = sessionService.findRandomOpenPort();
-        Binding bindNoVncPort = Ports.Binding.bindPort(noVncBindPort);
-        ExposedPort exposedNoVncPort = ExposedPort.tcp(noVncExposedPort);
-
-        PortBinding[] portBindings = {
-                new PortBinding(bindNoVncPort, exposedNoVncPort) };
-
-        dockerService.startAndWaitContainer(noVncImageId, vncContainerName,
-                portBindings);
-
-        String vncContainerIp = dockerService.getDockerServerIp();
-        String hubContainerIp = dockerService.getDockerServerIp();
-
-        String vncUrl = "http://" + vncContainerIp + ":" + noVncBindPort + "/"
-                + vncAutoFocusHtml + "?host=" + hubContainerIp + "&port="
-                + sessionInfo.getHubVncBindPort()
-                + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
-
-        dockerService.waitForHostIsReachable(vncUrl);
-
-        sessionInfo.setVncContainerName(vncContainerName);
-        sessionInfo.setVncUrl(vncUrl);
-        sessionInfo.setNoVncBindPort(noVncBindPort);
-
-        startRecording(sessionInfo);
-    }
-
-    public String getStatus() {
-        return jsonService.getStatus().toString();
+        sessionService.deleteSession(sessionInfo, false);
     }
 
     private String sanitizeMessage(String message) {

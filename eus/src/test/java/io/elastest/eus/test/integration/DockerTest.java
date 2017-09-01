@@ -36,7 +36,6 @@ import io.elastest.eus.app.EusSpringBootApp;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
-import io.elastest.eus.service.SessionService;
 
 /**
  * Tests for Docker service.
@@ -58,9 +57,6 @@ public class DockerTest {
 
     @Autowired
     private JsonService jsonService;
-
-    @Autowired
-    private SessionService sessionService;
 
     @Value("${hub.exposedport}")
     private int hubExposedPort;
@@ -88,11 +84,11 @@ public class DockerTest {
         String containerName = dockerService
                 .generateContainerName("eus-hub-for-test-");
 
-        int hubBindPort = sessionService.findRandomOpenPort();
+        int hubBindPort = dockerService.findRandomOpenPort();
         Binding bindPort = Ports.Binding.bindPort(hubBindPort);
         ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
 
-        int hubVncBindPort = sessionService.findRandomOpenPort();
+        int hubVncBindPort = dockerService.findRandomOpenPort();
         Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
         ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
 
