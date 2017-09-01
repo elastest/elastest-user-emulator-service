@@ -165,7 +165,7 @@ mvn clean package -DskipTests
       * Go to the root directory of the project with `cd elastest-user-emulator-service/eus`
       * Execute command `mvn spring-boot:run`
 
-The server application can be used from the web interface (see next section). The remote webdriver endpoint is located in URL http://localhost:8080/eus/v1.
+The server application can be used from the web interface (see next section). The remote webdriver endpoint is located in URL http://localhost:8040/eus/v1.
 
 If you change any source file, you need to stop the service and start it again.
 
