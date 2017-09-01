@@ -128,10 +128,9 @@ Then, install the following development tools:
 - [Visual Studio Code](https://code.visualstudio.com/) or similar for Angular development.
 - [Angular CLI](https://cli.angular.io/) 
 
-Last, clone the repositories in a local folder (for example, `/git`):
+Last, clone the repositories in a local folder:
 
 ```
-cd /git
 git clone https://github.com/elastest/elastest-user-emulator-service
 git clone https://github.com/elastest/elastest-torm
 ```
