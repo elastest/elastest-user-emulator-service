@@ -100,7 +100,7 @@ public class WebDriverService {
         String requestContext = requestUrl.substring(
                 requestUrl.lastIndexOf(contextPath) + contextPath.length());
         HttpMethod method = HttpMethod.resolve(request.getMethod());
-        String requestBody = sanitizeMessage(httpEntity.getBody());
+        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
         log.debug(">> Request: {} {} -- body: {}", method, requestContext,
                 requestBody);
@@ -261,13 +261,6 @@ public class WebDriverService {
             sessionService.sendRecordingToAllClients(sessionInfo);
         }
         sessionService.deleteSession(sessionInfo, false);
-    }
-
-    private String sanitizeMessage(String message) {
-        return message != null
-                ? message.trim().replaceAll(" +", " ").replaceAll("\\r", "")
-                        .replaceAll("\\n", "").replaceAll("\\t", "")
-                : message;
     }
 
 }

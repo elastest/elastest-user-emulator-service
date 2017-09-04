@@ -218,4 +218,10 @@ public class JsonService {
         return jsonObject;
     }
 
+    public String sanitizeMessage(String message) {
+        return message != null
+                ? message.trim().replaceAll(" +", " ").replaceAll("\\r", "")
+                        .replaceAll("\\n", "").replaceAll("\\t", "")
+                : message;
+    }
 }
