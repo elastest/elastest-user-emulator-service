@@ -38,7 +38,6 @@ public class SessionInfo {
     private int hubBindPort;
     private int hubVncBindPort;
     private int noVncBindPort;
-    private String recordingPath;
 
     public String getHubUrl() {
         return hubUrl;
@@ -142,14 +141,6 @@ public class SessionInfo {
 
     public void setNoVncBindPort(int noVncBindPort) {
         this.noVncBindPort = noVncBindPort;
-    }
-
-    public String getRecordingPath() {
-        return recordingPath;
-    }
-
-    public void setRecordingPath(String recordingPath) {
-        this.recordingPath = recordingPath;
     }
 
 }

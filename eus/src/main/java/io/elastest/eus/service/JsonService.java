@@ -80,9 +80,6 @@ public class JsonService {
     @Value("${ws.protocol.url}")
     private String wsProtocolUrl;
 
-    @Value("${ws.protocol.path}")
-    private String wsProtocolPath;
-
     @Value("${ws.protocol.browser}")
     private String wsProtocolBrowser;
 
@@ -204,7 +201,6 @@ public class JsonService {
     public JSONObject registryJson(SessionInfo sessionInfo) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(wsProtocolId, sessionInfo.getSessionId());
-        jsonObject.put(wsProtocolPath, sessionInfo.getRecordingPath());
         jsonObject.put(wsProtocolBrowser, sessionInfo.getBrowser());
         jsonObject.put(wsProtocolVersion, sessionInfo.getVersion());
         jsonObject.put(wsProtocolCreationTime, sessionInfo.getCreationTime());

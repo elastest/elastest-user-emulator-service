@@ -47,7 +47,7 @@ public class StatusTest {
     @Test
     void testStatus() {
         // Exercise
-        String status = webDriverService.getStatus();
+        String status = webDriverService.getStatus().getBody();
         log.debug("EUS status {}", status);
 
         // Assertion

@@ -29,7 +29,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import io.elastest.eus.api.model.AudioLevel;
@@ -228,7 +227,7 @@ public interface SessionApi {
     ResponseEntity<String> getStatus();
 
     /**
-     * GET/DELETE /session/{sessionId}/vnc
+     * GET /session/{sessionId}/vnc
      *
      * Get VNC session
      */
@@ -239,8 +238,24 @@ public interface SessionApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/session/{sessionId}/vnc", produces = {
-            "text/plain" }, method = { RequestMethod.GET, DELETE })
+            "text/plain" }, method = { GET })
     ResponseEntity<String> vnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
+
+    /**
+     * GET/DELETE /session/{sessionId}/recording
+     *
+     * Get VNC session
+     */
+    @ApiOperation(value = "Handle recordings", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/recording", produces = {
+            "text/plain" }, method = { GET, DELETE })
+    ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             HttpServletRequest request);
 

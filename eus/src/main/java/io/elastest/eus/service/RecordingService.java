@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -36,15 +38,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
-import com.github.dockerjava.api.model.Ports.Binding;
-
 import io.elastest.eus.session.SessionInfo;
 
 /**
- * Service implementation for VNC and recording capabilities.
+ * Service implementation for recording capabilities.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
@@ -53,9 +50,6 @@ import io.elastest.eus.session.SessionInfo;
 public class RecordingService {
 
     private final Logger log = LoggerFactory.getLogger(RecordingService.class);
-
-    @Value("${hub.vnc.exposedport}")
-    private int hubVncExposedPort;
 
     @Value("${registry.folder}")
     private String registryFolder;
@@ -72,27 +66,20 @@ public class RecordingService {
     @Value("${registry.metadata.extension}")
     private String registryMetadataExtension;
 
-    @Value("${eus.container.prefix}")
-    private String eusContainerPrefix;
-
-    @Value("${novnc.container.sufix}")
-    private String noVncContainerSufix;
-
-    @Value("${novnc.exposedport}")
-    private int noVncExposedPort;
-
-    @Value("${novnc.image.id}")
-    private String noVncImageId;
-
-    @Value("${hub.vnc.password}")
-    private String hubVncPassword;
-
-    @Value("${novnc.autofocus.html}")
-    private String vncAutoFocusHtml;
+    @Value("${edm.url}")
+    private String edmUrl;
 
     private DockerService dockerService;
     private JsonService jsonService;
     SessionService sessionService;
+
+    @PostConstruct
+    private void postConstruct() {
+        // Ensure that EDM URL (if available) ends with "/"
+        if (!edmUrl.isEmpty() && !edmUrl.endsWith("/")) {
+            edmUrl += "/";
+        }
+    }
 
     @Autowired
     public RecordingService(DockerService dockerService,
@@ -110,18 +97,17 @@ public class RecordingService {
                 .valueOf(sessionInfo.getHubVncBindPort());
 
         log.debug("Recording session {} in {}:{}", sessionId, hubContainerIp,
-                hubVncExposedPort);
-
-        dockerService.execCommand(noNvcContainerName, false, "flvrec.py", "-P",
-                "passwd_file", "-o", sessionId + ".flv", hubContainerIp,
                 hubContainerPort);
+
+        dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
+                "--start", sessionId, hubContainerIp, hubContainerPort);
     }
 
     public void stopRecording(SessionInfo sessionInfo) {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         log.trace("Stopping recording of container {}", noNvcContainerName);
-        dockerService.execCommand(noNvcContainerName, false, "killall",
-                "flvrec.py");
+        dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
+                "--end");
     }
 
     public void storeRecording(SessionInfo sessionInfo) {
@@ -130,42 +116,44 @@ public class RecordingService {
         String recordingFileName = sessionId + registryRecordingExtension;
 
         try {
-            // Create recording in container
-            dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
-                    sessionId + ".flv", "-c:v", "libx264", "-crf", "19",
-                    "-strict", "experimental", recordingFileName);
+            // Convert format of recording to mp4
+            dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
+                    "--convert", sessionId, recordingFileName);
 
-            // TODO send recording also to alluxio
+            if (edmUrl.isEmpty()) {
+                // If EDM is not available, recording is stored locally
+                String target = registryFolder + recordingFileName;
 
-            String target = registryFolder + recordingFileName;
+                InputStream inputStream = dockerService.getFileFromContainer(
+                        noNvcContainerName, recordingFileName);
 
-            InputStream inputStream = dockerService.getFileFromContainer(
-                    noNvcContainerName, recordingFileName);
+                // -------------
+                // FIXME: Workaround due to strange behavior of docker-java
+                // it seems that copyArchiveFromContainerCmd not works correctly
 
-            // -------------
-            // FIXME: Workaround due to strange behavior of docker-java
-            // it seems that copyArchiveFromContainerCmd not works correctly
+                byte[] bytes = IOUtils.toByteArray(inputStream);
 
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-
-            int i = 0;
-            for (; i < bytes.length; i++) {
-                char c1 = (char) bytes[i];
-                if (c1 == 'f') {
-                    char c2 = (char) bytes[i + 1];
-                    char c3 = (char) bytes[i + 2];
-                    if (c2 == 't' && c3 == 'y') {
-                        break;
+                int i = 0;
+                for (; i < bytes.length; i++) {
+                    char c1 = (char) bytes[i];
+                    if (c1 == 'f') {
+                        char c2 = (char) bytes[i + 1];
+                        char c3 = (char) bytes[i + 2];
+                        if (c2 == 't' && c3 == 'y') {
+                            break;
+                        }
                     }
                 }
+
+                FileUtils.writeByteArrayToFile(new File(target),
+                        Arrays.copyOfRange(bytes, i - 4, bytes.length));
+                // -------------
+
+            } else {
+                // If EDM is available, recording is stored in Alluxio
+                dockerService.execCommand(noNvcContainerName, false,
+                        "/novnc.sh", "--upload", edmUrl, recordingFileName);
             }
-
-            FileUtils.writeByteArrayToFile(new File(target),
-                    Arrays.copyOfRange(bytes, i - 4, bytes.length));
-            // -------------
-
-            sessionInfo.setRecordingPath(contextPath + registryContextPath + "/"
-                    + recordingFileName);
 
         } catch (IOException e) {
             log.error("Exception storing recording (sessiodId {})",
@@ -178,13 +166,19 @@ public class RecordingService {
         String metadataFileName = sessionId + registryMetadataExtension;
 
         try {
-            JSONObject sessionInfoToJson = jsonService
-                    .recordedSessionJson(sessionInfo);
-            FileUtils.writeStringToFile(
-                    new File(registryFolder + metadataFileName),
-                    sessionInfoToJson.toString(), Charset.defaultCharset());
-
-            // TODO send also to alluxio
+            if (edmUrl.isEmpty()) {
+                // If EDM is not available, metadata is stored locally
+                JSONObject sessionInfoToJson = jsonService
+                        .recordedSessionJson(sessionInfo);
+                FileUtils.writeStringToFile(
+                        new File(registryFolder + metadataFileName),
+                        sessionInfoToJson.toString(), Charset.defaultCharset());
+            } else {
+                // If EDM is available, recording is stored in Alluxio
+                String noNvcContainerName = sessionInfo.getVncContainerName();
+                dockerService.execCommand(noNvcContainerName, false,
+                        "/novnc.sh", "--upload", edmUrl, metadataFileName);
+            }
 
         } catch (IOException e) {
             log.error("Exception storing metadata (sessiodId {})",
@@ -192,66 +186,45 @@ public class RecordingService {
         }
     }
 
-    public void startVncContainer(SessionInfo sessionInfo) {
-        log.debug("Starting VNC container in session {}",
-                sessionInfo.getSessionId());
+    public ResponseEntity<String> getRecording(String sessionId) {
+        HttpStatus status = OK;
+        String urlResponse = "";
+        if (edmUrl.isEmpty()) {
+            // If EDM is not available, recording is store locally
+            urlResponse = contextPath + registryContextPath + "/" + sessionId
+                    + registryRecordingExtension;
 
-        String vncContainerName = dockerService.generateContainerName(
-                eusContainerPrefix + noVncContainerSufix);
-
-        // Port binding
-        int noVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindNoVncPort = Ports.Binding.bindPort(noVncBindPort);
-        ExposedPort exposedNoVncPort = ExposedPort.tcp(noVncExposedPort);
-
-        PortBinding[] portBindings = {
-                new PortBinding(bindNoVncPort, exposedNoVncPort) };
-
-        dockerService.startAndWaitContainer(noVncImageId, vncContainerName,
-                portBindings);
-
-        String vncContainerIp = dockerService.getDockerServerIp();
-        String hubContainerIp = dockerService.getDockerServerIp();
-
-        String vncUrl = "http://" + vncContainerIp + ":" + noVncBindPort + "/"
-                + vncAutoFocusHtml + "?host=" + hubContainerIp + "&port="
-                + sessionInfo.getHubVncBindPort()
-                + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
-
-        dockerService.waitForHostIsReachable(vncUrl);
-
-        sessionInfo.setVncContainerName(vncContainerName);
-        sessionInfo.setVncUrl(vncUrl);
-        sessionInfo.setNoVncBindPort(noVncBindPort);
-
-        startRecording(sessionInfo);
-    }
-
-    public ResponseEntity<String> getVnc(String sessionId) {
-        SessionInfo sessionInfo = sessionService.getSession(sessionId);
-        if (sessionInfo == null) {
-            return sessionService.sessionNotFound();
+        } else {
+            // If EDM is available, recording is store in Alluxio
         }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                sessionInfo.getVncUrl(), OK);
+                urlResponse, status);
         return responseEntity;
     }
 
-    public ResponseEntity<String> deleteVnc(String sessionId) {
-        log.debug("Deleting VNC recording of session {}", sessionId);
+    public ResponseEntity<String> deleteRecording(String sessionId) {
+        log.debug("Deleting recording of session {}", sessionId);
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
 
-        boolean deleteRecording = new File(registryFolder + recordingFileName)
-                .delete();
-        boolean deleteMetadata = new File(registryFolder + metadataFileName)
-                .delete();
+        HttpStatus status = OK;
+        if (edmUrl.isEmpty()) {
+            // If EDM is not available, delete is done locally
 
-        // TODO delete also from alluxio
+            boolean deleteRecording = new File(
+                    registryFolder + recordingFileName).delete();
+            boolean deleteMetadata = new File(registryFolder + metadataFileName)
+                    .delete();
+            status = deleteRecording && deleteMetadata ? OK
+                    : INTERNAL_SERVER_ERROR;
 
-        HttpStatus status = deleteRecording && deleteMetadata ? OK
-                : INTERNAL_SERVER_ERROR;
+        } else {
+            // If EDM is available, deleting is done in Alluxio
+
+            // TODO
+        }
+
         ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
         log.debug("... response {}", status);
         return responseEntity;

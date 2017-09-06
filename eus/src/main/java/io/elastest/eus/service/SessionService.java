@@ -16,7 +16,7 @@
  */
 package io.elastest.eus.service;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,13 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -141,6 +138,7 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    // TODO
     public void sendAllRecordingsToAllClients() {
         File[] metadataFiles = new File(registryFolder)
                 .listFiles((dir, name) -> {
@@ -206,7 +204,7 @@ public class SessionService extends TextWebSocketHandler {
 
             int timeout = Integer.parseInt(hubTimeout);
             Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
-                    timeout, TimeUnit.SECONDS);
+                    timeout, SECONDS);
 
             sessionInfo.setTimeoutFuture(timeoutFuture);
 
@@ -250,16 +248,6 @@ public class SessionService extends TextWebSocketHandler {
         if (vncContainerName != null) {
             dockerService.stopAndRemoveContainer(vncContainerName);
         }
-    }
-
-    public ResponseEntity<String> sessionNotFound() {
-        HttpStatus responseStatusNotFound = NOT_FOUND;
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                responseStatusNotFound);
-
-        log.debug("<< Response: {} ", responseStatusNotFound);
-
-        return responseEntity;
     }
 
 }

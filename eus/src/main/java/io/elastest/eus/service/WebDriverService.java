@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.service;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.text.SimpleDateFormat;
@@ -80,16 +81,19 @@ public class WebDriverService {
     private PropertiesService propertiesService;
     private JsonService jsonService;
     private SessionService sessionService;
+    private VncService vncService;
     private RecordingService recordingService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
-            SessionService sessionService, RecordingService recordingService) {
+            SessionService sessionService, VncService vncService,
+            RecordingService recordingService) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
+        this.vncService = vncService;
         this.recordingService = recordingService;
     }
 
@@ -147,7 +151,11 @@ public class WebDriverService {
                 // active sessions, meaning the session either does not
                 // exist or that it’s not active.
 
-                return sessionService.sessionNotFound();
+                ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                        NOT_FOUND);
+                log.debug("<< Response: {} ", responseEntity.getStatusCode());
+
+                return responseEntity;
             }
             isLive = sessionInfo.isLiveSession();
         }
@@ -172,8 +180,8 @@ public class WebDriverService {
             sessionInfo.setLiveSession(isLive);
 
             sessionService.putSession(sessionId, sessionInfo);
-
-            recordingService.startVncContainer(sessionInfo);
+            vncService.startVncContainer(sessionInfo);
+            recordingService.startRecording(sessionInfo);
 
             if (sessionService.activeWebSocketSessions() && !isLive) {
                 sessionService.sendNewSessionToAllClients(sessionInfo);
@@ -197,8 +205,9 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    public String getStatus() {
-        return jsonService.getStatus().toString();
+    public ResponseEntity<String> getStatus() {
+        String statusBody = jsonService.getStatus().toString();
+        return new ResponseEntity<String>(statusBody, OK);
     }
 
     private SessionInfo starBrowser(String jsonCapabilities, String timeout) {

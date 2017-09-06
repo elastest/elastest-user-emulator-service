@@ -46,6 +46,7 @@ import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
 import io.elastest.eus.service.RecordingService;
+import io.elastest.eus.service.VncService;
 import io.elastest.eus.service.WebDriverService;
 import io.swagger.annotations.ApiParam;
 
@@ -63,12 +64,14 @@ public class SessionApiController implements SessionApi {
             .getLogger(SessionApiController.class);
 
     private WebDriverService webDriverService;
+    private VncService vncService;
     private RecordingService recordingService;
 
     @Autowired
     public SessionApiController(WebDriverService webDriverService,
-            RecordingService recordingService) {
+            VncService vncService, RecordingService recordingService) {
         this.webDriverService = webDriverService;
+        this.vncService = vncService;
         this.recordingService = recordingService;
     }
 
@@ -183,26 +186,28 @@ public class SessionApiController implements SessionApi {
 
     @Override
     public ResponseEntity<String> getStatus() {
-        String statusBody = webDriverService.getStatus();
-        ResponseEntity<String> responseEntity = new ResponseEntity<String>(
-                statusBody, OK);
-        return responseEntity;
+        return webDriverService.getStatus();
     }
 
     @Override
     public ResponseEntity<String> vnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId) {
+        return vncService.getVnc(sessionId);
+
+    }
+
+    @Override
+    public ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             HttpServletRequest request) {
-
         ResponseEntity<String> response = null;
         HttpMethod method = HttpMethod.resolve(request.getMethod());
         if (method == GET) {
-            response = recordingService.getVnc(sessionId);
+            response = recordingService.getRecording(sessionId);
         } else if (method == DELETE) {
-            response = recordingService.deleteVnc(sessionId);
+            response = recordingService.deleteRecording(sessionId);
         }
         return response;
-
     }
 
 }
