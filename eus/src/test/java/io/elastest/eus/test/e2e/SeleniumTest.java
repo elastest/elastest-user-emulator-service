@@ -18,6 +18,8 @@ package io.elastest.eus.test.e2e;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
+import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.MalformedURLException;
@@ -25,6 +27,7 @@ import java.net.URL;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -52,6 +55,7 @@ import io.elastest.eus.app.EusSpringBootApp;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
+@Disabled
 public class SeleniumTest {
 
     final Logger log = LoggerFactory.getLogger(SeleniumTest.class);
@@ -65,8 +69,8 @@ public class SeleniumTest {
     String contextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
-        return Stream.of(Arguments.of(DesiredCapabilities.chrome(), "chrome"),
-                Arguments.of(DesiredCapabilities.firefox(), "firefox"));
+        return Stream.of(Arguments.of(chrome(), "chrome"),
+                Arguments.of(firefox(), "firefox"));
     }
 
     @ParameterizedTest
