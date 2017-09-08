@@ -19,16 +19,13 @@ case $key in
     shift
     ;;
     -u|--upload)
-    curl -v -X POST $2paths//$3/create-file
-
-    curl -v -X POST $2streams/1/write --data-binary @LICENSE -H "Content-Type: application/octet-stream"
-    curl -v -X POST $2streams/1/close
+    response=$(curl -X POST $2api/v1/paths//$3/create-file)
+    curl -X POST $2api/v1/streams/$response/write --data-binary @$3 -H "Content-Type: application/octet-stream"
+    curl -X POST $2api/v1/streams/$response/close
     shift
     ;;
-    -r|--read)
-    curl -v -X POST $2paths//$3/open-file
-    curl -v -X POST $2streams/1/write --data-binary @LICENSE -H "Content-Type: application/octet-stream"
-    curl -v -X POST $2streams/1/close
+    -d|--delete)
+    curl -X POST $2api/v1/paths//$3/delete
     shift
     ;;
 esac
