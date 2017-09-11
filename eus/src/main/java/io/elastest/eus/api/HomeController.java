@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.config;
+package io.elastest.eus.api;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

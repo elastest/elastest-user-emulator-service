@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.api.EusException;
+import io.elastest.eus.EusException;
 
 /**
  * Service implementation for properties.

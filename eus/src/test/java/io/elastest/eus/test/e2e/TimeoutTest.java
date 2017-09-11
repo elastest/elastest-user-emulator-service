@@ -39,7 +39,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.app.EusSpringBootApp;
+import io.elastest.eus.EusSpringBootApp;
 
 /**
  * Timeout test.

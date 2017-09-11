@@ -16,15 +16,11 @@
  */
 package io.elastest.eus.edm;
 
-import java.util.Map;
-
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.http.Headers;
-import retrofit2.http.Multipart;
+import retrofit2.http.Body;
 import retrofit2.http.POST;
-import retrofit2.http.PartMap;
 import retrofit2.http.Path;
 
 /**
@@ -45,15 +41,16 @@ public interface EdmAluxioApi {
     Call<ResponseBody> createFile(@Path("file") String file);
 
     @POST("/api/v1/streams/{streamId}/write")
-    @Multipart
-    @Headers("Content-Type: application/octet-stream")
     Call<Void> writeStream(@Path("streamId") String streamId,
-            @PartMap Map<String, RequestBody> fileContent);
+            @Body RequestBody fileContent);
 
     @POST("/api/v1/streams/{streamId}/close")
     Call<ResponseBody> closeStream(@Path("streamId") String streamId);
 
     @POST("/api/v1/paths//{file}/delete")
     Call<ResponseBody> deleteFile(@Path("file") String file);
+
+    @POST("/api/v1/paths//{folder}/list-status")
+    Call<ResponseBody> listFiles(@Path("folder") String folder);
 
 }

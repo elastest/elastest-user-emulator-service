@@ -16,6 +16,10 @@
  */
 package io.elastest.eus.service;
 
+import static java.nio.file.Files.readAllBytes;
+import static java.nio.file.Paths.get;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -23,7 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -250,6 +256,60 @@ public class RecordingService {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
         log.debug("... response {}", status);
         return responseEntity;
+    }
+
+    public List<String> getStoredMetadataContent() {
+        List<String> metadataContent = new ArrayList<>();
+
+        if (edmAlluxioUrl.isEmpty()) {
+            // If EDM Alluxio is not available, recordings and metadata are
+            // stored locally
+            File[] metadataFiles = new File(registryFolder)
+                    .listFiles((dir, name) -> {
+                        return name.toLowerCase()
+                                .endsWith(registryMetadataExtension);
+                    });
+            metadataContent = stream(metadataFiles).map(f -> {
+                String content = "";
+                try {
+                    content = new String(
+                            readAllBytes(get(f.getAbsolutePath())));
+                } catch (IOException e) {
+                    log.error("Exception reading content of local metadata {}",
+                            f, e);
+                }
+                return content;
+            }).collect(toList());
+
+            new File(registryFolder).listFiles();
+
+        } else {
+            // If EDM Alluxio is available, recordings and metadata are stored
+            // in Alluxio
+            List<String> metadataFileList;
+            try {
+                metadataFileList = alluxioService.getMetadataFileList();
+                metadataContent = metadataFileList.stream().map(f -> {
+                    String content = "";
+                    try {
+                        content = new String(alluxioService.getFile(f));
+                    } catch (IOException e) {
+                        log.error(
+                                "Exception reading content of Alluxio metadata {}",
+                                f, e);
+                    }
+                    return content;
+                }).collect(toList());
+
+            } catch (IOException e) {
+                log.error(
+                        "Exception reading content of metadata file from Alluxio",
+                        e);
+            }
+
+        }
+
+        return metadataContent;
     }
 
 }

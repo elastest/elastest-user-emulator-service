@@ -63,7 +63,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
-import io.elastest.eus.api.EusException;
+import io.elastest.eus.EusException;
 
 /**
  * Service implementation simulating EPM (ElasTest Platform Manager) with

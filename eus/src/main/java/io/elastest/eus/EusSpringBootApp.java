@@ -14,22 +14,21 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.app;
+package io.elastest.eus;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
@@ -42,20 +41,19 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableSwagger2
 @EnableWebSocket
-@ComponentScan(basePackages = "io.elastest.eus")
 public class EusSpringBootApp implements WebSocketConfigurer {
 
     private final Logger log = LoggerFactory.getLogger(EusSpringBootApp.class);
 
     private DockerService dockerService;
-
     private JsonService jsonService;
+    private RecordingService recordingService;
 
-    @Autowired
     public EusSpringBootApp(DockerService dockerService,
-            JsonService jsonService) {
+            JsonService jsonService, RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
+        this.recordingService = recordingService;
     }
 
     @Value("${ws.path}")
@@ -69,7 +67,7 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Bean
     public SessionService sessionService() {
-        return new SessionService(dockerService, jsonService);
+        return new SessionService(dockerService, jsonService, recordingService);
     }
 
     public static void main(String[] args) throws Exception {

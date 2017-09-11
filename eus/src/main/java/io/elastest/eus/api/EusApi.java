@@ -53,7 +53,7 @@ import io.swagger.annotations.ApiResponses;
  * @since 0.0.1
  */
 @Api(value = "session")
-public interface SessionApi {
+public interface EusApi {
 
     /**
      * DELETE /session/{sessionId}/event/{subscriptionId}

@@ -18,10 +18,7 @@ package io.elastest.eus.service;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -63,21 +60,20 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${registry.metadata.extension}")
     private String registryMetadataExtension;
 
-    private DockerService dockerService;
-
-    private JsonService jsonService;
-
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
-
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
-
     private ScheduledExecutorService timeoutExecutor = Executors
             .newScheduledThreadPool(1);
 
-    public SessionService(DockerService dockerService,
-            JsonService jsonService) {
+    private DockerService dockerService;
+    private JsonService jsonService;
+    private RecordingService recordingService;
+
+    public SessionService(DockerService dockerService, JsonService jsonService,
+            RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
+        this.recordingService = recordingService;
     }
 
     @Override
@@ -138,21 +134,11 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    // TODO
     public void sendAllRecordingsToAllClients() {
-        File[] metadataFiles = new File(registryFolder)
-                .listFiles((dir, name) -> {
-                    return name.toLowerCase()
-                            .endsWith(registryMetadataExtension);
-                });
         for (WebSocketSession session : activeSessions.values()) {
-            for (File file : metadataFiles) {
-                try {
-                    sendTextMessage(session, new String(Files
-                            .readAllBytes(Paths.get(file.getAbsolutePath()))));
-                } catch (IOException e) {
-                    log.error("Error reading file {}", file, e);
-                }
+            for (String fileContent : recordingService
+                    .getStoredMetadataContent()) {
+                sendTextMessage(session, fileContent);
             }
         }
     }

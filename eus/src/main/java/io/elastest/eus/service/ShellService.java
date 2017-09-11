@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.io.CharStreams;
 
-import io.elastest.eus.api.EusException;
+import io.elastest.eus.EusException;
 
 /**
  * Utilities to execute commands on the shell.

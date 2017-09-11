@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.api;
+package io.elastest.eus;
 
 /**
  * EUS exception.

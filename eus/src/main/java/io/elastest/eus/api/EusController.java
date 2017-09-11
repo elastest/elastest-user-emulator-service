@@ -58,17 +58,17 @@ import io.swagger.annotations.ApiParam;
  */
 @Controller
 @CrossOrigin
-public class SessionApiController implements SessionApi {
+public class EusController implements EusApi {
 
     private final Logger log = LoggerFactory
-            .getLogger(SessionApiController.class);
+            .getLogger(EusController.class);
 
     private WebDriverService webDriverService;
     private VncService vncService;
     private RecordingService recordingService;
 
     @Autowired
-    public SessionApiController(WebDriverService webDriverService,
+    public EusController(WebDriverService webDriverService,
             VncService vncService, RecordingService recordingService) {
         this.webDriverService = webDriverService;
         this.vncService = vncService;
