@@ -109,14 +109,6 @@ public class AlluxioService {
                 .execute();
         log.debug("Result: {}", execute);
 
-        // Map<String, RequestBody> map = new HashMap<>();
-        // RequestBody requestBody = RequestBody.create(
-        // MediaType.parse("application/octet-stream"), fileContent);
-        // map.put("data-binary", requestBody);
-        // Response<Void> execute = alluxio.writeStream(streamId,
-        // map).execute();
-        // log.debug("Result: {}", execute);
-
         alluxio.closeStream(streamId).execute();
         log.debug("Stream {} closed", streamId);
     }
@@ -134,34 +126,13 @@ public class AlluxioService {
 
         EdmAluxioFile[] files = new Gson().fromJson(responseBody,
                 EdmAluxioFile[].class);
-        return stream(files).map(f -> f.name).collect(toList());
+        return stream(files).map(f -> f.getName()).collect(toList());
     }
 
     public List<String> getMetadataFileList() throws IOException {
         List<String> listFiles = listFiles("/");
         return listFiles.stream().filter(f -> f.endsWith(metadataExtension))
                 .collect(Collectors.toList());
-    }
-
-    public static void main(String[] args) throws IOException {
-        AlluxioService alluxioService = new AlluxioService();
-        alluxioService.edmAlluxioUrl = "http://172.18.0.12:39999/";
-        alluxioService.metadataExtension = ".eus";
-        alluxioService.postConstruct();
-
-        // Path path = Paths.get("/tmp/spring.log");
-        // byte[] fileContent = Files.readAllBytes(path);
-        // alluxioService.writeFile("spring.log", fileContent);
-
-        // byte[] file = alluxioService
-        // .getFile("630e91d0-b91d-42b1-89ea-4c5d0d87e75f.eus");
-        // System.out.println(file.length);
-
-        List<String> listFiles = alluxioService.getMetadataFileList();
-        for (String f : listFiles) {
-            System.out.println(f);
-        }
-
     }
 
 }

@@ -37,7 +37,7 @@ import io.elastest.eus.EusException;
 @Service
 public class ShellService {
 
-    public static Logger log = LoggerFactory.getLogger(ShellService.class);
+    private final Logger log = LoggerFactory.getLogger(ShellService.class);
 
     public String runAndWait(final String... command) {
         return runAndWaitArray(command);
