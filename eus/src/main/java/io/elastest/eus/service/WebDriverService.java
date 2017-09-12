@@ -124,7 +124,7 @@ public class WebDriverService {
             sessionInfo = starBrowser(requestBody, hubTimeout);
 
             // -------------
-            // FIXME: Workaround due to bug of selenium-server 3.4.0
+            // Workaround due to bug of selenium-server 3.4.0
             // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
             String browserName = jsonService.getBrowser(requestBody);
             String version = jsonService.getVersion(requestBody);

@@ -46,7 +46,8 @@ public class ShellService {
     public String runAndWaitArray(String[] command) {
         assert (command.length > 0);
 
-        log.trace("Running command on the shell: {}", Arrays.toString(command));
+        String commandStr = Arrays.toString(command);
+        log.trace("Running command on the shell: {}", commandStr);
         String result = runAndWaitNoLog(command);
         log.trace("Result: {}", result);
         return result;

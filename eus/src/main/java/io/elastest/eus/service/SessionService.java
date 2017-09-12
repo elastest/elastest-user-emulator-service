@@ -16,13 +16,14 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.Integer.parseInt;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -63,8 +64,8 @@ public class SessionService extends TextWebSocketHandler {
 
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
-    private ScheduledExecutorService timeoutExecutor = Executors
-            .newScheduledThreadPool(1);
+    private ScheduledExecutorService timeoutExecutor = newScheduledThreadPool(
+            1);
 
     private DockerService dockerService;
     private JsonService jsonService;
@@ -193,7 +194,7 @@ public class SessionService extends TextWebSocketHandler {
         if (sessionInfo != null) {
             Runnable deleteSession = () -> deleteSession(sessionInfo, true);
 
-            int timeout = Integer.parseInt(hubTimeout);
+            int timeout = parseInt(hubTimeout);
             Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
                     timeout, SECONDS);
 

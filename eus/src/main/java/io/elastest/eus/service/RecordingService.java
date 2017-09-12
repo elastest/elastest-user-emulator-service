@@ -140,7 +140,7 @@ public class RecordingService {
                         noNvcContainerName, recordingFileName);
 
                 // -------------
-                // FIXME: Workaround due to strange behavior of docker-java
+                // Workaround due to strange behavior of docker-java
                 // it seems that copyArchiveFromContainerCmd not works correctly
 
                 byte[] bytes = IOUtils.toByteArray(inputStream);

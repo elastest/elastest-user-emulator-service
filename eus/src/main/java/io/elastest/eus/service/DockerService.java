@@ -450,52 +450,47 @@ public class DockerService {
             HostnameVerifier allHostsValid = (hostname, session) -> true;
             HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
-            int responseCode = 0;
-            while (true) {
-                try {
-                    responseCode = openConnection(url, (int) timeoutMillis);
-                    if (responseCode == HTTP_OK) {
-                        log.debug("URL already reachable");
-                        break;
-                    }
+            waitUrl(url, timeoutMillis, endTimeMillis, errorMessage);
 
-                } catch (SSLHandshakeException | SocketException e) {
-                    log.trace("Error {} waiting URL {}, trying again in {} ms",
-                            e.getMessage(), url, dockerPollTimeMs);
-
-                } finally {
-                    // Polling to wait a consistent state
-                    sleep(dockerPollTimeMs);
-                }
-
-                if (currentTimeMillis() > endTimeMillis) {
-                    throw new EusException(errorMessage);
-                }
-            }
-
-        } catch (
-
-        Exception e) {
+        } catch (Exception e) {
             throw new EusException(errorMessage, e);
         }
     }
 
-    private int openConnection(String url, int timeoutMillis)
-            throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url)
-                .openConnection();
-        connection.setConnectTimeout(timeoutMillis);
-        connection.setReadTimeout(timeoutMillis);
-        connection.setRequestMethod("GET");
+    private void waitUrl(String url, long timeoutMillis, long endTimeMillis,
+            String errorMessage) throws IOException, InterruptedException {
+        int responseCode = 0;
+        while (true) {
+            try {
+                HttpURLConnection connection = (HttpURLConnection) new URL(url)
+                        .openConnection();
+                connection.setConnectTimeout((int) timeoutMillis);
+                connection.setReadTimeout((int) timeoutMillis);
+                connection.setRequestMethod("GET");
+                responseCode = connection.getResponseCode();
 
-        int responseCode = connection.getResponseCode();
-        if (responseCode != HTTP_OK) {
-            log.trace(
-                    "URL {} not reachable (response {}). Trying again in {} ms",
-                    url, responseCode, dockerPollTimeMs);
+                if (responseCode == HTTP_OK) {
+                    log.debug("URL already reachable");
+                    break;
+                } else {
+                    log.trace(
+                            "URL {} not reachable (response {}). Trying again in {} ms",
+                            url, responseCode, dockerPollTimeMs);
+                }
+
+            } catch (SSLHandshakeException | SocketException e) {
+                log.trace("Error {} waiting URL {}, trying again in {} ms",
+                        e.getMessage(), url, dockerPollTimeMs);
+
+            } finally {
+                // Polling to wait a consistent state
+                sleep(dockerPollTimeMs);
+            }
+
+            if (currentTimeMillis() > endTimeMillis) {
+                throw new EusException(errorMessage);
+            }
         }
-        return responseCode;
-
     }
 
     public String generateContainerName(String prefix) {
