@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.EusException;
-
 /**
  * Service implementation for properties.
  *
@@ -114,12 +112,7 @@ public class PropertiesService {
 
     public String getKeyFromCapabilities(String browserName, String version,
             String platform) {
-
-        if (browserName == null) {
-            throw new EusException(
-                    "At least the type of browser must be honored");
-        }
-
+        assert (browserName != null);
         log.debug("Capabilities: browserName={}, version={}, platform={}",
                 browserName, version, platform);
 
@@ -138,7 +131,6 @@ public class PropertiesService {
                 }
             }
         }
-
         return out;
     }
 

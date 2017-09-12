@@ -290,7 +290,7 @@ public class RecordingService {
             try {
                 metadataFileList = alluxioService.getMetadataFileList();
                 metadataContent = metadataFileList.stream()
-                        .map(f -> getFileContent(f)).collect(toList());
+                        .map(this::getFileContent).collect(toList());
 
             } catch (IOException e) {
                 log.error(

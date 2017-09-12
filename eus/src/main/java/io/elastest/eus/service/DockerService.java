@@ -19,6 +19,8 @@ package io.elastest.eus.service;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
@@ -30,11 +32,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -165,8 +165,8 @@ public class DockerService {
 
     private boolean isRunningInContainer() {
         if (isRunningInContainer == null) {
-            try (BufferedReader br = Files.newBufferedReader(
-                    Paths.get("/proc/1/cgroup"), StandardCharsets.UTF_8)) {
+            try (BufferedReader br = Files
+                    .newBufferedReader(Paths.get("/proc/1/cgroup"), UTF_8)) {
 
                 String line = null;
                 while ((line = br.readLine()) != null) {
@@ -304,8 +304,10 @@ public class DockerService {
         assert (command.length > 0);
 
         String output = null;
+        String commandStr = Arrays.toString(command);
+
         log.trace("Executing command {} in container {} (await completion {})",
-                Arrays.toString(command), containerName, awaitCompletion);
+                commandStr, containerName, awaitCompletion);
         if (existsContainer(containerName)) {
             ExecCreateCmdResponse exec = dockerClient
                     .execCreateCmd(containerName).withCmd(command)
@@ -325,7 +327,7 @@ public class DockerService {
 
             } catch (Exception e) {
                 log.warn("Exception executing command {} on container {}",
-                        Arrays.toString(command), containerName, e);
+                        commandStr, containerName, e);
                 currentThread().interrupt();
 
             } finally {
@@ -359,13 +361,13 @@ public class DockerService {
 
     public void waitForContainer(String containerName) {
         boolean isRunning = false;
-        long timeoutMs = System.currentTimeMillis()
+        long timeoutMs = currentTimeMillis()
                 + SECONDS.toMillis(dockerWaitTimeoutSec);
         do {
             isRunning = isRunningContainer(containerName);
             if (!isRunning) {
                 // Check timeout
-                if (System.currentTimeMillis() > timeoutMs) {
+                if (currentTimeMillis() > timeoutMs) {
                     throw new EusException("Timeout of " + dockerWaitTimeoutSec
                             + " seconds waiting for container "
                             + containerName);
@@ -445,24 +447,16 @@ public class DockerService {
             HttpsURLConnection
                     .setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-            HostnameVerifier allHostsValid = (hostname, session) -> {
-                return true;
-            };
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
             HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
             int responseCode = 0;
             while (true) {
                 try {
                     responseCode = openConnection(url, (int) timeoutMillis);
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                    if (responseCode == HTTP_OK) {
                         log.debug("URL already reachable");
                         break;
-
-                    } else {
-                        log.trace(
-                                "URL {} not reachable. Response code: {}, "
-                                        + "trying again in {} ms",
-                                url, responseCode, dockerPollTimeMs);
                     }
 
                 } catch (SSLHandshakeException | SocketException e) {
@@ -487,13 +481,20 @@ public class DockerService {
     }
 
     private int openConnection(String url, int timeoutMillis)
-            throws MalformedURLException, IOException {
+            throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url)
                 .openConnection();
         connection.setConnectTimeout(timeoutMillis);
         connection.setReadTimeout(timeoutMillis);
         connection.setRequestMethod("GET");
-        return connection.getResponseCode();
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode != HTTP_OK) {
+            log.trace(
+                    "URL {} not reachable (response {}). Trying again in {} ms",
+                    url, responseCode, dockerPollTimeMs);
+        }
+        return responseCode;
 
     }
 

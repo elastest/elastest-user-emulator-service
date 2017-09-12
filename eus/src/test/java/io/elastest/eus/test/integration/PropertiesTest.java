@@ -17,7 +17,6 @@
 package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.stream.Stream;
@@ -33,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusException;
 import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
@@ -129,13 +127,10 @@ public class PropertiesTest {
         String platform = null;
 
         // Exercise and assertion
-        Throwable exception = assertThrows(EusException.class, () -> {
+        assertThrows(AssertionError.class, () -> {
             propertiesService.getKeyFromCapabilities(browserName, version,
                     platform);
         });
-        assertNotNull(exception.getMessage());
-
-        log.debug("EusException raised when browserName is {}", browserName);
     }
 
     @Test
