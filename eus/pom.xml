@@ -51,9 +51,8 @@
         <retrofit.version>2.3.0</retrofit.version>
 
         <!-- Test dependencies version -->
-        <junit.jupiter.version>5.0.0-M5</junit.jupiter.version>
-        <junit.platform.version>1.0.0-M5</junit.platform.version>
-        <spring-test-junit5.version>1.0.0.M5</spring-test-junit5.version>
+        <junit.jupiter.version>5.0.0</junit.jupiter.version>
+        <junit.platform.version>1.0.0</junit.platform.version>
 
         <!-- Plugins versions -->
         <maven.source.plugin.version>2.2.1</maven.source.plugin.version>
