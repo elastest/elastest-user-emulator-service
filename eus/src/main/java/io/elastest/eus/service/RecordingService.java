@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +77,9 @@ public class RecordingService {
     @Value("${edm.alluxio.url}")
     private String edmAlluxioUrl;
 
+    @Value("${novnc.script.filename}")
+    private String novncScript;
+
     private DockerService dockerService;
     private JsonService jsonService;
     private AlluxioService alluxioService;
@@ -105,14 +110,14 @@ public class RecordingService {
         log.debug("Recording session {} in container {} ({}:{})", sessionId,
                 noNvcContainerName, hubContainerIp, hubContainerPort);
 
-        dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
+        dockerService.execCommand(noNvcContainerName, false, novncScript,
                 "--start", sessionId, hubContainerIp, hubContainerPort);
     }
 
     public void stopRecording(SessionInfo sessionInfo) {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         log.trace("Stopping recording of container {}", noNvcContainerName);
-        dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
+        dockerService.execCommand(noNvcContainerName, false, novncScript,
                 "--end");
     }
 
@@ -158,7 +163,7 @@ public class RecordingService {
 
             } else {
                 // If EDM Alluxio is available, recording is stored in Alluxio
-                dockerService.execCommand(noNvcContainerName, true, "/novnc.sh",
+                dockerService.execCommand(noNvcContainerName, true, novncScript,
                         "--upload", edmAlluxioUrl, recordingFileName);
             }
 
@@ -220,9 +225,7 @@ public class RecordingService {
             }
         }
 
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                urlResponse, status);
-        return responseEntity;
+        return new ResponseEntity<>(urlResponse, status);
     }
 
     public ResponseEntity<String> deleteRecording(String sessionId) {
@@ -231,27 +234,25 @@ public class RecordingService {
         String metadataFileName = sessionId + registryMetadataExtension;
 
         HttpStatus status = OK;
-        if (edmAlluxioUrl.isEmpty()) {
-            // If EDM Alluxio is not available, delete is done locally
-            boolean deleteRecording = new File(
-                    registryFolder + recordingFileName).delete();
-            boolean deleteMetadata = new File(registryFolder + metadataFileName)
-                    .delete();
-            status = deleteRecording && deleteMetadata ? OK
-                    : INTERNAL_SERVER_ERROR;
+        try {
+            if (edmAlluxioUrl.isEmpty()) {
+                // If EDM Alluxio is not available, delete is done locally
+                boolean deleteRecording = Files.deleteIfExists(
+                        Paths.get(registryFolder + recordingFileName));
+                boolean deleteMetadata = Files.deleteIfExists(
+                        Paths.get(registryFolder + metadataFileName));
+                status = deleteRecording && deleteMetadata ? OK
+                        : INTERNAL_SERVER_ERROR;
 
-        } else {
-            try {
+            } else {
                 // If EDM Alluxio is available, deleting is done in Alluxio
                 alluxioService.deleteFile(recordingFileName);
                 alluxioService.deleteFile(metadataFileName);
 
-            } catch (IOException e) {
-                status = INTERNAL_SERVER_ERROR;
-                log.error("Error deleting session {} from Alluxio", sessionId,
-                        e);
             }
-
+        } catch (IOException e) {
+            status = INTERNAL_SERVER_ERROR;
+            log.error("Error deleting session {} from Alluxio", sessionId, e);
         }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
@@ -266,10 +267,8 @@ public class RecordingService {
             // If EDM Alluxio is not available, recordings and metadata are
             // stored locally
             File[] metadataFiles = new File(registryFolder)
-                    .listFiles((dir, name) -> {
-                        return name.toLowerCase()
-                                .endsWith(registryMetadataExtension);
-                    });
+                    .listFiles((dir, name) -> name.toLowerCase()
+                            .endsWith(registryMetadataExtension));
             metadataContent = stream(metadataFiles).map(f -> {
                 String content = "";
                 try {
@@ -290,17 +289,8 @@ public class RecordingService {
             List<String> metadataFileList;
             try {
                 metadataFileList = alluxioService.getMetadataFileList();
-                metadataContent = metadataFileList.stream().map(f -> {
-                    String content = "";
-                    try {
-                        content = new String(alluxioService.getFile(f));
-                    } catch (IOException e) {
-                        log.error(
-                                "Exception reading content of Alluxio metadata {}",
-                                f, e);
-                    }
-                    return content;
-                }).collect(toList());
+                metadataContent = metadataFileList.stream()
+                        .map(f -> getFileContent(f)).collect(toList());
 
             } catch (IOException e) {
                 log.error(
@@ -311,6 +301,17 @@ public class RecordingService {
         }
 
         return metadataContent;
+    }
+
+    private String getFileContent(String file) {
+        String content = "";
+        try {
+            content = new String(alluxioService.getFile(file));
+        } catch (IOException e) {
+            log.error("Exception reading content of Alluxio metadata {}", file,
+                    e);
+        }
+        return content;
     }
 
 }

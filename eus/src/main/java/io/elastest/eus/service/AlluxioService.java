@@ -96,8 +96,7 @@ public class AlluxioService {
 
     public void writeFile(String fileName, byte[] fileContent)
             throws IOException {
-        log.trace("Writing file content to Alluxio: {}",
-                new String(fileContent));
+        log.debug("Writing {} bytes to Alluxio", fileContent.length);
 
         Call<ResponseBody> openFile = alluxio.createFile(fileName);
         String streamId = openFile.execute().body().string();
@@ -126,7 +125,7 @@ public class AlluxioService {
 
         EdmAluxioFile[] files = new Gson().fromJson(responseBody,
                 EdmAluxioFile[].class);
-        return stream(files).map(f -> f.getName()).collect(toList());
+        return stream(files).map(EdmAluxioFile::getName).collect(toList());
     }
 
     public List<String> getMetadataFileList() throws IOException {

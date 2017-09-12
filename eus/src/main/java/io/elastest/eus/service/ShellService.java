@@ -39,18 +39,22 @@ public class ShellService {
 
     private final Logger log = LoggerFactory.getLogger(ShellService.class);
 
-    public String runAndWait(final String... command) {
+    public String runAndWait(String... command) {
         return runAndWaitArray(command);
     }
 
-    public String runAndWaitArray(final String[] command) {
+    public String runAndWaitArray(String[] command) {
+        assert (command.length > 0);
+
         log.trace("Running command on the shell: {}", Arrays.toString(command));
         String result = runAndWaitNoLog(command);
-        log.trace("Result:" + result);
+        log.trace("Result: {}", result);
         return result;
     }
 
-    public String runAndWaitNoLog(final String... command) {
+    public String runAndWaitNoLog(String... command) {
+        assert (command.length > 0);
+
         Process p;
         try {
             p = new ProcessBuilder(command).redirectErrorStream(true).start();
@@ -60,8 +64,10 @@ public class ShellService {
             return output;
 
         } catch (IOException e) {
-            throw new EusException("Exception executing command on the shell: "
-                    + Arrays.toString(command), e);
+            throw new EusException(
+                    "Exception executing command on the shell: {} "
+                            + Arrays.toString(command),
+                    e);
         }
     }
 

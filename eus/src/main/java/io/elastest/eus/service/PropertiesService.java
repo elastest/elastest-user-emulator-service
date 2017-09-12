@@ -129,10 +129,11 @@ public class PropertiesService {
                 if (version != null) {
                     if (key.contains(version) && platformMatch(key, platform)) {
                         out = key;
-                        break;
                     }
                 } else if (platformMatch(key, platform)) {
                     out = key;
+                }
+                if (out != null) {
                     break;
                 }
             }
@@ -142,9 +143,9 @@ public class PropertiesService {
     }
 
     public boolean platformMatch(String key, String platform) {
-        return ((platform != null && key.contains(platform))
-                || ((platform == null || platform.equals("")
-                        || platform.equalsIgnoreCase(webdriverAnyPlatform))));
+        return (platform != null && key.contains(platform)) || platform == null
+                || platform.equals("")
+                || platform.equalsIgnoreCase(webdriverAnyPlatform);
     }
 
     public String getVersionFromKey(String key) {

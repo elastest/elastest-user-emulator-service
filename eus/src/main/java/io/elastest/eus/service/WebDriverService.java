@@ -130,14 +130,11 @@ public class WebDriverService {
             String version = jsonService.getVersion(requestBody);
             if (browserName.equalsIgnoreCase("firefox")
                     && !version.equals("")) {
-                version = "";
                 log.warn(
                         "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
-                httpEntity = new HttpEntity<String>(
-                        "{ \"desiredCapabilities\": {"
-                                + "\"browserName\": \"firefox\","
-                                + "\"version\": \"\","
-                                + "\"platform\": \"ANY\" } }");
+                httpEntity = new HttpEntity<>("{ \"desiredCapabilities\": {"
+                        + "\"browserName\": \"firefox\"," + "\"version\": \"\","
+                        + "\"platform\": \"ANY\" } }");
             }
             // -------------
 
@@ -208,7 +205,7 @@ public class WebDriverService {
 
     public ResponseEntity<String> getStatus() {
         String statusBody = jsonService.getStatus().toString();
-        return new ResponseEntity<String>(statusBody, OK);
+        return new ResponseEntity<>(statusBody, OK);
     }
 
     private ResponseEntity<String> notFound() {
