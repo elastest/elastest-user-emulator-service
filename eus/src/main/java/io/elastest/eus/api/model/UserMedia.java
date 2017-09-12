@@ -16,8 +16,6 @@
  */
 package io.elastest.eus.api.model;
 
-import java.util.Objects;
-
 import io.swagger.annotations.ApiModelProperty;
 
 /**
@@ -36,11 +34,6 @@ public class UserMedia {
         return this;
     }
 
-    /**
-     * URL of media (video, audio, or both) to fake WebRTC user media
-     * 
-     * @return mediaUrl
-     **/
     @ApiModelProperty(value = "URL of media (video, audio, or both) to fake WebRTC user media")
     public String getMediaUrl() {
         return mediaUrl;
@@ -55,11 +48,6 @@ public class UserMedia {
         return this;
     }
 
-    /**
-     * Flag that indicates whether or not the video should be faked
-     * 
-     * @return video
-     **/
     @ApiModelProperty(value = "Flag that indicates whether or not the video should be faked")
     public Boolean getVideo() {
         return video;
@@ -74,11 +62,6 @@ public class UserMedia {
         return this;
     }
 
-    /**
-     * Flag that indicates whether or not the audio should be faked
-     * 
-     * @return audio
-     **/
     @ApiModelProperty(value = "Flag that indicates whether or not the audio should be faked")
     public Boolean getAudio() {
         return audio;
@@ -88,46 +71,4 @@ public class UserMedia {
         this.audio = audio;
     }
 
-    @Override
-    public boolean equals(java.lang.Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        UserMedia userMedia = (UserMedia) o;
-        return Objects.equals(this.mediaUrl, userMedia.mediaUrl)
-                && Objects.equals(this.video, userMedia.video)
-                && Objects.equals(this.audio, userMedia.audio);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(mediaUrl, video, audio);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("class UserMedia {\n");
-
-        sb.append("    mediaUrl: ").append(toIndentedString(mediaUrl))
-                .append("\n");
-        sb.append("    video: ").append(toIndentedString(video)).append("\n");
-        sb.append("    audio: ").append(toIndentedString(audio)).append("\n");
-        sb.append("}");
-        return sb.toString();
-    }
-
-    /**
-     * Convert the given object to string with each line indented by 4 spaces
-     * (except the first line).
-     */
-    private String toIndentedString(java.lang.Object o) {
-        if (o == null) {
-            return "null";
-        }
-        return o.toString().replace("\n", "\n    ");
-    }
 }

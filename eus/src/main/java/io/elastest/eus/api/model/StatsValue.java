@@ -16,8 +16,6 @@
  */
 package io.elastest.eus.api.model;
 
-import java.util.Objects;
-
 import io.swagger.annotations.ApiModelProperty;
 
 /**
@@ -35,11 +33,6 @@ public class StatsValue {
         return this;
     }
 
-    /**
-     * Peerconnection identifier
-     * 
-     * @return id
-     **/
     @ApiModelProperty(value = "Peerconnection identifier")
     public String getId() {
         return id;
@@ -54,11 +47,6 @@ public class StatsValue {
         return this;
     }
 
-    /**
-     * All Peerconnection stats
-     * 
-     * @return stats
-     **/
     @ApiModelProperty(value = "All Peerconnection stats")
     public String getStats() {
         return stats;
@@ -68,43 +56,4 @@ public class StatsValue {
         this.stats = stats;
     }
 
-    @Override
-    public boolean equals(java.lang.Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        StatsValue statsValue = (StatsValue) o;
-        return Objects.equals(this.id, statsValue.id)
-                && Objects.equals(this.stats, statsValue.stats);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, stats);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("class StatsValue {\n");
-
-        sb.append("    id: ").append(toIndentedString(id)).append("\n");
-        sb.append("    stats: ").append(toIndentedString(stats)).append("\n");
-        sb.append("}");
-        return sb.toString();
-    }
-
-    /**
-     * Convert the given object to string with each line indented by 4 spaces
-     * (except the first line).
-     */
-    private String toIndentedString(java.lang.Object o) {
-        if (o == null) {
-            return "null";
-        }
-        return o.toString().replace("\n", "\n    ");
-    }
 }

@@ -16,8 +16,6 @@
  */
 package io.elastest.eus.api.model;
 
-import java.util.Objects;
-
 import io.swagger.annotations.ApiModelProperty;
 
 /**
@@ -27,62 +25,20 @@ import io.swagger.annotations.ApiModelProperty;
  * @since 0.0.1
  */
 public class Event {
-    private String event = null;
+    private String eventName = null;
 
-    public Event event(String event) {
-        this.event = event;
+    public Event event(String eventName) {
+        this.eventName = eventName;
         return this;
     }
 
-    /**
-     * Event name
-     * 
-     * @return event
-     **/
     @ApiModelProperty(value = "Event name")
-    public String getEvent() {
-        return event;
+    public String getEventName() {
+        return eventName;
     }
 
-    public void setEvent(String event) {
-        this.event = event;
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
     }
 
-    @Override
-    public boolean equals(java.lang.Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Event event = (Event) o;
-        return Objects.equals(this.event, event.event);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(event);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("class Event {\n");
-
-        sb.append("    event: ").append(toIndentedString(event)).append("\n");
-        sb.append("}");
-        return sb.toString();
-    }
-
-    /**
-     * Convert the given object to string with each line indented by 4 spaces
-     * (except the first line).
-     */
-    private String toIndentedString(java.lang.Object o) {
-        if (o == null) {
-            return "null";
-        }
-        return o.toString().replace("\n", "\n    ");
-    }
 }

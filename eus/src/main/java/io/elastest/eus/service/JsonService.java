@@ -104,8 +104,7 @@ public class JsonService {
     }
 
     public String getSessionIdFromResponse(String jsonMessage) {
-        return (String) ((JSONObject) string2Json(jsonMessage))
-                .get(webdriverSessionId);
+        return (String) string2Json(jsonMessage).get(webdriverSessionId);
     }
 
     public String getVersion(String jsonMessage) {

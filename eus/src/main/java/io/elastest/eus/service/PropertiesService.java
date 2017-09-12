@@ -93,7 +93,7 @@ public class PropertiesService {
             String dockerImage) {
         Map<String, String> entry = new HashMap<>();
 
-        String[] split = ((String) key).split(propertiesSeparatorChar);
+        String[] split = key.split(propertiesSeparatorChar);
         entry.put(webdriverBrowserName, split[0]);
         entry.put(webdriverVersion, split[1]);
         entry.put(webdriverPlatform, split[2]);

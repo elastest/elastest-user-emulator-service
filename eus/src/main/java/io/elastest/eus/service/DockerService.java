@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
@@ -45,7 +47,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -280,7 +281,7 @@ public class DockerService {
                     log.trace("Removed {}", containerName, count);
                     removed = true;
 
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     if (count == dockerRemoveContainersRetries) {
                         log.error("Exception removing container {}",
                                 containerName, e);
@@ -300,6 +301,8 @@ public class DockerService {
 
     public String execCommand(String containerName, boolean awaitCompletion,
             String... command) {
+        assert (command.length > 0);
+
         String output = null;
         log.trace("Executing command {} in container {} (await completion {})",
                 Arrays.toString(command), containerName, awaitCompletion);
@@ -311,17 +314,16 @@ public class DockerService {
 
             log.trace("Command executed. Exec id: {}", exec.getId());
             OutputStream outputStream = new ByteArrayOutputStream();
-            try {
-                ExecStartResultCallback startResultCallback = dockerClient
-                        .execStartCmd(exec.getId()).withDetach(false)
-                        .withTty(true).exec(new ExecStartResultCallback(
-                                outputStream, System.err));
+            try (ExecStartResultCallback startResultCallback = dockerClient
+                    .execStartCmd(exec.getId()).withDetach(false).withTty(true)
+                    .exec(new ExecStartResultCallback(outputStream,
+                            outputStream))) {
                 if (awaitCompletion) {
                     startResultCallback.awaitCompletion();
                 }
                 output = outputStream.toString();
 
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("Exception executing command {} on container {}",
                         Arrays.toString(command), containerName, e);
                 currentThread().interrupt();
@@ -421,18 +423,20 @@ public class DockerService {
             TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
                         @Override
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                            return null;
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[] {};
                         }
 
                         @Override
                         public void checkClientTrusted(X509Certificate[] certs,
                                 String authType) {
+                            // No actions required
                         }
 
                         @Override
                         public void checkServerTrusted(X509Certificate[] certs,
                                 String authType) {
+                            // No actions required
                         }
                     } };
 
@@ -441,27 +445,19 @@ public class DockerService {
             HttpsURLConnection
                     .setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-            HostnameVerifier allHostsValid = new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
+            HostnameVerifier allHostsValid = (hostname, session) -> {
+                return true;
             };
             HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
             int responseCode = 0;
             while (true) {
                 try {
-                    HttpURLConnection connection = (HttpURLConnection) new URL(
-                            url).openConnection();
-                    connection.setConnectTimeout((int) timeoutMillis);
-                    connection.setReadTimeout((int) timeoutMillis);
-                    connection.setRequestMethod("GET");
-                    responseCode = connection.getResponseCode();
-
+                    responseCode = openConnection(url, (int) timeoutMillis);
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         log.debug("URL already reachable");
                         break;
+
                     } else {
                         log.trace(
                                 "URL {} not reachable. Response code: {}, "
@@ -478,14 +474,27 @@ public class DockerService {
                     sleep(dockerPollTimeMs);
                 }
 
-                if (System.currentTimeMillis() > endTimeMillis) {
+                if (currentTimeMillis() > endTimeMillis) {
                     throw new EusException(errorMessage);
                 }
             }
 
-        } catch (Exception e) {
+        } catch (
+
+        Exception e) {
             throw new EusException(errorMessage, e);
         }
+    }
+
+    private int openConnection(String url, int timeoutMillis)
+            throws MalformedURLException, IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url)
+                .openConnection();
+        connection.setConnectTimeout(timeoutMillis);
+        connection.setReadTimeout(timeoutMillis);
+        connection.setRequestMethod("GET");
+        return connection.getResponseCode();
+
     }
 
     public String generateContainerName(String prefix) {

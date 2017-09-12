@@ -60,8 +60,7 @@ import io.swagger.annotations.ApiParam;
 @CrossOrigin
 public class EusController implements EusApi {
 
-    private final Logger log = LoggerFactory
-            .getLogger(EusController.class);
+    private final Logger log = LoggerFactory.getLogger(EusController.class);
 
     private WebDriverService webDriverService;
     private VncService vncService;
@@ -81,9 +80,9 @@ public class EusController implements EusApi {
         log.debug("[deleteSubscription] sessionId={} subscriptionId={}",
                 sessionId, subscriptionId);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<Void>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<AudioLevel> getAudioLevel(
@@ -92,9 +91,9 @@ public class EusController implements EusApi {
         log.debug("[getAudioLevel] sessionId={} elementId={}", sessionId,
                 elementId);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<AudioLevel>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<ColorValue> getColorByCoordinates(
@@ -105,9 +104,9 @@ public class EusController implements EusApi {
         log.debug("[getColorByCoordinates] sessionId={} elementId={} x={} y={}",
                 sessionId, elementId, x, y);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<ColorValue>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<List<StatsValue>> getStats(
@@ -116,9 +115,9 @@ public class EusController implements EusApi {
         log.debug("[getStats] sessionId={} subscriptionId={}", sessionId,
                 subscriptionId);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<List<StatsValue>>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<EventValue> getSubscriptionValue(
@@ -127,9 +126,9 @@ public class EusController implements EusApi {
         log.debug("[getSubscriptionValue] sessionId={} peerconnectionId={}",
                 sessionId, peerconnectionId);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<EventValue>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<Void> setUserMedia(
@@ -137,9 +136,9 @@ public class EusController implements EusApi {
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body) {
         log.debug("[setUserMedia] sessionId={} userMedia={}", sessionId, body);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<Void>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToEvent(
@@ -149,9 +148,9 @@ public class EusController implements EusApi {
         log.debug("[subscribeToEvent] sessionId={} elementId={} latency={}",
                 sessionId, elementId, body);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<EventSubscription>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToLatency(
@@ -161,9 +160,9 @@ public class EusController implements EusApi {
         log.debug("[subscribeToLatency] sessionId={} elementId={} quality={}",
                 sessionId, elementId, body);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<EventSubscription>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     public ResponseEntity<EventSubscription> subscribeToQuality(
@@ -173,9 +172,9 @@ public class EusController implements EusApi {
         log.debug("[subscribeToQuality] sessionId={} elementId={} event={}",
                 sessionId, elementId, body);
 
-        // TODO implementation
+        // Not implemented yet
 
-        return new ResponseEntity<EventSubscription>(OK);
+        return new ResponseEntity<>(OK);
     }
 
     @Override

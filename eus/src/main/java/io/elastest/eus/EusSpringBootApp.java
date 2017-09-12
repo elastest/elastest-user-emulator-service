@@ -70,7 +70,7 @@ public class EusSpringBootApp implements WebSocketConfigurer {
         return new SessionService(dockerService, jsonService, recordingService);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new SpringApplication(EusSpringBootApp.class).run(args);
     }
 
