@@ -144,25 +144,21 @@ public class WebDriverService {
         } else {
             Optional<String> sessionIdFromPath = jsonService
                     .getSessionIdFromPath(requestContext);
-            String sessionId = sessionIdFromPath.get();
-            Optional<SessionInfo> optionalSession = sessionService
-                    .getSession(sessionId);
+            if (sessionIdFromPath.isPresent()) {
+                String sessionId = sessionIdFromPath.get();
+                Optional<SessionInfo> optionalSession = sessionService
+                        .getSession(sessionId);
+                if (optionalSession.isPresent()) {
+                    sessionInfo = optionalSession.get();
+                } else {
+                    return notFound();
+                }
+                isLive = sessionInfo.isLiveSession();
 
-            if (optionalSession.isPresent()) {
-                sessionInfo = optionalSession.get();
             } else {
-                // Occurs if the given session id is not in the list of
-                // active sessions, meaning the session either does not
-                // exist or that it’s not active.
-
-                ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                        NOT_FOUND);
-                log.debug("<< Response: {} ", responseEntity.getStatusCode());
-
-                return responseEntity;
+                return notFound();
             }
 
-            isLive = sessionInfo.isLiveSession();
         }
 
         // Only using timer for non-live sessions
@@ -213,6 +209,12 @@ public class WebDriverService {
     public ResponseEntity<String> getStatus() {
         String statusBody = jsonService.getStatus().toString();
         return new ResponseEntity<String>(statusBody, OK);
+    }
+
+    private ResponseEntity<String> notFound() {
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(NOT_FOUND);
+        log.debug("<< Response: {} ", responseEntity.getStatusCode());
+        return responseEntity;
     }
 
     private SessionInfo starBrowser(String jsonCapabilities, String timeout) {

@@ -127,32 +127,24 @@ public class PropertiesService {
         for (String key : browsers.keySet()) {
             if (key.contains(browserName)) {
                 if (version != null) {
-                    if (key.contains(version) && platform != null
-                            && key.contains(platform)) {
+                    if (key.contains(version) && platformMatch(key, platform)) {
                         out = key;
-                    } else if (key.contains(version) && (platform == null
-                            || platform.equals("") || platform
-                                    .equalsIgnoreCase(webdriverAnyPlatform))) {
-                        out = key;
+                        break;
                     }
-                } else {
-                    if ((version == null || version.equals(""))
-                            && platform != null && key.contains(platform)) {
-                        out = key;
-                    } else if ((version == null || version.equals(""))
-                            && (platform == null || platform.equals("")
-                                    || platform.equalsIgnoreCase(
-                                            webdriverAnyPlatform))) {
-                        out = key;
-                    }
+                } else if (platformMatch(key, platform)) {
+                    out = key;
+                    break;
                 }
-            }
-            if (out != null) {
-                break;
             }
         }
 
         return out;
+    }
+
+    public boolean platformMatch(String key, String platform) {
+        return ((platform != null && key.contains(platform))
+                || ((platform == null || platform.equals("")
+                        || platform.equalsIgnoreCase(webdriverAnyPlatform))));
     }
 
     public String getVersionFromKey(String key) {
