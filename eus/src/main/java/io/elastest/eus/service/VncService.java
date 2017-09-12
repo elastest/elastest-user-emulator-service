@@ -110,14 +110,15 @@ public class VncService {
     public ResponseEntity<String> getVnc(String sessionId) {
         Optional<SessionInfo> sessionInfo = sessionService
                 .getSession(sessionId);
-        if (!sessionInfo.isPresent()) {
-            ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                    NOT_FOUND);
+        ResponseEntity<String> responseEntity;
+        if (sessionInfo.isPresent()) {
+            responseEntity = new ResponseEntity<>(sessionInfo.get().getVncUrl(),
+                    OK);
+        } else {
+            responseEntity = new ResponseEntity<>(NOT_FOUND);
             log.debug("<< Response: {} ", responseEntity.getStatusCode());
         }
 
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                sessionInfo.get().getVncUrl(), OK);
         return responseEntity;
     }
 

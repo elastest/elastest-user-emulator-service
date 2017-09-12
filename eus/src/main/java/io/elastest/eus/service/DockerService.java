@@ -378,6 +378,7 @@ public class DockerService {
 
                 } catch (InterruptedException e) {
                     log.warn("Exception waiting for hub", e);
+                    currentThread().interrupt();
                 }
             }
         } while (!isRunning);
