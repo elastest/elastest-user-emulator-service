@@ -45,6 +45,9 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     private final Logger log = LoggerFactory.getLogger(EusSpringBootApp.class);
 
+    @Value("${ws.path}")
+    private String wsPath;
+
     private DockerService dockerService;
     private JsonService jsonService;
     private RecordingService recordingService;
@@ -55,9 +58,6 @@ public class EusSpringBootApp implements WebSocketConfigurer {
         this.jsonService = jsonService;
         this.recordingService = recordingService;
     }
-
-    @Value("${ws.path}")
-    private String wsPath;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {

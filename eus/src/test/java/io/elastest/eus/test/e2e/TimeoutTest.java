@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -74,7 +75,7 @@ public class TimeoutTest {
     @Test
     void test() throws InterruptedException {
         // Do nothing a period of time > hub.timeout
-        Thread.sleep(12000);
+        sleep(12000);
 
         Throwable exception = assertThrows(WebDriverException.class,
                 () -> driver.get("http://elastest.io/"));

@@ -102,8 +102,8 @@ public class RecordingService {
         String hubContainerPort = String
                 .valueOf(sessionInfo.getHubVncBindPort());
 
-        log.debug("Recording session {} in {}:{}", sessionId, hubContainerIp,
-                hubContainerPort);
+        log.debug("Recording session {} in container {} ({}:{})", sessionId,
+                noNvcContainerName, hubContainerIp, hubContainerPort);
 
         dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
                 "--start", sessionId, hubContainerIp, hubContainerPort);
@@ -123,8 +123,9 @@ public class RecordingService {
 
         try {
             // Convert format of recording to mp4
-            dockerService.execCommand(noNvcContainerName, false, "/novnc.sh",
-                    "--convert", sessionId, recordingFileName);
+            dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
+                    sessionId + ".flv", "-c:v", "libx264", "-crf", "19",
+                    "-strict", "experimental", recordingFileName);
 
             if (edmAlluxioUrl.isEmpty()) {
                 // If EDM Alluxio is not available, recording is stored locally

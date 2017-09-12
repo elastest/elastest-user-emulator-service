@@ -49,7 +49,6 @@ import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -104,12 +103,9 @@ public class DockerService {
     private ShellService shellService;
 
     private DockerClient dockerClient;
-
     private String dockerServerIp;
-
     private Boolean isRunningInContainer;
 
-    @Autowired
     public DockerService(ShellService shellService) {
         this.shellService = shellService;
     }
