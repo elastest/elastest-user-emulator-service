@@ -97,6 +97,11 @@ public class WebDriverService {
         this.recordingService = recordingService;
     }
 
+    public ResponseEntity<String> getStatus() {
+        String statusBody = jsonService.getStatus().toString();
+        return new ResponseEntity<>(statusBody, OK);
+    }
+
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
 
@@ -110,8 +115,8 @@ public class WebDriverService {
                 requestBody);
 
         SessionInfo sessionInfo;
-
         boolean isLive = false;
+        Optional<HttpEntity<String>> optionalHttpEntity = Optional.empty();
 
         // Intercept create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
@@ -122,21 +127,7 @@ public class WebDriverService {
                 hubTimeout = "0";
             }
             sessionInfo = starBrowser(requestBody, hubTimeout);
-
-            // -------------
-            // Workaround due to bug of selenium-server 3.4.0
-            // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-            String browserName = jsonService.getBrowser(requestBody);
-            String version = jsonService.getVersion(requestBody);
-            if (browserName.equalsIgnoreCase("firefox")
-                    && !version.equals("")) {
-                log.warn(
-                        "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
-                httpEntity = new HttpEntity<>("{ \"desiredCapabilities\": {"
-                        + "\"browserName\": \"firefox\"," + "\"version\": \"\","
-                        + "\"platform\": \"ANY\" } }");
-            }
-            // -------------
+            optionalHttpEntity = optionalHttpEntity(requestBody);
 
         } else {
             Optional<String> sessionIdFromPath = jsonService
@@ -155,7 +146,6 @@ public class WebDriverService {
             } else {
                 return notFound();
             }
-
         }
 
         // Only using timer for non-live sessions
@@ -164,32 +154,18 @@ public class WebDriverService {
             sessionService.startSessionTimer(sessionInfo);
         }
 
-        String hubUrl = sessionInfo.getHubUrl();
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> exchange = restTemplate.exchange(
-                hubUrl + requestContext, method, httpEntity, String.class);
-        String responseBody = exchange.getBody();
+        // Proxy request to Selenium Hub
+        String responseBody = exchange(httpEntity, requestContext, method,
+                sessionInfo, optionalHttpEntity);
 
         // Intercept again create session
         if (jsonService.isPostSessionRequest(method, requestContext)) {
-            String sessionId = jsonService
-                    .getSessionIdFromResponse(responseBody);
-            sessionInfo.setSessionId(sessionId);
-            sessionInfo.setLiveSession(isLive);
-
-            sessionService.putSession(sessionId, sessionInfo);
-            vncService.startVncContainer(sessionInfo);
-            recordingService.startRecording(sessionInfo);
-
-            if (sessionService.activeWebSocketSessions() && !isLive) {
-                sessionService.sendNewSessionToAllClients(sessionInfo);
-            }
+            postSessionRequest(sessionInfo, isLive, responseBody);
         }
 
         HttpStatus responseStatusOk = OK;
         ResponseEntity<String> responseEntity = new ResponseEntity<>(
                 responseBody, responseStatusOk);
-
         log.debug("<< Response: {} -- body: {}", responseStatusOk,
                 responseBody);
 
@@ -203,9 +179,54 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    public ResponseEntity<String> getStatus() {
-        String statusBody = jsonService.getStatus().toString();
-        return new ResponseEntity<>(statusBody, OK);
+    private String exchange(HttpEntity<String> httpEntity,
+            String requestContext, HttpMethod method, SessionInfo sessionInfo,
+            Optional<HttpEntity<String>> optionalHttpEntity) {
+        String hubUrl = sessionInfo.getHubUrl();
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> exchange = restTemplate
+                .exchange(hubUrl + requestContext, method,
+                        optionalHttpEntity.isPresent()
+                                ? optionalHttpEntity.get()
+                                : httpEntity,
+                        String.class);
+        String responseBody = exchange.getBody();
+        return responseBody;
+    }
+
+    private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
+            String responseBody) {
+        String sessionId = jsonService.getSessionIdFromResponse(responseBody);
+        sessionInfo.setSessionId(sessionId);
+        sessionInfo.setLiveSession(isLive);
+
+        sessionService.putSession(sessionId, sessionInfo);
+        vncService.startVncContainer(sessionInfo);
+        recordingService.startRecording(sessionInfo);
+
+        if (sessionService.activeWebSocketSessions() && !isLive) {
+            sessionService.sendNewSessionToAllClients(sessionInfo);
+        }
+    }
+
+    private Optional<HttpEntity<String>> optionalHttpEntity(
+            String requestBody) {
+        // Workaround due to bug of selenium-server 3.4.0
+        // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
+        String browserName = jsonService.getBrowser(requestBody);
+        String version = jsonService.getVersion(requestBody);
+
+        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
+            log.warn(
+                    "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
+
+            return Optional
+                    .of(new HttpEntity<String>("{ \"desiredCapabilities\": {"
+                            + "\"browserName\": \"firefox\","
+                            + "\"version\": \"\","
+                            + "\"platform\": \"ANY\" } }"));
+        }
+        return Optional.empty();
     }
 
     private ResponseEntity<String> notFound() {
