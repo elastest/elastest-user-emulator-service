@@ -125,24 +125,22 @@ public class PropertiesService {
 
         String out = null;
         for (String key : browsers.keySet()) {
-            if (key.contains(browserName) && version != null
-                    && key.contains(version) && platform != null
-                    && key.contains(platform)) {
-                out = key;
-            } else if (key.contains(browserName) && version != null
-                    && key.contains(version)
-                    && (platform == null || platform.equals("") || platform
-                            .equalsIgnoreCase(webdriverAnyPlatform))) {
-                out = key;
-            } else if (key.contains(browserName)
-                    && (version == null || version.equals(""))
-                    && platform != null && key.contains(platform)) {
-                out = key;
-            } else if (key.contains(browserName)
-                    && (version == null || version.equals(""))
-                    && (platform == null || platform.equals("") || platform
-                            .equalsIgnoreCase(webdriverAnyPlatform))) {
-                out = key;
+            if (key.contains(browserName)) {
+                if (version != null && key.contains(version) && platform != null
+                        && key.contains(platform)) {
+                    out = key;
+                } else if (version != null && key.contains(version)
+                        && (platform == null || platform.equals("") || platform
+                                .equalsIgnoreCase(webdriverAnyPlatform))) {
+                    out = key;
+                } else if ((version == null || version.equals(""))
+                        && platform != null && key.contains(platform)) {
+                    out = key;
+                } else if ((version == null || version.equals(""))
+                        && (platform == null || platform.equals("") || platform
+                                .equalsIgnoreCase(webdriverAnyPlatform))) {
+                    out = key;
+                }
             }
             if (out != null) {
                 break;

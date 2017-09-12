@@ -19,6 +19,8 @@ package io.elastest.eus.service;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,15 +108,16 @@ public class VncService {
     }
 
     public ResponseEntity<String> getVnc(String sessionId) {
-        SessionInfo sessionInfo = sessionService.getSession(sessionId);
-        if (sessionInfo == null) {
+        Optional<SessionInfo> sessionInfo = sessionService
+                .getSession(sessionId);
+        if (!sessionInfo.isPresent()) {
             ResponseEntity<String> responseEntity = new ResponseEntity<>(
                     NOT_FOUND);
             log.debug("<< Response: {} ", responseEntity.getStatusCode());
         }
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                sessionInfo.getVncUrl(), OK);
+                sessionInfo.get().getVncUrl(), OK);
         return responseEntity;
     }
 

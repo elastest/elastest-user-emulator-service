@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.Thread.currentThread;
+import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
@@ -186,29 +188,30 @@ public class DockerService {
             pullImageIfNecessary(imageId);
 
             log.debug("Using TORM: {}", useTorm);
-            CreateContainerCmd createContainer = dockerClient
-                    .createContainerCmd(imageId).withName(containerName);
-            if (useTorm) {
-                createContainer.withNetworkMode(dockerNetwork);
-            }
-
-            if (portBindings != null) {
-                if (log.isDebugEnabled()) {
-                    for (PortBinding p : portBindings) {
-                        log.debug("Using port binding {} -> {}",
-                                p.getExposedPort().getPort(),
-                                p.getBinding().getHostPortSpec());
-                    }
+            try (CreateContainerCmd createContainer = dockerClient
+                    .createContainerCmd(imageId).withName(containerName)) {
+                if (useTorm) {
+                    createContainer.withNetworkMode(dockerNetwork);
                 }
-                createContainer.withPortBindings(portBindings);
-            }
 
-            if (env != null) {
-                createContainer.withEnv(env);
+                if (portBindings != null) {
+                    if (log.isDebugEnabled()) {
+                        for (PortBinding p : portBindings) {
+                            log.debug("Using port binding {} -> {}",
+                                    p.getExposedPort().getPort(),
+                                    p.getBinding().getHostPortSpec());
+                        }
+                    }
+                    createContainer.withPortBindings(portBindings);
+                }
+
+                if (env != null) {
+                    createContainer.withEnv(env);
+                }
+                createContainer.exec();
+                dockerClient.startContainerCmd(containerName).exec();
+                waitForContainer(containerName);
             }
-            createContainer.exec();
-            dockerClient.startContainerCmd(containerName).exec();
-            waitForContainer(containerName);
         } else {
             log.warn("Container {} already running", containerName);
         }
@@ -285,9 +288,10 @@ public class DockerService {
                     try {
                         log.trace("Waiting for removing {} ({} retries)",
                                 containerName, count);
-                        Thread.sleep(dockerWaitTimeoutSec);
+                        sleep(dockerWaitTimeoutSec);
                     } catch (InterruptedException e1) {
                         log.warn("Exception waiting to remove container", e1);
+                        currentThread().interrupt();
                     }
                 }
             } while (!removed && count <= dockerRemoveContainersRetries);
@@ -316,9 +320,12 @@ public class DockerService {
                     startResultCallback.awaitCompletion();
                 }
                 output = outputStream.toString();
+
             } catch (InterruptedException e) {
                 log.warn("Exception executing command {} on container {}",
                         Arrays.toString(command), containerName, e);
+                currentThread().interrupt();
+
             } finally {
                 log.trace("Callback terminated. Result: {}", output);
             }
@@ -367,7 +374,7 @@ public class DockerService {
                     log.trace(
                             "Container {} is not still running ... waiting {} ms",
                             containerName, dockerPollTimeMs);
-                    Thread.sleep(dockerPollTimeMs);
+                    sleep(dockerPollTimeMs);
 
                 } catch (InterruptedException e) {
                     log.warn("Exception waiting for hub", e);
@@ -467,7 +474,7 @@ public class DockerService {
 
                 } finally {
                     // Polling to wait a consistent state
-                    Thread.sleep(dockerPollTimeMs);
+                    sleep(dockerPollTimeMs);
                 }
 
                 if (System.currentTimeMillis() > endTimeMillis) {

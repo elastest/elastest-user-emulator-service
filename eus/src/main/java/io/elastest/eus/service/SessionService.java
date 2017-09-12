@@ -20,6 +20,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -176,8 +177,12 @@ public class SessionService extends TextWebSocketHandler {
         sessionRegistry.put(sessionId, sessionEntry);
     }
 
-    public SessionInfo getSession(String sessionId) {
-        return sessionRegistry.get(sessionId);
+    public Optional<SessionInfo> getSession(String sessionId) {
+        if (sessionRegistry.containsKey(sessionId)) {
+            return Optional.of(sessionRegistry.get(sessionId));
+        } else {
+            return Optional.empty();
+        }
     }
 
     public Map<String, SessionInfo> getSessionRegistry() {

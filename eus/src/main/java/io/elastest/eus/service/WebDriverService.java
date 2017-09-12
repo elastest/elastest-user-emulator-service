@@ -145,8 +145,10 @@ public class WebDriverService {
             Optional<String> sessionIdFromPath = jsonService
                     .getSessionIdFromPath(requestContext);
             String sessionId = sessionIdFromPath.get();
-            sessionInfo = sessionService.getSession(sessionId);
-            if (sessionInfo == null) {
+            Optional<SessionInfo> optionalSession = sessionService
+                    .getSession(sessionId);
+
+            if (!optionalSession.isPresent()) {
                 // Occurs if the given session id is not in the list of
                 // active sessions, meaning the session either does not
                 // exist or that it’s not active.
@@ -157,6 +159,8 @@ public class WebDriverService {
 
                 return responseEntity;
             }
+
+            sessionInfo = optionalSession.get();
             isLive = sessionInfo.isLiveSession();
         }
 
