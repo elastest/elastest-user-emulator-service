@@ -18,8 +18,11 @@ package io.elastest.eus.service;
 
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Paths.get;
+import static java.util.Arrays.copyOfRange;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
+import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -30,13 +33,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,7 +144,7 @@ public class RecordingService {
                 // Workaround due to strange behavior of docker-java
                 // it seems that copyArchiveFromContainerCmd not works correctly
 
-                byte[] bytes = IOUtils.toByteArray(inputStream);
+                byte[] bytes = toByteArray(inputStream);
 
                 int i = 0;
                 for (; i < bytes.length; i++) {
@@ -157,8 +158,8 @@ public class RecordingService {
                     }
                 }
 
-                FileUtils.writeByteArrayToFile(new File(target),
-                        Arrays.copyOfRange(bytes, i - 4, bytes.length));
+                writeByteArrayToFile(new File(target),
+                        copyOfRange(bytes, i - 4, bytes.length));
                 // -------------
 
             } else {
@@ -215,7 +216,7 @@ public class RecordingService {
                 byte[] file;
                 try {
                     file = alluxioService.getFile(recordingFileName);
-                    FileUtils.writeByteArrayToFile(targetFile, file);
+                    writeByteArrayToFile(targetFile, file);
                 } catch (IOException e) {
                     status = INTERNAL_SERVER_ERROR;
                     log.error(

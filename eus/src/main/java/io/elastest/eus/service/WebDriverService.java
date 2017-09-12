@@ -190,8 +190,7 @@ public class WebDriverService {
                                 ? optionalHttpEntity.get()
                                 : httpEntity,
                         String.class);
-        String responseBody = exchange.getBody();
-        return responseBody;
+        return exchange.getBody();
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
