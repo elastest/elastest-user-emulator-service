@@ -63,7 +63,7 @@ public class AlluxioService {
     private EdmAluxioApi alluxio;
 
     @PostConstruct
-    private void postConstruct() {
+    public void postConstruct() {
         if (!edmAlluxioUrl.isEmpty()) {
             // Ensure that EDM Alluxio URL (if available) ends with "/"
             if (!edmAlluxioUrl.endsWith("/")) {

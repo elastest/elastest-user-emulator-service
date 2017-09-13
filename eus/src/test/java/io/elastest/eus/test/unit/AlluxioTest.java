@@ -1,0 +1,114 @@
+/*
+ * (C) Copyright 2017-2019 ElasTest (http://elastest.io/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package io.elastest.eus.test.unit;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.internal.util.reflection.FieldSetter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+
+import io.elastest.eus.service.AlluxioService;
+import io.elastest.eus.test.util.MockitoExtension;
+
+/**
+ * Tests for EDM Alluxio.
+ *
+ * @author Boni Garcia (boni.garcia@urjc.es)
+ * @since 0.1.1
+ */
+@ExtendWith(MockitoExtension.class)
+@TestInstance(PER_CLASS)
+public class AlluxioTest {
+
+    final Logger log = LoggerFactory.getLogger(AlluxioTest.class);
+
+    @InjectMocks
+    AlluxioService alluxioService;
+
+    WireMockServer wireMockServer;
+
+    // Test data
+    String filename = "foo";
+    String streamId = "1";
+    String contentFile = "dummy";
+
+    @BeforeAll
+    void setup() throws Exception {
+        // Look for free port
+        int port;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+        }
+
+        // Mock server for Alluxio
+        wireMockServer = new WireMockServer(options().port(port));
+        wireMockServer.start();
+        WireMock.configureFor("localhost", wireMockServer.port());
+
+        // URL for mock service
+        String edmAlluxioUrlFieldName = "edmAlluxioUrl";
+        String mockAlluxioUrl = "http://localhost:" + port;
+        FieldSetter.setField(alluxioService,
+                AlluxioService.class.getDeclaredField(edmAlluxioUrlFieldName),
+                mockAlluxioUrl);
+        log.debug("Mock servicio for Alluxio in URL {}", mockAlluxioUrl);
+
+        // Stubbing service
+        stubFor(post(urlEqualTo("/api/v1/paths//" + filename + "/open-file"))
+                .willReturn(aResponse().withStatus(200).withBody(streamId)));
+        stubFor(post(urlEqualTo("/api/v1/streams/" + streamId + "/read"))
+                .willReturn(aResponse().withStatus(200).withBody(contentFile)));
+        stubFor(post(urlEqualTo("/api/v1/streams/" + streamId + "/close"))
+                .willReturn(aResponse().withStatus(200)));
+    }
+
+    @Test
+    void test() throws IOException {
+        // Exercise
+        alluxioService.postConstruct();
+        byte[] response = alluxioService.getFile(filename);
+
+        // Assertion
+        assertThat(response.length, equalTo(contentFile.length()));
+    }
+
+    @AfterAll
+    void teardown() {
+        wireMockServer.stop();
+    }
+
+}
