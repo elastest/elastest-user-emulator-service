@@ -115,8 +115,8 @@ public class AlluxioTest {
     @Test
     @DisplayName("Get file")
     void testGetFile() throws IOException {
-        byte[] response = alluxioService.getFile(filename);
-        assertThat(response.length, equalTo(contentFile.length()));
+        String response = alluxioService.getFileAsString(filename);
+        assertThat(response, equalTo(contentFile));
     }
 
     @Test

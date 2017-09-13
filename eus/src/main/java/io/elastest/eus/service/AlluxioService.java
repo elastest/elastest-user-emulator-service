@@ -78,6 +78,17 @@ public class AlluxioService {
         }
     }
 
+    public String getFileAsString(String file) {
+        String content = "";
+        try {
+            content = new String(getFile(file));
+        } catch (IOException e) {
+            log.error("Exception reading content of Alluxio metadata {}", file,
+                    e);
+        }
+        return content;
+    }
+
     public byte[] getFile(String file) throws IOException {
         Call<ResponseBody> openFile = alluxio.openFile(file);
         Response<ResponseBody> execute = openFile.execute();

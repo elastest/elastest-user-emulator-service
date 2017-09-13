@@ -270,19 +270,8 @@ public class RecordingService {
             File[] metadataFiles = new File(registryFolder)
                     .listFiles((dir, name) -> name.toLowerCase()
                             .endsWith(registryMetadataExtension));
-            metadataContent = stream(metadataFiles).map(f -> {
-                String content = "";
-                try {
-                    content = new String(
-                            readAllBytes(get(f.getAbsolutePath())));
-                } catch (IOException e) {
-                    log.error("Exception reading content of local metadata {}",
-                            f, e);
-                }
-                return content;
-            }).collect(toList());
-
-            new File(registryFolder).listFiles();
+            metadataContent = stream(metadataFiles)
+                    .map(this::getLocalFileContent).collect(toList());
 
         } else {
             // If EDM Alluxio is available, recordings and metadata are stored
@@ -291,7 +280,7 @@ public class RecordingService {
             try {
                 metadataFileList = alluxioService.getMetadataFileList();
                 metadataContent = metadataFileList.stream()
-                        .map(this::getFileContent).collect(toList());
+                        .map(alluxioService::getFileAsString).collect(toList());
 
             } catch (IOException e) {
                 log.error(
@@ -304,10 +293,10 @@ public class RecordingService {
         return metadataContent;
     }
 
-    private String getFileContent(String file) {
+    private String getLocalFileContent(File file) {
         String content = "";
         try {
-            content = new String(alluxioService.getFile(file));
+            content = new String(readAllBytes(get(file.getAbsolutePath())));
         } catch (IOException e) {
             log.error("Exception reading content of Alluxio metadata {}", file,
                     e);
