@@ -23,10 +23,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -98,14 +100,42 @@ public class AlluxioTest {
                 .willReturn(aResponse().withStatus(200).withBody(contentFile)));
         stubFor(post(urlEqualTo("/api/v1/streams/" + streamId + "/close"))
                 .willReturn(aResponse().withStatus(200)));
+        stubFor(post(urlEqualTo("/api/v1/paths//" + filename + "/create-file"))
+                .willReturn(aResponse().withStatus(200).withBody(streamId)));
+        stubFor(post(urlEqualTo("/api/v1/streams/" + streamId + "/write"))
+                .willReturn(aResponse().withStatus(200)));
+        stubFor(post(urlEqualTo("/api/v1/paths//" + filename + "/delete"))
+                .willReturn(aResponse().withStatus(200)));
+        stubFor(post(urlEqualTo("/api/v1/paths//%2F/list-status"))
+                .willReturn(aResponse().withStatus(200).withBody("[]")));
+
+        alluxioService.postConstruct();
     }
 
     @Test
     @DisplayName("Get file")
     void testGetFile() throws IOException {
-        alluxioService.postConstruct();
         byte[] response = alluxioService.getFile(filename);
         assertThat(response.length, equalTo(contentFile.length()));
+    }
+
+    @Test
+    @DisplayName("Write file")
+    void testWriteFile() throws IOException {
+        alluxioService.writeFile(filename, contentFile.getBytes());
+    }
+
+    @Test
+    @DisplayName("Delete file")
+    void testDeleteFile() throws IOException {
+        alluxioService.deleteFile(filename);
+    }
+
+    @Test
+    @DisplayName("List metatadata")
+    void testListMetadataFile() throws IOException {
+        List<String> metadataFileList = alluxioService.getMetadataFileList();
+        assertThat(metadataFileList, empty());
     }
 
     @AfterAll
