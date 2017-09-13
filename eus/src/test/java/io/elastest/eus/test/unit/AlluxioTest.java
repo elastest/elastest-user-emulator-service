@@ -22,14 +22,18 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.charset.Charset;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -85,12 +89,18 @@ public class AlluxioTest {
         wireMockServer.start();
         WireMock.configureFor("localhost", wireMockServer.port());
 
-        // URL for mock service
+        // Values injected with Spring properties
         String edmAlluxioUrlFieldName = "edmAlluxioUrl";
         String mockAlluxioUrl = "http://localhost:" + port;
         FieldSetter.setField(alluxioService,
                 AlluxioService.class.getDeclaredField(edmAlluxioUrlFieldName),
                 mockAlluxioUrl);
+        String metadataExtensionFieldName = "metadataExtension";
+        String metadataExtension = ".eus";
+        FieldSetter.setField(alluxioService, AlluxioService.class
+                .getDeclaredField(metadataExtensionFieldName),
+                metadataExtension);
+
         log.debug("Mock servicio for Alluxio in URL {}", mockAlluxioUrl);
 
         // Stubbing service
@@ -106,8 +116,11 @@ public class AlluxioTest {
                 .willReturn(aResponse().withStatus(200)));
         stubFor(post(urlEqualTo("/api/v1/paths//" + filename + "/delete"))
                 .willReturn(aResponse().withStatus(200)));
-        stubFor(post(urlEqualTo("/api/v1/paths//%2F/list-status"))
-                .willReturn(aResponse().withStatus(200).withBody("[]")));
+        String alluxioListJson = IOUtils.toString(
+                this.getClass().getResourceAsStream("/list-alluxio.json"),
+                Charset.defaultCharset());
+        stubFor(post(urlEqualTo("/api/v1/paths//%2F/list-status")).willReturn(
+                aResponse().withStatus(200).withBody(alluxioListJson)));
 
         alluxioService.postConstruct();
     }
@@ -135,7 +148,7 @@ public class AlluxioTest {
     @DisplayName("List metatadata")
     void testListMetadataFile() throws IOException {
         List<String> metadataFileList = alluxioService.getMetadataFileList();
-        assertThat(metadataFileList, empty());
+        assertThat(metadataFileList, not(empty()));
     }
 
     @AfterAll
