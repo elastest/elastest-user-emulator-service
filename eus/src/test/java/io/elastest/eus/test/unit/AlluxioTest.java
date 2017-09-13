@@ -30,6 +30,8 @@ import java.net.ServerSocket;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +54,8 @@ import io.elastest.eus.test.util.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 @TestInstance(PER_CLASS)
+@Tag("unit")
+@DisplayName("Unit tests for Alluxio Service")
 public class AlluxioTest {
 
     final Logger log = LoggerFactory.getLogger(AlluxioTest.class);
@@ -97,12 +101,10 @@ public class AlluxioTest {
     }
 
     @Test
-    void test() throws IOException {
-        // Exercise
+    @DisplayName("Get file")
+    void testGetFile() throws IOException {
         alluxioService.postConstruct();
         byte[] response = alluxioService.getFile(filename);
-
-        // Assertion
         assertThat(response.length, equalTo(contentFile.length()));
     }
 

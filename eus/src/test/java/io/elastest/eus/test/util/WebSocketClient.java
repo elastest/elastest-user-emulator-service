@@ -27,6 +27,9 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Simple WebSocket client.
  *
@@ -36,8 +39,10 @@ import javax.websocket.WebSocketContainer;
 @ClientEndpoint
 public class WebSocketClient {
 
+    final Logger log = LoggerFactory.getLogger(WebSocketClient.class);
+
     Session userSession = null;
-    private MessageHandler messageHandler;
+    MessageHandler messageHandler;
 
     public WebSocketClient(String url) {
         try {
@@ -51,13 +56,13 @@ public class WebSocketClient {
 
     @OnOpen
     public void onOpen(Session userSession) {
-        System.out.println("opening websocket");
+        log.debug("opening websocket");
         this.userSession = userSession;
     }
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket");
+        log.debug("closing websocket");
         this.userSession = null;
     }
 

@@ -104,8 +104,7 @@ public class WebSocketTest {
         String jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + "/" + contextPath
-                + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
 
         final String sentMessage = wsProtocolGetSessions;
         final String[] receivedMessage = { "" };
@@ -148,8 +147,7 @@ public class WebSocketTest {
         String jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + "/" + contextPath
-                + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
 
         final String sentMessage = wsProtocolGetRecordings;
         final String[] receivedMessage = { "" };
