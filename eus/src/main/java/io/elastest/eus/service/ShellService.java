@@ -26,8 +26,6 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.io.CharStreams;
 
-import io.elastest.eus.EusException;
-
 /**
  * Utilities to execute commands on the shell.
  *
@@ -39,11 +37,11 @@ public class ShellService {
 
     private final Logger log = LoggerFactory.getLogger(ShellService.class);
 
-    public String runAndWait(String... command) {
+    public String runAndWait(String... command) throws IOException {
         return runAndWaitArray(command);
     }
 
-    public String runAndWaitArray(String[] command) {
+    public String runAndWaitArray(String[] command) throws IOException {
         assert (command.length > 0);
 
         String commandStr = Arrays.toString(command);
@@ -53,23 +51,15 @@ public class ShellService {
         return result;
     }
 
-    public String runAndWaitNoLog(String... command) {
+    public String runAndWaitNoLog(String... command) throws IOException {
         assert (command.length > 0);
 
-        Process p;
-        try {
-            p = new ProcessBuilder(command).redirectErrorStream(true).start();
-            String output = CharStreams.toString(
-                    new InputStreamReader(p.getInputStream(), "UTF-8"));
-            p.destroy();
-            return output;
-
-        } catch (IOException e) {
-            throw new EusException(
-                    "Exception executing command on the shell: {} "
-                            + Arrays.toString(command),
-                    e);
-        }
+        Process process = new ProcessBuilder(command).redirectErrorStream(true)
+                .start();
+        String output = CharStreams.toString(
+                new InputStreamReader(process.getInputStream(), "UTF-8"));
+        process.destroy();
+        return output;
     }
 
 }

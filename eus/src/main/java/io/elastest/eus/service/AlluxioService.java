@@ -85,6 +85,7 @@ public class AlluxioService {
         } catch (IOException e) {
             String errorMessage = "Exception getting file from Alluxio: "
                     + file;
+            // Not propagating IOException to improve readability
             throw new EusException(errorMessage, e);
         }
     }

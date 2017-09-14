@@ -114,12 +114,12 @@ public class DockerService {
     }
 
     @PostConstruct
-    private void postConstruct() {
+    private void postConstruct() throws IOException {
         dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())
                 .build();
     }
 
-    public String getDockerServerUrl() {
+    public String getDockerServerUrl() throws IOException {
         String out;
         if (dockerServerUrl != null && !dockerServerUrl.equals("")) {
             out = dockerServerUrl;
@@ -130,35 +130,30 @@ public class DockerService {
         return out;
     }
 
-    public String getDockerServerIp() {
+    public String getDockerServerIp() throws IOException {
         if (dockerServerIp == null) {
-            try {
-                if (IS_OS_WINDOWS) {
-                    dockerServerIp = getDockerMachineIp();
+            if (IS_OS_WINDOWS) {
+                dockerServerIp = getDockerMachineIp();
 
-                } else if (isRunningInContainer()) {
-                    dockerServerIp = getContainerIp();
+            } else if (isRunningInContainer()) {
+                dockerServerIp = getContainerIp();
 
-                } else {
-                    dockerServerIp = dockerDefaultHostIp;
-                }
-                log.trace("Docker server IP: {}", dockerServerIp);
-
-            } catch (Exception e) {
-                throw new EusException("Exception getting docker server IP", e);
+            } else {
+                dockerServerIp = dockerDefaultHostIp;
             }
+            log.trace("Docker server IP: {}", dockerServerIp);
         }
 
         return dockerServerIp;
     }
 
-    public String getContainerIp() {
+    public String getContainerIp() throws IOException {
         String ipRoute = shellService.runAndWait("sh", "-c", "/sbin/ip route");
         String[] tokens = ipRoute.split("\\s");
         return tokens[2];
     }
 
-    public String getDockerMachineIp() {
+    public String getDockerMachineIp() throws IOException {
         return shellService.runAndWait("docker-machine", "ip")
                 .replaceAll("\\r", "").replaceAll("\\n", "");
     }
@@ -240,7 +235,8 @@ public class DockerService {
         return exists;
     }
 
-    public String getContainerIpAddress(String containerName) {
+    public String getContainerIpAddress(String containerName)
+            throws IOException {
         String ipAddress;
         if (IS_OS_WINDOWS) {
             ipAddress = getDockerServerIp();
@@ -408,7 +404,7 @@ public class DockerService {
         return exists;
     }
 
-    public void waitForHostIsReachable(String url) {
+    public void waitForHostIsReachable(String url) throws Exception {
         long timeoutMillis = MILLISECONDS.convert(dockerWaitTimeoutSec,
                 SECONDS);
         long endTimeMillis = System.currentTimeMillis() + timeoutMillis;
@@ -417,40 +413,35 @@ public class DockerService {
                 dockerWaitTimeoutSec);
         String errorMessage = "URL " + url + " not reachable in "
                 + dockerWaitTimeoutSec + " seconds";
-        try {
-            TrustManager[] trustAllCerts = new TrustManager[] {
-                    new X509TrustManager() {
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return new X509Certificate[] {};
-                        }
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[] {};
+                    }
 
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] certs,
-                                String authType) {
-                            // No actions required
-                        }
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] certs,
+                            String authType) {
+                        // No actions required
+                    }
 
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] certs,
-                                String authType) {
-                            // No actions required
-                        }
-                    } };
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] certs,
+                            String authType) {
+                        // No actions required
+                    }
+                } };
 
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection
-                    .setDefaultSSLSocketFactory(sc.getSocketFactory());
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-            HostnameVerifier allHostsValid = (hostname, session) -> true;
-            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+        HostnameVerifier allHostsValid = (hostname, session) -> true;
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
-            waitUrl(url, timeoutMillis, endTimeMillis, errorMessage);
+        waitUrl(url, timeoutMillis, endTimeMillis, errorMessage);
 
-        } catch (Exception e) {
-            throw new EusException(errorMessage, e);
-        }
     }
 
     private void waitUrl(String url, long timeoutMillis, long endTimeMillis,
@@ -495,11 +486,9 @@ public class DockerService {
         return prefix + randomSufix;
     }
 
-    public Integer findRandomOpenPort() {
+    public Integer findRandomOpenPort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0);) {
             return socket.getLocalPort();
-        } catch (IOException e) {
-            throw new EusException("Exception looking for a free port", e);
         }
     }
 

@@ -16,9 +16,9 @@
  */
 package io.elastest.eus.service;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -105,7 +105,7 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            HttpServletRequest request) {
+            HttpServletRequest request) throws Exception {
 
         StringBuffer requestUrl = request.getRequestURL();
         String requestContext = requestUrl.substring(
@@ -208,7 +208,7 @@ public class WebDriverService {
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
-            String responseBody) throws IOException, InterruptedException {
+            String responseBody) throws Exception {
         String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
@@ -248,7 +248,8 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private SessionInfo starBrowser(String jsonCapabilities, String timeout) {
+    private SessionInfo starBrowser(String jsonCapabilities, String timeout)
+            throws Exception {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);

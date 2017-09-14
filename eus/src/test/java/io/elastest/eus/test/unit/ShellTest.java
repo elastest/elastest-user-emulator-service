@@ -21,6 +21,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
+import java.io.IOException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -52,7 +54,7 @@ public class ShellTest {
 
     @Test
     @DisplayName("List current folder")
-    void test() {
+    void testShellWithDir() throws IOException {
         String dirOutput = shellService.runAndWait("dir");
         log.debug("The list of the current folder is: {}", dirOutput);
         assertThat(dirOutput, not(isEmptyString()));

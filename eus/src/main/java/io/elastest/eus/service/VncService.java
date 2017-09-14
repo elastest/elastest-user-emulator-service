@@ -74,7 +74,7 @@ public class VncService {
         this.sessionService = sessionService;
     }
 
-    public void startVncContainer(SessionInfo sessionInfo) {
+    public void startVncContainer(SessionInfo sessionInfo) throws Exception {
         log.debug("Starting VNC container in session {}",
                 sessionInfo.getSessionId());
 

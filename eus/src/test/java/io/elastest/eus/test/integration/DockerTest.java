@@ -65,7 +65,7 @@ public class DockerTest {
     private int hubVncExposedPort;
 
     @Test
-    void test() throws InterruptedException {
+    void testDocker() throws Exception {
         // Test data (input)
         String jsonCapabilities = "{ \"desiredCapabilities\": {"
                 + "\"browserName\": \"chrome\"," + " \"version\": \"\","

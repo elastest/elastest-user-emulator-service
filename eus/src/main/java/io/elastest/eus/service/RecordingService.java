@@ -273,6 +273,7 @@ public class RecordingService {
         } catch (IOException e) {
             String errorMessage = "Exception reading content of " + file
                     + " from Alluxio";
+            // Not propagating IOException to improve readability
             throw new EusException(errorMessage, e);
         }
         return content;
