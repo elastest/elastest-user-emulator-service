@@ -19,6 +19,7 @@ package io.elastest.eus.test.integration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -114,6 +115,15 @@ public class SessionTest {
         restTemplate.delete("/session/" + sessionId);
 
         // NOTE: This can be done as an scenario test when available (JUnit 5.1)
+    }
+
+    @Test
+    void notFoundSession() {
+        log.debug("GET /session/nofound/vnc");
+        ResponseEntity<String> response = restTemplate
+                .getForEntity("/session/nofound/url", String.class);
+
+        assertEquals(NOT_FOUND, response.getStatusCode());
     }
 
 }
