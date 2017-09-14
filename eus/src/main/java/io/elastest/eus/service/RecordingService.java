@@ -120,7 +120,8 @@ public class RecordingService {
             throws IOException, InterruptedException {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         log.trace("Stopping recording of container {}", noNvcContainerName);
-        dockerService.execCommand(noNvcContainerName, false, novncScript,
+
+        dockerService.execCommand(noNvcContainerName, true, novncScript,
                 "--end");
     }
 
@@ -131,9 +132,8 @@ public class RecordingService {
         String recordingFileName = sessionId + registryRecordingExtension;
 
         // Convert format of recording to mp4
-        dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
-                sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
-                "experimental", recordingFileName);
+        dockerService.execCommand(noNvcContainerName, true, novncScript,
+                "--convert", sessionId, recordingFileName);
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recording is stored locally

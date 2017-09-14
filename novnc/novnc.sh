@@ -11,7 +11,6 @@ case $key in
     ;;
     -e|--end)
     killall flvrec.py
-    ffmpeg -i sessionId $2.flv -c:v libx264 -crf 19 -strict experimental
     shift
     ;;
     -c|--convert)
