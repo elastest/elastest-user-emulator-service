@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -221,8 +220,8 @@ public class RecordingService {
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
 
-        HttpStatus status = OK;
-        boolean deleteRecording, deleteMetadata;
+        boolean deleteRecording;
+        boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
             deleteRecording = Files.deleteIfExists(
@@ -236,15 +235,16 @@ public class RecordingService {
             deleteMetadata = alluxioService.deleteFile(metadataFileName);
 
         }
-        status = deleteRecording && deleteMetadata ? OK : INTERNAL_SERVER_ERROR;
-
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
+        HttpStatus status = deleteRecording && deleteMetadata ? OK
+                : INTERNAL_SERVER_ERROR;
         log.debug("... response {}", status);
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
+
         return responseEntity;
     }
 
     public List<String> getStoredMetadataContent() throws IOException {
-        List<String> metadataContent = new ArrayList<>();
+        List<String> metadataContent;
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recordings and metadata are
