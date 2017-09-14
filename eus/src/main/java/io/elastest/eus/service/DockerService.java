@@ -83,9 +83,6 @@ public class DockerService {
     @Value("${docker.poll.time.ms}")
     private int dockerPollTimeMs;
 
-    @Value("${docker.remove.container.retries}")
-    private int dockerRemoveContainersRetries;
-
     @Value("${docker.server.url}")
     private String dockerServerUrl;
 
@@ -233,8 +230,7 @@ public class DockerService {
         return exists;
     }
 
-    public void stopAndRemoveContainer(String containerName)
-            throws InterruptedException {
+    public void stopAndRemoveContainer(String containerName) {
         stopContainer(containerName);
         removeContainer(containerName);
     }
@@ -249,34 +245,11 @@ public class DockerService {
         }
     }
 
-    public void removeContainer(String containerName)
-            throws InterruptedException {
+    public void removeContainer(String containerName) {
         if (existsContainer(containerName)) {
             log.trace("Removing container {}", containerName);
-            boolean removed = false;
-            int count = 0;
-            do {
-                try {
-                    count++;
-                    dockerClient.removeContainerCmd(containerName)
-                            .withRemoveVolumes(true).exec();
-                    log.trace("Removed {}", containerName, count);
-                    removed = true;
-                } catch (Exception e) {
-                    if (count == dockerRemoveContainersRetries) {
-                        log.error("Exception removing container {}",
-                                containerName, e);
-                    }
-                    try {
-                        log.trace("Waiting for removing {} ({} retries)",
-                                containerName, count);
-                        sleep(dockerWaitTimeoutSec);
-                    } catch (InterruptedException e1) {
-                        log.warn("Exception waiting to remove container", e1);
-                        currentThread().interrupt();
-                    }
-                }
-            } while (!removed && count <= dockerRemoveContainersRetries);
+            dockerClient.removeContainerCmd(containerName)
+                    .withRemoveVolumes(true).exec();
         }
     }
 

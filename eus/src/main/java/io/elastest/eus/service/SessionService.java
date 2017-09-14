@@ -230,7 +230,7 @@ public class SessionService extends TextWebSocketHandler {
                 sendRemoveSessionToAllClients(sessionInfo);
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             String errorMessage = "Exception session message for removing session "
                     + sessionInfo;
             // Not propagating Exception to improve readability
@@ -238,8 +238,7 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    public void stopAllContainerOfSession(SessionInfo sessionInfo)
-            throws InterruptedException {
+    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
         String hubContainerName = sessionInfo.getHubContainerName();
         if (hubContainerName != null) {
             dockerService.stopAndRemoveContainer(hubContainerName);
