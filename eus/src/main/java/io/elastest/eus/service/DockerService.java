@@ -40,7 +40,6 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.net.ssl.HostnameVerifier;
@@ -59,7 +58,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
@@ -235,20 +233,6 @@ public class DockerService {
         return exists;
     }
 
-    public String getContainerIpAddress(String containerName)
-            throws IOException {
-        String ipAddress;
-        if (IS_OS_WINDOWS) {
-            ipAddress = getDockerServerIp();
-        } else {
-            Map<String, ContainerNetwork> networks = dockerClient
-                    .inspectContainerCmd(containerName).exec()
-                    .getNetworkSettings().getNetworks();
-            ipAddress = networks.values().iterator().next().getIpAddress();
-        }
-        return ipAddress;
-    }
-
     public void stopAndRemoveContainer(String containerName)
             throws InterruptedException {
         stopContainer(containerName);
@@ -327,15 +311,6 @@ public class DockerService {
             }
         }
         return output;
-    }
-
-    public void copyFileToContainer(String containerName, String fileName) {
-        if (existsContainer(containerName)) {
-            log.trace("Copying {} to container {}", fileName, containerName);
-
-            dockerClient.copyArchiveToContainerCmd(containerName)
-                    .withHostResource(fileName).exec();
-        }
     }
 
     public InputStream getFileFromContainer(String containerName,
