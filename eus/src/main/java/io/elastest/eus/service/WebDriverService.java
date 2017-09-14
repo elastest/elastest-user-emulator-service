@@ -105,7 +105,7 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            HttpServletRequest request) throws Exception {
+            HttpServletRequest request) throws IOException {
 
         StringBuffer requestUrl = request.getRequestURL();
         String requestContext = requestUrl.substring(
@@ -208,7 +208,7 @@ public class WebDriverService {
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
-            String responseBody) throws Exception {
+            String responseBody) throws IOException, InterruptedException {
         String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
@@ -249,7 +249,7 @@ public class WebDriverService {
     }
 
     private SessionInfo starBrowser(String jsonCapabilities, String timeout)
-            throws Exception {
+            throws IOException {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);

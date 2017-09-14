@@ -404,7 +404,7 @@ public class DockerService {
         return exists;
     }
 
-    public void waitForHostIsReachable(String url) throws Exception {
+    public void waitForHostIsReachable(String url) {
         long timeoutMillis = MILLISECONDS.convert(dockerWaitTimeoutSec,
                 SECONDS);
         long endTimeMillis = System.currentTimeMillis() + timeoutMillis;
@@ -433,14 +433,23 @@ public class DockerService {
                     }
                 } };
 
-        SSLContext sc = SSLContext.getInstance("SSL");
-        sc.init(null, trustAllCerts, new java.security.SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection
+                    .setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-        HostnameVerifier allHostsValid = (hostname, session) -> true;
-        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
-        waitUrl(url, timeoutMillis, endTimeMillis, errorMessage);
+            waitUrl(url, timeoutMillis, endTimeMillis, errorMessage);
+
+        } catch (Exception e) {
+            // Not propagating multiple exceptions (NoSuchAlgorithmException,
+            // KeyManagementException, IOException, InterruptedException) to
+            // improve readability
+            throw new EusException(errorMessage, e);
+        }
 
     }
 

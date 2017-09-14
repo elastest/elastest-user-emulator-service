@@ -19,6 +19,7 @@ package io.elastest.eus.service;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public class VncService {
         this.sessionService = sessionService;
     }
 
-    public void startVncContainer(SessionInfo sessionInfo) throws Exception {
+    public void startVncContainer(SessionInfo sessionInfo) throws IOException {
         log.debug("Starting VNC container in session {}",
                 sessionInfo.getSessionId());
 

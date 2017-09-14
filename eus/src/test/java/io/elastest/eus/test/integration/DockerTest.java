@@ -18,6 +18,8 @@ package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -65,7 +67,7 @@ public class DockerTest {
     private int hubVncExposedPort;
 
     @Test
-    void testDocker() throws Exception {
+    void testDocker() throws IOException, InterruptedException {
         // Test data (input)
         String jsonCapabilities = "{ \"desiredCapabilities\": {"
                 + "\"browserName\": \"chrome\"," + " \"version\": \"\","

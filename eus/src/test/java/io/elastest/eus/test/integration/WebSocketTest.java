@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.CountDownLatch;
 
@@ -96,7 +97,7 @@ public class WebSocketTest {
     }
 
     @Test
-    void testSessions() throws Exception {
+    void testSessions() throws InterruptedException {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
@@ -129,7 +130,7 @@ public class WebSocketTest {
     }
 
     @Test
-    void testRecordings() throws Exception {
+    void testRecordings() throws IOException, InterruptedException {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
