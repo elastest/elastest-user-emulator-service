@@ -35,6 +35,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.elastest.eus.EusException;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -79,8 +80,8 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleTextMessage(WebSocketSession session,
-            TextMessage message) {
+    public void handleTextMessage(WebSocketSession session, TextMessage message)
+            throws IOException {
         String sessionId = session.getId();
         String payload = message.getPayload();
         log.debug("Incomming message {} from session {}", payload, sessionId);
@@ -116,18 +117,14 @@ public class SessionService extends TextWebSocketHandler {
         activeSessions.remove(sessionId);
     }
 
-    public void sendTextMessage(WebSocketSession session, String message) {
+    public void sendTextMessage(WebSocketSession session, String message)
+            throws IOException {
         TextMessage textMessage = new TextMessage(message);
-        try {
-            log.trace("Sending {} to session {}", message, session.getId());
-            session.sendMessage(textMessage);
-        } catch (IOException e) {
-            log.warn("Error sending message {} in session {}", message,
-                    session.getId(), e);
-        }
+        log.trace("Sending {} to session {}", message, session.getId());
+        session.sendMessage(textMessage);
     }
 
-    public void sendAllSessionsInfoToAllClients() {
+    public void sendAllSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (SessionInfo sessionInfo : sessionRegistry.values()) {
                 sendTextMessage(session,
@@ -136,7 +133,7 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    public void sendAllRecordingsToAllClients() {
+    public void sendAllRecordingsToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (String fileContent : recordingService
                     .getStoredMetadataContent()) {
@@ -145,14 +142,16 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
-    public void sendRecordingToAllClients(SessionInfo sessionInfo) {
+    public void sendRecordingToAllClients(SessionInfo sessionInfo)
+            throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             sendTextMessage(session,
                     jsonService.recordedSessionJson(sessionInfo).toString());
         }
     }
 
-    public void sendNewSessionToAllClients(SessionInfo sessionInfo) {
+    public void sendNewSessionToAllClients(SessionInfo sessionInfo)
+            throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             sendTextMessage(session,
                     jsonService.newSessionJson(sessionInfo).toString());
@@ -163,7 +162,8 @@ public class SessionService extends TextWebSocketHandler {
         return !activeSessions.isEmpty();
     }
 
-    public void sendRemoveSessionToAllClients(SessionInfo sessionInfo) {
+    public void sendRemoveSessionToAllClients(SessionInfo sessionInfo)
+            throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             sendTextMessage(session,
                     jsonService.removeSessionJson(sessionInfo).toString());
@@ -214,23 +214,31 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
-        shutdownSessionTimer(sessionInfo);
+        try {
+            shutdownSessionTimer(sessionInfo);
 
-        if (timeout) {
-            log.info("Deleting session {} due to timeout of {} seconds",
-                    sessionInfo.getSessionId(), hubTimeout);
-        } else {
-            log.info("Deleting session {}", sessionInfo.getSessionId());
-        }
+            if (timeout) {
+                log.info("Deleting session {} due to timeout of {} seconds",
+                        sessionInfo.getSessionId(), hubTimeout);
+            } else {
+                log.info("Deleting session {}", sessionInfo.getSessionId());
+            }
 
-        stopAllContainerOfSession(sessionInfo);
-        removeSession(sessionInfo.getSessionId());
-        if (!sessionInfo.isLiveSession()) {
-            sendRemoveSessionToAllClients(sessionInfo);
+            stopAllContainerOfSession(sessionInfo);
+            removeSession(sessionInfo.getSessionId());
+            if (!sessionInfo.isLiveSession()) {
+                sendRemoveSessionToAllClients(sessionInfo);
+            }
+
+        } catch (Exception e) {
+            String errorMessage = "Exception session message for removing session "
+                    + sessionInfo;
+            throw new EusException(errorMessage, e);
         }
     }
 
-    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
+    public void stopAllContainerOfSession(SessionInfo sessionInfo)
+            throws InterruptedException {
         String hubContainerName = sessionInfo.getHubContainerName();
         if (hubContainerName != null) {
             dockerService.stopAndRemoveContainer(hubContainerName);

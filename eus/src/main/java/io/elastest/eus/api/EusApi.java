@@ -207,7 +207,8 @@ public interface EusApi {
             "W3C WebDriver" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation"),
-            @ApiResponse(code = 404, message = "No such element") })
+            @ApiResponse(code = 404, message = "No such element"),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/session/**", produces = {
             "application/json" }, method = { GET, POST, DELETE })
     ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -221,7 +222,8 @@ public interface EusApi {
     @ApiOperation(value = "W3C WebDriver standard get status operation", notes = "", response = String.class, tags = {
             "W3C WebDriver" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = String.class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/status", produces = {
             "application/json" }, method = { GET })
     ResponseEntity<String> getStatus();

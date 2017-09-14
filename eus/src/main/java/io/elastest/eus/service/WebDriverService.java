@@ -18,7 +18,9 @@ package io.elastest.eus.service;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
@@ -158,25 +160,37 @@ public class WebDriverService {
         String responseBody = exchange(httpEntity, requestContext, method,
                 sessionInfo, optionalHttpEntity);
 
-        // Intercept again create session
-        if (jsonService.isPostSessionRequest(method, requestContext)) {
-            postSessionRequest(sessionInfo, isLive, responseBody);
+        // Handle response
+        HttpStatus responseStatus = sessionResponse(requestContext, method,
+                sessionInfo, isLive, responseBody);
+
+        return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    private HttpStatus sessionResponse(String requestContext, HttpMethod method,
+            SessionInfo sessionInfo, boolean isLive, String responseBody) {
+        HttpStatus responseStatus = OK;
+        try {
+            // Intercept again create session
+            if (jsonService.isPostSessionRequest(method, requestContext)) {
+                postSessionRequest(sessionInfo, isLive, responseBody);
+            }
+
+            // Intercept destroy session
+            if (jsonService.isDeleteSessionRequest(method, requestContext)) {
+                log.trace("Intercepted DELETE session");
+                stopBrowser(sessionInfo);
+            }
+
+        } catch (Exception e) {
+            log.error("Exception handling response for session", e);
+            responseStatus = INTERNAL_SERVER_ERROR;
+
+        } finally {
+            log.debug("<< Response: {} -- body: {}", responseStatus,
+                    responseBody);
         }
-
-        HttpStatus responseStatusOk = OK;
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(
-                responseBody, responseStatusOk);
-        log.debug("<< Response: {} -- body: {}", responseStatusOk,
-                responseBody);
-
-        // Intercept destroy session
-        if (jsonService.isDeleteSessionRequest(method, requestContext)) {
-            log.trace("Intercepted DELETE session");
-
-            stopBrowser(sessionInfo);
-        }
-
-        return responseEntity;
+        return responseStatus;
     }
 
     private String exchange(HttpEntity<String> httpEntity,
@@ -194,7 +208,7 @@ public class WebDriverService {
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
-            String responseBody) {
+            String responseBody) throws IOException, InterruptedException {
         String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
@@ -285,7 +299,8 @@ public class WebDriverService {
         return sessionInfo;
     }
 
-    private void stopBrowser(SessionInfo sessionInfo) {
+    private void stopBrowser(SessionInfo sessionInfo)
+            throws IOException, InterruptedException {
         if (sessionInfo.getVncContainerName() != null) {
             recordingService.stopRecording(sessionInfo);
             recordingService.storeRecording(sessionInfo);

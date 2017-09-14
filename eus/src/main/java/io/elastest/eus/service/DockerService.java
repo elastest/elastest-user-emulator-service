@@ -253,7 +253,8 @@ public class DockerService {
         return ipAddress;
     }
 
-    public void stopAndRemoveContainer(String containerName) {
+    public void stopAndRemoveContainer(String containerName)
+            throws InterruptedException {
         stopContainer(containerName);
         removeContainer(containerName);
     }
@@ -268,7 +269,8 @@ public class DockerService {
         }
     }
 
-    public void removeContainer(String containerName) {
+    public void removeContainer(String containerName)
+            throws InterruptedException {
         if (existsContainer(containerName)) {
             log.trace("Removing container {}", containerName);
             boolean removed = false;
@@ -280,7 +282,6 @@ public class DockerService {
                             .withRemoveVolumes(true).exec();
                     log.trace("Removed {}", containerName, count);
                     removed = true;
-
                 } catch (Exception e) {
                     if (count == dockerRemoveContainersRetries) {
                         log.error("Exception removing container {}",
@@ -300,7 +301,7 @@ public class DockerService {
     }
 
     public String execCommand(String containerName, boolean awaitCompletion,
-            String... command) {
+            String... command) throws IOException, InterruptedException {
         assert (command.length > 0);
 
         String output = null;
@@ -324,11 +325,6 @@ public class DockerService {
                     startResultCallback.awaitCompletion();
                 }
                 output = outputStream.toString();
-
-            } catch (Exception e) {
-                log.warn("Exception executing command {} on container {}",
-                        commandStr, containerName, e);
-                currentThread().interrupt();
 
             } finally {
                 log.trace("Callback terminated. Result: {}", output);

@@ -16,8 +16,8 @@
  */
 package io.elastest.eus.api;
 
-import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
@@ -180,31 +180,65 @@ public class EusController implements EusApi {
     @Override
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
-        return webDriverService.session(httpEntity, request);
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.session(httpEntity, request);
+        } catch (Exception e) {
+            String errorMessage = "Exception handling session";
+            log.error(errorMessage, e);
+            response = new ResponseEntity<>(errorMessage,
+                    INTERNAL_SERVER_ERROR);
+        }
+        return response;
     }
 
     @Override
     public ResponseEntity<String> getStatus() {
-        return webDriverService.getStatus();
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.getStatus();
+        } catch (Exception e) {
+            String errorMessage = "Exception getting status";
+            log.error(errorMessage, e);
+            response = new ResponseEntity<>(errorMessage,
+                    INTERNAL_SERVER_ERROR);
+        }
+        return response;
     }
 
     @Override
     public ResponseEntity<String> vnc(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId) {
-        return vncService.getVnc(sessionId);
-
+        ResponseEntity<String> response;
+        try {
+            response = vncService.getVnc(sessionId);
+        } catch (Exception e) {
+            String errorMessage = "Exception getting VNC session";
+            log.error(errorMessage, e);
+            response = new ResponseEntity<>(errorMessage,
+                    INTERNAL_SERVER_ERROR);
+        }
+        return response;
     }
 
     @Override
     public ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             HttpServletRequest request) {
-        ResponseEntity<String> response = null;
-        HttpMethod method = HttpMethod.resolve(request.getMethod());
-        if (method == GET) {
-            response = recordingService.getRecording(sessionId);
-        } else if (method == DELETE) {
-            response = recordingService.deleteRecording(sessionId);
+        ResponseEntity<String> response;
+        try {
+            HttpMethod method = HttpMethod.resolve(request.getMethod());
+            if (method == GET) {
+                response = recordingService.getRecording(sessionId);
+            } else {
+                // The only option here is DELETE method
+                response = recordingService.deleteRecording(sessionId);
+            }
+        } catch (Exception e) {
+            String errorMessage = "Exception handling recording";
+            log.error(errorMessage, e);
+            response = new ResponseEntity<>(errorMessage,
+                    INTERNAL_SERVER_ERROR);
         }
         return response;
     }

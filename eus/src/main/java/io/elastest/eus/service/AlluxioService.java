@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
+import io.elastest.eus.EusException;
 import io.elastest.eus.edm.EdmAluxioApi;
 import io.elastest.eus.edm.EdmAluxioFile;
 import okhttp3.MediaType;
@@ -79,14 +80,13 @@ public class AlluxioService {
     }
 
     public String getFileAsString(String file) {
-        String content = "";
         try {
-            content = new String(getFile(file));
+            return new String(getFile(file));
         } catch (IOException e) {
-            log.error("Exception reading content of Alluxio metadata {}", file,
-                    e);
+            String errorMessage = "Exception getting file from Alluxio: "
+                    + file;
+            throw new EusException(errorMessage, e);
         }
-        return content;
     }
 
     public byte[] getFile(String file) throws IOException {
@@ -105,7 +105,7 @@ public class AlluxioService {
         return content;
     }
 
-    public void writeFile(String fileName, byte[] fileContent)
+    public boolean writeFile(String fileName, byte[] fileContent)
             throws IOException {
         log.debug("Writing {} bytes to Alluxio", fileContent.length);
 
@@ -119,14 +119,19 @@ public class AlluxioService {
                 .execute();
         log.debug("Result: {}", execute);
 
+        boolean writeSuccessful = execute.isSuccessful();
+
         alluxio.closeStream(streamId).execute();
         log.debug("Stream {} closed", streamId);
+
+        return writeSuccessful;
     }
 
-    public void deleteFile(String file) throws IOException {
+    public boolean deleteFile(String file) throws IOException {
         log.debug("Deleting file {}", file);
         Response<ResponseBody> response = alluxio.deleteFile(file).execute();
         log.debug("Reponse: {}", response);
+        return response.isSuccessful();
     }
 
     public List<String> listFiles(String folder) throws IOException {

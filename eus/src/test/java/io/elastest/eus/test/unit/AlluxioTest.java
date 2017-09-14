@@ -23,7 +23,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -141,7 +140,8 @@ public class AlluxioTest {
     @Test
     @DisplayName("Delete file")
     void testDeleteFile() throws IOException {
-        alluxioService.deleteFile(filename);
+        boolean deleteFileResult = alluxioService.deleteFile(filename);
+        assertThat(deleteFileResult, equalTo(true));
     }
 
     @Test

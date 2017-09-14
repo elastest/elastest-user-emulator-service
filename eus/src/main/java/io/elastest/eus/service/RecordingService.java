@@ -47,6 +47,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import io.elastest.eus.EusException;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -101,7 +102,8 @@ public class RecordingService {
         this.alluxioService = alluxioService;
     }
 
-    public void startRecording(SessionInfo sessionInfo) {
+    public void startRecording(SessionInfo sessionInfo)
+            throws IOException, InterruptedException {
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
         String hubContainerIp = dockerService.getDockerServerIp();
@@ -115,91 +117,83 @@ public class RecordingService {
                 "--start", sessionId, hubContainerIp, hubContainerPort);
     }
 
-    public void stopRecording(SessionInfo sessionInfo) {
+    public void stopRecording(SessionInfo sessionInfo)
+            throws IOException, InterruptedException {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         log.trace("Stopping recording of container {}", noNvcContainerName);
         dockerService.execCommand(noNvcContainerName, false, novncScript,
                 "--end");
     }
 
-    public void storeRecording(SessionInfo sessionInfo) {
+    public void storeRecording(SessionInfo sessionInfo)
+            throws IOException, InterruptedException {
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionId + registryRecordingExtension;
 
-        try {
-            // Convert format of recording to mp4
-            dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
-                    sessionId + ".flv", "-c:v", "libx264", "-crf", "19",
-                    "-strict", "experimental", recordingFileName);
+        // Convert format of recording to mp4
+        dockerService.execCommand(noNvcContainerName, true, "ffmpeg", "-i",
+                sessionId + ".flv", "-c:v", "libx264", "-crf", "19", "-strict",
+                "experimental", recordingFileName);
 
-            if (edmAlluxioUrl.isEmpty()) {
-                // If EDM Alluxio is not available, recording is stored locally
-                String target = registryFolder + recordingFileName;
+        if (edmAlluxioUrl.isEmpty()) {
+            // If EDM Alluxio is not available, recording is stored locally
+            String target = registryFolder + recordingFileName;
 
-                InputStream inputStream = dockerService.getFileFromContainer(
-                        noNvcContainerName, recordingFileName);
+            InputStream inputStream = dockerService.getFileFromContainer(
+                    noNvcContainerName, recordingFileName);
 
-                // -------------
-                // Workaround due to strange behavior of docker-java
-                // it seems that copyArchiveFromContainerCmd not works correctly
+            // -------------
+            // Workaround due to strange behavior of docker-java
+            // it seems that copyArchiveFromContainerCmd not works correctly
 
-                byte[] bytes = toByteArray(inputStream);
+            byte[] bytes = toByteArray(inputStream);
 
-                int i = 0;
-                for (; i < bytes.length; i++) {
-                    char c1 = (char) bytes[i];
-                    if (c1 == 'f') {
-                        char c2 = (char) bytes[i + 1];
-                        char c3 = (char) bytes[i + 2];
-                        if (c2 == 't' && c3 == 'y') {
-                            break;
-                        }
+            int i = 0;
+            for (; i < bytes.length; i++) {
+                char c1 = (char) bytes[i];
+                if (c1 == 'f') {
+                    char c2 = (char) bytes[i + 1];
+                    char c3 = (char) bytes[i + 2];
+                    if (c2 == 't' && c3 == 'y') {
+                        break;
                     }
                 }
-
-                writeByteArrayToFile(new File(target),
-                        copyOfRange(bytes, i - 4, bytes.length));
-                // -------------
-
-            } else {
-                // If EDM Alluxio is available, recording is stored in Alluxio
-                dockerService.execCommand(noNvcContainerName, true, novncScript,
-                        "--upload", edmAlluxioUrl, recordingFileName);
             }
 
-        } catch (IOException e) {
-            log.error("Exception storing recording (sessiodId {})",
-                    sessionInfo.getSessionId(), e);
+            writeByteArrayToFile(new File(target),
+                    copyOfRange(bytes, i - 4, bytes.length));
+            // -------------
+
+        } else {
+            // If EDM Alluxio is available, recording is stored in Alluxio
+            dockerService.execCommand(noNvcContainerName, true, novncScript,
+                    "--upload", edmAlluxioUrl, recordingFileName);
         }
     }
 
-    public void storeMetadata(SessionInfo sessionInfo) {
+    public void storeMetadata(SessionInfo sessionInfo) throws IOException {
         String sessionId = sessionInfo.getSessionId();
         String metadataFileName = sessionId + registryMetadataExtension;
         JSONObject sessionInfoToJson = jsonService
                 .recordedSessionJson(sessionInfo);
-        try {
-            if (edmAlluxioUrl.isEmpty()) {
-                // If EDM Alluxio is not available, metadata is stored locally
 
-                FileUtils.writeStringToFile(
-                        new File(registryFolder + metadataFileName),
-                        sessionInfoToJson.toString(), Charset.defaultCharset());
+        if (edmAlluxioUrl.isEmpty()) {
+            // If EDM Alluxio is not available, metadata is stored locally
 
-            } else {
-                // If EDM Alluxio is available, recording is stored in Alluxio
-                alluxioService.writeFile(metadataFileName,
-                        sessionInfoToJson.toString().getBytes());
-            }
+            FileUtils.writeStringToFile(
+                    new File(registryFolder + metadataFileName),
+                    sessionInfoToJson.toString(), Charset.defaultCharset());
 
-        } catch (IOException e) {
-            log.error("Exception storing metadata (sessiodId {})",
-                    sessionInfo.getSessionId(), e);
+        } else {
+            // If EDM Alluxio is available, recording is stored in Alluxio
+            alluxioService.writeFile(metadataFileName,
+                    sessionInfoToJson.toString().getBytes());
         }
     }
 
-    public ResponseEntity<String> getRecording(String sessionId) {
+    public ResponseEntity<String> getRecording(String sessionId)
+            throws IOException {
         HttpStatus status = OK;
         String recordingFileName = sessionId + registryRecordingExtension;
 
@@ -213,55 +207,43 @@ public class RecordingService {
             // If EDM Alluxio is available, recording is store in Alluxio
             File targetFile = new File(registryFolder + recordingFileName);
             if (!targetFile.exists()) {
-                byte[] file;
-                try {
-                    file = alluxioService.getFile(recordingFileName);
-                    writeByteArrayToFile(targetFile, file);
-                } catch (IOException e) {
-                    status = INTERNAL_SERVER_ERROR;
-                    log.error(
-                            "Error getting recording of session {} from Alluxio",
-                            sessionId, e);
-                }
+                byte[] file = alluxioService.getFile(recordingFileName);
+                writeByteArrayToFile(targetFile, file);
             }
         }
 
         return new ResponseEntity<>(urlResponse, status);
     }
 
-    public ResponseEntity<String> deleteRecording(String sessionId) {
+    public ResponseEntity<String> deleteRecording(String sessionId)
+            throws IOException {
         log.debug("Deleting recording of session {}", sessionId);
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
 
         HttpStatus status = OK;
-        try {
-            if (edmAlluxioUrl.isEmpty()) {
-                // If EDM Alluxio is not available, delete is done locally
-                boolean deleteRecording = Files.deleteIfExists(
-                        Paths.get(registryFolder + recordingFileName));
-                boolean deleteMetadata = Files.deleteIfExists(
-                        Paths.get(registryFolder + metadataFileName));
-                status = deleteRecording && deleteMetadata ? OK
-                        : INTERNAL_SERVER_ERROR;
+        boolean deleteRecording, deleteMetadata;
+        if (edmAlluxioUrl.isEmpty()) {
+            // If EDM Alluxio is not available, delete is done locally
+            deleteRecording = Files.deleteIfExists(
+                    Paths.get(registryFolder + recordingFileName));
+            deleteMetadata = Files.deleteIfExists(
+                    Paths.get(registryFolder + metadataFileName));
 
-            } else {
-                // If EDM Alluxio is available, deleting is done in Alluxio
-                alluxioService.deleteFile(recordingFileName);
-                alluxioService.deleteFile(metadataFileName);
+        } else {
+            // If EDM Alluxio is available, deleting is done in Alluxio
+            deleteRecording = alluxioService.deleteFile(recordingFileName);
+            deleteMetadata = alluxioService.deleteFile(metadataFileName);
 
-            }
-        } catch (IOException e) {
-            status = INTERNAL_SERVER_ERROR;
-            log.error("Error deleting session {} from Alluxio", sessionId, e);
         }
+        status = deleteRecording && deleteMetadata ? OK : INTERNAL_SERVER_ERROR;
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
         log.debug("... response {}", status);
         return responseEntity;
     }
 
-    public List<String> getStoredMetadataContent() {
+    public List<String> getStoredMetadataContent() throws IOException {
         List<String> metadataContent = new ArrayList<>();
 
         if (edmAlluxioUrl.isEmpty()) {
@@ -276,17 +258,10 @@ public class RecordingService {
         } else {
             // If EDM Alluxio is available, recordings and metadata are stored
             // in Alluxio
-            List<String> metadataFileList;
-            try {
-                metadataFileList = alluxioService.getMetadataFileList();
-                metadataContent = metadataFileList.stream()
-                        .map(alluxioService::getFileAsString).collect(toList());
-
-            } catch (IOException e) {
-                log.error(
-                        "Exception reading content of metadata file from Alluxio",
-                        e);
-            }
+            List<String> metadataFileList = alluxioService
+                    .getMetadataFileList();
+            metadataContent = metadataFileList.stream()
+                    .map(alluxioService::getFileAsString).collect(toList());
 
         }
 
@@ -298,8 +273,9 @@ public class RecordingService {
         try {
             content = new String(readAllBytes(get(file.getAbsolutePath())));
         } catch (IOException e) {
-            log.error("Exception reading content of Alluxio metadata {}", file,
-                    e);
+            String errorMessage = "Exception reading content of " + file
+                    + " from Alluxio";
+            throw new EusException(errorMessage, e);
         }
         return content;
     }
