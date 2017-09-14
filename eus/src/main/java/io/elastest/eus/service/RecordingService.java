@@ -238,9 +238,7 @@ public class RecordingService {
         HttpStatus status = deleteRecording && deleteMetadata ? OK
                 : INTERNAL_SERVER_ERROR;
         log.debug("... response {}", status);
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(status);
-
-        return responseEntity;
+        return new ResponseEntity<>(status);
     }
 
     public List<String> getStoredMetadataContent() throws IOException {
