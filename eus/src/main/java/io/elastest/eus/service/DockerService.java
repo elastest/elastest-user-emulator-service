@@ -291,8 +291,8 @@ public class DockerService {
                 commandStr, containerName, awaitCompletion);
         if (existsContainer(containerName)) {
             ExecCreateCmdResponse exec = dockerClient
-                    .execCreateCmd(containerName).withCmd(command)
-                    .withTty(false).withAttachStdin(true).withAttachStdout(true)
+                    .execCreateCmd(containerName).withCmd(command).withTty(true)
+                    .withAttachStdin(true).withAttachStdout(true)
                     .withAttachStderr(true).exec();
 
             log.trace("Command executed. Exec id: {}", exec.getId());
@@ -301,6 +301,7 @@ public class DockerService {
                     .execStartCmd(exec.getId()).withDetach(false).withTty(true)
                     .exec(new ExecStartResultCallback(outputStream,
                             outputStream))) {
+
                 if (awaitCompletion) {
                     startResultCallback.awaitCompletion();
                 }
