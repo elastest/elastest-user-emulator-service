@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,8 @@ import io.elastest.eus.service.JsonService;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
+@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc",
+        "edm.alluxio.url=http://localhost" })
 public class SessionTest {
 
     final Logger log = LoggerFactory.getLogger(SessionTest.class);
@@ -104,13 +106,27 @@ public class SessionTest {
                 statusCode);
         log.debug("[GET /session/{}/vnc] Response {}", sessionId, responseBody);
 
-        // ---------------
-
         // Assertions #2
         assertEquals(OK, response.getStatusCode());
         assertNotNull(sessionId);
 
-        // Exercise #3 (destroy session)
+        // ---------------
+
+        // Exercise #3 (get recording)
+        log.debug("GET /session/{}/recording", sessionId);
+        response = restTemplate.getForEntity(
+                "/session/" + sessionId + "/recording", String.class);
+        assertEquals(INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        // ---------------
+
+        // Exercise #4 (delete recording)
+        log.debug("DELETE /session/{}/recording", sessionId);
+        restTemplate.delete("/session/" + sessionId + "/recording");
+
+        // ---------------
+
+        // Exercise #5 (destroy session)
         log.debug("DELETE /session/{}", sessionId);
         restTemplate.delete("/session/" + sessionId);
 
