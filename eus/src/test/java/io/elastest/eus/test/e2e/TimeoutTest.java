@@ -61,10 +61,15 @@ public class TimeoutTest {
         assertThrows(Exception.class, () -> {
             String eusUrl = "http://localhost:" + serverPort + contextPath;
             log.debug("EUS URL: {}", eusUrl);
-
             driver = new RemoteWebDriver(new URL(eusUrl),
                     DesiredCapabilities.chrome());
-            driver.get("http://elastest.io/");
+
+            // Make several consecutive requests waiting for the end of session
+            for (int i = 0; i < 10; i++) {
+                driver.get("http://elastest.io/");
+                log.info(driver.getTitle());
+            }
+
             driver.close();
         });
     }
