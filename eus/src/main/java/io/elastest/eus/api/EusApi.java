@@ -56,6 +56,21 @@ import io.swagger.annotations.ApiResponses;
 public interface EusApi {
 
     /**
+     * GET /session/{sessionId}/event/{subscriptionId}
+     */
+    @ApiOperation(value = "Read the value of event for a given subscription", notes = "", response = EventValue.class, tags = {
+            "Event subscription", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = EventValue.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = EventValue.class),
+            @ApiResponse(code = 404, message = "No such subscription", response = EventValue.class) })
+    @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", produces = {
+            "application/json" }, method = GET)
+    ResponseEntity<List<StatsValue>> getStats(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
+
+    /**
      * DELETE /session/{sessionId}/event/{subscriptionId}
      */
     @ApiOperation(value = "Remove a subscription", notes = "", response = Void.class, tags = {
@@ -102,21 +117,6 @@ public interface EusApi {
             @ApiParam(value = "Coordinate in y-axis", defaultValue = "0") @RequestParam(value = "y", required = false, defaultValue = "0") Integer y);
 
     /**
-     * GET /session/{sessionId}/event/{subscriptionId}
-     */
-    @ApiOperation(value = "Read the value of event for a given subscription", notes = "", response = EventValue.class, tags = {
-            "Event subscription", })
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = EventValue.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = EventValue.class),
-            @ApiResponse(code = 404, message = "No such subscription", response = EventValue.class) })
-    @RequestMapping(value = "/session/{sessionId}/event/{subscriptionId}", produces = {
-            "application/json" }, method = GET)
-    ResponseEntity<List<StatsValue>> getStats(
-            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "Subscription identifier (previously subscribed)", required = true) @PathVariable("subscriptionId") String subscriptionId);
-
-    /**
      * GET /session/{sessionId}/stats
      */
     @ApiOperation(value = "Read the WebRTC stats", notes = "", response = StatsValue.class, responseContainer = "List", tags = {
@@ -147,7 +147,7 @@ public interface EusApi {
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body);
 
     /**
-     * POST /session/{sessionId}/element/{elementId}/latenc
+     * POST /session/{sessionId}/element/{elementId}/latency
      */
     @ApiOperation(value = "Measure end-to-end latency of a WebRTC session", notes = "The E2E latency calculation is done comparing the media in P2P WebRTC communication (presenter-viewer)", response = EventSubscription.class, tags = {
             "Advance media evaluation", })
