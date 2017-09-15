@@ -20,8 +20,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -110,6 +110,12 @@ public class ApiServiceTest {
     void testGetStatus() throws Exception {
         mockMvc.perform(get("/status")).andExpect(status().isOk()).andExpect(
                 content().contentType("application/json;charset=UTF-8"));
+    }
+
+    @Test
+    @DisplayName("GET /")
+    void testGetHome() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isFound());
     }
 
     @Test
