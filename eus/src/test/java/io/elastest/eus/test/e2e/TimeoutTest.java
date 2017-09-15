@@ -23,7 +23,6 @@ import java.net.URL;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -61,10 +60,12 @@ public class TimeoutTest {
     void testTimeout() {
         assertThrows(Exception.class, () -> {
             String eusUrl = "http://localhost:" + serverPort + contextPath;
-            Capabilities capabilities = DesiredCapabilities.chrome();
-            driver = new RemoteWebDriver(new URL(eusUrl), capabilities);
             log.debug("EUS URL: {}", eusUrl);
+
+            driver = new RemoteWebDriver(new URL(eusUrl),
+                    DesiredCapabilities.chrome());
             driver.get("http://elastest.io/");
+            driver.close();
         });
     }
 
