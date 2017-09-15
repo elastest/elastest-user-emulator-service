@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.unit;
 
+import static java.lang.System.getProperty;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,8 +66,9 @@ public class ShellUnitTest {
     @Test
     @DisplayName("Is running in container")
     void testIsRunningInContainer() {
+        boolean runningInJenkins = isEmpty(getProperty("jenkins"));
         boolean runningInContainer = shellService.isRunningInContainer();
-        assertThat(runningInContainer, equalTo(false));
+        assertThat(runningInContainer, not(equalTo(runningInJenkins)));
     }
 
 }
