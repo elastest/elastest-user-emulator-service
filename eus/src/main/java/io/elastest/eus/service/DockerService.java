@@ -17,7 +17,6 @@
 package io.elastest.eus.service;
 
 import static java.lang.System.currentTimeMillis;
-import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -174,7 +173,8 @@ public class DockerService {
     }
 
     public void startAndWaitContainer(String imageId, String containerName,
-            PortBinding[] portBindings, String... env) {
+            PortBinding[] portBindings, String... env)
+            throws InterruptedException {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
@@ -300,7 +300,8 @@ public class DockerService {
         return inputStream;
     }
 
-    public void waitForContainer(String containerName) {
+    public void waitForContainer(String containerName)
+            throws InterruptedException {
         boolean isRunning = false;
         long timeoutMs = currentTimeMillis()
                 + SECONDS.toMillis(dockerWaitTimeoutSec);
@@ -314,17 +315,11 @@ public class DockerService {
                             + containerName);
                 }
 
-                try {
-                    // Wait poll time
-                    log.trace(
-                            "Container {} is not still running ... waiting {} ms",
-                            containerName, dockerPollTimeMs);
-                    sleep(dockerPollTimeMs);
+                // Wait poll time
+                log.trace("Container {} is not still running ... waiting {} ms",
+                        containerName, dockerPollTimeMs);
+                sleep(dockerPollTimeMs);
 
-                } catch (InterruptedException e) {
-                    log.warn("Exception waiting for hub", e);
-                    currentThread().interrupt();
-                }
             }
         } while (!isRunning);
     }

@@ -75,7 +75,8 @@ public class VncService {
         this.sessionService = sessionService;
     }
 
-    public void startVncContainer(SessionInfo sessionInfo) throws IOException {
+    public void startVncContainer(SessionInfo sessionInfo)
+            throws IOException, InterruptedException {
         log.debug("Starting VNC container in session {}",
                 sessionInfo.getSessionId());
 

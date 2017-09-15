@@ -105,7 +105,8 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            HttpServletRequest request) throws IOException {
+            HttpServletRequest request)
+            throws IOException, InterruptedException {
 
         StringBuffer requestUrl = request.getRequestURL();
         String requestContext = requestUrl.substring(
@@ -249,7 +250,7 @@ public class WebDriverService {
     }
 
     private SessionInfo starBrowser(String jsonCapabilities, String timeout)
-            throws IOException {
+            throws IOException, InterruptedException {
         String browserName = jsonService.getBrowser(jsonCapabilities);
         String version = jsonService.getVersion(jsonCapabilities);
         String platform = jsonService.getPlatform(jsonCapabilities);
