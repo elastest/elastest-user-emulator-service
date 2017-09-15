@@ -69,7 +69,7 @@ public class SessionTest {
     void createAndDestroySession() throws InterruptedException {
         // Test data (input)
         String jsonMessage = "{\"desiredCapabilities\": {"
-                + "\"browserName\": \"chrome\"," + "\"version\": \"\","
+                + "\"browserName\": \"firefox\"," + "\"version\": \"54\","
                 + "\"platform\": \"ANY\"" + "}" + "}";
 
         // Exercise #1 (create session)
