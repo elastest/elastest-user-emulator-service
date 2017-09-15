@@ -42,7 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "hub.timeout=0",
+@TestPropertySource(properties = { "hub.timeout=1",
         "novnc.image.id=elastest/eus-novnc" })
 public class TimeoutTest {
 
