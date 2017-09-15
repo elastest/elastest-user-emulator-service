@@ -16,12 +16,15 @@
  */
 package io.elastest.eus.test.integration;
 
+import static io.elastest.eus.test.util.JsonUtils.isJsonValid;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -38,6 +42,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.service.JsonService;
+import io.elastest.eus.test.util.WebSocketClient;
+import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
 /**
  * Session test (including VNC).
@@ -47,8 +53,7 @@ import io.elastest.eus.service.JsonService;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc",
-        "edm.alluxio.url=http://localhost" })
+@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
 public class SessionTest {
 
     final Logger log = LoggerFactory.getLogger(SessionTest.class);
@@ -62,24 +67,38 @@ public class SessionTest {
     @LocalServerPort
     int serverPort;
 
+    @Value("${ws.path}")
+    private String wsPath;
+
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
+
     @BeforeEach
     void setup() {
         log.debug("App started on port {}", serverPort);
     }
 
     @Test
-    void createAndDestroySession() throws InterruptedException {
-        // Test data (input)
+    void createAndDestroySession() throws Exception {
+        // #1 Create session and WebSocket connection
+        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
+        WebSocketClient webSocketClient = new WebSocketClient(wsUrl);
+        webSocketClient.addMessageHandler(new MessageHandler() {
+            @Override
+            public void handleMessage(String message) {
+                log.debug("Received message: {}", message);
+                assertThat(message, isJsonValid(message));
+            }
+        });
+
+        log.debug("POST /session");
         String jsonMessage = "{\"desiredCapabilities\": {"
                 + "\"browserName\": \"firefox\"," + "\"version\": \"54\","
                 + "\"platform\": \"ANY\"" + "}" + "}";
-
-        // Exercise #1 (create session)
-        log.debug("POST /session");
         ResponseEntity<String> response = restTemplate.postForEntity("/session",
                 jsonMessage, String.class);
+        assertEquals(OK, response.getStatusCode());
 
-        // Test outcome #1 (output)
         HttpStatus statusCode = response.getStatusCode();
         String responseBody = response.getBody();
         log.debug("[POST /session] Status code {}", statusCode);
@@ -87,48 +106,38 @@ public class SessionTest {
 
         String sessionId = jsonService.getSessionIdFromResponse(responseBody);
         log.debug("sessionId {}", sessionId);
-
-        // Assertions #1
-        assertEquals(OK, response.getStatusCode());
         assertNotNull(sessionId);
 
-        // ---------------
-
-        // Exercise #2 (get VNC session)
+        // #2 Get VNC session)
         log.debug("GET /session/{}/vnc", sessionId);
         response = restTemplate.getForEntity("/session/" + sessionId + "/vnc",
                 String.class);
 
-        // Test outcome #2 (output)
         statusCode = response.getStatusCode();
         responseBody = response.getBody();
         log.debug("[GET /session/{}/vnc] Status code {}", sessionId,
                 statusCode);
         log.debug("[GET /session/{}/vnc] Response {}", sessionId, responseBody);
 
-        // Assertions #2
         assertEquals(OK, response.getStatusCode());
         assertNotNull(sessionId);
 
-        // ---------------
-
-        // Exercise #3 (get recording)
+        // #3 Handle recordings
         log.debug("GET /session/{}/recording", sessionId);
         response = restTemplate.getForEntity(
                 "/session/" + sessionId + "/recording", String.class);
-        assertEquals(INTERNAL_SERVER_ERROR, response.getStatusCode());
 
-        // ---------------
+        assertEquals(OK, response.getStatusCode());
+        assertThat(response.getHeaders().getContentType().toString(),
+                containsString(TEXT_PLAIN_VALUE));
 
-        // Exercise #4 (delete recording)
         log.debug("DELETE /session/{}/recording", sessionId);
         restTemplate.delete("/session/" + sessionId + "/recording");
 
-        // ---------------
-
-        // Exercise #5 (destroy session)
+        // Exercise #4 Destroy session and close WebSocket
         log.debug("DELETE /session/{}", sessionId);
         restTemplate.delete("/session/" + sessionId);
+        webSocketClient.closeSession();
 
         // NOTE: This can be done as an scenario test when available (JUnit 5.1)
     }
