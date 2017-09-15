@@ -62,7 +62,7 @@ public class ShellService {
         Process process = new ProcessBuilder(command).redirectErrorStream(true)
                 .start();
         String output = CharStreams.toString(
-                new InputStreamReader(process.getInputStream(), "UTF-8"));
+                new InputStreamReader(process.getInputStream(), UTF_8));
         process.destroy();
         return output;
     }
@@ -80,7 +80,7 @@ public class ShellService {
             }
 
         } catch (IOException e) {
-            isRunningInContainer = false;
+            log.trace("Not running inside a Docker container");
         }
         return isRunningInContainer;
     }
