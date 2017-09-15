@@ -102,7 +102,7 @@ public class SessionService extends TextWebSocketHandler {
             throws Exception {
         super.afterConnectionEstablished(session);
         String sessionId = session.getId();
-        log.debug("WebSocket connection {} established ", sessionId);
+        log.debug("WebSocket connection {} established", sessionId);
 
         activeSessions.put(sessionId, session);
     }
@@ -112,7 +112,7 @@ public class SessionService extends TextWebSocketHandler {
             CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
         String sessionId = session.getId();
-        log.debug("WebSocket connection {} closed ", sessionId);
+        log.debug("WebSocket connection {} closed", sessionId);
 
         activeSessions.remove(sessionId);
     }

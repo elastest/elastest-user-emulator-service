@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.util;
 
+import java.io.IOException;
 import java.net.URI;
 
 import javax.websocket.ClientEndpoint;
@@ -43,12 +44,14 @@ public class WebSocketClient {
 
     Session userSession = null;
     MessageHandler messageHandler;
+    Session session;
 
     public WebSocketClient(String url) {
         try {
             WebSocketContainer container = ContainerProvider
                     .getWebSocketContainer();
-            container.connectToServer(this, new URI(url));
+            session = container.connectToServer(this, new URI(url));
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -79,6 +82,10 @@ public class WebSocketClient {
 
     public void sendMessage(String message) {
         this.userSession.getAsyncRemote().sendText(message);
+    }
+
+    public void closeSession() throws IOException {
+        session.close();
     }
 
     public static interface MessageHandler {

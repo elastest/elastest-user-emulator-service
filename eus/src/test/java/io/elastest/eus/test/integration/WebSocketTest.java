@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.CountDownLatch;
 
@@ -97,7 +96,7 @@ public class WebSocketTest {
     }
 
     @Test
-    void testSessions() throws InterruptedException {
+    void testSessions() throws Exception {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
@@ -127,10 +126,11 @@ public class WebSocketTest {
         latch.await(5, SECONDS);
 
         assertTrue(receivedMessage[0].contains(wsProtocolNewSession));
+        webSocketClient.closeSession();
     }
 
     @Test
-    void testRecordings() throws IOException, InterruptedException {
+    void testRecordings() throws Exception {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
@@ -172,6 +172,7 @@ public class WebSocketTest {
         assertTrue(receivedMessage[0].contains(wsProtocolRecordedSesssion));
 
         file.delete();
+        webSocketClient.closeSession();
     }
 
 }
