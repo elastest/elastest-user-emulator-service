@@ -1,6 +1,7 @@
 [![License badge](https://img.shields.io/badge/license-Apache2-green.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Documentation badge](https://img.shields.io/badge/docs-latest-brightgreen.svg)](http://elastest.io/docs/)
 [![Build Status](https://travis-ci.org/elastest/elastest-user-emulator-service.svg?branch=master)](https://travis-ci.org/elastest/elastest-user-emulator-service)
+[![Quality Gate](https://sonarcloud.io/api/badges/gate?key=io.elastest.eus:user-emulator-service)](https://sonarcloud.io/dashboard/index/io.elastest.eus:user-emulator-service)
 [![codecov](https://codecov.io/gh/elastest/elastest-user-emulator-service/branch/master/graph/badge.svg)](https://codecov.io/gh/elastest/elastest-user-emulator-service)
 
 
