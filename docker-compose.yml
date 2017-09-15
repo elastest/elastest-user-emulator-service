@@ -1,7 +1,6 @@
 version: '2.1'
 services:
    elastest-eus:
-      container_name: elastest-eus
       image: elastest/eus
       environment:
          - USE_TORM=true
