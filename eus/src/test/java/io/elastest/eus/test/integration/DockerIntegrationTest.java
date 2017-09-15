@@ -17,9 +17,10 @@
 package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import java.io.IOException;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -34,7 +35,6 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
-import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
@@ -46,10 +46,12 @@ import io.elastest.eus.service.PropertiesService;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class)
-public class DockerTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("integration")
+@DisplayName("Integration test for Docker Service")
+public class DockerIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(DockerTest.class);
+    final Logger log = LoggerFactory.getLogger(DockerIntegrationTest.class);
 
     @Autowired
     private DockerService dockerService;
@@ -67,7 +69,8 @@ public class DockerTest {
     private int hubVncExposedPort;
 
     @Test
-    void testDocker() throws IOException, InterruptedException {
+    @DisplayName("Ask for Chrome to Docker")
+    void testDocker() throws Exception {
         // Test data (input)
         String jsonCapabilities = "{ \"desiredCapabilities\": {"
                 + "\"browserName\": \"chrome\"," + " \"version\": \"\","

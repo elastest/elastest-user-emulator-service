@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -52,10 +53,11 @@ import io.elastest.eus.api.model.UserMedia;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@DisplayName("EUS service operations")
-public class ApiServiceTest {
+@Tag("integration")
+@DisplayName("Integration tests for service operations")
+public class ApiServiceIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(ApiServiceTest.class);
+    final Logger log = LoggerFactory.getLogger(ApiServiceIntegrationTest.class);
 
     @LocalServerPort
     int serverPort;

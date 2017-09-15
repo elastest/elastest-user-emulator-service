@@ -17,9 +17,12 @@
 package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -29,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.JsonService;
 
 /**
@@ -39,25 +41,26 @@ import io.elastest.eus.service.JsonService;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class)
-public class JsonServiceTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("integration")
+@DisplayName("Integration test for JSON Service")
+public class JsonServiceIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(JsonServiceTest.class);
+    final Logger log = LoggerFactory
+            .getLogger(JsonServiceIntegrationTest.class);
 
     @Autowired
     private JsonService jsonService;
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "Checking {0}")
+    @DisplayName("Parsing paths")
     @ValueSource(strings = { "/session/4562f70d-a350-4e88-96da-25d56c91f336",
             "/session/a3a824f9-ee62-4f2d-ab73-1b883efa83d5",
             "/session/03e9d769-95e6-4772-939e-0bcd4d9d1b37/url", "/session",
             "/status" })
-    void testKey(String path) {
-        // Exercise service
+    void testJsonKey(String path) {
         Optional<String> sessionId = jsonService.getSessionIdFromPath(path);
-
         int countCharsInString = jsonService.countCharsInString(path, '/');
-
         String errorMessage = "path " + path + " -- sessionId present "
                 + sessionId.isPresent() + " -- countCharsInString "
                 + countCharsInString;

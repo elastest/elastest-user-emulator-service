@@ -61,9 +61,9 @@ import io.elastest.eus.test.util.MockitoExtension;
 @TestInstance(PER_CLASS)
 @Tag("unit")
 @DisplayName("Unit tests for Alluxio Service")
-public class AlluxioTest {
+public class AlluxioUnitTest {
 
-    final Logger log = LoggerFactory.getLogger(AlluxioTest.class);
+    final Logger log = LoggerFactory.getLogger(AlluxioUnitTest.class);
 
     @InjectMocks
     AlluxioService alluxioService;

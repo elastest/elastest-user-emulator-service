@@ -16,8 +16,13 @@
  */
 package io.elastest.eus.service;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.slf4j.Logger;
@@ -60,6 +65,24 @@ public class ShellService {
                 new InputStreamReader(process.getInputStream(), "UTF-8"));
         process.destroy();
         return output;
+    }
+
+    public boolean isRunningInContainer() {
+        boolean isRunningInContainer = false;
+        try (BufferedReader br = Files
+                .newBufferedReader(Paths.get("/proc/1/cgroup"), UTF_8)) {
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                if (line.contains("/docker")) {
+                    return true;
+                }
+                isRunningInContainer = false;
+            }
+
+        } catch (IOException e) {
+            isRunningInContainer = false;
+        }
+        return isRunningInContainer;
     }
 
 }

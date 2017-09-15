@@ -19,12 +19,10 @@ package io.elastest.eus.service;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +32,6 @@ import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -101,7 +97,8 @@ public class DockerService {
 
     private DockerClient dockerClient;
     private String dockerServerIp;
-    private Boolean isRunningInContainer;
+    private boolean isRunningInContainer = false;
+    private boolean containerCheked = false;
 
     public DockerService(ShellService shellService) {
         this.shellService = shellService;
@@ -128,12 +125,17 @@ public class DockerService {
         if (dockerServerIp == null) {
             if (IS_OS_WINDOWS) {
                 dockerServerIp = getDockerMachineIp();
-
-            } else if (isRunningInContainer()) {
-                dockerServerIp = getContainerIp();
-
             } else {
-                dockerServerIp = dockerDefaultHostIp;
+                if (!containerCheked) {
+                    isRunningInContainer = shellService.isRunningInContainer();
+                    containerCheked = true;
+                }
+                if (isRunningInContainer) {
+                    dockerServerIp = getContainerIp();
+
+                } else {
+                    dockerServerIp = dockerDefaultHostIp;
+                }
             }
             log.trace("Docker server IP: {}", dockerServerIp);
         }
@@ -150,26 +152,6 @@ public class DockerService {
     public String getDockerMachineIp() throws IOException {
         return shellService.runAndWait("docker-machine", "ip")
                 .replaceAll("\\r", "").replaceAll("\\n", "");
-    }
-
-    private boolean isRunningInContainer() {
-        if (isRunningInContainer == null) {
-            try (BufferedReader br = Files
-                    .newBufferedReader(Paths.get("/proc/1/cgroup"), UTF_8)) {
-
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    if (line.contains("/docker")) {
-                        return true;
-                    }
-                }
-                isRunningInContainer = false;
-
-            } catch (IOException e) {
-                isRunningInContainer = false;
-            }
-        }
-        return isRunningInContainer;
     }
 
     public void startAndWaitContainer(String imageId, String containerName,

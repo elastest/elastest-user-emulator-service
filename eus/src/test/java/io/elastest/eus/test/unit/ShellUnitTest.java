@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.unit;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
@@ -44,10 +45,10 @@ import io.elastest.eus.test.util.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 @TestInstance(PER_CLASS)
 @Tag("unit")
-@DisplayName("Unit tests Shell Service")
-public class ShellTest {
+@DisplayName("Unit tests for shell Service")
+public class ShellUnitTest {
 
-    final Logger log = LoggerFactory.getLogger(ShellTest.class);
+    final Logger log = LoggerFactory.getLogger(ShellUnitTest.class);
 
     @InjectMocks
     ShellService shellService;
@@ -58,6 +59,13 @@ public class ShellTest {
         String dirOutput = shellService.runAndWait("dir");
         log.debug("The list of the current folder is: {}", dirOutput);
         assertThat(dirOutput, not(isEmptyString()));
+    }
+
+    @Test
+    @DisplayName("Is running in container")
+    void testIsRunningInContainer() {
+        boolean runningInContainer = shellService.isRunningInContainer();
+        assertThat(runningInContainer, equalTo(false));
     }
 
 }

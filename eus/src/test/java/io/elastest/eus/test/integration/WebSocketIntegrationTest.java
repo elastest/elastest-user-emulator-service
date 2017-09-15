@@ -28,6 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -38,7 +40,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
@@ -52,10 +53,12 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
-public class WebSocketTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("integration")
+@DisplayName("Integration tests for WebSockets")
+public class WebSocketIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(WebSocketTest.class);
+    final Logger log = LoggerFactory.getLogger(WebSocketIntegrationTest.class);
 
     @LocalServerPort
     int serverPort;
@@ -96,6 +99,7 @@ public class WebSocketTest {
     }
 
     @Test
+    @DisplayName("Tests messages about a session through WebSocket")
     void testSessions() throws Exception {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
@@ -130,6 +134,7 @@ public class WebSocketTest {
     }
 
     @Test
+    @DisplayName("Tests recording messages through WebSocket")
     void testRecordings() throws Exception {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");

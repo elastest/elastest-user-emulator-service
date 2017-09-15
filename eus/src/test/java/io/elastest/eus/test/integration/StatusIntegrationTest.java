@@ -16,8 +16,13 @@
  */
 package io.elastest.eus.test.integration;
 
+import static io.elastest.eus.test.util.JsonUtils.isJsonValid;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -26,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.WebDriverService;
 
 /**
@@ -36,22 +40,26 @@ import io.elastest.eus.service.WebDriverService;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class)
-public class StatusTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("integration")
+@DisplayName("Integration tests for the status operation")
+public class StatusIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(StatusTest.class);
+    final Logger log = LoggerFactory.getLogger(StatusIntegrationTest.class);
 
     @Autowired
     private WebDriverService webDriverService;
 
     @Test
+    @DisplayName("Get status")
     void testStatus() {
         // Exercise
         String status = webDriverService.getStatus().getBody();
         log.debug("EUS status {}", status);
 
-        // Assertion
+        // Assertions
         assertNotNull(status);
+        assertTrue(isJsonValid(status));
     }
 
 }

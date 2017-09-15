@@ -17,7 +17,6 @@
 package io.elastest.eus.test.e2e;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -27,6 +26,8 @@ import java.net.URL;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,8 +44,6 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
-
 /**
  * Selenium test.
  *
@@ -52,11 +51,13 @@ import io.elastest.eus.EusSpringBootApp;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("e2e")
+@DisplayName("End-to-end tests using Selenium WebDriver")
 @TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
-public class SeleniumTest {
+public class SeleniumE2ETest {
 
-    final Logger log = LoggerFactory.getLogger(SeleniumTest.class);
+    final Logger log = LoggerFactory.getLogger(SeleniumE2ETest.class);
 
     WebDriver driver;
 
@@ -71,7 +72,8 @@ public class SeleniumTest {
                 Arguments.of(firefox(), "firefox"));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "Using {1} as browser")
+    @DisplayName("Visit Wikipedia using a browser provided by EUS")
     @MethodSource("capabilitiesProvider")
     void test(DesiredCapabilities capability, String expectedBrowserName)
             throws MalformedURLException {
@@ -86,8 +88,7 @@ public class SeleniumTest {
 
         String title = driver.getTitle();
         log.debug("SUT title: {}", title);
-
-        assertNotNull(title);
+        assertEquals(title, "Wikipedia, the free encyclopedia");
 
         Capabilities caps = ((RemoteWebDriver) driver).getCapabilities();
         String realBrowserName = caps.getBrowserName();

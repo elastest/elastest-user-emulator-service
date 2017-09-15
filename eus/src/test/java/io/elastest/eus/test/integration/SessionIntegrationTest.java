@@ -27,6 +27,8 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -54,9 +56,11 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
-public class SessionTest {
+@Tag("integration")
+@DisplayName("Integration tests with W3C WebDriver sessions")
+public class SessionIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(SessionTest.class);
+    final Logger log = LoggerFactory.getLogger(SessionIntegrationTest.class);
 
     @Autowired
     TestRestTemplate restTemplate;
@@ -79,6 +83,7 @@ public class SessionTest {
     }
 
     @Test
+    @DisplayName("Create and destroy session")
     void createAndDestroySession() throws Exception {
         // #1 Create session and WebSocket connection
         String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
@@ -143,6 +148,7 @@ public class SessionTest {
     }
 
     @Test
+    @DisplayName("Get VNC URL of a non-valid session")
     void notFoundSession() {
         log.debug("GET /session/nofound/vnc");
         ResponseEntity<String> response = restTemplate

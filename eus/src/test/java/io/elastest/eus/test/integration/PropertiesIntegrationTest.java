@@ -18,9 +18,12 @@ package io.elastest.eus.test.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
 
@@ -43,10 +45,12 @@ import io.elastest.eus.service.PropertiesService;
  * @since 0.0.1
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class)
-public class PropertiesTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("integration")
+@DisplayName("Integration test for Properties Service")
+public class PropertiesIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(PropertiesTest.class);
+    final Logger log = LoggerFactory.getLogger(PropertiesIntegrationTest.class);
 
     @Autowired
     private PropertiesService propertiesService;
@@ -95,7 +99,8 @@ public class PropertiesTest {
                         "selenium/standalone-firefox-debug:3.4.0-dysprosium"));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0} {1} {2} -> {3}")
+    @DisplayName("Test properties key names")
     @MethodSource("keyProvider")
     void testKey(String browserName, String version, String platform,
             String expectedKey) {
@@ -107,7 +112,8 @@ public class PropertiesTest {
         assertEquals(expectedKey, realKey);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0} {1} {2} -> {3}")
+    @DisplayName("Test docker image names")
     @MethodSource("dockerProvider")
     void testDocker(String browserName, String version, String platform,
             String expectedDocker) {
@@ -120,7 +126,8 @@ public class PropertiesTest {
     }
 
     @Test
-    void testException() {
+    @DisplayName("Invalid capabilities")
+    void testInvalidCapabilities() {
         // Test data (input)
         String browserName = null;
         String version = null;
@@ -134,6 +141,7 @@ public class PropertiesTest {
     }
 
     @Test
+    @DisplayName("Valid capabilities")
     void testJson() {
         // Test data (input)
         String jsonCapabilities = "{" + " \"desiredCapabilities\": {"

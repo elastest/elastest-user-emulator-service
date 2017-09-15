@@ -21,6 +21,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import java.net.URL;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
@@ -42,11 +44,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@Tag("e2e")
+@DisplayName("End-to-end tests for timeout")
 @TestPropertySource(properties = { "hub.timeout=1",
         "novnc.image.id=elastest/eus-novnc" })
-public class TimeoutTest {
+public class TimeoutE2ETest {
 
-    final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
+    final Logger log = LoggerFactory.getLogger(TimeoutE2ETest.class);
 
     WebDriver driver;
 
@@ -57,6 +61,7 @@ public class TimeoutTest {
     String contextPath;
 
     @Test
+    @DisplayName("Assert exception due to timeout")
     void testTimeout() {
         assertThrows(Exception.class, () -> {
             String eusUrl = "http://localhost:" + serverPort + contextPath;
