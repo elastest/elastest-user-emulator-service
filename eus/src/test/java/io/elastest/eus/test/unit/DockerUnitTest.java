@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.unit;
 
+import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -67,10 +70,11 @@ public class DockerUnitTest {
         assertThrows(Exception.class, () -> {
             Binding bindPort = Ports.Binding.bindPort(0);
             ExposedPort exposedPort = ExposedPort.tcp(0);
-            PortBinding[] portBindings = {
-                    new PortBinding(bindPort, exposedPort) };
+            List<PortBinding> portBindings = asList(
+                    new PortBinding(bindPort, exposedPort));
 
-            dockerService.startAndWaitContainer("", "", portBindings);
+            dockerService.startAndWaitContainer(
+                    dockerBuilder("", "").portBindings(portBindings).build());
         });
 
     }

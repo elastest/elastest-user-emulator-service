@@ -33,8 +33,8 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 
 import io.elastest.eus.EusException;
-import io.elastest.eus.edm.EdmAluxioApi;
-import io.elastest.eus.edm.EdmAluxioFile;
+import io.elastest.eus.external.EdmAluxioApi;
+import io.elastest.eus.external.EdmAluxioFile;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;

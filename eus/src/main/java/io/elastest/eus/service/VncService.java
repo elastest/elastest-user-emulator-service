@@ -16,10 +16,13 @@
  */
 package io.elastest.eus.service;
 
+import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.util.Arrays.asList;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -87,12 +90,12 @@ public class VncService {
         int noVncBindPort = dockerService.findRandomOpenPort();
         Binding bindNoVncPort = Ports.Binding.bindPort(noVncBindPort);
         ExposedPort exposedNoVncPort = ExposedPort.tcp(noVncExposedPort);
+        List<PortBinding> portBindings = asList(
+                new PortBinding(bindNoVncPort, exposedNoVncPort));
 
-        PortBinding[] portBindings = {
-                new PortBinding(bindNoVncPort, exposedNoVncPort) };
-
-        dockerService.startAndWaitContainer(noVncImageId, vncContainerName,
-                portBindings);
+        dockerService.startAndWaitContainer(
+                dockerBuilder(noVncImageId, vncContainerName)
+                        .portBindings(portBindings).build());
 
         String vncContainerIp = dockerService.getDockerServerIp();
         String hubContainerIp = dockerService.getDockerServerIp();

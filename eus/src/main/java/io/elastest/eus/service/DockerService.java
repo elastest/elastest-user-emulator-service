@@ -59,6 +59,7 @@ import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
 import io.elastest.eus.EusException;
+import io.elastest.eus.docker.DockerContainer;
 
 /**
  * Service implementation simulating EPM (ElasTest Platform Manager) with
@@ -154,33 +155,53 @@ public class DockerService {
                 .replaceAll("\\r", "").replaceAll("\\n", "");
     }
 
-    public void startAndWaitContainer(String imageId, String containerName,
-            PortBinding[] portBindings, String... env)
+    public void startAndWaitContainer(DockerContainer dockerContainer)
             throws InterruptedException {
+        String containerName = dockerContainer.getContainerName();
+        String imageId = dockerContainer.getImageId();
+
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
             log.debug("Using TORM: {}", useTorm);
             try (CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName)) {
+
                 if (useTorm) {
                     createContainer.withNetworkMode(dockerNetwork);
                 }
 
-                if (portBindings != null) {
+                if (dockerContainer.getPortBindings().isPresent()) {
                     if (log.isDebugEnabled()) {
-                        for (PortBinding p : portBindings) {
+                        for (PortBinding p : dockerContainer.getPortBindings()
+                                .get()) {
                             log.debug("Using port binding {} -> {}",
                                     p.getExposedPort().getPort(),
                                     p.getBinding().getHostPortSpec());
                         }
                     }
-                    createContainer.withPortBindings(portBindings);
+                    createContainer.withPortBindings(
+                            dockerContainer.getPortBindings().get());
+                }
+                if (dockerContainer.getVolumes().isPresent()) {
+                    log.debug("Using volumes: {}",
+                            dockerContainer.getVolumes().get());
+                    createContainer
+                            .withVolumes(dockerContainer.getVolumes().get());
                 }
 
-                if (env != null) {
-                    createContainer.withEnv(env);
+                if (dockerContainer.getBinds().isPresent()) {
+                    log.debug("Using binds: {}",
+                            dockerContainer.getBinds().get());
+                    createContainer.withBinds(dockerContainer.getBinds().get());
                 }
+
+                if (dockerContainer.getEnvs().isPresent()) {
+                    log.debug("Using envs: {}",
+                            dockerContainer.getEnvs().get());
+                    createContainer.withEnv(dockerContainer.getEnvs().get());
+                }
+
                 createContainer.exec();
                 dockerClient.startContainerCmd(containerName).exec();
                 waitForContainer(containerName);
@@ -421,8 +442,8 @@ public class DockerService {
         return prefix + randomSufix;
     }
 
-    public Integer findRandomOpenPort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0);) {
+    public int findRandomOpenPort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         }
     }

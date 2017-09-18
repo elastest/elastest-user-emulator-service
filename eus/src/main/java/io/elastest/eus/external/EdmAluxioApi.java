@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.edm;
+package io.elastest.eus.external;
 
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;

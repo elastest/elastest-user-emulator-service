@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.edm;
+package io.elastest.eus.external;
 
 import java.util.List;
 

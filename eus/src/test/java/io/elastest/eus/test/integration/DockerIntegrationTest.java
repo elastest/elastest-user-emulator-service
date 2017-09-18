@@ -16,8 +16,12 @@
  */
 package io.elastest.eus.test.integration;
 
+import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -97,11 +101,13 @@ public class DockerIntegrationTest {
         Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
         ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
 
-        PortBinding[] portBindings = { new PortBinding(bindPort, exposedPort),
-                new PortBinding(bindHubVncPort, exposedHubVncPort) };
+        List<PortBinding> portBindings = asList(
+                new PortBinding(bindPort, exposedPort),
+                new PortBinding(bindHubVncPort, exposedHubVncPort));
 
-        dockerService.startAndWaitContainer(imageId, containerName,
-                portBindings);
+        dockerService
+                .startAndWaitContainer(dockerBuilder(imageId, containerName)
+                        .portBindings(portBindings).build());
 
         // Assertions
         assertTrue(dockerService.existsContainer(containerName));

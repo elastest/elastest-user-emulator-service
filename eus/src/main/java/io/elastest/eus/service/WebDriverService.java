@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.service;
 
+import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.util.Arrays.asList;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
@@ -23,6 +25,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -260,8 +263,8 @@ public class WebDriverService {
         String imageId = propertiesService.getDockerImageFromKey(propertiesKey);
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
-        String[] env = {
-                "SE_OPTS=-timeout " + timeout + " -browserTimeout " + timeout };
+        List<String> env = asList(
+                "SE_OPTS=-timeout " + timeout + " -browserTimeout " + timeout);
         log.debug(
                 "Starting browser with container name {} and environment variables {}",
                 hubContainerName, env);
@@ -275,11 +278,13 @@ public class WebDriverService {
         Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
         ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
 
-        PortBinding[] portBindings = { new PortBinding(bindPort, exposedPort),
-                new PortBinding(bindHubVncPort, exposedHubVncPort) };
+        List<PortBinding> portBindings = asList(
+                new PortBinding(bindPort, exposedPort),
+                new PortBinding(bindHubVncPort, exposedHubVncPort));
 
-        dockerService.startAndWaitContainer(imageId, hubContainerName,
-                portBindings, env);
+        dockerService
+                .startAndWaitContainer(dockerBuilder(imageId, hubContainerName)
+                        .portBindings(portBindings).envs(env).build());
 
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubBindPort + "/wd/hub";
