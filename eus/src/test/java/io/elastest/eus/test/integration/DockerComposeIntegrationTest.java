@@ -16,12 +16,14 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.IOException;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,8 +58,12 @@ public class DockerComposeIntegrationTest {
     @DisplayName("Docker Compose test")
     void testDockerCompose() throws IOException {
         String projectName = "elastest-eus";
+        String dockerComposeYml = IOUtils.toString(
+                this.getClass().getResourceAsStream("/docker-compose.yml"),
+                defaultCharset());
         boolean createProject = dockerComposeService.createProject(projectName,
-                "version: '2.1'\nservices:\n   elastest-eus:\n      image: elastest/eus\n      environment:\n         - USE_TORM=false\n      expose:\n         - 8040\n      ports:\n         - 8040:8040");
+                dockerComposeYml);
+
         assertThat(createProject, equalTo(true));
 
         boolean startProject = dockerComposeService.startProject(projectName);
