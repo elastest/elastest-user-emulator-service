@@ -146,8 +146,7 @@ public class DockerComposeService {
         Response<ResponseBody> response = dockerComposeUi.createProject(data)
                 .execute();
 
-        log.trace("Response: {} -- {}", response.code(),
-                response.body().string());
+        log.debug("Create project response: code={}}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
@@ -166,8 +165,7 @@ public class DockerComposeService {
         Response<ResponseBody> response = dockerComposeUi.dockerComposeUp(data)
                 .execute();
 
-        log.trace("Response: {} -- {}", response.code(),
-                response.body().string());
+        log.debug("Start project response: code={}}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
@@ -184,8 +182,7 @@ public class DockerComposeService {
         Response<ResponseBody> response = dockerComposeUi
                 .dockerComposeDown(data).execute();
 
-        log.trace("Response: {} -- {}", response.code(),
-                response.body().string());
+        log.debug("Stop project response: code={}}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
