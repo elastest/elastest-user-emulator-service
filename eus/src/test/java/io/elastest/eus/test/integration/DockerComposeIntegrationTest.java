@@ -16,24 +16,20 @@
  */
 package io.elastest.eus.test.integration;
 
-import static java.nio.charset.Charset.defaultCharset;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +37,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.external.DockerComposeProject;
+import io.elastest.eus.external.DockerContainerInfo;
 import io.elastest.eus.service.DockerComposeService;
 
 /**
@@ -65,35 +62,31 @@ public class DockerComposeIntegrationTest {
     @DisplayName("Start and stop Docker compose")
     void testStartAndStop() throws IOException {
         // Test data
-        String projectName = "elastesteus";
-        String dockerComposeYml = IOUtils.toString(
-                this.getClass().getResourceAsStream("/docker-compose.yml"),
-                defaultCharset());
+        String projectName = "elastest-eus";
+        String dockerComposeFile = "docker-compose.yml";
 
         // Start docker compose
         DockerComposeProject dockerComposeProject = dockerComposeService
-                .createAndStartDockerComposeProject(projectName,
-                        dockerComposeYml);
+                .createAndStartDockerComposeWithFile(projectName,
+                        dockerComposeFile);
         assertThat(dockerComposeProject.isStarted(), equalTo(true));
 
-        // List projects and stop all of them
+        // Get container info
+        DockerContainerInfo containersInfo = dockerComposeProject
+                .getContainersInfo();
+        log.debug("Container info {}", containersInfo);
+        assertThat(containersInfo.getContainers(), not(empty()));
+
+        // List projects and assert YML content
         List<DockerComposeProject> projects = dockerComposeService
                 .listProjects();
         for (DockerComposeProject project : projects) {
-            project.stop();
-            assertThat(project.isStarted(), equalTo(false));
             assertThat(project.getDockerComposeYml(), not(isEmptyString()));
         }
-    }
 
-    @ParameterizedTest(name = "Checking {0}")
-    @DisplayName("Invalid project names")
-    @ValueSource(strings = { "elastest-eus", "elastest_eus", "€lastest" })
-    void testListProjects(String projectName) {
-        assertThrows(AssertionError.class, () -> {
-            dockerComposeService.createAndStartDockerComposeProject(projectName,
-                    null);
-        });
+        // Stop project
+        dockerComposeProject.stop();
+        assertThat(dockerComposeProject.isStarted(), equalTo(false));
     }
 
 }

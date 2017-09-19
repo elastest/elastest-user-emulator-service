@@ -38,49 +38,59 @@ public class DockerComposeProject {
     private String dockerComposeYml;
     private DockerComposeService dockerComposeService;
     private boolean isStarted = false;
+    private DockerContainerInfo containersInfo;
 
     public DockerComposeProject(String projectName, String dockerComposeYml,
             DockerComposeService dockerComposeService) throws IOException {
         this.projectName = projectName;
         this.dockerComposeYml = dockerComposeYml;
         this.dockerComposeService = dockerComposeService;
-
-        // Auto start in constructor
-        this.start();
     }
 
     public DockerComposeProject(String projectName,
             DockerComposeService dockerComposeService) throws IOException {
         this.projectName = projectName;
-        this.dockerComposeYml = dockerComposeService.getYaml(projectName);
         this.dockerComposeService = dockerComposeService;
-        isStarted = true;
+        this.isStarted = true;
     }
 
     public synchronized void start() throws IOException {
-        if (!isStarted) {
-            log.debug("Starting Docker Compose project {}", projectName);
-            dockerComposeService.createProject(projectName, dockerComposeYml);
-            dockerComposeService.startProject(projectName);
-            isStarted = true;
-            log.debug("Docker Compose project {} started correctly",
-                    projectName);
-        } else {
-            log.debug("Docker Compose project {} already started", projectName);
-        }
+        assertNotProjectStarted();
+
+        log.debug("Starting Docker Compose project {}", projectName);
+        dockerComposeService.createProject(projectName, dockerComposeYml);
+        dockerComposeService.startProject(projectName);
+        isStarted = true;
+        log.debug("Docker Compose project {} started correctly", projectName);
     }
 
     public synchronized void stop() throws IOException {
-        if (isStarted) {
-            log.debug("Stopping Docker Compose project {}", projectName);
-            dockerComposeService.stopProject(projectName);
-            isStarted = false;
-            log.debug("Docker Compose project {} stopped correctly",
-                    projectName);
-        } else {
-            log.debug("Docker Compose project {} already is NOT started",
-                    projectName);
-        }
+        assertProjectStarted();
+
+        log.debug("Stopping Docker Compose project {}", projectName);
+        dockerComposeService.stopProject(projectName);
+        isStarted = false;
+        log.debug("Docker Compose project {} stopped correctly", projectName);
+    }
+
+    public synchronized void updateContainerInfo() throws IOException {
+        log.debug("Updating container info of project {}", projectName);
+        containersInfo = dockerComposeService.getContainers(projectName);
+    }
+
+    public synchronized void updateDockerComposeYml() throws IOException {
+        log.debug("Updating docker compose yaml of project {}", projectName);
+        dockerComposeYml = dockerComposeService.getYaml(projectName);
+    }
+
+    private void assertProjectStarted() {
+        assert isStarted : "Docker Compose project " + projectName
+                + " already is NOT started";
+    }
+
+    private void assertNotProjectStarted() {
+        assert !isStarted : "Docker Compose project " + projectName
+                + " already is ALREADY started";
     }
 
     public boolean isStarted() {
@@ -89,6 +99,10 @@ public class DockerComposeProject {
 
     public String getDockerComposeYml() {
         return dockerComposeYml;
+    }
+
+    public DockerContainerInfo getContainersInfo() {
+        return containersInfo;
     }
 
 }

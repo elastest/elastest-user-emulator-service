@@ -17,19 +17,21 @@
 package io.elastest.eus.service;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.regex.Pattern.matches;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static okhttp3.MediaType.parse;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +46,11 @@ import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.docker.DockerException;
+import io.elastest.eus.external.DockerComposeApi;
 import io.elastest.eus.external.DockerComposeConfig;
 import io.elastest.eus.external.DockerComposeList;
 import io.elastest.eus.external.DockerComposeProject;
-import io.elastest.eus.external.DockerComposeUiApi;
+import io.elastest.eus.external.DockerContainerInfo;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -84,7 +87,7 @@ public class DockerComposeService {
     private String dockerDefaultSocket;
 
     private String dockerComposeUiContainerName;
-    private DockerComposeUiApi dockerComposeUi;
+    private DockerComposeApi dockerComposeApi;
 
     private DockerService dockerService;
 
@@ -94,6 +97,7 @@ public class DockerComposeService {
 
     @PostConstruct
     public void setup() throws IOException, InterruptedException {
+        // 1. Start docker-compose-ui container
         dockerComposeUiContainerName = dockerService
                 .generateContainerName(dockerComposeUiPrefix);
 
@@ -101,7 +105,7 @@ public class DockerComposeService {
         Binding bindNoVncPort = Ports.Binding.bindPort(dockerComposeBindPort);
         ExposedPort exposedNoVncPort = ExposedPort.tcp(dockerComposeUiPort);
 
-        String dockerComposeUiUrl = "http://"
+        String dockerComposeServiceUrl = "http://"
                 + dockerService.getDockerServerIp() + ":"
                 + dockerComposeBindPort;
 
@@ -119,17 +123,24 @@ public class DockerComposeService {
                         dockerComposeUiContainerName).portBindings(portBindings)
                                 .volumes(volumes).binds(binds).build());
 
+        // 2. Create Retrofit object to call docker-compose-ui REST API
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .readTimeout(dockerComposeTimeout, SECONDS)
                 .connectTimeout(dockerComposeTimeout, SECONDS).build();
         Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(dockerComposeUiUrl).build();
-        dockerComposeUi = retrofit.create(DockerComposeUiApi.class);
+                .baseUrl(dockerComposeServiceUrl).build();
+        dockerComposeApi = retrofit.create(DockerComposeApi.class);
 
         log.debug("docker-compose-ui up and running on URL: {}",
-                dockerComposeUiUrl);
+                dockerComposeServiceUrl);
+
+        // 3.Delete default example projects
+        dockerService.waitForHostIsReachable(dockerComposeServiceUrl);
+        String[] defaultProjects = { "env-demo", "hello-node", "node-redis",
+                "volumes-demo", "volumes-relative-paths" };
+        removeProjects(defaultProjects);
     }
 
     @PreDestroy
@@ -139,15 +150,28 @@ public class DockerComposeService {
         dockerService.stopAndRemoveContainer(dockerComposeUiContainerName);
     }
 
-    public DockerComposeProject createAndStartDockerComposeProject(
+    public DockerComposeProject createAndStartDockerComposeWithFile(
+            String projectName, String dockerComposeFile) throws IOException {
+        String dockerComposeYml = IOUtils.toString(
+                this.getClass().getResourceAsStream("/" + dockerComposeFile),
+                defaultCharset());
+
+        return createAndStartDockerComposeByContent(projectName,
+                dockerComposeYml);
+    }
+
+    public DockerComposeProject createAndStartDockerComposeByContent(
             String projectName, String dockerComposeYml) throws IOException {
-        return new DockerComposeProject(projectName, dockerComposeYml, this);
+        DockerComposeProject dockerComposeProject = new DockerComposeProject(
+                projectName, dockerComposeYml, this);
+        dockerComposeProject.start();
+        dockerComposeProject.updateContainerInfo();
+
+        return dockerComposeProject;
     }
 
     public boolean createProject(String projectName, String dockerComposeYml)
             throws IOException {
-        assert matches("^[a-zA-Z0-9]*$", projectName);
-
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", projectName);
         jsonObject.put("yml", dockerComposeYml.replaceAll("'", "\""));
@@ -155,7 +179,7 @@ public class DockerComposeService {
                 jsonObject.toString());
 
         log.trace("Creating Docker Compose with data: {}", jsonObject);
-        Response<ResponseBody> response = dockerComposeUi.createProject(data)
+        Response<ResponseBody> response = dockerComposeApi.createProject(data)
                 .execute();
 
         log.trace("Create project response code {}", response.code());
@@ -174,7 +198,7 @@ public class DockerComposeService {
                 jsonObject.toString());
 
         log.trace("Starting Docker Compose project with data: {}", jsonObject);
-        Response<ResponseBody> response = dockerComposeUi.dockerComposeUp(data)
+        Response<ResponseBody> response = dockerComposeApi.dockerComposeUp(data)
                 .execute();
 
         log.trace("Start project response code {}", response.code());
@@ -191,7 +215,7 @@ public class DockerComposeService {
                 jsonObject.toString());
 
         log.trace("Stopping Docker Compose project with data: {}", jsonObject);
-        Response<ResponseBody> response = dockerComposeUi
+        Response<ResponseBody> response = dockerComposeApi
                 .dockerComposeDown(data).execute();
 
         log.trace("Stop project response code {}", response.code());
@@ -205,28 +229,40 @@ public class DockerComposeService {
         log.debug("List Docker Compose projects");
         List<DockerComposeProject> projects = new ArrayList<>();
 
-        Response<DockerComposeList> response = dockerComposeUi.listProjects()
+        Response<DockerComposeList> response = dockerComposeApi.listProjects()
                 .execute();
         log.debug("List projects response code {}", response.code());
 
         if (response.isSuccessful()) {
             DockerComposeList body = response.body();
             log.debug("Success: {}", body);
-            List<Object> active = body.getActive();
+            Set<String> keySet = body.getProjects().keySet();
 
-            for (Object o : active) {
-                if (o.getClass() == String.class) {
-                    projects.add(new DockerComposeProject(o.toString(), this));
-                }
+            for (String key : keySet) {
+                DockerComposeProject project = new DockerComposeProject(key,
+                        this);
+                project.updateDockerComposeYml();
+                project.updateContainerInfo();
+                projects.add(project);
             }
         }
         return projects;
     }
 
+    public DockerContainerInfo getContainers(String projectName)
+            throws IOException {
+        Response<DockerContainerInfo> response = dockerComposeApi
+                .getContainers(projectName).execute();
+        if (response.isSuccessful()) {
+            return response.body();
+        }
+        throw new DockerException(response.errorBody().string());
+    }
+
     public String getYaml(String projectName) throws IOException {
         log.debug("Get YAML of project {}", projectName);
 
-        Response<DockerComposeConfig> response = dockerComposeUi
+        Response<DockerComposeConfig> response = dockerComposeApi
                 .getDockerComposeYml(projectName).execute();
         log.debug("Get YAML response code {}", response.code());
 
@@ -234,6 +270,13 @@ public class DockerComposeService {
             return response.body().getYml();
         }
         throw new DockerException(response.errorBody().string());
+    }
+
+    public void removeProjects(String... projects) throws IOException {
+        for (String project : projects) {
+            log.debug("Deleting project {}", project);
+            dockerComposeApi.removeProject(project).execute();
+        }
     }
 
 }

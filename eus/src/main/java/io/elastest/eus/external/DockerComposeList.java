@@ -31,14 +31,18 @@ public class DockerComposeList {
 
     Map<String, String> projects;
 
+    public Map<String, String> getProjects() {
+        return projects;
+    }
+
     public List<Object> getActive() {
         return active;
     }
 
     @Override
     public String toString() {
-        return "DockerComposeList [active=" + active + ", projects=" + projects
-                + "]";
+        return "DockerComposeList [getProjects()=" + getProjects()
+                + ", getActive()=" + getActive() + "]";
     }
 
 }

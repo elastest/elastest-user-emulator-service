@@ -20,6 +20,7 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -30,7 +31,7 @@ import retrofit2.http.Path;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public interface DockerComposeUiApi {
+public interface DockerComposeApi {
 
     @POST("/api/v1/create-project")
     Call<ResponseBody> createProject(@Body RequestBody data);
@@ -46,6 +47,14 @@ public interface DockerComposeUiApi {
 
     @GET("/api/v1/projects/yml/{projectName}")
     Call<DockerComposeConfig> getDockerComposeYml(
+            @Path("projectName") String projectName);
+
+    @DELETE("/api/v1/remove-project/{projectName}")
+    Call<DockerComposeConfig> removeProject(
+            @Path("projectName") String projectName);
+
+    @GET("/api/v1/projects/{projectName}")
+    Call<DockerContainerInfo> getContainers(
             @Path("projectName") String projectName);
 
 }
