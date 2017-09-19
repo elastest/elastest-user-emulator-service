@@ -18,6 +18,7 @@ package io.elastest.eus.service;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,6 +42,7 @@ import com.github.dockerjava.api.model.Volume;
 import io.elastest.eus.docker.DockerException;
 import io.elastest.eus.external.DockerComposeUiApi;
 import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
@@ -68,6 +70,9 @@ public class DockerComposeService {
 
     @Value("${docker.compose.ui.prefix}")
     private String dockerComposeUiPrefix;
+
+    @Value("${docker.compose.ui.timeout}")
+    private int dockerComposeTimeout;
 
     private String dockerComposeUiUrl;
     private String dockerComposeUiContainerName;
@@ -106,7 +111,10 @@ public class DockerComposeService {
                         dockerComposeUiContainerName).portBindings(portBindings)
                                 .volumes(volumes).binds(binds).build());
 
-        Retrofit retrofit = new Retrofit.Builder()
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .readTimeout(dockerComposeTimeout, SECONDS)
+                .connectTimeout(dockerComposeTimeout, SECONDS).build();
+        Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(dockerComposeUiUrl).build();
