@@ -19,6 +19,7 @@ package io.elastest.eus.service;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.io.IOException;
 import java.util.List;
@@ -74,7 +75,9 @@ public class DockerComposeService {
     @Value("${docker.compose.ui.timeout}")
     private int dockerComposeTimeout;
 
-    private String dockerComposeUiUrl;
+    @Value("${docker.default.socket}")
+    private String dockerDefaultSocket;
+
     private String dockerComposeUiContainerName;
     private DockerComposeUiApi dockerComposeUi;
 
@@ -93,7 +96,8 @@ public class DockerComposeService {
         Binding bindNoVncPort = Ports.Binding.bindPort(dockerComposeBindPort);
         ExposedPort exposedNoVncPort = ExposedPort.tcp(dockerComposeUiPort);
 
-        dockerComposeUiUrl = "http://" + dockerService.getDockerServerIp() + ":"
+        String dockerComposeUiUrl = "http://"
+                + dockerService.getDockerServerIp() + ":"
                 + dockerComposeBindPort;
 
         log.debug("Starting docker-compose-ui container: {}",
@@ -101,10 +105,9 @@ public class DockerComposeService {
 
         List<PortBinding> portBindings = asList(
                 new PortBinding(bindNoVncPort, exposedNoVncPort));
-        String path = "/var/run/docker.sock";
-        Volume volume = new Volume(path);
+        Volume volume = new Volume(dockerDefaultSocket);
         List<Volume> volumes = asList(volume);
-        List<Bind> binds = asList(new Bind(path, volume));
+        List<Bind> binds = asList(new Bind(dockerDefaultSocket, volume));
 
         dockerService
                 .startAndWaitContainer(dockerBuilder(dockerComposeUiImageId,
@@ -136,33 +139,35 @@ public class DockerComposeService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", projectName);
         jsonObject.put("yml", dockerComposeYml.replaceAll("'", "\""));
-        RequestBody data = RequestBody.create(
-                MediaType.parse("application/json"), jsonObject.toString());
-
-        log.debug("Creating Docker Compose with data: {}",
+        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
                 jsonObject.toString());
+
+        log.debug("Creating Docker Compose with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi.createProject(data)
                 .execute();
+
         log.trace("Response: {} -- {}", response.code(),
                 response.body().string());
-
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
+
         return true;
     }
 
     public boolean startProject(String projectName) throws IOException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", projectName);
-        RequestBody data = RequestBody.create(
-                MediaType.parse("application/json"), jsonObject.toString());
 
-        log.debug("Starting Docker Compose project with data: {}",
+        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
                 jsonObject.toString());
+
+        log.debug("Starting Docker Compose project with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi.dockerComposeUp(data)
                 .execute();
 
+        log.trace("Response: {} -- {}", response.code(),
+                response.body().string());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
@@ -172,14 +177,15 @@ public class DockerComposeService {
     public boolean stopProject(String projectName) throws IOException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", projectName);
-        RequestBody data = RequestBody.create(
-                MediaType.parse("application/json"), jsonObject.toString());
-
-        log.debug("Stopping Docker Compose project with data: {}",
+        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
                 jsonObject.toString());
+
+        log.debug("Stopping Docker Compose project with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi
                 .dockerComposeDown(data).execute();
 
+        log.trace("Response: {} -- {}", response.code(),
+                response.body().string());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
