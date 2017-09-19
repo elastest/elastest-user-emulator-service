@@ -35,6 +35,8 @@ import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.net.ssl.HostnameVerifier;
@@ -53,7 +55,9 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -171,35 +175,26 @@ public class DockerService {
                     createContainer.withNetworkMode(dockerNetwork);
                 }
 
-                if (dockerContainer.getPortBindings().isPresent()) {
-                    if (log.isDebugEnabled()) {
-                        for (PortBinding p : dockerContainer.getPortBindings()
-                                .get()) {
-                            log.debug("Using port binding {} -> {}",
-                                    p.getExposedPort().getPort(),
-                                    p.getBinding().getHostPortSpec());
-                        }
-                    }
-                    createContainer.withPortBindings(
-                            dockerContainer.getPortBindings().get());
+                Optional<List<PortBinding>> portBindings = dockerContainer
+                        .getPortBindings();
+                if (portBindings.isPresent()) {
+                    log.debug("Using port binding: {}", portBindings.get());
+                    createContainer.withPortBindings(portBindings.get());
                 }
-                if (dockerContainer.getVolumes().isPresent()) {
-                    log.debug("Using volumes: {}",
-                            dockerContainer.getVolumes().get());
-                    createContainer
-                            .withVolumes(dockerContainer.getVolumes().get());
+                Optional<List<Volume>> volumes = dockerContainer.getVolumes();
+                if (volumes.isPresent()) {
+                    log.debug("Using volumes: {}", volumes.get());
+                    createContainer.withVolumes(volumes.get());
                 }
-
-                if (dockerContainer.getBinds().isPresent()) {
-                    log.debug("Using binds: {}",
-                            dockerContainer.getBinds().get());
-                    createContainer.withBinds(dockerContainer.getBinds().get());
+                Optional<List<Bind>> binds = dockerContainer.getBinds();
+                if (binds.isPresent()) {
+                    log.debug("Using binds: {}", binds.get());
+                    createContainer.withBinds(binds.get());
                 }
-
-                if (dockerContainer.getEnvs().isPresent()) {
-                    log.debug("Using envs: {}",
-                            dockerContainer.getEnvs().get());
-                    createContainer.withEnv(dockerContainer.getEnvs().get());
+                Optional<List<String>> envs = dockerContainer.getEnvs();
+                if (envs.isPresent()) {
+                    log.debug("Using envs: {}", envs.get());
+                    createContainer.withEnv(envs.get());
                 }
 
                 createContainer.exec();
