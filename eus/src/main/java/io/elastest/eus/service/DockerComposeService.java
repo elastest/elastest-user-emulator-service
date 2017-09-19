@@ -219,9 +219,6 @@ public class DockerComposeService {
                     projects.add(new DockerComposeProject(o.toString(), this));
                 }
             }
-
-        } else {
-            log.debug("Error: {}", response.errorBody().string());
         }
         return projects;
     }
