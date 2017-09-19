@@ -158,20 +158,22 @@ public class DockerContainerInfo {
     }
 
     public class Ports {
-        Map<String, PortInfo> ports;
+        Map<String, PortInfo> portsMap;
     }
 
     public class PortInfo {
-        String HostIp;
+        @SerializedName("HostIp")
+        String hostIp;
 
-        String HostPort;
+        @SerializedName("HostPort")
+        String hostPort;
 
         public String getHostIp() {
-            return HostIp;
+            return hostIp;
         }
 
         public String getHostPort() {
-            return HostPort;
+            return hostPort;
         }
 
         @Override
@@ -179,7 +181,6 @@ public class DockerContainerInfo {
             return "PortInfo [getHostIp()=" + getHostIp() + ", getHostPort()="
                     + getHostPort() + "]";
         }
-
     }
 
 }

@@ -41,14 +41,14 @@ public class DockerComposeProject {
     private DockerContainerInfo containersInfo;
 
     public DockerComposeProject(String projectName, String dockerComposeYml,
-            DockerComposeService dockerComposeService) throws IOException {
+            DockerComposeService dockerComposeService) {
         this.projectName = projectName;
         this.dockerComposeYml = dockerComposeYml;
         this.dockerComposeService = dockerComposeService;
     }
 
     public DockerComposeProject(String projectName,
-            DockerComposeService dockerComposeService) throws IOException {
+            DockerComposeService dockerComposeService) {
         this.projectName = projectName;
         this.dockerComposeService = dockerComposeService;
         this.isStarted = true;
