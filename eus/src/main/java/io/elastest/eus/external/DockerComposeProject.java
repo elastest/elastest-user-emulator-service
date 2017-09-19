@@ -16,18 +16,79 @@
  */
 package io.elastest.eus.external;
 
-import java.util.List;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.elastest.eus.service.DockerComposeService;
 
 /**
- * Utility class for deserialize responses from docker-compose-ui.
+ * Project on docker-compose-ui.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
 public class DockerComposeProject {
 
-    List<Object> active;
+    private final Logger log = LoggerFactory
+            .getLogger(DockerComposeProject.class);
 
-    Object projects;
+    private String projectName;
+    private String dockerComposeYml;
+    private DockerComposeService dockerComposeService;
+    private boolean isStarted = false;
+
+    public DockerComposeProject(String projectName, String dockerComposeYml,
+            DockerComposeService dockerComposeService) throws IOException {
+        this.projectName = projectName;
+        this.dockerComposeYml = dockerComposeYml;
+        this.dockerComposeService = dockerComposeService;
+
+        // Auto start in constructor
+        this.start();
+    }
+
+    public DockerComposeProject(String projectName,
+            DockerComposeService dockerComposeService) throws IOException {
+        this.projectName = projectName;
+        this.dockerComposeYml = dockerComposeService.getYaml(projectName);
+        this.dockerComposeService = dockerComposeService;
+        isStarted = true;
+    }
+
+    public synchronized void start() throws IOException {
+        if (!isStarted) {
+            log.debug("Starting Docker Compose project {}", projectName);
+            dockerComposeService.createProject(projectName, dockerComposeYml);
+            dockerComposeService.startProject(projectName);
+            isStarted = true;
+            log.debug("Docker Compose project {} started correctly",
+                    projectName);
+        } else {
+            log.debug("Docker Compose project {} already started", projectName);
+        }
+    }
+
+    public synchronized void stop() throws IOException {
+        if (isStarted) {
+            log.debug("Stopping Docker Compose project {}", projectName);
+            dockerComposeService.stopProject(projectName);
+            isStarted = false;
+            log.debug("Docker Compose project {} stopped correctly",
+                    projectName);
+        } else {
+            log.debug("Docker Compose project {} already is NOT started",
+                    projectName);
+        }
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public String getDockerComposeYml() {
+        return dockerComposeYml;
+    }
 
 }

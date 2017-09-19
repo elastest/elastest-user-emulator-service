@@ -22,6 +22,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 /**
  * Docker Compose UI REST service.
@@ -41,6 +42,10 @@ public interface DockerComposeUiApi {
     Call<ResponseBody> dockerComposeDown(@Body RequestBody data);
 
     @GET("/api/v1/projects")
-    Call<DockerComposeProject> listProjects();
+    Call<DockerComposeList> listProjects();
+
+    @GET("/api/v1/projects/yml/{projectName}")
+    Call<DockerComposeConfig> getDockerComposeYml(
+            @Path("projectName") String projectName);
 
 }

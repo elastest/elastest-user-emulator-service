@@ -19,9 +19,12 @@ package io.elastest.eus.service;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.regex.Pattern.matches;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static okhttp3.MediaType.parse;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -41,8 +44,10 @@ import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.docker.DockerException;
+import io.elastest.eus.external.DockerComposeConfig;
+import io.elastest.eus.external.DockerComposeList;
+import io.elastest.eus.external.DockerComposeProject;
 import io.elastest.eus.external.DockerComposeUiApi;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -134,19 +139,26 @@ public class DockerComposeService {
         dockerService.stopAndRemoveContainer(dockerComposeUiContainerName);
     }
 
+    public DockerComposeProject createAndStartDockerComposeProject(
+            String projectName, String dockerComposeYml) throws IOException {
+        return new DockerComposeProject(projectName, dockerComposeYml, this);
+    }
+
     public boolean createProject(String projectName, String dockerComposeYml)
             throws IOException {
+        assert matches("^[a-zA-Z0-9]*$", projectName);
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", projectName);
         jsonObject.put("yml", dockerComposeYml.replaceAll("'", "\""));
-        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
+        RequestBody data = RequestBody.create(parse(APPLICATION_JSON),
                 jsonObject.toString());
 
-        log.debug("Creating Docker Compose with data: {}", jsonObject);
+        log.trace("Creating Docker Compose with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi.createProject(data)
                 .execute();
 
-        log.debug("Create project response: code={}}", response.code());
+        log.trace("Create project response code {}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
@@ -158,14 +170,14 @@ public class DockerComposeService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", projectName);
 
-        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
+        RequestBody data = RequestBody.create(parse(APPLICATION_JSON),
                 jsonObject.toString());
 
-        log.debug("Starting Docker Compose project with data: {}", jsonObject);
+        log.trace("Starting Docker Compose project with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi.dockerComposeUp(data)
                 .execute();
 
-        log.debug("Start project response: code={}}", response.code());
+        log.trace("Start project response code {}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
@@ -175,18 +187,56 @@ public class DockerComposeService {
     public boolean stopProject(String projectName) throws IOException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", projectName);
-        RequestBody data = RequestBody.create(MediaType.parse(APPLICATION_JSON),
+        RequestBody data = RequestBody.create(parse(APPLICATION_JSON),
                 jsonObject.toString());
 
-        log.debug("Stopping Docker Compose project with data: {}", jsonObject);
+        log.trace("Stopping Docker Compose project with data: {}", jsonObject);
         Response<ResponseBody> response = dockerComposeUi
                 .dockerComposeDown(data).execute();
 
-        log.debug("Stop project response: code={}}", response.code());
+        log.trace("Stop project response code {}", response.code());
         if (!response.isSuccessful()) {
             throw new DockerException(response.errorBody().string());
         }
         return true;
+    }
+
+    public List<DockerComposeProject> listProjects() throws IOException {
+        log.debug("List Docker Compose projects");
+        List<DockerComposeProject> projects = new ArrayList<>();
+
+        Response<DockerComposeList> response = dockerComposeUi.listProjects()
+                .execute();
+        log.debug("List projects response code {}", response.code());
+
+        if (response.isSuccessful()) {
+            DockerComposeList body = response.body();
+            log.debug("Success: {}", body);
+            List<Object> active = body.getActive();
+
+            for (Object o : active) {
+                if (o.getClass() == String.class) {
+                    projects.add(new DockerComposeProject(o.toString(), this));
+                }
+            }
+
+        } else {
+            log.debug("Error: {}", response.errorBody().string());
+        }
+        return projects;
+    }
+
+    public String getYaml(String projectName) throws IOException {
+        log.debug("Get YAML of project {}", projectName);
+
+        Response<DockerComposeConfig> response = dockerComposeUi
+                .getDockerComposeYml(projectName).execute();
+        log.debug("Get YAML response code {}", response.code());
+
+        if (response.isSuccessful()) {
+            return response.body().getYml();
+        }
+        throw new DockerException(response.errorBody().string());
     }
 
 }
