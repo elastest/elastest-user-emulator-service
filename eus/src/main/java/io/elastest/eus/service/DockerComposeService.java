@@ -274,7 +274,7 @@ public class DockerComposeService {
 
     public void removeProjects(String... projects) throws IOException {
         for (String project : projects) {
-            log.debug("Deleting project {}", project);
+            log.trace("Deleting docker-compose project {}", project);
             dockerComposeApi.removeProject(project).execute();
         }
     }

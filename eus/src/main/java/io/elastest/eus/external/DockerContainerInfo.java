@@ -159,6 +159,16 @@ public class DockerContainerInfo {
 
     public class Ports {
         Map<String, PortInfo> portsMap;
+
+        public Map<String, PortInfo> getPortsMap() {
+            return portsMap;
+        }
+
+        @Override
+        public String toString() {
+            return "Ports [getPortsMap()=" + getPortsMap() + "]";
+        }
+
     }
 
     public class PortInfo {
