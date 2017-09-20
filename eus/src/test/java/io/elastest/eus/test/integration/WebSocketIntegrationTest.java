@@ -16,30 +16,32 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.commons.io.FileUtils;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.elastest.eus.json.NewSession;
+import io.elastest.eus.json.RecordedSession;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
@@ -58,7 +60,7 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 @DisplayName("Integration tests for WebSockets")
 public class WebSocketIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(WebSocketIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @LocalServerPort
     int serverPort;
@@ -105,7 +107,8 @@ public class WebSocketIntegrationTest {
         sessionInfo.setBrowser("chrome");
         sessionInfo.setVersion("59");
         sessionService.putSession("my-session-id", sessionInfo);
-        String jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
+
+        String jsonMessage = jsonService.objectToJson(sessionInfo);
         assertNotNull(jsonMessage);
 
         String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
@@ -144,13 +147,13 @@ public class WebSocketIntegrationTest {
 
         String jsonFileName = sessionId + registryMetadataExtension;
 
-        JSONObject sessionInfoToJson = jsonService
-                .recordedSessionJson(sessionInfo);
+        String sessionInfoToJson = jsonService
+                .objectToJson(new RecordedSession(sessionInfo));
         File file = new File(registryFolder + jsonFileName);
-        FileUtils.writeStringToFile(file, sessionInfoToJson.toString(),
-                Charset.defaultCharset());
+        writeStringToFile(file, sessionInfoToJson, Charset.defaultCharset());
 
-        String jsonMessage = jsonService.newSessionJson(sessionInfo).toString();
+        String jsonMessage = jsonService
+                .objectToJson(new NewSession(sessionInfo));
         assertNotNull(jsonMessage);
 
         String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;

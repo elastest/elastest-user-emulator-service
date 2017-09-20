@@ -16,11 +16,13 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.IOException;
@@ -31,13 +33,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.external.DockerComposeProject;
-import io.elastest.eus.external.DockerContainerInfo;
+import io.elastest.eus.json.DockerContainerInfo;
 import io.elastest.eus.service.DockerComposeService;
 
 /**
@@ -52,8 +53,7 @@ import io.elastest.eus.service.DockerComposeService;
 @DisplayName("Integration test for Docker Compose Service")
 public class DockerComposeIntegrationTest {
 
-    final Logger log = LoggerFactory
-            .getLogger(DockerComposeIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
     private DockerComposeService dockerComposeService;

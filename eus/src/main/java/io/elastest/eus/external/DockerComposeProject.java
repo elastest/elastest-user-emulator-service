@@ -16,11 +16,14 @@
  */
 package io.elastest.eus.external;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import io.elastest.eus.json.DockerContainerInfo;
 import io.elastest.eus.service.DockerComposeService;
 
 /**
@@ -31,8 +34,7 @@ import io.elastest.eus.service.DockerComposeService;
  */
 public class DockerComposeProject {
 
-    private final Logger log = LoggerFactory
-            .getLogger(DockerComposeProject.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     private String projectName;
     private String dockerComposeYml;

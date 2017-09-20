@@ -17,8 +17,10 @@
 package io.elastest.eus.test.integration;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.List;
@@ -28,7 +30,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +40,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.json.Capabilities;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
@@ -55,7 +57,7 @@ import io.elastest.eus.service.PropertiesService;
 @DisplayName("Integration test for Docker Service")
 public class DockerIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(DockerIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
     private DockerService dockerService;
@@ -81,9 +83,15 @@ public class DockerIntegrationTest {
                 + "\"platform\": \"ANY\"" + " }" + "}";
 
         // Exercise
-        String browserName = jsonService.getBrowser(jsonCapabilities);
-        String version = jsonService.getVersion(jsonCapabilities);
-        String platform = jsonService.getPlatform(jsonCapabilities);
+        String browserName = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getBrowserName();
+        String version = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getVersion();
+        String platform = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getPlatform();
 
         log.debug("Starting Hub from JSON message {}", jsonCapabilities);
 

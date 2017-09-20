@@ -17,12 +17,14 @@
 package io.elastest.eus.test.unit;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,7 +36,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
@@ -56,7 +57,7 @@ import io.elastest.eus.test.util.MockitoExtension;
 @DisplayName("Unit tests for Docker")
 public class DockerUnitTest {
 
-    final Logger log = LoggerFactory.getLogger(DockerUnitTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @InjectMocks
     DockerService dockerService;

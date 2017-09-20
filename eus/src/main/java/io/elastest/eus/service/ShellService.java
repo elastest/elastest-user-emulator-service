@@ -16,7 +16,9 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,7 +28,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.google.common.io.CharStreams;
@@ -40,7 +41,7 @@ import com.google.common.io.CharStreams;
 @Service
 public class ShellService {
 
-    private final Logger log = LoggerFactory.getLogger(ShellService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     public String runAndWait(String... command) throws IOException {
         return runAndWaitArray(command);

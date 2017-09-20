@@ -17,7 +17,11 @@
 package io.elastest.eus.service;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
@@ -31,7 +35,6 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -41,11 +44,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.json.Capabilities;
+import io.elastest.eus.json.EusStatus;
+import io.elastest.eus.json.SessionResponse;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -57,7 +64,7 @@ import io.elastest.eus.session.SessionInfo;
 @Service
 public class WebDriverService {
 
-    private final Logger log = LoggerFactory.getLogger(WebDriverService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
@@ -82,6 +89,9 @@ public class WebDriverService {
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
+    @Value("${webdriver.session.message}")
+    private String webdriverSessionMessage;
+
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
@@ -102,8 +112,10 @@ public class WebDriverService {
         this.recordingService = recordingService;
     }
 
-    public ResponseEntity<String> getStatus() {
-        String statusBody = jsonService.getStatus().toString();
+    public ResponseEntity<String> getStatus() throws JsonProcessingException {
+        EusStatus eusStatus = new EusStatus(true, "EUS ready");
+        log.debug("EUS status {}", eusStatus);
+        String statusBody = jsonService.objectToJson(eusStatus);
         return new ResponseEntity<>(statusBody, OK);
     }
 
@@ -121,23 +133,23 @@ public class WebDriverService {
                 requestBody);
 
         SessionInfo sessionInfo;
-        boolean isLive = false;
+        boolean liveSession = false;
         Optional<HttpEntity<String>> optionalHttpEntity = Optional.empty();
 
         // Intercept create session
-        if (jsonService.isPostSessionRequest(method, requestContext)) {
-            isLive = jsonService.isLive(requestBody);
+        if (isPostSessionRequest(method, requestContext)) {
+            liveSession = isLive(requestBody);
 
             // If live, no timeout
-            if (isLive) {
+            if (liveSession) {
                 hubTimeout = "0";
             }
             sessionInfo = starBrowser(requestBody, hubTimeout);
             optionalHttpEntity = optionalHttpEntity(requestBody);
 
         } else {
-            Optional<String> sessionIdFromPath = jsonService
-                    .getSessionIdFromPath(requestContext);
+            Optional<String> sessionIdFromPath = getSessionIdFromPath(
+                    requestContext);
             if (sessionIdFromPath.isPresent()) {
                 String sessionId = sessionIdFromPath.get();
                 Optional<SessionInfo> optionalSession = sessionService
@@ -147,7 +159,7 @@ public class WebDriverService {
                 } else {
                     return notFound();
                 }
-                isLive = sessionInfo.isLiveSession();
+                liveSession = sessionInfo.isLiveSession();
 
             } else {
                 return notFound();
@@ -155,7 +167,7 @@ public class WebDriverService {
         }
 
         // Only using timer for non-live sessions
-        if (!isLive) {
+        if (!liveSession) {
             sessionService.shutdownSessionTimer(sessionInfo);
             sessionService.startSessionTimer(sessionInfo);
         }
@@ -166,7 +178,7 @@ public class WebDriverService {
 
         // Handle response
         HttpStatus responseStatus = sessionResponse(requestContext, method,
-                sessionInfo, isLive, responseBody);
+                sessionInfo, liveSession, responseBody);
 
         return new ResponseEntity<>(responseBody, responseStatus);
     }
@@ -176,12 +188,12 @@ public class WebDriverService {
         HttpStatus responseStatus = OK;
         try {
             // Intercept again create session
-            if (jsonService.isPostSessionRequest(method, requestContext)) {
+            if (isPostSessionRequest(method, requestContext)) {
                 postSessionRequest(sessionInfo, isLive, responseBody);
             }
 
             // Intercept destroy session
-            if (jsonService.isDeleteSessionRequest(method, requestContext)) {
+            if (isDeleteSessionRequest(method, requestContext)) {
                 log.trace("Intercepted DELETE session");
                 stopBrowser(sessionInfo);
             }
@@ -213,7 +225,11 @@ public class WebDriverService {
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
             String responseBody) throws IOException, InterruptedException {
-        String sessionId = jsonService.getSessionIdFromResponse(responseBody);
+        SessionResponse sessionResponse = jsonService.jsonToObject(responseBody,
+                SessionResponse.class);
+        log.debug("Session response {}", sessionResponse);
+
+        String sessionId = sessionResponse.getSessionId();
         sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
 
@@ -226,22 +242,22 @@ public class WebDriverService {
         }
     }
 
-    private Optional<HttpEntity<String>> optionalHttpEntity(
-            String requestBody) {
+    private Optional<HttpEntity<String>> optionalHttpEntity(String requestBody)
+            throws IOException {
         // Workaround due to bug of selenium-server 3.4.0
         // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-        String browserName = jsonService.getBrowser(requestBody);
-        String version = jsonService.getVersion(requestBody);
+        String browserName = jsonService
+                .jsonToObject(requestBody, Capabilities.class)
+                .getDesiredCapabilities().getBrowserName();
+        String version = jsonService
+                .jsonToObject(requestBody, Capabilities.class)
+                .getDesiredCapabilities().getVersion();
 
         if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
-            log.warn(
-                    "Due to a bug in selenium-server 3.4.0 the W3C capabilities are not handled correctly");
-
-            return Optional
-                    .of(new HttpEntity<String>("{ \"desiredCapabilities\": {"
-                            + "\"browserName\": \"firefox\","
-                            + "\"version\": \"\","
-                            + "\"platform\": \"ANY\" } }"));
+            Capabilities firefox = new Capabilities("firefox", "", "ANY");
+            log.debug("Using empty firefox capabilities {}", firefox);
+            return Optional.of(
+                    new HttpEntity<String>(jsonService.objectToJson(firefox)));
         }
         return Optional.empty();
     }
@@ -254,9 +270,15 @@ public class WebDriverService {
 
     private SessionInfo starBrowser(String jsonCapabilities, String timeout)
             throws IOException, InterruptedException {
-        String browserName = jsonService.getBrowser(jsonCapabilities);
-        String version = jsonService.getVersion(jsonCapabilities);
-        String platform = jsonService.getPlatform(jsonCapabilities);
+        String browserName = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getBrowserName();
+        String version = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getVersion();
+        String platform = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getPlatform();
 
         String propertiesKey = propertiesService
                 .getKeyFromCapabilities(browserName, version, platform);
@@ -316,6 +338,57 @@ public class WebDriverService {
             sessionService.sendRecordingToAllClients(sessionInfo);
         }
         sessionService.deleteSession(sessionInfo, false);
+    }
+
+    private boolean isPostSessionRequest(HttpMethod method, String context) {
+        return method == POST && context.equals(webdriverSessionMessage);
+    }
+
+    private boolean isDeleteSessionRequest(HttpMethod method, String context) {
+        return method == DELETE && context.startsWith(webdriverSessionMessage)
+                && countCharsInString(context, '/') == 2;
+    }
+
+    private boolean isLive(String jsonMessage) {
+        boolean out = false;
+        try {
+            out = jsonService.jsonToObject(jsonMessage, Capabilities.class)
+                    .getDesiredCapabilities().isLive();
+            log.trace("Received message from a live session");
+        } catch (Exception e) {
+            log.trace("Received message from a regular session (non-live)");
+        }
+        return out;
+    }
+
+    public Optional<String> getSessionIdFromPath(String path) {
+        Optional<String> out = Optional.empty();
+        int i = path.indexOf(webdriverSessionMessage);
+
+        if (i != -1) {
+            int j = path.indexOf('/', i + webdriverSessionMessage.length());
+            if (j != -1) {
+                int k = path.indexOf('/', j + 1);
+                int cut = (k == -1) ? path.length() : k;
+
+                String sessionId = path.substring(j + 1, cut);
+                out = Optional.of(sessionId);
+            }
+        }
+
+        log.trace("getSessionIdFromPath -- path: {} sessionId {}", path, out);
+
+        return out;
+    }
+
+    public int countCharsInString(String string, char c) {
+        int count = 0;
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) == c) {
+                count++;
+            }
+        }
+        return count;
     }
 
 }

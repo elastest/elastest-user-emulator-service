@@ -17,12 +17,14 @@
 package io.elastest.eus.test.unit;
 
 import static java.lang.System.getProperty;
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
@@ -33,7 +35,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.elastest.eus.service.ShellService;
 import io.elastest.eus.test.util.MockitoExtension;
@@ -50,7 +51,7 @@ import io.elastest.eus.test.util.MockitoExtension;
 @DisplayName("Unit tests for shell Service")
 public class ShellUnitTest {
 
-    final Logger log = LoggerFactory.getLogger(ShellUnitTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @InjectMocks
     ShellService shellService;

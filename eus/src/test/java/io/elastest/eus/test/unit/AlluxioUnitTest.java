@@ -21,11 +21,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -43,7 +45,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.internal.util.reflection.FieldSetter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -63,7 +64,7 @@ import io.elastest.eus.test.util.MockitoExtension;
 @DisplayName("Unit tests for Alluxio Service")
 public class AlluxioUnitTest {
 
-    final Logger log = LoggerFactory.getLogger(AlluxioUnitTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @InjectMocks
     AlluxioService alluxioService;

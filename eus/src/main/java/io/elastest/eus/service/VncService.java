@@ -17,7 +17,9 @@
 package io.elastest.eus.service;
 
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -26,7 +28,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -48,7 +49,7 @@ import io.elastest.eus.session.SessionInfo;
 @Service
 public class VncService {
 
-    private final Logger log = LoggerFactory.getLogger(VncService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${eus.container.prefix}")
     private String eusContainerPrefix;

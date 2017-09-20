@@ -14,26 +14,29 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.external;
-
-import java.util.List;
+package io.elastest.eus.json;
 
 /**
- * Utility class for deserialize project configuration from docker-compose-ui.
+ * Utility class for deserialize container info from docker-compose-ui.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class DockerComposeConfig {
+public class DockerComposeProjectMessage {
 
-    List<Object> config;
+    public String id;
 
-    Object env;
+    public DockerComposeProjectMessage(String id) {
+        this.id = id;
+    }
 
-    String yml;
+    public String getId() {
+        return id;
+    }
 
-    public String getYml() {
-        return yml;
+    @Override
+    public String toString() {
+        return "DockerComposeProjectMessage [getId()=" + getId() + "]";
     }
 
 }

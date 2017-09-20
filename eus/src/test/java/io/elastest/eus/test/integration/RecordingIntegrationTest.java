@@ -16,7 +16,9 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.core.StringContains.containsString;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,7 +31,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -50,7 +51,7 @@ import org.springframework.web.context.WebApplicationContext;
 @DisplayName("Integration tests for recording service with non-existing Alluxio service")
 public class RecordingIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(RecordingIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @LocalServerPort
     int serverPort;

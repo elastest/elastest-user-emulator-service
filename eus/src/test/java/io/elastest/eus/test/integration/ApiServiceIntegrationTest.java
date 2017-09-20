@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,7 +31,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -38,12 +39,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import com.google.gson.Gson;
-
 import io.elastest.eus.api.model.Event;
 import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.UserMedia;
+import io.elastest.eus.service.JsonService;
 
 /**
  * Integration tests for non-implemented service operations.
@@ -57,13 +57,16 @@ import io.elastest.eus.api.model.UserMedia;
 @DisplayName("Integration tests for service operations")
 public class ApiServiceIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(ApiServiceIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @LocalServerPort
     int serverPort;
 
     @Autowired
     WebApplicationContext webContext;
+
+    @Autowired
+    JsonService jsonService;
 
     MockMvc mockMvc;
 
@@ -123,7 +126,7 @@ public class ApiServiceIntegrationTest {
     @Test
     @DisplayName("POST /session/{sessionId}/usermedia")
     void testPostUsermedia() throws Exception {
-        String usermedia = new Gson().toJson(new UserMedia());
+        String usermedia = jsonService.objectToJson(new UserMedia());
         mockMvc.perform(post("/session/sessionId/usermedia").content(usermedia)
                 .contentType("application/json")).andExpect(status().isOk());
     }
@@ -131,7 +134,7 @@ public class ApiServiceIntegrationTest {
     @Test
     @DisplayName("POST /session/{sessionId}/element/{elementId}/latency")
     void testPostLatency() throws Exception {
-        String latency = new Gson().toJson(new Latency());
+        String latency = jsonService.objectToJson(new Latency());
         mockMvc.perform(post("/session/sessionId/element/elementId/latency")
                 .content(latency).contentType("application/json"))
                 .andExpect(status().isOk());
@@ -140,7 +143,7 @@ public class ApiServiceIntegrationTest {
     @Test
     @DisplayName("POST /session/{sessionId}/element/{elementId}/quality")
     void testPostQuality() throws Exception {
-        String quality = new Gson().toJson(new Quality());
+        String quality = jsonService.objectToJson(new Quality());
         mockMvc.perform(post("/session/sessionId/element/elementId/quality")
                 .content(quality).contentType("application/json"))
                 .andExpect(status().isOk());
@@ -149,7 +152,7 @@ public class ApiServiceIntegrationTest {
     @Test
     @DisplayName("POST /session/{sessionId}/element/{elementId}/event")
     void testPostEvent() throws Exception {
-        String event = new Gson().toJson(new Event());
+        String event = jsonService.objectToJson(new Event());
         mockMvc.perform(post("/session/sessionId/element/elementId/event")
                 .content(event).contentType("application/json"))
                 .andExpect(status().isOk());

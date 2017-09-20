@@ -14,31 +14,36 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.test.util;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
+package io.elastest.eus.json;
 
 /**
- * JSON utilities for tests.
+ * Utility class for serialize JSON messages (create project).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
- * @since 0.0.1
+ * @since 0.1.1
  */
-public class JsonUtils {
+public class EusStatus {
 
-    final Logger log = LoggerFactory.getLogger(JsonUtils.class);
+    public boolean ready;
+    public String message;
 
-    private static Gson gson = new Gson();
-
-    public static boolean isJsonValid(String jsonString) {
-        try {
-            gson.fromJson(jsonString, Object.class);
-            return true;
-        } catch (com.google.gson.JsonSyntaxException ex) {
-            return false;
-        }
+    public EusStatus(boolean ready, String message) {
+        this.ready = ready;
+        this.message = message;
     }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return "EusStatus [isReady()=" + isReady() + ", getMessage()="
+                + getMessage() + "]";
+    }
+
 }

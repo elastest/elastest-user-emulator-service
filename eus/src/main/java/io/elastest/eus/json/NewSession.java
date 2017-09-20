@@ -14,35 +14,34 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.external;
+package io.elastest.eus.json;
 
-import java.util.List;
-import java.util.Map;
+import io.elastest.eus.session.SessionInfo;
 
 /**
- * Utility class for deserialize project list from docker-compose-ui.
+ * Utility class for serialize JSON messages (new session).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class DockerComposeList {
+public class NewSession {
 
-    List<Object> active;
+    public SessionInfo newSession;
 
-    Map<String, String> projects;
-
-    public Map<String, String> getProjects() {
-        return projects;
+    public NewSession() {
     }
 
-    public List<Object> getActive() {
-        return active;
+    public NewSession(SessionInfo newSession) {
+        this.newSession = newSession;
+    }
+
+    public SessionInfo getNewSession() {
+        return newSession;
     }
 
     @Override
     public String toString() {
-        return "DockerComposeList [getProjects()=" + getProjects()
-                + ", getActive()=" + getActive() + "]";
+        return "NewSession [getNewSession()=" + getNewSession() + "]";
     }
 
 }

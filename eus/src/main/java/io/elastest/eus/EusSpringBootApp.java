@@ -16,8 +16,10 @@
  */
 package io.elastest.eus;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -43,7 +45,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableWebSocket
 public class EusSpringBootApp implements WebSocketConfigurer {
 
-    private final Logger log = LoggerFactory.getLogger(EusSpringBootApp.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${ws.path}")
     private String wsPath;

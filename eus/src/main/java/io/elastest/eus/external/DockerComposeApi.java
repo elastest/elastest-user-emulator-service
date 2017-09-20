@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.external;
 
+import io.elastest.eus.json.DockerComposeConfig;
+import io.elastest.eus.json.DockerComposeList;
+import io.elastest.eus.json.DockerContainerInfo;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;

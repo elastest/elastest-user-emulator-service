@@ -16,11 +16,12 @@
  */
 package io.elastest.eus.test.integration;
 
-import static io.elastest.eus.test.util.JsonUtils.isJsonValid;
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,6 +43,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.elastest.eus.json.SessionResponse;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
@@ -60,7 +61,7 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 @DisplayName("Integration tests with W3C WebDriver sessions")
 public class SessionIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(SessionIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
     TestRestTemplate restTemplate;
@@ -92,7 +93,7 @@ public class SessionIntegrationTest {
             @Override
             public void handleMessage(String message) {
                 log.debug("Received message: {}", message);
-                assertThat(message, isJsonValid(message));
+                assertThat(message, jsonService.isJsonValid(message));
             }
         });
 
@@ -109,7 +110,9 @@ public class SessionIntegrationTest {
         log.debug("[POST /session] Status code {}", statusCode);
         log.debug("[POST /session] Response {}", responseBody);
 
-        String sessionId = jsonService.getSessionIdFromResponse(responseBody);
+        String sessionId = jsonService
+                .jsonToObject(responseBody, SessionResponse.class)
+                .getSessionId();
         log.debug("sessionId {}", sessionId);
         assertNotNull(sessionId);
 

@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Paths.get;
 import static java.util.Arrays.copyOfRange;
@@ -23,13 +25,13 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
 import static org.apache.commons.io.IOUtils.toByteArray;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -37,9 +39,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
-import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -47,6 +47,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.EusException;
+import io.elastest.eus.json.RecordedSession;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -58,7 +59,7 @@ import io.elastest.eus.session.SessionInfo;
 @Service
 public class RecordingService {
 
-    private final Logger log = LoggerFactory.getLogger(RecordingService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${registry.folder}")
     private String registryFolder;
@@ -174,20 +175,21 @@ public class RecordingService {
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
         String sessionId = sessionInfo.getSessionId();
         String metadataFileName = sessionId + registryMetadataExtension;
-        JSONObject sessionInfoToJson = jsonService
-                .recordedSessionJson(sessionInfo);
+        RecordedSession recordedSession = new RecordedSession(sessionInfo);
+        log.debug("Storing metadata {}", recordedSession);
+        String sessionInfoToJson = jsonService.objectToJson(recordedSession);
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, metadata is stored locally
 
             FileUtils.writeStringToFile(
                     new File(registryFolder + metadataFileName),
-                    sessionInfoToJson.toString(), Charset.defaultCharset());
+                    sessionInfoToJson, defaultCharset());
 
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
             alluxioService.writeFile(metadataFileName,
-                    sessionInfoToJson.toString().getBytes());
+                    sessionInfoToJson.getBytes());
         }
     }
 

@@ -14,12 +14,12 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus.external;
+package io.elastest.eus.json;
 
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Utility class for deserialize container info from docker-compose-ui.
@@ -29,7 +29,7 @@ import com.google.gson.annotations.SerializedName;
  */
 public class DockerContainerInfo {
 
-    List<DockerContainer> containers;
+    public List<DockerContainer> containers;
 
     public List<DockerContainer> getContainers() {
         return containers;
@@ -40,24 +40,24 @@ public class DockerContainerInfo {
         return "DockerContainerInfo [getContainers()=" + getContainers() + "]";
     }
 
-    public class DockerContainer {
-        String command;
+    public static class DockerContainer {
+        public String command;
 
-        @SerializedName("is_running")
-        boolean isRunning;
+        @JsonProperty("is_running")
+        public boolean isRunning;
 
-        Labels labels;
+        public Labels labels;
 
-        String name;
+        public String name;
 
-        @SerializedName("name_without_project")
-        String nameWithoutProject;
+        @JsonProperty("name_without_project")
+        public String nameWithoutProject;
 
-        Ports ports;
+        public Ports ports;
 
-        String state;
+        public String state;
 
-        Map<String, Object> volumes;
+        public Map<String, Object> volumes;
 
         public String getCommand() {
             return command;
@@ -103,24 +103,24 @@ public class DockerContainerInfo {
 
     }
 
-    public class Labels {
-        @SerializedName("com.docker.compose.config-hash")
-        String configHash;
+    public static class Labels {
+        @JsonProperty("com.docker.compose.config-hash")
+        public String configHash;
 
-        @SerializedName("com.docker.compose.container-number")
-        String containerNumber;
+        @JsonProperty("com.docker.compose.container-number")
+        public String containerNumber;
 
-        @SerializedName("com.docker.compose.oneoff")
-        String oneoff;
+        @JsonProperty("com.docker.compose.oneoff")
+        public String oneoff;
 
-        @SerializedName("com.docker.compose.project")
-        String project;
+        @JsonProperty("com.docker.compose.project")
+        public String project;
 
-        @SerializedName("com.docker.compose.service")
-        String service;
+        @JsonProperty("com.docker.compose.service")
+        public String service;
 
-        @SerializedName("com.docker.compose.version")
-        String version;
+        @JsonProperty("com.docker.compose.version")
+        public String version;
 
         public String getConfigHash() {
             return configHash;
@@ -157,8 +157,8 @@ public class DockerContainerInfo {
 
     }
 
-    public class Ports {
-        Map<String, PortInfo> portsMap;
+    public static class Ports {
+        public Map<String, PortInfo> portsMap;
 
         public Map<String, PortInfo> getPortsMap() {
             return portsMap;
@@ -171,12 +171,12 @@ public class DockerContainerInfo {
 
     }
 
-    public class PortInfo {
-        @SerializedName("HostIp")
-        String hostIp;
+    public static class PortInfo {
+        @JsonProperty("HostIp")
+        public String hostIp;
 
-        @SerializedName("HostPort")
-        String hostPort;
+        @JsonProperty("HostPort")
+        public String hostPort;
 
         public String getHostIp() {
             return hostIp;

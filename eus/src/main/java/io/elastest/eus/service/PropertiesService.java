@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -28,7 +31,6 @@ import java.util.TreeMap;
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +43,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class PropertiesService {
 
-    private final Logger log = LoggerFactory.getLogger(PropertiesService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     private Map<String, Map<String, String>> browsers = new TreeMap<>(
             Collections.reverseOrder());

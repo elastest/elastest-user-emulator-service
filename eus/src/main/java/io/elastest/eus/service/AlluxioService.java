@@ -16,25 +16,25 @@
  */
 package io.elastest.eus.service;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-
 import io.elastest.eus.EusException;
 import io.elastest.eus.external.EdmAluxioApi;
-import io.elastest.eus.external.EdmAluxioFile;
+import io.elastest.eus.json.EdmAluxioFile;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -53,7 +53,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @Service
 public class AlluxioService {
 
-    private final Logger log = LoggerFactory.getLogger(AlluxioService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${edm.alluxio.url}")
     private String edmAlluxioUrl;
@@ -136,12 +136,10 @@ public class AlluxioService {
     }
 
     public List<String> listFiles(String folder) throws IOException {
-        Response<ResponseBody> execute = alluxio.listFiles(folder).execute();
-        String responseBody = execute.body().string();
         log.trace("Listing Alluxio files in folder {}", folder);
-
-        EdmAluxioFile[] files = new Gson().fromJson(responseBody,
-                EdmAluxioFile[].class);
+        Response<EdmAluxioFile[]> execute = alluxio.listFiles(folder).execute();
+        EdmAluxioFile[] files = execute.body();
+        log.debug("List files response: {}", Arrays.toString(files));
         return stream(files).map(EdmAluxioFile::getName).collect(toList());
     }
 

@@ -16,10 +16,13 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import java.io.IOException;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -30,11 +33,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.elastest.eus.json.Capabilities;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
 
@@ -50,7 +53,7 @@ import io.elastest.eus.service.PropertiesService;
 @DisplayName("Integration test for Properties Service")
 public class PropertiesIntegrationTest {
 
-    final Logger log = LoggerFactory.getLogger(PropertiesIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
     private PropertiesService propertiesService;
@@ -142,7 +145,7 @@ public class PropertiesIntegrationTest {
 
     @Test
     @DisplayName("Valid capabilities")
-    void testJson() {
+    void testJson() throws IOException {
         // Test data (input)
         String jsonCapabilities = "{" + " \"desiredCapabilities\": {"
                 + "\"browserName\": \"chrome\"," + " \"version\": \"59\","
@@ -159,9 +162,15 @@ public class PropertiesIntegrationTest {
         String expectedDocker = "selenium/standalone-chrome-debug:3.4.0-einsteinium";
 
         // Exercise
-        String browserName = jsonService.getBrowser(jsonCapabilities);
-        String version = jsonService.getVersion(jsonCapabilities);
-        String platform = jsonService.getPlatform(jsonCapabilities);
+        String browserName = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getBrowserName();
+        String version = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getVersion();
+        String platform = jsonService
+                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .getDesiredCapabilities().getPlatform();
 
         String realKey = propertiesService.getKeyFromCapabilities(browserName,
                 version, platform);

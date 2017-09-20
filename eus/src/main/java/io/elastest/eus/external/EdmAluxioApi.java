@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.external;
 
+import io.elastest.eus.json.EdmAluxioFile;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -51,6 +52,6 @@ public interface EdmAluxioApi {
     Call<ResponseBody> deleteFile(@Path("file") String file);
 
     @POST("/api/v1/paths//{folder}/list-status")
-    Call<ResponseBody> listFiles(@Path("folder") String folder);
+    Call<EdmAluxioFile[]> listFiles(@Path("folder") String folder);
 
 }

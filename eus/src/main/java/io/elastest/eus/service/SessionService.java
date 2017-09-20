@@ -17,8 +17,10 @@
 package io.elastest.eus.service;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Map;
@@ -28,7 +30,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -36,6 +37,9 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import io.elastest.eus.EusException;
+import io.elastest.eus.json.NewSession;
+import io.elastest.eus.json.RecordedSession;
+import io.elastest.eus.json.RemoveSession;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -46,7 +50,7 @@ import io.elastest.eus.session.SessionInfo;
  */
 public class SessionService extends TextWebSocketHandler {
 
-    private final Logger log = LoggerFactory.getLogger(SessionService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
@@ -127,8 +131,10 @@ public class SessionService extends TextWebSocketHandler {
     public void sendAllSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                sendTextMessage(session,
-                        jsonService.newSessionJson(sessionInfo).toString());
+                NewSession newSession = new NewSession(sessionInfo);
+                log.debug("Sending newSession message {} to session {}",
+                        newSession, session);
+                sendTextMessage(session, jsonService.objectToJson(newSession));
             }
         }
     }
@@ -145,16 +151,20 @@ public class SessionService extends TextWebSocketHandler {
     public void sendRecordingToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            sendTextMessage(session,
-                    jsonService.recordedSessionJson(sessionInfo).toString());
+            RecordedSession recordedSession = new RecordedSession(sessionInfo);
+            log.debug("Sending recording {} to session {}", recordedSession,
+                    session);
+            sendTextMessage(session, jsonService.objectToJson(recordedSession));
         }
     }
 
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            sendTextMessage(session,
-                    jsonService.newSessionJson(sessionInfo).toString());
+            NewSession newSession = new NewSession(sessionInfo);
+            log.debug("Sending newSession message {} to session {}", newSession,
+                    session);
+            sendTextMessage(session, jsonService.objectToJson(newSession));
         }
     }
 
@@ -165,8 +175,10 @@ public class SessionService extends TextWebSocketHandler {
     public void sendRemoveSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            sendTextMessage(session,
-                    jsonService.removeSessionJson(sessionInfo).toString());
+            RemoveSession removeSession = new RemoveSession(sessionInfo);
+            log.debug("Sending remove session message {} to session {}",
+                    removeSession, session);
+            sendTextMessage(session, jsonService.objectToJson(removeSession));
         }
     }
 

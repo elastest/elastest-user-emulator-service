@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.test.util;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 import java.net.URI;
 
@@ -29,7 +32,6 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Simple WebSocket client.
@@ -40,7 +42,7 @@ import org.slf4j.LoggerFactory;
 @ClientEndpoint
 public class WebSocketClient {
 
-    final Logger log = LoggerFactory.getLogger(WebSocketClient.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     Session userSession = null;
     MessageHandler messageHandler;

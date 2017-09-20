@@ -16,26 +16,32 @@
  */
 package io.elastest.eus.test.integration;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.WebDriverService;
 
 /**
- * Tests for properties JSON service.
+ * Tests for EUS status.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
@@ -43,14 +49,28 @@ import io.elastest.eus.service.JsonService;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
-@DisplayName("Integration test for JSON Service")
-public class JsonServiceIntegrationTest {
+@DisplayName("Integration tests for the status operation")
+public class WebDriverIntegrationTest {
 
-    final Logger log = LoggerFactory
-            .getLogger(JsonServiceIntegrationTest.class);
+    final Logger log = getLogger(lookup().lookupClass());
+
+    @Autowired
+    private WebDriverService webDriverService;
 
     @Autowired
     private JsonService jsonService;
+
+    @Test
+    @DisplayName("Get status")
+    void testStatus() throws JsonProcessingException {
+        // Exercise
+        String status = webDriverService.getStatus().getBody();
+        log.debug("EUS status {}", status);
+
+        // Assertions
+        assertNotNull(status);
+        assertTrue(jsonService.isJsonValid(status));
+    }
 
     @ParameterizedTest(name = "Checking {0}")
     @DisplayName("Parsing paths")
@@ -59,8 +79,9 @@ public class JsonServiceIntegrationTest {
             "/session/03e9d769-95e6-4772-939e-0bcd4d9d1b37/url", "/session",
             "/status" })
     void testJsonKey(String path) {
-        Optional<String> sessionId = jsonService.getSessionIdFromPath(path);
-        int countCharsInString = jsonService.countCharsInString(path, '/');
+        Optional<String> sessionId = webDriverService
+                .getSessionIdFromPath(path);
+        int countCharsInString = webDriverService.countCharsInString(path, '/');
         String errorMessage = "path " + path + " -- sessionId present "
                 + sessionId.isPresent() + " -- countCharsInString "
                 + countCharsInString;

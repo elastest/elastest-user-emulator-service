@@ -18,10 +18,12 @@ package io.elastest.eus.service;
 
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +49,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -75,7 +76,7 @@ import io.elastest.eus.docker.DockerContainer;
 @Service
 public class DockerService {
 
-    private final Logger log = LoggerFactory.getLogger(DockerService.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${docker.wait.timeout.sec}")
     private int dockerWaitTimeoutSec;

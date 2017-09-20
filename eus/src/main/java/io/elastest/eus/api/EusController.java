@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.api;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
@@ -25,7 +27,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -60,7 +61,7 @@ import io.swagger.annotations.ApiParam;
 @CrossOrigin
 public class EusController implements EusApi {
 
-    private final Logger log = LoggerFactory.getLogger(EusController.class);
+    final Logger log = getLogger(lookup().lookupClass());
 
     private WebDriverService webDriverService;
     private VncService vncService;
