@@ -31,12 +31,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.io.IOUtils;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.model.Bind;
@@ -100,7 +103,6 @@ public class DockerComposeService {
         this.jsonService = jsonService;
     }
 
-    @PostConstruct
     public void setup() throws IOException, InterruptedException {
         // 1. Start docker-compose-ui container
         dockerComposeUiContainerName = dockerService
@@ -282,6 +284,26 @@ public class DockerComposeService {
             log.trace("Deleting docker-compose project {}", project);
             dockerComposeApi.removeProject(project).execute();
         }
+    }
+
+    @Aspect
+    @Component
+    class DockerComposeAspect {
+        final Logger log = getLogger(lookup().lookupClass());
+
+        boolean isStarted = false;
+
+        @Autowired
+        DockerComposeService dockerComposeService;
+
+        @Before("execution(* io.elastest.eus.service.DockerComposeService.*(..))")
+        void before() throws IOException, InterruptedException {
+            if (!isStarted) {
+                isStarted = true;
+                dockerComposeService.setup();
+            }
+        }
+
     }
 
 }
