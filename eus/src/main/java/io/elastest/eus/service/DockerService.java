@@ -168,7 +168,7 @@ public class DockerService {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
-            log.debug("Using TORM: {}", useTorm);
+            log.trace("Using TORM: {}", useTorm);
             try (CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName)) {
 
@@ -179,22 +179,22 @@ public class DockerService {
                 Optional<List<PortBinding>> portBindings = dockerContainer
                         .getPortBindings();
                 if (portBindings.isPresent()) {
-                    log.debug("Using port binding: {}", portBindings.get());
+                    log.trace("Using port binding: {}", portBindings.get());
                     createContainer.withPortBindings(portBindings.get());
                 }
                 Optional<List<Volume>> volumes = dockerContainer.getVolumes();
                 if (volumes.isPresent()) {
-                    log.debug("Using volumes: {}", volumes.get());
+                    log.trace("Using volumes: {}", volumes.get());
                     createContainer.withVolumes(volumes.get());
                 }
                 Optional<List<Bind>> binds = dockerContainer.getBinds();
                 if (binds.isPresent()) {
-                    log.debug("Using binds: {}", binds.get());
+                    log.trace("Using binds: {}", binds.get());
                     createContainer.withBinds(binds.get());
                 }
                 Optional<List<String>> envs = dockerContainer.getEnvs();
                 if (envs.isPresent()) {
-                    log.debug("Using envs: {}", envs.get());
+                    log.trace("Using envs: {}", envs.get());
                     createContainer.withEnv(envs.get());
                 }
 
