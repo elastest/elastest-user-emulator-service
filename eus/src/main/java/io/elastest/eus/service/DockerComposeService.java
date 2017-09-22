@@ -52,7 +52,7 @@ import com.github.dockerjava.api.model.Volume;
 import io.elastest.eus.docker.DockerException;
 import io.elastest.eus.external.DockerComposeApi;
 import io.elastest.eus.external.DockerComposeProject;
-import io.elastest.eus.json.CreateProject;
+import io.elastest.eus.json.DockerComposeCreateProject;
 import io.elastest.eus.json.DockerComposeConfig;
 import io.elastest.eus.json.DockerComposeList;
 import io.elastest.eus.json.DockerComposeProjectMessage;
@@ -179,7 +179,7 @@ public class DockerComposeService {
 
     public boolean createProject(String projectName, String dockerComposeYml)
             throws IOException {
-        CreateProject createProject = new CreateProject(projectName,
+        DockerComposeCreateProject createProject = new DockerComposeCreateProject(projectName,
                 dockerComposeYml.replaceAll("'", "\""));
         log.trace("Creating Docker Compose with data: {}", createProject);
 

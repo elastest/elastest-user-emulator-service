@@ -19,30 +19,29 @@ package io.elastest.eus.json;
 import io.elastest.eus.session.SessionInfo;
 
 /**
- * Utility class for serialize JSON messages (recorded session).
+ * Utility class for serialize JSON messages (new session).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class RecordedSession {
+public class WebSocketNewSession {
 
-    public SessionInfo recordedSession;
+    public WebSocketSessionInfoEntry newSession;
 
-    public RecordedSession() {
+    public WebSocketNewSession() {
     }
 
-    public RecordedSession(SessionInfo recordedSession) {
-        this.recordedSession = recordedSession;
+    public WebSocketNewSession(SessionInfo sessionInfo) {
+        newSession = new WebSocketSessionInfoEntry(sessionInfo);
     }
 
-    public SessionInfo getRecordedSession() {
-        return recordedSession;
+    public WebSocketSessionInfoEntry getNewSession() {
+        return newSession;
     }
 
     @Override
     public String toString() {
-        return "RecordedSession [getRecordedSession()=" + getRecordedSession()
-                + "]";
+        return "WebSocketNewSession [getNewSession()=" + getNewSession() + "]";
     }
 
 }

@@ -40,8 +40,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.json.NewSession;
-import io.elastest.eus.json.RecordedSession;
+import io.elastest.eus.json.WebSocketNewSession;
+import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
@@ -148,12 +148,12 @@ public class WebSocketIntegrationTest {
         String jsonFileName = sessionId + registryMetadataExtension;
 
         String sessionInfoToJson = jsonService
-                .objectToJson(new RecordedSession(sessionInfo));
+                .objectToJson(new WebSocketRecordedSession(sessionInfo));
         File file = new File(registryFolder + jsonFileName);
         writeStringToFile(file, sessionInfoToJson, Charset.defaultCharset());
 
         String jsonMessage = jsonService
-                .objectToJson(new NewSession(sessionInfo));
+                .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);
 
         String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;

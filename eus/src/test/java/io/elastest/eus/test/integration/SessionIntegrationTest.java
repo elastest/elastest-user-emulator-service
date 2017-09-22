@@ -43,7 +43,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.json.SessionResponse;
+import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
@@ -111,7 +111,7 @@ public class SessionIntegrationTest {
         log.debug("[POST /session] Response {}", responseBody);
 
         String sessionId = jsonService
-                .jsonToObject(responseBody, SessionResponse.class)
+                .jsonToObject(responseBody, WebDriverSessionResponse.class)
                 .getSessionId();
         log.debug("sessionId {}", sessionId);
         assertNotNull(sessionId);

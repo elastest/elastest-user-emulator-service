@@ -16,32 +16,37 @@
  */
 package io.elastest.eus.json;
 
-import io.elastest.eus.session.SessionInfo;
-
 /**
- * Utility class for serialize JSON messages (new session).
+ * Utility class for serialize JSON messages (create project).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class NewSession {
+public class DockerComposeCreateProject {
 
-    public SessionInfo newSession;
+    public String name;
+    public String yml;
 
-    public NewSession() {
+    public DockerComposeCreateProject() {
     }
 
-    public NewSession(SessionInfo newSession) {
-        this.newSession = newSession;
+    public DockerComposeCreateProject(String name, String yml) {
+        this.name = name;
+        this.yml = yml;
     }
 
-    public SessionInfo getNewSession() {
-        return newSession;
+    public String getName() {
+        return name;
+    }
+
+    public String getYml() {
+        return yml;
     }
 
     @Override
     public String toString() {
-        return "NewSession [getNewSession()=" + getNewSession() + "]";
+        return "DockerComposeCreateProject [getName()=" + getName()
+                + ", getYml()=" + getYml() + "]";
     }
 
 }

@@ -37,7 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.json.Capabilities;
+import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
 
@@ -163,13 +163,13 @@ public class PropertiesIntegrationTest {
 
         // Exercise
         String browserName = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getBrowserName();
         String version = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
         String platform = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getPlatform();
 
         String realKey = propertiesService.getKeyFromCapabilities(browserName,

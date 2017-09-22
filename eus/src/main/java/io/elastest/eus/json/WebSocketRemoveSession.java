@@ -24,24 +24,25 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class RemoveSession {
+public class WebSocketRemoveSession {
 
-    public SessionInfo removeSession;
+    public WebSocketSessionInfoEntry removeSession;
 
-    public RemoveSession() {
+    public WebSocketRemoveSession() {
     }
 
-    public RemoveSession(SessionInfo removeSession) {
-        this.removeSession = removeSession;
+    public WebSocketRemoveSession(SessionInfo sessionInfo) {
+        removeSession = new WebSocketSessionInfoEntry(sessionInfo);
     }
 
-    public SessionInfo getRemoveSession() {
+    public WebSocketSessionInfoEntry getRemoveSession() {
         return removeSession;
     }
 
     @Override
     public String toString() {
-        return "RemoveSession [getRemoveSession()=" + getRemoveSession() + "]";
+        return "WebSocketRemoveSession [getRemoveSession()="
+                + getRemoveSession() + "]";
     }
 
 }

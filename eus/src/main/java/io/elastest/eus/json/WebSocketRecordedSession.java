@@ -16,37 +16,33 @@
  */
 package io.elastest.eus.json;
 
+import io.elastest.eus.session.SessionInfo;
+
 /**
- * Utility class for serialize JSON messages (create project).
+ * Utility class for serialize JSON messages (recorded session).
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class CreateProject {
+public class WebSocketRecordedSession {
 
-    public String name;
-    public String yml;
+    public WebSocketSessionInfoEntry recordedSession;
 
-    public CreateProject() {
+    public WebSocketRecordedSession() {
     }
 
-    public CreateProject(String name, String yml) {
-        this.name = name;
-        this.yml = yml;
+    public WebSocketRecordedSession(SessionInfo sessionInfo) {
+        recordedSession = new WebSocketSessionInfoEntry(sessionInfo);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getYml() {
-        return yml;
+    public WebSocketSessionInfoEntry getRecordedSession() {
+        return recordedSession;
     }
 
     @Override
     public String toString() {
-        return "CreateProject [getName()=" + getName() + ", getYml()="
-                + getYml() + "]";
+        return "WebSocketRecordedSession [getRecordedSession()="
+                + getRecordedSession() + "]";
     }
 
 }

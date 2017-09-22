@@ -40,7 +40,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
-import io.elastest.eus.json.Capabilities;
+import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.PropertiesService;
@@ -84,13 +84,13 @@ public class DockerIntegrationTest {
 
         // Exercise
         String browserName = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getBrowserName();
         String version = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
         String platform = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getPlatform();
 
         log.debug("Starting Hub from JSON message {}", jsonCapabilities);

@@ -22,7 +22,7 @@ package io.elastest.eus.json;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class Capabilities {
+public class WebDriverCapabilities {
 
     public DesiredCapabilities desiredCapabilities;
     public Object capabilities;
@@ -30,10 +30,11 @@ public class Capabilities {
     public Object alwaysMatch;
     public Object firstMatch;
 
-    public Capabilities() {
+    public WebDriverCapabilities() {
     }
 
-    public Capabilities(String browserName, String version, String platform) {
+    public WebDriverCapabilities(String browserName, String version,
+            String platform) {
         desiredCapabilities = new DesiredCapabilities(browserName, version,
                 platform);
     }
@@ -60,7 +61,7 @@ public class Capabilities {
 
     @Override
     public String toString() {
-        return "Capabilities [getDesiredCapabilities()="
+        return "WebDriverCapabilities [getDesiredCapabilities()="
                 + getDesiredCapabilities() + ", getCapabilities()="
                 + getCapabilities() + ", getRequiredCapabilities()="
                 + getRequiredCapabilities() + ", getAlwaysMatch()="

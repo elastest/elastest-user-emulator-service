@@ -50,9 +50,9 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
-import io.elastest.eus.json.Capabilities;
-import io.elastest.eus.json.EusStatus;
-import io.elastest.eus.json.SessionResponse;
+import io.elastest.eus.json.WebDriverCapabilities;
+import io.elastest.eus.json.WebDriverStatus;
+import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -113,7 +113,7 @@ public class WebDriverService {
     }
 
     public ResponseEntity<String> getStatus() throws JsonProcessingException {
-        EusStatus eusStatus = new EusStatus(true, "EUS ready");
+        WebDriverStatus eusStatus = new WebDriverStatus(true, "EUS ready");
         log.debug("EUS status {}", eusStatus);
         String statusBody = jsonService.objectToJson(eusStatus);
         return new ResponseEntity<>(statusBody, OK);
@@ -225,8 +225,8 @@ public class WebDriverService {
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
             String responseBody) throws IOException, InterruptedException {
-        SessionResponse sessionResponse = jsonService.jsonToObject(responseBody,
-                SessionResponse.class);
+        WebDriverSessionResponse sessionResponse = jsonService.jsonToObject(responseBody,
+                WebDriverSessionResponse.class);
         log.debug("Session response {}", sessionResponse);
 
         String sessionId = sessionResponse.getSessionId();
@@ -247,14 +247,14 @@ public class WebDriverService {
         // Workaround due to bug of selenium-server 3.4.0
         // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
         String browserName = jsonService
-                .jsonToObject(requestBody, Capabilities.class)
+                .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getBrowserName();
         String version = jsonService
-                .jsonToObject(requestBody, Capabilities.class)
+                .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
 
         if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
-            Capabilities firefox = new Capabilities("firefox", "", "ANY");
+            WebDriverCapabilities firefox = new WebDriverCapabilities("firefox", "", "ANY");
             log.debug("Using empty firefox capabilities {}", firefox);
             return Optional.of(
                     new HttpEntity<String>(jsonService.objectToJson(firefox)));
@@ -271,13 +271,13 @@ public class WebDriverService {
     private SessionInfo starBrowser(String jsonCapabilities, String timeout)
             throws IOException, InterruptedException {
         String browserName = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getBrowserName();
         String version = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
         String platform = jsonService
-                .jsonToObject(jsonCapabilities, Capabilities.class)
+                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getPlatform();
 
         String propertiesKey = propertiesService
@@ -352,7 +352,7 @@ public class WebDriverService {
     private boolean isLive(String jsonMessage) {
         boolean out = false;
         try {
-            out = jsonService.jsonToObject(jsonMessage, Capabilities.class)
+            out = jsonService.jsonToObject(jsonMessage, WebDriverCapabilities.class)
                     .getDesiredCapabilities().isLive();
             log.trace("Received message from a live session");
         } catch (Exception e) {

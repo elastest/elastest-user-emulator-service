@@ -22,12 +22,12 @@ package io.elastest.eus.json;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class EusStatus {
+public class WebDriverStatus {
 
     public boolean ready;
     public String message;
 
-    public EusStatus(boolean ready, String message) {
+    public WebDriverStatus(boolean ready, String message) {
         this.ready = ready;
         this.message = message;
     }
@@ -42,8 +42,8 @@ public class EusStatus {
 
     @Override
     public String toString() {
-        return "EusStatus [isReady()=" + isReady() + ", getMessage()="
-                + getMessage() + "]";
+        return "WebDriverStatusStatus [isReady()=" + isReady()
+                + ", getMessage()=" + getMessage() + "]";
     }
 
 }

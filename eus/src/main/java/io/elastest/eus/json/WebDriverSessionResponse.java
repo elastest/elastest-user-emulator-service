@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class SessionResponse {
+public class WebDriverSessionResponse {
 
     public String sessionId;
     public int status;
@@ -66,7 +66,7 @@ public class SessionResponse {
 
     @Override
     public String toString() {
-        return "SessionResponse [getSessionId()=" + getSessionId()
+        return "WebDriverSessionResponse [getSessionId()=" + getSessionId()
                 + ", getStatus()=" + getStatus() + ", getValue()=" + getValue()
                 + ", getOs()=" + getOs() + ", getState()=" + getState()
                 + ", gethCode()=" + gethCode() + ", getClazz()=" + getClazz()

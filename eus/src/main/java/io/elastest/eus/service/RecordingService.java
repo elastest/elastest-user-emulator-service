@@ -47,7 +47,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.EusException;
-import io.elastest.eus.json.RecordedSession;
+import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -175,7 +175,7 @@ public class RecordingService {
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
         String sessionId = sessionInfo.getSessionId();
         String metadataFileName = sessionId + registryMetadataExtension;
-        RecordedSession recordedSession = new RecordedSession(sessionInfo);
+        WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(sessionInfo);
         log.debug("Storing metadata {}", recordedSession);
         String sessionInfoToJson = jsonService.objectToJson(recordedSession);
 
