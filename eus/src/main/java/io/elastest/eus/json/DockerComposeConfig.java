@@ -31,9 +31,6 @@ public class DockerComposeConfig {
     String yml;
     String path;
 
-    public DockerComposeConfig() {
-    }
-
     public List<Object> getConfig() {
         return config;
     }

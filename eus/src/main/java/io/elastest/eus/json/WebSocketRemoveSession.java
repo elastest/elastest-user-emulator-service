@@ -29,6 +29,7 @@ public class WebSocketRemoveSession {
     WebSocketSessionInfoEntry removeSession;
 
     public WebSocketRemoveSession() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebSocketRemoveSession(SessionInfo sessionInfo) {

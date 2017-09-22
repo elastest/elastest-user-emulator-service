@@ -37,6 +37,7 @@ public class WebDriverSessionResponse {
     Object clazz;
 
     public WebDriverSessionResponse() {
+        // Empty default construct (needed by Jackson)
     }
 
     public String getSessionId() {

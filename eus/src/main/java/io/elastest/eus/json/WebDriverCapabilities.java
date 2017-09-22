@@ -31,6 +31,7 @@ public class WebDriverCapabilities {
     Object firstMatch;
 
     public WebDriverCapabilities() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebDriverCapabilities(String browserName, String version,

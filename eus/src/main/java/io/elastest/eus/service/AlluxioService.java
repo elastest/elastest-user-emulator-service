@@ -22,7 +22,6 @@ import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -138,9 +137,10 @@ public class AlluxioService {
     public List<String> listFiles(String folder) throws IOException {
         log.trace("Listing Alluxio files in folder {}", folder);
         Response<EdmAluxioFile[]> execute = alluxio.listFiles(folder).execute();
-        EdmAluxioFile[] files = execute.body();
-        log.debug("List files response: {}", Arrays.toString(files));
-        return stream(files).map(EdmAluxioFile::getName).collect(toList());
+        List<String> files = stream(execute.body()).map(EdmAluxioFile::getName)
+                .collect(toList());
+        log.debug("List files response: {}", files);
+        return files;
     }
 
     public List<String> getMetadataFileList() throws IOException {

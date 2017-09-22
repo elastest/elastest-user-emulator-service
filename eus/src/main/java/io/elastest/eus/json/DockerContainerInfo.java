@@ -31,9 +31,6 @@ public class DockerContainerInfo {
 
     List<DockerContainer> containers;
 
-    public DockerContainerInfo() {
-    }
-
     public List<DockerContainer> getContainers() {
         return containers;
     }

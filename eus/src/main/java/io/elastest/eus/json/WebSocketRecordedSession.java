@@ -29,6 +29,7 @@ public class WebSocketRecordedSession {
     WebSocketSessionInfoEntry recordedSession;
 
     public WebSocketRecordedSession() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebSocketRecordedSession(SessionInfo sessionInfo) {

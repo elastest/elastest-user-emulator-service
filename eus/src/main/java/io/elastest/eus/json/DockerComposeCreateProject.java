@@ -27,9 +27,6 @@ public class DockerComposeCreateProject {
     String name;
     String yml;
 
-    public DockerComposeCreateProject() {
-    }
-
     public DockerComposeCreateProject(String name, String yml) {
         this.name = name;
         this.yml = yml;

@@ -26,9 +26,6 @@ public class DockerComposeProjectMessage {
 
     String id;
 
-    public DockerComposeProjectMessage() {
-    }
-
     public DockerComposeProjectMessage(String id) {
         this.id = id;
     }

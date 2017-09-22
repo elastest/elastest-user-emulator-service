@@ -52,6 +52,7 @@ public class EdmAluxioFile {
     String fileId;
 
     public EdmAluxioFile() {
+        // Empty default construct (needed by Jackson)
     }
 
     public String getOwner() {

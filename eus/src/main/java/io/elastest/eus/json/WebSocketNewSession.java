@@ -29,6 +29,7 @@ public class WebSocketNewSession {
     WebSocketSessionInfoEntry newSession;
 
     public WebSocketNewSession() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebSocketNewSession(SessionInfo sessionInfo) {

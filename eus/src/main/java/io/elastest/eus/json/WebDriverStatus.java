@@ -28,6 +28,7 @@ public class WebDriverStatus {
     String message;
 
     public WebDriverStatus() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebDriverStatus(boolean ready, String message) {

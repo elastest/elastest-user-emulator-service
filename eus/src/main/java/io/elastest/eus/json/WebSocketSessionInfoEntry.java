@@ -33,6 +33,7 @@ public class WebSocketSessionInfoEntry {
     String creationTime;
 
     public WebSocketSessionInfoEntry() {
+        // Empty default construct (needed by Jackson)
     }
 
     public WebSocketSessionInfoEntry(SessionInfo sessionInfo) {

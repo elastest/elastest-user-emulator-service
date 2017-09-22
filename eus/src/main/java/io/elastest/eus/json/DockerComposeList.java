@@ -30,9 +30,6 @@ public class DockerComposeList {
     List<Object> active;
     Map<String, String> projects;
 
-    public DockerComposeList() {
-    }
-
     public Map<String, String> getProjects() {
         return projects;
     }
