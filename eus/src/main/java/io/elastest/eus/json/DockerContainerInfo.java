@@ -29,7 +29,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DockerContainerInfo {
 
-    public List<DockerContainer> containers;
+    List<DockerContainer> containers;
+
+    public DockerContainerInfo() {
+    }
 
     public List<DockerContainer> getContainers() {
         return containers;
@@ -40,24 +43,19 @@ public class DockerContainerInfo {
         return "DockerContainerInfo [getContainers()=" + getContainers() + "]";
     }
 
-    public static class DockerContainer {
-        public String command;
-
+    static class DockerContainer {
         @JsonProperty("is_running")
-        public boolean isRunning;
-
-        public Labels labels;
-
-        public String name;
+        boolean isRunning;
 
         @JsonProperty("name_without_project")
-        public String nameWithoutProject;
+        String nameWithoutProject;
 
-        public Ports ports;
-
-        public String state;
-
-        public Map<String, Object> volumes;
+        String command;
+        Labels labels;
+        String name;
+        Ports ports;
+        String state;
+        Map<String, Object> volumes;
 
         public String getCommand() {
             return command;
@@ -105,22 +103,22 @@ public class DockerContainerInfo {
 
     public static class Labels {
         @JsonProperty("com.docker.compose.config-hash")
-        public String configHash;
+        String configHash;
 
         @JsonProperty("com.docker.compose.container-number")
-        public String containerNumber;
+        String containerNumber;
 
         @JsonProperty("com.docker.compose.oneoff")
-        public String oneoff;
+        String oneoff;
 
         @JsonProperty("com.docker.compose.project")
-        public String project;
+        String project;
 
         @JsonProperty("com.docker.compose.service")
-        public String service;
+        String service;
 
         @JsonProperty("com.docker.compose.version")
-        public String version;
+        String version;
 
         public String getConfigHash() {
             return configHash;
@@ -158,7 +156,7 @@ public class DockerContainerInfo {
     }
 
     public static class Ports {
-        public Map<String, PortInfo> portsMap;
+        Map<String, PortInfo> portsMap;
 
         public Map<String, PortInfo> getPortsMap() {
             return portsMap;
@@ -173,10 +171,10 @@ public class DockerContainerInfo {
 
     public static class PortInfo {
         @JsonProperty("HostIp")
-        public String hostIp;
+        String hostIp;
 
         @JsonProperty("HostPort")
-        public String hostPort;
+        String hostPort;
 
         public String getHostIp() {
             return hostIp;

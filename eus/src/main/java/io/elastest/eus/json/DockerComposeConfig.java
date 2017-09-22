@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 ElasTest (http://elastest.io/)
+dlis     * (C) Copyright 2017-2019 ElasTest (http://elastest.io/)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import java.util.List;
  */
 public class DockerComposeConfig {
 
-    public List<Object> config;
-    public Object env;
-    public String yml;
-    public String path;
+    List<Object> config;
+    Object env;
+    String yml;
+    String path;
 
     public DockerComposeConfig() {
     }

@@ -24,8 +24,8 @@ package io.elastest.eus.json;
  */
 public class DockerComposeCreateProject {
 
-    public String name;
-    public String yml;
+    String name;
+    String yml;
 
     public DockerComposeCreateProject() {
     }

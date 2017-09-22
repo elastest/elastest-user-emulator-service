@@ -24,11 +24,11 @@ package io.elastest.eus.json;
  */
 public class WebDriverCapabilities {
 
-    public DesiredCapabilities desiredCapabilities;
-    public Object capabilities;
-    public Object requiredCapabilities;
-    public Object alwaysMatch;
-    public Object firstMatch;
+    DesiredCapabilities desiredCapabilities;
+    Object capabilities;
+    Object requiredCapabilities;
+    Object alwaysMatch;
+    Object firstMatch;
 
     public WebDriverCapabilities() {
     }
@@ -70,12 +70,12 @@ public class WebDriverCapabilities {
     }
 
     public class DesiredCapabilities {
-        public String browserName;
-        public Object chromeOptions;
-        public String version;
-        public String platform;
-        public boolean acceptInsecureCerts;
-        public boolean live;
+        String browserName;
+        Object chromeOptions;
+        String version;
+        String platform;
+        boolean acceptInsecureCerts;
+        boolean live;
 
         public DesiredCapabilities() {
         }

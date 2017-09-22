@@ -24,7 +24,10 @@ package io.elastest.eus.json;
  */
 public class DockerComposeProjectMessage {
 
-    public String id;
+    String id;
+
+    public DockerComposeProjectMessage() {
+    }
 
     public DockerComposeProjectMessage(String id) {
         this.id = id;

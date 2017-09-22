@@ -24,8 +24,11 @@ package io.elastest.eus.json;
  */
 public class WebDriverStatus {
 
-    public boolean ready;
-    public String message;
+    boolean ready;
+    String message;
+
+    public WebDriverStatus() {
+    }
 
     public WebDriverStatus(boolean ready, String message) {
         this.ready = ready;

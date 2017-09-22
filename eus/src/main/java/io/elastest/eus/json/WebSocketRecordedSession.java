@@ -26,7 +26,7 @@ import io.elastest.eus.session.SessionInfo;
  */
 public class WebSocketRecordedSession {
 
-    public WebSocketSessionInfoEntry recordedSession;
+    WebSocketSessionInfoEntry recordedSession;
 
     public WebSocketRecordedSession() {
     }

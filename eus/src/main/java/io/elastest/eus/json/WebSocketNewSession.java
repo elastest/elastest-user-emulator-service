@@ -26,7 +26,7 @@ import io.elastest.eus.session.SessionInfo;
  */
 public class WebSocketNewSession {
 
-    public WebSocketSessionInfoEntry newSession;
+    WebSocketSessionInfoEntry newSession;
 
     public WebSocketNewSession() {
     }

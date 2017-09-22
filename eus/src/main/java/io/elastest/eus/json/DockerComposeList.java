@@ -27,8 +27,8 @@ import java.util.Map;
  */
 public class DockerComposeList {
 
-    public List<Object> active;
-    public Map<String, String> projects;
+    List<Object> active;
+    Map<String, String> projects;
 
     public DockerComposeList() {
     }

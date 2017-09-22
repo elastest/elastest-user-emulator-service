@@ -25,6 +25,7 @@ import io.elastest.eus.session.SessionInfo;
  * @since 0.1.1
  */
 public class WebSocketSessionInfoEntry {
+
     String id;
     String url;
     String browser;

@@ -26,15 +26,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class WebDriverSessionResponse {
 
-    public String sessionId;
-    public int status;
-    public Object value;
-    public Object os;
-    public Object state;
-    public Object hCode;
+    String sessionId;
+    int status;
+    Object value;
+    Object os;
+    Object state;
+    Object hCode;
 
     @JsonProperty("class")
-    public Object clazz;
+    Object clazz;
+
+    public WebDriverSessionResponse() {
+    }
 
     public String getSessionId() {
         return sessionId;

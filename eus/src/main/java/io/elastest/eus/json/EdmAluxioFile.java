@@ -26,30 +26,30 @@ import java.util.List;
  */
 public class EdmAluxioFile {
 
-    public String owner;
-    public List<Long> blockIds;
-    public long creationTimeMs;
-    public int inMemoryPercentage;
-    public long lastModificationTimeMs;
-    public String persistenceState;
-    public boolean pinned;
-    public boolean mountPoint;
-    public List<FileBlockInfo> fileBlockInfos;
-    public boolean completed;
-    public boolean persisted;
-    public boolean cacheable;
-    public int ttl;
-    public String ttlAction;
-    public String group;
-    public int mode;
-    public long blockSizeBytes;
-    public String ufsPath;
-    public long mountId;
-    public boolean folder;
-    public long length;
-    public String name;
-    public String path;
-    public String fileId;
+    String owner;
+    List<Long> blockIds;
+    long creationTimeMs;
+    int inMemoryPercentage;
+    long lastModificationTimeMs;
+    String persistenceState;
+    boolean pinned;
+    boolean mountPoint;
+    List<FileBlockInfo> fileBlockInfos;
+    boolean completed;
+    boolean persisted;
+    boolean cacheable;
+    int ttl;
+    String ttlAction;
+    String group;
+    int mode;
+    long blockSizeBytes;
+    String ufsPath;
+    long mountId;
+    boolean folder;
+    long length;
+    String name;
+    String path;
+    String fileId;
 
     public EdmAluxioFile() {
     }
@@ -171,12 +171,9 @@ public class EdmAluxioFile {
     }
 
     public static class FileBlockInfo {
-        public List<Object> ufsLocations;
-        public BlockInfo blockInfo;
-        public long offset;
-
-        public FileBlockInfo() {
-        }
+        List<Object> ufsLocations;
+        BlockInfo blockInfo;
+        long offset;
 
         public List<Object> getUfsLocations() {
             return ufsLocations;
@@ -200,12 +197,9 @@ public class EdmAluxioFile {
     }
 
     public static class BlockInfo {
-        public long blockId;
-        public List<Location> locations;
-        public long length;
-
-        public BlockInfo() {
-        }
+        long blockId;
+        List<Location> locations;
+        long length;
 
         public long getBlockId() {
             return blockId;
@@ -229,12 +223,9 @@ public class EdmAluxioFile {
     }
 
     public static class Location {
-        public long workerId;
-        public WorkerAddress workerAddress;
-        public String tierAlias;
-
-        public Location() {
-        }
+        long workerId;
+        WorkerAddress workerAddress;
+        String tierAlias;
 
         public long getWorkerId() {
             return workerId;
@@ -258,14 +249,11 @@ public class EdmAluxioFile {
     }
 
     public static class WorkerAddress {
-        public String host;
-        public int rpcPort;
-        public String domainSocketPath;
-        public int dataPort;
-        public int webPort;
-
-        public WorkerAddress() {
-        }
+        String host;
+        int rpcPort;
+        String domainSocketPath;
+        int dataPort;
+        int webPort;
 
         public String getHost() {
             return host;

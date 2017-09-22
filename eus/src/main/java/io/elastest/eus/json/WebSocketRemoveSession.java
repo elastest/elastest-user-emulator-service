@@ -26,7 +26,7 @@ import io.elastest.eus.session.SessionInfo;
  */
 public class WebSocketRemoveSession {
 
-    public WebSocketSessionInfoEntry removeSession;
+    WebSocketSessionInfoEntry removeSession;
 
     public WebSocketRemoveSession() {
     }
