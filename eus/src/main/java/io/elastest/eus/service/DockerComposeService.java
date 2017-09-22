@@ -52,8 +52,8 @@ import com.github.dockerjava.api.model.Volume;
 import io.elastest.eus.docker.DockerException;
 import io.elastest.eus.external.DockerComposeApi;
 import io.elastest.eus.external.DockerComposeProject;
-import io.elastest.eus.json.DockerComposeCreateProject;
 import io.elastest.eus.json.DockerComposeConfig;
+import io.elastest.eus.json.DockerComposeCreateProject;
 import io.elastest.eus.json.DockerComposeList;
 import io.elastest.eus.json.DockerComposeProjectMessage;
 import io.elastest.eus.json.DockerContainerInfo;
@@ -179,9 +179,9 @@ public class DockerComposeService {
 
     public boolean createProject(String projectName, String dockerComposeYml)
             throws IOException {
-        DockerComposeCreateProject createProject = new DockerComposeCreateProject(projectName,
-                dockerComposeYml.replaceAll("'", "\""));
-        log.trace("Creating Docker Compose with data: {}", createProject);
+        DockerComposeCreateProject createProject = new DockerComposeCreateProject(
+                projectName, dockerComposeYml.replaceAll("'", "\""));
+        log.debug("Creating Docker Compose with data: {}", createProject);
 
         String json = jsonService.objectToJson(createProject);
         RequestBody data = create(parse(APPLICATION_JSON), json);
@@ -199,11 +199,11 @@ public class DockerComposeService {
     public boolean startProject(String projectName) throws IOException {
         DockerComposeProjectMessage projectMessage = new DockerComposeProjectMessage(
                 projectName);
+        log.debug("Starting Docker Compose project with data: {}",
+                projectMessage);
+
         RequestBody data = create(parse(APPLICATION_JSON),
                 jsonService.objectToJson(projectMessage));
-
-        log.trace("Starting Docker Compose project with data: {}",
-                projectMessage);
         Response<ResponseBody> response = dockerComposeApi.dockerComposeUp(data)
                 .execute();
 
@@ -217,11 +217,11 @@ public class DockerComposeService {
     public boolean stopProject(String projectName) throws IOException {
         DockerComposeProjectMessage projectMessage = new DockerComposeProjectMessage(
                 projectName);
+        log.debug("Stopping Docker Compose project with data: {}",
+                projectMessage);
+
         RequestBody data = create(parse(APPLICATION_JSON),
                 jsonService.objectToJson(projectMessage));
-
-        log.trace("Stopping Docker Compose project with data: {}",
-                projectMessage);
         Response<ResponseBody> response = dockerComposeApi
                 .dockerComposeDown(data).execute();
 
@@ -274,7 +274,9 @@ public class DockerComposeService {
         log.debug("Get YAML response code {}", response.code());
 
         if (response.isSuccessful()) {
-            return response.body().getYml();
+            DockerComposeConfig body = response.body();
+            log.debug("YAML body content: {}", body);
+            return body.getYml();
         }
         throw new DockerException(response.errorBody().string());
     }
