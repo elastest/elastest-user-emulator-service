@@ -39,8 +39,9 @@ public class DockerContainer {
     private final Optional<List<Volume>> volumes;
     private final Optional<List<Bind>> binds;
     private final Optional<List<String>> envs;
+    private final Optional<String> network;
 
-    private DockerContainer(Builder builder) {
+    private DockerContainer(DockerBuilder builder) {
         this.imageId = builder.imageId;
         this.containerName = builder.containerName;
         this.portBindings = builder.portBindings != null
@@ -49,10 +50,11 @@ public class DockerContainer {
         this.volumes = builder.volumes != null ? of(builder.volumes) : empty();
         this.binds = builder.binds != null ? of(builder.binds) : empty();
         this.envs = builder.envs != null ? of(builder.envs) : empty();
+        this.network = builder.network != null ? of(builder.network) : empty();
     }
 
-    public static Builder dockerBuilder(String imageId, String containerName) {
-        return new Builder(imageId, containerName);
+    public static DockerBuilder dockerBuilder(String imageId, String containerName) {
+        return new DockerBuilder(imageId, containerName);
     }
 
     public String getImageId() {
@@ -79,36 +81,46 @@ public class DockerContainer {
         return envs;
     }
 
-    public static class Builder {
+    public Optional<String> getNetwork() {
+        return network;
+    }
+
+    public static class DockerBuilder {
         private String imageId;
         private String containerName;
         private List<PortBinding> portBindings;
         private List<Volume> volumes;
         private List<Bind> binds;
         private List<String> envs;
+        private String network;
 
-        public Builder(String imageId, String containerName) {
+        public DockerBuilder(String imageId, String containerName) {
             this.imageId = imageId;
             this.containerName = containerName;
         }
 
-        public Builder portBindings(List<PortBinding> portBindings) {
+        public DockerBuilder portBindings(List<PortBinding> portBindings) {
             this.portBindings = portBindings;
             return this;
         }
 
-        public Builder volumes(List<Volume> volumes) {
+        public DockerBuilder volumes(List<Volume> volumes) {
             this.volumes = volumes;
             return this;
         }
 
-        public Builder binds(List<Bind> binds) {
+        public DockerBuilder binds(List<Bind> binds) {
             this.binds = binds;
             return this;
         }
 
-        public Builder envs(List<String> envs) {
+        public DockerBuilder envs(List<String> envs) {
             this.envs = envs;
+            return this;
+        }
+
+        public DockerBuilder network(String network) {
+            this.network = network;
             return this;
         }
 

@@ -35,9 +35,12 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
+
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -69,6 +72,12 @@ public class VncService {
     @Value("${novnc.autofocus.html}")
     private String vncAutoFocusHtml;
 
+    @Value("${use.torm}")
+    private boolean useTorm;
+
+    @Value("${docker.network}")
+    private String dockerNetwork;
+
     private DockerService dockerService;
     SessionService sessionService;
 
@@ -89,14 +98,18 @@ public class VncService {
 
         // Port binding
         int noVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindNoVncPort = Ports.Binding.bindPort(noVncBindPort);
-        ExposedPort exposedNoVncPort = ExposedPort.tcp(noVncExposedPort);
+        Binding bindNoVncPort = bindPort(noVncBindPort);
+        ExposedPort exposedNoVncPort = tcp(noVncExposedPort);
         List<PortBinding> portBindings = asList(
                 new PortBinding(bindNoVncPort, exposedNoVncPort));
 
-        dockerService.startAndWaitContainer(
-                dockerBuilder(noVncImageId, vncContainerName)
-                        .portBindings(portBindings).build());
+        DockerBuilder dockerBuilder = dockerBuilder(noVncImageId,
+                vncContainerName).portBindings(portBindings);
+
+        if (useTorm) {
+            dockerBuilder.network(dockerNetwork);
+        }
+        dockerService.startAndWaitContainer(dockerBuilder.build());
 
         String vncContainerIp = dockerService.getDockerServerIp();
         String hubContainerIp = dockerService.getDockerServerIp();

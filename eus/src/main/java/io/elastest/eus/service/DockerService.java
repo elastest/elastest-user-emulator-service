@@ -87,17 +87,11 @@ public class DockerService {
     @Value("${docker.server.url}")
     private String dockerServerUrl;
 
-    @Value("${docker.network}")
-    private String dockerNetwork;
-
     @Value("${docker.default.host.ip}")
     private String dockerDefaultHostIp;
 
     @Value("${docker.server.port}")
     private int dockerServerPort;
-
-    @Value("${use.torm}")
-    private boolean useTorm;
 
     private ShellService shellService;
 
@@ -168,14 +162,14 @@ public class DockerService {
         if (!isRunningContainer(containerName)) {
             pullImageIfNecessary(imageId);
 
-            log.trace("Using TORM: {}", useTorm);
             try (CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName)) {
 
-                if (useTorm) {
-                    createContainer.withNetworkMode(dockerNetwork);
+                Optional<String> network = dockerContainer.getNetwork();
+                if (network.isPresent()) {
+                    log.trace("Using network: {}", network.get());
+                    createContainer.withNetworkMode(network.get());
                 }
-
                 Optional<List<PortBinding>> portBindings = dockerContainer
                         .getPortBindings();
                 if (portBindings.isPresent()) {

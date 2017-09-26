@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.integration;
 
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -37,9 +39,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
@@ -74,6 +76,12 @@ public class DockerIntegrationTest {
     @Value("${hub.vnc.exposedport}")
     private int hubVncExposedPort;
 
+    @Value("${use.torm}")
+    private boolean useTorm;
+
+    @Value("${docker.network}")
+    private String dockerNetwork;
+
     @Test
     @DisplayName("Ask for Chrome to Docker")
     void testDocker() throws Exception {
@@ -102,20 +110,24 @@ public class DockerIntegrationTest {
                 .generateContainerName("eus-hub-for-test-");
 
         int hubBindPort = dockerService.findRandomOpenPort();
-        Binding bindPort = Ports.Binding.bindPort(hubBindPort);
-        ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
+        Binding bindPort = bindPort(hubBindPort);
+        ExposedPort exposedPort = tcp(hubExposedPort);
 
         int hubVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
-        ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
+        Binding bindHubVncPort = bindPort(hubVncBindPort);
+        ExposedPort exposedHubVncPort = tcp(hubVncExposedPort);
 
         List<PortBinding> portBindings = asList(
                 new PortBinding(bindPort, exposedPort),
                 new PortBinding(bindHubVncPort, exposedHubVncPort));
 
-        dockerService
-                .startAndWaitContainer(dockerBuilder(imageId, containerName)
-                        .portBindings(portBindings).build());
+        DockerBuilder dockerBuilder = dockerBuilder(imageId, containerName)
+                .portBindings(portBindings);
+        if (useTorm) {
+            dockerBuilder.network(dockerNetwork);
+        }
+
+        dockerService.startAndWaitContainer(dockerBuilder.build());
 
         // Assertions
         assertTrue(dockerService.existsContainer(containerName));

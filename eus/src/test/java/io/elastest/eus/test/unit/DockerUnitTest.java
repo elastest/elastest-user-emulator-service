@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.unit;
 
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -39,7 +41,6 @@ import org.slf4j.Logger;
 
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.service.DockerService;
@@ -69,8 +70,8 @@ public class DockerUnitTest {
     @DisplayName("Try to start a container with invalid input")
     void testEmptyContainer() {
         assertThrows(Exception.class, () -> {
-            Binding bindPort = Ports.Binding.bindPort(0);
-            ExposedPort exposedPort = ExposedPort.tcp(0);
+            Binding bindPort = bindPort(0);
+            ExposedPort exposedPort = tcp(0);
             List<PortBinding> portBindings = asList(
                     new PortBinding(bindPort, exposedPort));
 

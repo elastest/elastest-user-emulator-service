@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.service;
 
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -47,9 +49,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
@@ -92,6 +94,12 @@ public class WebDriverService {
 
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
+
+    @Value("${use.torm}")
+    private boolean useTorm;
+
+    @Value("${docker.network}")
+    private String dockerNetwork;
 
     private DockerService dockerService;
     private PropertiesService propertiesService;
@@ -303,20 +311,23 @@ public class WebDriverService {
 
         // Port binding
         int hubBindPort = dockerService.findRandomOpenPort();
-        Binding bindPort = Ports.Binding.bindPort(hubBindPort);
-        ExposedPort exposedPort = ExposedPort.tcp(hubExposedPort);
+        Binding bindPort = bindPort(hubBindPort);
+        ExposedPort exposedPort = tcp(hubExposedPort);
 
         int hubVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindHubVncPort = Ports.Binding.bindPort(hubVncBindPort);
-        ExposedPort exposedHubVncPort = ExposedPort.tcp(hubVncExposedPort);
+        Binding bindHubVncPort = bindPort(hubVncBindPort);
+        ExposedPort exposedHubVncPort = tcp(hubVncExposedPort);
 
         List<PortBinding> portBindings = asList(
                 new PortBinding(bindPort, exposedPort),
                 new PortBinding(bindHubVncPort, exposedHubVncPort));
 
-        dockerService
-                .startAndWaitContainer(dockerBuilder(imageId, hubContainerName)
-                        .portBindings(portBindings).envs(env).build());
+        DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
+                .portBindings(portBindings).envs(env);
+        if (useTorm) {
+            dockerBuilder.network(dockerNetwork);
+        }
+        dockerService.startAndWaitContainer(dockerBuilder.build());
 
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubBindPort + "/wd/hub";

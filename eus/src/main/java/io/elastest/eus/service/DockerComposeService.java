@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.service;
 
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.Charset.defaultCharset;
@@ -45,10 +47,10 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.api.model.Volume;
 
+import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.docker.DockerException;
 import io.elastest.eus.external.DockerComposeApi;
 import io.elastest.eus.external.DockerComposeProject;
@@ -91,6 +93,12 @@ public class DockerComposeService {
     @Value("${docker.default.socket}")
     private String dockerDefaultSocket;
 
+    @Value("${use.torm}")
+    private boolean useTorm;
+
+    @Value("${docker.network}")
+    private String dockerNetwork;
+
     private String dockerComposeUiContainerName;
     private DockerComposeApi dockerComposeApi;
 
@@ -109,8 +117,8 @@ public class DockerComposeService {
                 .generateContainerName(dockerComposeUiPrefix);
 
         int dockerComposeBindPort = dockerService.findRandomOpenPort();
-        Binding bindNoVncPort = Ports.Binding.bindPort(dockerComposeBindPort);
-        ExposedPort exposedNoVncPort = ExposedPort.tcp(dockerComposeUiPort);
+        Binding bindNoVncPort = bindPort(dockerComposeBindPort);
+        ExposedPort exposedNoVncPort = tcp(dockerComposeUiPort);
 
         String dockerComposeServiceUrl = "http://"
                 + dockerService.getDockerServerIp() + ":"
@@ -125,10 +133,10 @@ public class DockerComposeService {
         List<Volume> volumes = asList(volume);
         List<Bind> binds = asList(new Bind(dockerDefaultSocket, volume));
 
-        dockerService
-                .startAndWaitContainer(dockerBuilder(dockerComposeUiImageId,
-                        dockerComposeUiContainerName).portBindings(portBindings)
-                                .volumes(volumes).binds(binds).build());
+        DockerBuilder dockerBuilder = dockerBuilder(dockerComposeUiImageId,
+                dockerComposeUiContainerName).portBindings(portBindings)
+                        .volumes(volumes).binds(binds);
+        dockerService.startAndWaitContainer(dockerBuilder.build());
 
         // 2. Create Retrofit object to call docker-compose-ui REST API
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
