@@ -68,14 +68,14 @@ public class PropertiesIntegrationTest {
                 Arguments.of("firefox", "54", "LINUX", "firefox_54_LINUX"),
                 Arguments.of("firefox", "53", "ANY", "firefox_53_LINUX"),
                 Arguments.of("firefox", "52", "LINUX", "firefox_52_LINUX"),
-                Arguments.of("chrome", null, null, "chrome_59_LINUX"),
-                Arguments.of("firefox", null, null, "firefox_54_LINUX"),
+                Arguments.of("chrome", null, null, "chrome_61_LINUX"),
+                Arguments.of("firefox", null, null, "firefox_55_LINUX"),
                 Arguments.of("chrome", "58", null, "chrome_58_LINUX"),
                 Arguments.of("firefox", "53", null, "firefox_53_LINUX"),
-                Arguments.of("chrome", "", "", "chrome_59_LINUX"),
-                Arguments.of("chrome", "", "ANY", "chrome_59_LINUX"),
-                Arguments.of("firefox", "", "", "firefox_54_LINUX"),
-                Arguments.of("firefox", "", "ANY", "firefox_54_LINUX"));
+                Arguments.of("chrome", "", "", "chrome_61_LINUX"),
+                Arguments.of("chrome", "", "ANY", "chrome_61_LINUX"),
+                Arguments.of("firefox", "", "", "firefox_55_LINUX"),
+                Arguments.of("firefox", "", "ANY", "firefox_55_LINUX"));
     }
 
     static Stream<Arguments> dockerProvider() {
@@ -93,9 +93,9 @@ public class PropertiesIntegrationTest {
                 Arguments.of("firefox", "52", "LINUX",
                         "selenium/standalone-firefox-debug:3.4.0-actinium"),
                 Arguments.of("chrome", null, null,
-                        "selenium/standalone-chrome-debug:3.4.0-einsteinium"),
+                        "selenium/standalone-chrome-debug:3.5.3"),
                 Arguments.of("firefox", null, null,
-                        "selenium/standalone-firefox-debug:3.4.0-einsteinium"),
+                        "selenium/standalone-firefox-debug:3.5.3"),
                 Arguments.of("chrome", "58", null,
                         "selenium/standalone-chrome-debug:3.4.0-chromium"),
                 Arguments.of("firefox", "53", null,
