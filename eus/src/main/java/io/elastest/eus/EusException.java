@@ -26,10 +26,6 @@ public class EusException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public EusException(String msg) {
-        super(msg);
-    }
-
     public EusException(String msg, Throwable e) {
         super(msg, e);
     }

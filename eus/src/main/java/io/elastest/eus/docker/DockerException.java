@@ -30,4 +30,8 @@ public class DockerException extends RuntimeException {
         super(msg);
     }
 
+    public DockerException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
 }

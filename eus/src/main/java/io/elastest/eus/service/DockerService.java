@@ -63,8 +63,8 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 
-import io.elastest.eus.EusException;
 import io.elastest.eus.docker.DockerContainer;
+import io.elastest.eus.docker.DockerException;
 
 /**
  * Service implementation simulating EPM (ElasTest Platform Manager) with
@@ -303,9 +303,10 @@ public class DockerService {
             if (!isRunning) {
                 // Check timeout
                 if (currentTimeMillis() > timeoutMs) {
-                    throw new EusException("Timeout of " + dockerWaitTimeoutSec
-                            + " seconds waiting for container "
-                            + containerName);
+                    throw new DockerException(
+                            "Timeout of " + dockerWaitTimeoutSec
+                                    + " seconds waiting for container "
+                                    + containerName);
                 }
 
                 // Wait poll time
@@ -385,7 +386,7 @@ public class DockerService {
             // Not propagating multiple exceptions (NoSuchAlgorithmException,
             // KeyManagementException, IOException, InterruptedException) to
             // improve readability
-            throw new EusException(errorMessage, e);
+            throw new DockerException(errorMessage, e);
         }
 
     }
@@ -421,7 +422,7 @@ public class DockerService {
             }
 
             if (currentTimeMillis() > endTimeMillis) {
-                throw new EusException(errorMessage);
+                throw new DockerException(errorMessage);
             }
         }
     }
