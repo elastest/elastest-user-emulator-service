@@ -131,7 +131,8 @@ public class SessionService extends TextWebSocketHandler {
     public void sendAllSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                WebSocketNewSession newSession = new WebSocketNewSession(sessionInfo);
+                WebSocketNewSession newSession = new WebSocketNewSession(
+                        sessionInfo);
                 log.debug("Sending newSession message {} to session {}",
                         newSession, session);
                 sendTextMessage(session, jsonService.objectToJson(newSession));
@@ -151,7 +152,8 @@ public class SessionService extends TextWebSocketHandler {
     public void sendRecordingToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(sessionInfo);
+            WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(
+                    sessionInfo);
             log.debug("Sending recording {} to session {}", recordedSession,
                     session);
             sendTextMessage(session, jsonService.objectToJson(recordedSession));
@@ -161,7 +163,8 @@ public class SessionService extends TextWebSocketHandler {
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            WebSocketNewSession newSession = new WebSocketNewSession(sessionInfo);
+            WebSocketNewSession newSession = new WebSocketNewSession(
+                    sessionInfo);
             log.debug("Sending newSession message {} to session {}", newSession,
                     session);
             sendTextMessage(session, jsonService.objectToJson(newSession));
@@ -175,7 +178,8 @@ public class SessionService extends TextWebSocketHandler {
     public void sendRemoveSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            WebSocketRemoveSession removeSession = new WebSocketRemoveSession(sessionInfo);
+            WebSocketRemoveSession removeSession = new WebSocketRemoveSession(
+                    sessionInfo);
             log.debug("Sending remove session message {} to session {}",
                     removeSession, session);
             sendTextMessage(session, jsonService.objectToJson(removeSession));

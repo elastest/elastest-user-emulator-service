@@ -152,9 +152,11 @@ public class DockerComposeService {
 
     @PreDestroy
     public void teardown() {
-        log.debug("Stopping docker-compose-ui container: {}",
-                dockerComposeUiContainerName);
-        dockerService.stopAndRemoveContainer(dockerComposeUiContainerName);
+        if (dockerComposeUiContainerName != null) {
+            log.debug("Stopping docker-compose-ui container: {}",
+                    dockerComposeUiContainerName);
+            dockerService.stopAndRemoveContainer(dockerComposeUiContainerName);
+        }
     }
 
     public DockerComposeProject createAndStartDockerComposeWithFile(

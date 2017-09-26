@@ -51,8 +51,9 @@ import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.json.WebDriverCapabilities;
-import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.json.WebDriverSessionResponse;
+import io.elastest.eus.json.WebDriverSessionValue;
+import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -225,11 +226,19 @@ public class WebDriverService {
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
             String responseBody) throws IOException, InterruptedException {
-        WebDriverSessionResponse sessionResponse = jsonService.jsonToObject(responseBody,
-                WebDriverSessionResponse.class);
-        log.debug("Session response {}", sessionResponse);
+        WebDriverSessionResponse sessionResponse = jsonService
+                .jsonToObject(responseBody, WebDriverSessionResponse.class);
+        log.debug("Session response: JSON: {} -- Java: {}", responseBody,
+                sessionResponse);
 
         String sessionId = sessionResponse.getSessionId();
+        if (sessionId == null) {
+            // Due to changes in JSON response in Selenium 3.5.3
+            WebDriverSessionValue responseValue = jsonService
+                    .jsonToObject(responseBody, WebDriverSessionValue.class);
+            log.debug("Response value {}", responseValue);
+            sessionId = responseValue.getValue().getSessionId();
+        }
         sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
 
@@ -254,7 +263,8 @@ public class WebDriverService {
                 .getDesiredCapabilities().getVersion();
 
         if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
-            WebDriverCapabilities firefox = new WebDriverCapabilities("firefox", "", "ANY");
+            WebDriverCapabilities firefox = new WebDriverCapabilities("firefox",
+                    "", "ANY");
             log.debug("Using empty firefox capabilities {}", firefox);
             return Optional.of(
                     new HttpEntity<String>(jsonService.objectToJson(firefox)));
@@ -352,7 +362,8 @@ public class WebDriverService {
     private boolean isLive(String jsonMessage) {
         boolean out = false;
         try {
-            out = jsonService.jsonToObject(jsonMessage, WebDriverCapabilities.class)
+            out = jsonService
+                    .jsonToObject(jsonMessage, WebDriverCapabilities.class)
                     .getDesiredCapabilities().isLive();
             log.trace("Received message from a live session");
         } catch (Exception e) {
