@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 function containerIp () {
 	ip=$(docker inspect --format=\"{{.NetworkSettings.Networks."$COMPOSE_PROJECT_NAME"_elastest.IPAddress}}\" "$COMPOSE_PROJECT_NAME"_$1_1 2> /dev/null)
