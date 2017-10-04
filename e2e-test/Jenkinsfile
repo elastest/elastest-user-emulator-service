@@ -7,7 +7,7 @@ node('docker') {
 
       stage "Start ElasTest Platform"
          echo ("Start ElasTest Platform")
-         sh 'cd e2e-test; . ./start_platform.sh'
+         sh 'cd e2e-test; ./start_platform.sh'
 
       stage "E2E tests"
          echo ("E2E tests")
