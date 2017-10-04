@@ -16,7 +16,6 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -25,6 +24,7 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfEl
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -51,12 +51,23 @@ public class EusSupportServiceE2eTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
+    String tormUrl = "http://localhost:37006/"; // default value (local)
+
+    @BeforeEach
+    void setup() {
+        String etmApi = System.getenv("ET_ETM_API");
+        if (etmApi != null) {
+            tormUrl = "http://" + etmApi + ":8091";
+        }
+        log.debug("Using URL {} to connect to TORM", tormUrl);
+    }
+
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(ChromeDriver driver) throws InterruptedException {
         log.debug("Navigate to TORM and select EUS as support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
-        driver.get(getProperty("torm.url", "http://localhost:37006/"));
+        driver.get(tormUrl);
         driver.findElement(By.id("main_menu")).click();
         driver.findElement(By.id("nav_support_services")).click();
         driver.findElement(By.className("mat-select-trigger")).click();
