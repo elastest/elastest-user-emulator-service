@@ -38,12 +38,12 @@ while [ $ERROR -gt 0 ] ; do
 		fi
 done
 
-ET_ETM_HOST=$(containerIp "etm")
+ET_ETM_HOST=$(docker inspect --format=\"{{.NetworkSettings.Networks.elastest_elastest.IPAddress}}\" elastest_etm_1 2> /dev/null)
 export ET_ETM_HOST=$ET_ETM_HOST
 
 echo "ElasTest ETM container is started with IP $ET_ETM_HOST"
 
-docker logs -f "$COMPOSE_PROJECT_NAME"_etm_1 &
+docker logs -f elastest_etm_1 &
 
 # Connect test container to docker-compose network
 
