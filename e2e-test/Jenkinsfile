@@ -7,11 +7,20 @@ node('docker') {
 
       stage "Start ElasTest Platform"
          echo ("Start ElasTest Platform")
-         sh 'cd e2e-test; ./start_platform.sh'
+         log = sh (
+            script: "cd e2e-test; ./start_platform.sh",
+            returnStdout: true
+         ).trim().split("\n");
+
+         ET_ETM_API = log[log.length - 1];
 
       stage "E2E tests"
          echo ("E2E tests")
-         sh 'cd e2e-test; mvn clean test'
+         
+         withEnv(["ET_ETM_API=${ET_ETM_API}"]) {
+            sh 'cd e2e-test; mvn clean test'
+         }
+
          step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
 
       stage "Stop ElasTest Platform"

@@ -16,9 +16,9 @@ export COMPOSE_PROJECT_NAME=$projectName
 
 # Start
 
-echo 'Running Platform...'
-docker run -d -v /var/run/docker.sock:/var/run/docker.sock --rm elastest/platform start --lite --forcepull --noports --nocheck
-
+echo 'Starting ElasTest Platform...'
+docker pull elastest/platform
+docker run -d -v /var/run/docker.sock:/var/run/docker.sock --rm elastest/platform start --lite --forcepull --nocheck
 
 # Check if ETM container is created
 ERROR=$(containerIp "etm" "check")
@@ -27,18 +27,21 @@ initial=70
 counter=$initial
 
 while [ $ERROR -gt 0 ] ; do
+	echo "Waiting to ElasTest ETM container"
 	ERROR=$(containerIp "etm" "check")
 	sleep 2
 	# prevent infinite loop
 	counter=$(($counter-1))
 		if [ $counter = 0 ]; then
 		    echo "Timeout while checking if ETM container is created"
-		    break;
+		    exit 1
 		fi
 done
 
-ET_ETM_API=$(containerIp "etm")
-export ET_ETM_API=$ET_ETM_API
+echo "ElasTest ETM container is started with IP $ET_ETM_HOST"
+
+ET_ETM_HOST=$(containerIp "etm")
+export ET_ETM_HOST=$ET_ETM_HOST
 
 docker logs -f "$COMPOSE_PROJECT_NAME"_etm_1 &
 
@@ -46,36 +49,49 @@ docker logs -f "$COMPOSE_PROJECT_NAME"_etm_1 &
 
 containerId=$(cat /proc/self/cgroup | grep "docker" | sed s/\\//\\n/g | tail -1)
 
-echo "containerId = ${containerId}"
+if [ $containerId = '' ]; then
+   echo "Script executing inside the container = ${containerId}"
+   docker network connect ${projectName}_elastest ${containerId}
+else			
+   echo "Script executing in host (not in container)"
+fi
 
-docker network connect ${projectName}_elastest ${containerId}
+echo "Waiting to ETM service ready inside the container (port 8091 available in IP $ET_ETM_HOST)"
 
 # wait ETM started
 initial=90
 counter=$initial
-while ! nc -z -v $ET_ETM_API 8091 2> /dev/null; do
-    if [ $counter = $initial ]; then
-	    echo "ETM is not ready in address $ET_ETM_API and port 8091"
-    fi
-    echo 'Wait while ETM is starting up'
+while ! nc -z -v $ET_ETM_HOST 8091 2> /dev/null; do
+	echo "Waiting to ETM ready inside the container"
     sleep 2
     # prevent infinite loop
     counter=$(($counter-1))
     if [ $counter = 0 ]; then
-	    echo "Timeout while wait for ETM started"
-	    break;
+	    echo "Timeout while checking if ETM service is started"
+	    exit 1
     fi
 done
 
 echo ''
-echo "ETM is ready in address $ET_ETM_API and port 8091"
+echo "ETM is ready in address $ET_ETM_HOST and port 8091"
 
-echo 'Check if ETM is working...'
-responseCheck=$(curl --write-out %{http_code} --silent --output /dev/null http://$ET_ETM_API:8091)
+echo 'Check if ETM is working... (return 200 OK)'
+responseCheck=$(curl --write-out %{http_code} --silent --output /dev/null http://${ET_ETM_HOST}:8091)
 
 if [ $responseCheck = '200' ]; then
-	echo 'ElasTest ETM started'
+	echo "ElasTest ETM is working (returned 200 OK in http://${ET_ETM_HOST}:8091)"
 else
-	echo 'ElasTest ETM not started'
+	echo "ElasTest ETM is not working (returned ${responseCheck} in http://${ET_ETM_HOST}:8091)"
+	exit 1
 fi
+
+echo ''
+echo ''
+echo ''
+echo ''
+echo ''
+echo ''
+echo ''
+echo "http://$ET_ETM_HOST:8091"
+
 

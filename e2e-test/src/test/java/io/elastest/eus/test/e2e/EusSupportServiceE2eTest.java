@@ -57,7 +57,7 @@ public class EusSupportServiceE2eTest {
     void setup() {
         String etmApi = System.getenv("ET_ETM_API");
         if (etmApi != null) {
-            tormUrl = "http://" + etmApi + ":8091";
+            tormUrl = etmApi;
         }
         log.debug("Using URL {} to connect to TORM", tormUrl);
     }
