@@ -7,12 +7,16 @@ node('docker') {
 
       stage "Start ElasTest Platform"
          echo ("Start ElasTest Platform")
-         log = sh (
-            script: "cd e2e-test; ./start_platform.sh",
-            returnStdout: true
-         ).trim().split("\n");
+         sh "cd e2e-test; ./start_platform.sh"
 
-         ET_ETM_API = log[log.length - 1];
+         ET_ETM_API = sh (
+            script: "docker inspect --format=\"{{.NetworkSettings.Networks.elastest_elastest.IPAddress}}\" elastest_etm_1 2> /dev/null",
+            returnStdout: true
+         ).trim();
+
+         ET_ETM_API="http://"+ET_ETM_API+":8091/"
+
+         echo "ElasTest started in URL ${ET_ETM_API}"
 
       stage "E2E tests"
          echo ("E2E tests")

@@ -38,10 +38,10 @@ while [ $ERROR -gt 0 ] ; do
 		fi
 done
 
-echo "ElasTest ETM container is started with IP $ET_ETM_HOST"
-
 ET_ETM_HOST=$(containerIp "etm")
 export ET_ETM_HOST=$ET_ETM_HOST
+
+echo "ElasTest ETM container is started with IP $ET_ETM_HOST"
 
 docker logs -f "$COMPOSE_PROJECT_NAME"_etm_1 &
 
