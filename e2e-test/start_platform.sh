@@ -49,7 +49,8 @@ docker logs -f "$COMPOSE_PROJECT_NAME"_etm_1 &
 
 containerId=$(cat /proc/self/cgroup | grep "docker" | sed s/\\//\\n/g | tail -1)
 
-if [ $containerId = '' ]; then
+if [ ! -z $containerId];
+then
    echo "Script executing inside the container = ${containerId}"
    docker network connect ${projectName}_elastest ${containerId}
 else			
