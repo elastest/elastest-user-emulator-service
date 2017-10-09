@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static io.github.bonigarcia.SeleniumJupiter.ARGS;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -30,12 +31,15 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
+import io.github.bonigarcia.DriverOptions;
+import io.github.bonigarcia.Option;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -64,24 +68,13 @@ public class EusSupportServiceE2eTest {
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(FirefoxDriver driver) throws InterruptedException {
+    void testSupportService(@DriverOptions(options = {
+            @Option(name = ARGS, value = "--no-sandbox") }) ChromeDriver driver)
+            throws InterruptedException {
         log.debug("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
-        driver.findElement(By.id("main_menu")).click();
-        driver.findElement(By.id("nav_support_services")).click();
-        driver.findElement(By.className("mat-select-trigger")).click();
-        driver.findElement(By.xpath("//md-option[contains(string(), 'EUS')]"))
-                .click();
-
-        log.debug("Create EUS instance and wait instance");
-        driver.findElement(By.id("create_instance")).click();
-        WebDriverWait waitEus = new WebDriverWait(driver, 30); // seconds
-        sleep(15000); // TODO Temporal wait for EUS to be available
-        By serviceDetailButton = By
-                .xpath("//button[@title='View Service Detail']");
-        waitEus.until(visibilityOfElementLocated(serviceDetailButton));
-        driver.findElement(serviceDetailButton).click();
+        startTestSupportService(driver, "EUS");
 
         log.debug("Select Chrome as browser and start session");
         driver.findElement(By.id("chrome_radio")).click();
@@ -111,6 +104,24 @@ public class EusSupportServiceE2eTest {
 
         log.debug("Wait for recording and delete it");
         driver.findElement(By.id("delete_recording")).click();
+    }
+
+    void startTestSupportService(WebDriver driver, String supportServiceLabel)
+            throws InterruptedException {
+        driver.findElement(By.id("main_menu")).click();
+        driver.findElement(By.id("nav_support_services")).click();
+        driver.findElement(By.className("mat-select-trigger")).click();
+        driver.findElement(By.xpath("//md-option[contains(string(), '"
+                + supportServiceLabel + "')]")).click();
+
+        log.debug("Create and wait instance");
+        driver.findElement(By.id("create_instance")).click();
+        WebDriverWait waitService = new WebDriverWait(driver, 30); // seconds
+        sleep(15000); // TODO Temporal wait for EUS to be available
+        By serviceDetailButton = By
+                .xpath("//button[@title='View Service Detail']");
+        waitService.until(visibilityOfElementLocated(serviceDetailButton));
+        driver.findElement(serviceDetailButton).click();
     }
 
 }
