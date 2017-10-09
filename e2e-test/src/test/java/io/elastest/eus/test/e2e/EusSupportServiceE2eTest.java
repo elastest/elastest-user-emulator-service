@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -64,8 +64,8 @@ public class EusSupportServiceE2eTest {
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(ChromeDriver driver) throws InterruptedException {
-        log.debug("Navigate to TORM and select EUS as support service");
+    void testSupportService(FirefoxDriver driver) throws InterruptedException {
+        log.debug("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
         driver.findElement(By.id("main_menu")).click();
