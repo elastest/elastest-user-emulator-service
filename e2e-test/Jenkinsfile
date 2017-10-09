@@ -7,7 +7,9 @@ node('docker') {
 
       stage "Stop previous ElasTest Platform"
          echo "Stopping ElasTest platform if exists"
-         sh 'docker rm -f $(docker ps -a -q) || echo "ElasTest platform does not exist"'
+         sh '''
+            docker rm -f $(docker ps -a -q) || echo 'ElasTest platform does not exist'
+         '''
 
       stage "Start ElasTest Platform"
          echo ("Start ElasTest Platform")
