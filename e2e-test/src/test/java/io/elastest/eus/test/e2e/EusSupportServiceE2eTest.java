@@ -69,7 +69,7 @@ public class EusSupportServiceE2eTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(@DriverOptions(options = {
-            @Option(name = ARGS, value = "--no-sandbox") }) ChromeDriver driver)
+            @Option(name = ARGS, value = "--headless") }) ChromeDriver driver)
             throws InterruptedException {
         log.debug("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
