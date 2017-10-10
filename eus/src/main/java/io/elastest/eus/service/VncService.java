@@ -16,7 +16,10 @@
  */
 package io.elastest.eus.service;
 
+import static com.github.dockerjava.api.model.ExposedPort.tcp;
+import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -35,9 +38,6 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
-
-import static com.github.dockerjava.api.model.ExposedPort.tcp;
-import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
@@ -78,6 +78,9 @@ public class VncService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
+    @Value("${et.host.env}")
+    private String etHostEnv;
+
     private DockerService dockerService;
     SessionService sessionService;
 
@@ -111,7 +114,9 @@ public class VncService {
         }
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
-        String vncContainerIp = dockerService.getDockerServerIp();
+        String etHost = getenv(etHostEnv);
+        String vncContainerIp = etHost != null ? etHost
+                : dockerService.getDockerServerIp();
         String hubContainerIp = dockerService.getDockerServerIp();
 
         String vncUrl = "http://" + vncContainerIp + ":" + noVncBindPort + "/"
