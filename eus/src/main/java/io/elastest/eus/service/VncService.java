@@ -19,6 +19,7 @@ package io.elastest.eus.service;
 import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -116,18 +117,16 @@ public class VncService {
 
         String vncContainerIp = dockerService.getDockerServerIp();
         String hubContainerIp = dockerService.getDockerServerIp();
-
-        String vncUrlEndPart = ":" + noVncBindPort + "/" + vncAutoFocusHtml
-                + "?host=" + hubContainerIp + "&port="
+        String vncUrlFormat = "http://%s:" + noVncBindPort + "/"
+                + vncAutoFocusHtml + "?host=%s&port="
                 + sessionInfo.getHubVncBindPort()
                 + "&resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = "http://" + vncContainerIp + vncUrlEndPart;
-
+        String vncUrl = format(vncUrlFormat, vncContainerIp, hubContainerIp);
         dockerService.waitForHostIsReachable(vncUrl);
 
         String etHost = getenv(etHostEnv);
         if (etHost != null) {
-            vncUrl = "http://" + etHost + vncUrlEndPart;
+            vncUrl = format(vncUrlFormat, etHost, etHost);
         }
 
         sessionInfo.setVncContainerName(vncContainerName);
