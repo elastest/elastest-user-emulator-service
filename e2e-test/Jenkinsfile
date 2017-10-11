@@ -1,4 +1,16 @@
-node('docker') {
+@Library('ciElastestConnect') _
+
+// initialization of the context for the library
+elastest_lib.setContext(this)
+
+// initialization of the runnable object to access elastest methods inside the pipeline
+def elastest= elastest_lib.getElastestMethods()
+
+// lite version of elastest
+elastest_lib.setLite(' --lite')
+
+// definition of nodes is managed by the library
+elastest_lib.pipeline({
    stage "Container Prep"
       def mycontainer = docker.image('elastest/ci-docker-e2e:latest')
       mycontainer.pull()
@@ -6,24 +18,11 @@ node('docker') {
          sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
          git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
-         @Library('ciElastestConnect') _
-
-         // initialization of the context for the library
-         elastest_lib.setContext(this)
-
-         // initialization of the runnable object to access elastest methods inside the pipeline
-         def elastest= elastest_lib.getElastestMethods()
-
-         // lite version of elastest
-         elastest_lib.setLite(' --lite')
-
-         // definition of nodes is managed by the library
-         elastest_lib.pipeline({
-            stage "E2E tests"
-               echo ("E2E tests")
-               def etEmpApi = elastest.getIp()
-               sh "cd e2e-test; mvn clean test -DetEmpApi=${etEmpApi}"
-               step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-         })
-      }
+         stage "E2E tests"
+            echo ("E2E tests")
+            def etEmpApi = elastest.getIp()
+            sh "cd e2e-test; mvn clean test -DetEmpApi=${etEmpApi}"
+            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+      })
+   }
 }
