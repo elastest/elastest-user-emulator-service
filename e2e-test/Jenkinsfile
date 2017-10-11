@@ -24,5 +24,4 @@ elastest_lib.pipeline({
             sh "cd e2e-test; mvn clean test -DetEmpApi=${etEmpApi}"
             step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
       }
-   })
-}
+})
