@@ -1,41 +1,31 @@
 node('docker') {
-   stage "Container Prep"
-      def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
+   stage "Container Prep" {
+      def mycontainer = docker.image('elastest/elastest/ci-docker-e2e:latest')
       mycontainer.pull()
       mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
-      git 'https://github.com/elastest/elastest-user-emulator-service.git'
+         sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
+         git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
-      stage "Stop previous ElasTest Platform"
-         echo "Stopping ElasTest platform if exists"
-         sh '''
-            docker rm -f $(docker ps -a -q) || echo 'ElasTest platform does not exist'
-         '''
+         @Library('ciElastestConnect') _
 
-      stage "Start ElasTest Platform"
-         echo ("Start ElasTest Platform")
+         // initialization of the context for the library
+         elastest_lib.setContext(this)
 
-         sh "cd e2e-test; ./start_platform.sh"
+         // initialization of the runnable object to access elastest methods inside the pipeline
+         def elastest= elastest_lib.getElastestMethods()
 
-         ET_ETM_API = sh (
-            script: "docker inspect --format=\"{{.NetworkSettings.Networks.elastest_elastest.IPAddress}}\" elastest_etm_1 2> /dev/null",
-            returnStdout: true
-         ).trim();
+         // lite version of elastest
+         elastest_lib.setLite(' --lite')
 
-         ET_ETM_API="http://"+ET_ETM_API+":8091/"
-
-         echo "ElasTest started in URL ${ET_ETM_API}"
-
-      stage "E2E tests"
-         echo ("E2E tests")
-         
-         withEnv(["ET_ETM_API=${ET_ETM_API}"]) {
-            sh 'cd e2e-test; mvn clean test'
-         }
-
-         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-
-      stage "Stop ElasTest Platform"
-         echo ("Start ElasTest Platform")
-         sh 'docker run -v /var/run/docker.sock:/var/run/docker.sock --rm elastest/platform stop'
+         // definition of nodes is managed by the library
+         elastest_lib.pipeline({
+            stage "E2E tests" {
+               echo ("E2E tests")
+               def etEmpApi = elastest.getIp()
+               sh "cd e2e-test; mvn clean test -DetEmpApi=${etEmpApi}"
+               step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            }
+         })
       }
+   }
 }

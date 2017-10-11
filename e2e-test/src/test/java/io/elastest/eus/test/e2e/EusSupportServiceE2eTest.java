@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -56,7 +57,7 @@ public class EusSupportServiceE2eTest {
 
     @BeforeEach
     void setup() {
-        String etmApi = System.getenv("ET_ETM_API");
+        String etmApi = getProperty("etEmpApi");
         if (etmApi != null) {
             tormUrl = etmApi;
         }
@@ -77,7 +78,7 @@ public class EusSupportServiceE2eTest {
 
         log.info("Wait to load browser");
         By iframe = By.id("eus_iframe");
-        WebDriverWait waitBrowser = new WebDriverWait(driver, 60); // seconds
+        WebDriverWait waitBrowser = new WebDriverWait(driver, 120); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
         driver.switchTo().frame(driver.findElement(iframe));
 
@@ -95,14 +96,21 @@ public class EusSupportServiceE2eTest {
         driver.switchTo().defaultContent();
         driver.findElement(By.id("close_dialog")).click();
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
-        waitElement.until(invisibilityOfElementLocated(iframe));
+        waitElement.until(invisibilityOfElementLocated(
+                By.cssSelector("md-dialog-container")));
 
-        log.info("Wait for recording and delete it");
-        driver.findElement(By.id("delete_recording")).click();
+        log.info("View recording and delete it");
+        driver.findElement(By.id("view_recording")).click();
+        sleep(SECONDS.toMillis(navigationTimeSec));
+        driver.findElement(By.id("close_dialog")).click();
+        waitElement.until(invisibilityOfElementLocated(
+                By.cssSelector("md-dialog-container")));
+        By deleteRecording = By.id("delete_recording");
+        driver.findElement(deleteRecording).click();
+        waitElement.until(invisibilityOfElementLocated(deleteRecording));
     }
 
-    void startTestSupportService(WebDriver driver, String supportServiceLabel)
-            throws InterruptedException {
+    void startTestSupportService(WebDriver driver, String supportServiceLabel) {
         driver.findElement(By.id("main_menu")).click();
         driver.findElement(By.id("nav_support_services")).click();
         driver.findElement(By.className("mat-select-trigger")).click();
@@ -111,8 +119,7 @@ public class EusSupportServiceE2eTest {
 
         log.info("Create and wait instance");
         driver.findElement(By.id("create_instance")).click();
-        WebDriverWait waitService = new WebDriverWait(driver, 30); // seconds
-        sleep(15000); // TODO Temporal wait for EUS to be available
+        WebDriverWait waitService = new WebDriverWait(driver, 60); // seconds
         By serviceDetailButton = By
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
