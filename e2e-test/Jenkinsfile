@@ -1,6 +1,6 @@
 node('docker') {
-   stage "Container Prep"
-      def mycontainer = docker.image('elastest/elastest/ci-docker-e2e:latest')
+   stage "Container Prep" {
+      def mycontainer = docker.image('elastest/ci-docker-e2e:latest')
       mycontainer.pull()
       mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
          sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
@@ -19,11 +19,13 @@ node('docker') {
 
          // definition of nodes is managed by the library
          elastest_lib.pipeline({
-            stage "E2E tests"
+            stage "E2E tests" {
                echo ("E2E tests")
                def etEmpApi = elastest.getIp()
                sh "cd e2e-test; mvn clean test -DetEmpApi=${etEmpApi}"
                step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            }
          })
       }
+   }
 }
