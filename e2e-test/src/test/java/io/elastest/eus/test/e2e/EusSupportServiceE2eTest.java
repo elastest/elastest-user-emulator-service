@@ -32,11 +32,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
-import io.github.bonigarcia.DockerChromeDriver;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -65,8 +65,7 @@ public class EusSupportServiceE2eTest {
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(DockerChromeDriver driver)
-            throws InterruptedException {
+    void testSupportService(ChromeDriver driver) throws InterruptedException {
         log.info("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
