@@ -16,7 +16,6 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static io.github.bonigarcia.SeleniumJupiter.ARGS;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -33,13 +32,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
-import io.github.bonigarcia.DriverOptions;
-import io.github.bonigarcia.Option;
+import io.github.bonigarcia.DockerChromeDriver;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -63,36 +60,35 @@ public class EusSupportServiceE2eTest {
         if (etmApi != null) {
             tormUrl = etmApi;
         }
-        log.debug("Using URL {} to connect to TORM", tormUrl);
+        log.info("Using URL {} to connect to TORM", tormUrl);
     }
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(@DriverOptions(options = {
-            @Option(name = ARGS, value = "--no-sandbox") }) ChromeDriver driver)
+    void testSupportService(DockerChromeDriver driver)
             throws InterruptedException {
-        log.debug("Navigate to TORM and start support service");
+        log.info("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
         startTestSupportService(driver, "EUS");
 
-        log.debug("Select Chrome as browser and start session");
+        log.info("Select Chrome as browser and start session");
         driver.findElement(By.id("chrome_radio")).click();
         driver.findElement(By.id("start_session")).click();
 
-        log.debug("Wait to load browser");
+        log.info("Wait to load browser");
         By iframe = By.id("eus_iframe");
         WebDriverWait waitBrowser = new WebDriverWait(driver, 60); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
         driver.switchTo().frame(driver.findElement(iframe));
 
-        log.debug("Click browser navigation bar and navigate");
+        log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
         int navigationTimeSec = 5;
-        log.debug("Waiting {} secons (simulation of manual navigation)",
+        log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
 
@@ -102,7 +98,7 @@ public class EusSupportServiceE2eTest {
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         waitElement.until(invisibilityOfElementLocated(iframe));
 
-        log.debug("Wait for recording and delete it");
+        log.info("Wait for recording and delete it");
         driver.findElement(By.id("delete_recording")).click();
     }
 
@@ -114,7 +110,7 @@ public class EusSupportServiceE2eTest {
         driver.findElement(By.xpath("//md-option[contains(string(), '"
                 + supportServiceLabel + "')]")).click();
 
-        log.debug("Create and wait instance");
+        log.info("Create and wait instance");
         driver.findElement(By.id("create_instance")).click();
         WebDriverWait waitService = new WebDriverWait(driver, 30); // seconds
         sleep(15000); // TODO Temporal wait for EUS to be available
