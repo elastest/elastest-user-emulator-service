@@ -34,6 +34,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -82,11 +83,12 @@ public class EusSupportServiceE2eTest {
         waitBrowser.until(visibilityOfElementLocated(iframe));
         driver.switchTo().frame(driver.findElement(iframe));
 
-        log.info("Click browser navigation bar and navigate");
+        //Disable interacting with browser due to problem in Jenkins
+        /*log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
-        canvas.sendKeys("elastest.io" + RETURN);
+        canvas.sendKeys("elastest.io" + RETURN);*/
         int navigationTimeSec = 5;
         log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
