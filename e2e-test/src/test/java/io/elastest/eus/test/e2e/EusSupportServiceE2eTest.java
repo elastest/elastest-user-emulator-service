@@ -111,8 +111,11 @@ public class EusSupportServiceE2eTest {
     }
 
     void startTestSupportService(WebDriver driver, String supportServiceLabel) {
-        driver.findElement(By.id("main_menu")).click();
-        driver.findElement(By.id("nav_support_services")).click();
+    	WebElement tssNavButton = driver.findElement(By.id("nav_support_services"));
+		if(!tssNavButton.isDisplayed()) {
+			driver.findElement(By.id("main_menu")).click();
+		}
+        tssNavButton.click();
         driver.findElement(By.className("mat-select-trigger")).click();
         driver.findElement(By.xpath("//md-option[contains(string(), '"
                 + supportServiceLabel + "')]")).click();
