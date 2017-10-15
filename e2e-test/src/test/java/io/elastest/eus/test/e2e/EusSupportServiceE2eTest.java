@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -68,6 +69,9 @@ public class EusSupportServiceE2eTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(ChromeDriver driver) throws InterruptedException {
+    	
+    	driver.manage().window().setSize(new Dimension(1024, 1024));
+    	
         log.info("Navigate to TORM and start support service");
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
