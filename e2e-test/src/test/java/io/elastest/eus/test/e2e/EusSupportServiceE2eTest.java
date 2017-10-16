@@ -25,6 +25,13 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfEl
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -32,7 +39,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -87,6 +97,18 @@ public class EusSupportServiceE2eTest {
         // Disable interacting with browser due to problem in Jenkins
         log.info("Click browser navigation bar and navigate");
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
+
+        try {
+            File file = ((TakesScreenshot) driver)
+                    .getScreenshotAs(OutputType.FILE);
+            byte[] data = Files.readAllBytes(file.toPath());
+            String encodedfile = new String(
+                    Base64.getEncoder().encodeToString(data));
+            System.out.println("data:image/png;base64," + encodedfile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         By canvasBy = By.id("noVNC_canvas");
         waitElement.until(visibilityOfElementLocated(canvasBy));
         WebElement canvas = driver.findElement(canvasBy);
