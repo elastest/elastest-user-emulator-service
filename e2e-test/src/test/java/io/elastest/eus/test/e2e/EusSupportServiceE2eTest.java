@@ -84,11 +84,9 @@ public class EusSupportServiceE2eTest {
 
         log.info("Wait to load browser");
         By iframe = By.id("eus_iframe");
-        WebDriverWait waitBrowser = new WebDriverWait(driver, 120); // seconds
+        WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
-        log.info("Canvas iframe URL {}",
-                driver.findElement(iframe).getAttribute("src"));
-        driver.switchTo().frame(driver.findElement(iframe));
+
         log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
@@ -108,7 +106,7 @@ public class EusSupportServiceE2eTest {
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
 
-        log.info("View recording and delete it");
+        log.info("View recording");
         driver.findElement(By.id("view_recording")).click();
         sleep(SECONDS.toMillis(navigationTimeSec));
         log.info("Screenshot (in Base64) after view recording:\n{}",
@@ -117,6 +115,7 @@ public class EusSupportServiceE2eTest {
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
 
+        log.info("Delete recording");
         By deleteRecording = By.id("delete_recording");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
@@ -137,7 +136,7 @@ public class EusSupportServiceE2eTest {
 
         log.info("Create and wait instance");
         driver.findElement(By.id("create_instance")).click();
-        WebDriverWait waitService = new WebDriverWait(driver, 60); // seconds
+        WebDriverWait waitService = new WebDriverWait(driver, 120); // seconds
         By serviceDetailButton = By
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
