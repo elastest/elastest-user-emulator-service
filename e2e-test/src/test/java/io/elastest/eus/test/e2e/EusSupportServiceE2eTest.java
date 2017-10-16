@@ -88,9 +88,9 @@ public class EusSupportServiceE2eTest {
         By iframe = By.id("eus_iframe");
         WebDriverWait waitBrowser = new WebDriverWait(driver, 120); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
-        driver.switchTo().frame(driver.findElement(iframe));
         log.info("Canvas iframe URL {}",
                 driver.findElement(iframe).getAttribute("src"));
+        driver.switchTo().frame(driver.findElement(iframe));
         log.info("Click browser navigation bar and navigate");
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         File file = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
