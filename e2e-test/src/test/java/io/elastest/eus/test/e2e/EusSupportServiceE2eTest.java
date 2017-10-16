@@ -16,33 +16,27 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.Keys.RETURN;
-import static org.openqa.selenium.OutputType.BASE64;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
+import io.elastest.eus.test.base.EusBaseTest;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -54,20 +48,9 @@ import io.github.bonigarcia.SeleniumExtension;
 @Tag("e2e")
 @DisplayName("E2E tests of EUS through TORM")
 @ExtendWith(SeleniumExtension.class)
-public class EusSupportServiceE2eTest {
+public class EusSupportServiceE2eTest extends EusBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
-
-    String tormUrl = "http://localhost:37006/"; // default value (local)
-
-    @BeforeEach
-    void setup() {
-        String etmApi = getProperty("etEmpApi");
-        if (etmApi != null) {
-            tormUrl = etmApi;
-        }
-        log.info("Using URL {} to connect to TORM", tormUrl);
-    }
 
     @Test
     @DisplayName("EUS as support service")
@@ -122,32 +105,6 @@ public class EusSupportServiceE2eTest {
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
         log.info("Screenshot (in Base64) at the end of test:\n{}",
                 getBase64Screenshot(driver));
-    }
-
-    void startTestSupportService(WebDriver driver, String supportServiceLabel) {
-        WebElement tssNavButton = driver
-                .findElement(By.id("nav_support_services"));
-        if (!tssNavButton.isDisplayed()) {
-            driver.findElement(By.id("main_menu")).click();
-        }
-        tssNavButton.click();
-        driver.findElement(By.className("mat-select-trigger")).click();
-        driver.findElement(By.xpath("//md-option[contains(string(), '"
-                + supportServiceLabel + "')]")).click();
-
-        log.info("Create and wait instance");
-        driver.findElement(By.id("create_instance")).click();
-        WebDriverWait waitService = new WebDriverWait(driver, 120); // seconds
-        By serviceDetailButton = By
-                .xpath("//button[@title='View Service Detail']");
-        waitService.until(visibilityOfElementLocated(serviceDetailButton));
-        driver.findElement(serviceDetailButton).click();
-    }
-
-    String getBase64Screenshot(WebDriver driver) throws IOException {
-        String screenshotBase64 = ((TakesScreenshot) driver)
-                .getScreenshotAs(BASE64);
-        return "data:image/png;base64," + screenshotBase64;
     }
 
 }
