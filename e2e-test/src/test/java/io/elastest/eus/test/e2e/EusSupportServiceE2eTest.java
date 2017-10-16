@@ -19,17 +19,14 @@ package io.elastest.eus.test.e2e;
 import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.nio.file.Files.readAllBytes;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.Keys.RETURN;
-import static org.openqa.selenium.OutputType.FILE;
+import static org.openqa.selenium.OutputType.BASE64;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Base64;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -148,11 +145,9 @@ public class EusSupportServiceE2eTest {
     }
 
     String getBase64Screenshot(WebDriver driver) throws IOException {
-        File file = ((TakesScreenshot) driver).getScreenshotAs(FILE);
-        byte[] data = readAllBytes(file.toPath());
-        String encodedfile = new String(
-                Base64.getEncoder().encodeToString(data));
-        return "data:image/png;base64," + encodedfile;
+        String screenshotBase64 = ((TakesScreenshot) driver)
+                .getScreenshotAs(BASE64);
+        return "data:image/png;base64," + screenshotBase64;
     }
 
 }
