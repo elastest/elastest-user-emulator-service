@@ -26,10 +26,7 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElem
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Base64;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +39,6 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -77,7 +73,7 @@ public class EusSupportServiceE2eTest {
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(ChromeDriver driver) throws InterruptedException {
+    void testSupportService(ChromeDriver driver) throws Exception {
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
@@ -93,21 +89,15 @@ public class EusSupportServiceE2eTest {
         WebDriverWait waitBrowser = new WebDriverWait(driver, 120); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
         driver.switchTo().frame(driver.findElement(iframe));
-
-        // Disable interacting with browser due to problem in Jenkins
+        log.info("Canvas iframe URL {}",
+                driver.findElement(iframe).getAttribute("src"));
         log.info("Click browser navigation bar and navigate");
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
-
-        try {
-            File file = ((TakesScreenshot) driver)
-                    .getScreenshotAs(OutputType.FILE);
-            byte[] data = Files.readAllBytes(file.toPath());
-            String encodedfile = new String(
-                    Base64.getEncoder().encodeToString(data));
-            System.out.println("data:image/png;base64," + encodedfile);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        File file = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        byte[] data = Files.readAllBytes(file.toPath());
+        String encodedfile = new String(
+                Base64.getEncoder().encodeToString(data));
+        System.out.println("data:image/png;base64," + encodedfile);
 
         By canvasBy = By.id("noVNC_canvas");
         waitElement.until(visibilityOfElementLocated(canvasBy));
