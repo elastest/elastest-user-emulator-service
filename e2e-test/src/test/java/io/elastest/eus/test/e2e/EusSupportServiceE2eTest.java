@@ -35,7 +35,6 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -69,10 +68,8 @@ public class EusSupportServiceE2eTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(ChromeDriver driver) throws InterruptedException {
-    	
-    	driver.manage().window().setSize(new Dimension(1024, 1024));
-    	
         log.info("Navigate to TORM and start support service");
+        driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
         startTestSupportService(driver, "EUS");
@@ -87,12 +84,12 @@ public class EusSupportServiceE2eTest {
         waitBrowser.until(visibilityOfElementLocated(iframe));
         driver.switchTo().frame(driver.findElement(iframe));
 
-        //Disable interacting with browser due to problem in Jenkins
-        /*log.info("Click browser navigation bar and navigate");
+        // Disable interacting with browser due to problem in Jenkins
+        log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
-        canvas.sendKeys("elastest.io" + RETURN);*/
+        canvas.sendKeys("elastest.io" + RETURN);
         int navigationTimeSec = 5;
         log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
@@ -106,24 +103,29 @@ public class EusSupportServiceE2eTest {
                 By.cssSelector("md-dialog-container")));
 
         log.info("View recording and delete it");
-        //Disable view recording due to problem in Jenkins
-        /*driver.findElement(By.id("view_recording")).click();
-        sleep(SECONDS.toMillis(navigationTimeSec));
-        driver.findElement(By.id("close_dialog")).click();
-        waitElement.until(invisibilityOfElementLocated(
-                By.cssSelector("md-dialog-container")));*/
-        
-        //Disable delete recording due to timeout in Jenkins
-        /*By deleteRecording = By.id("delete_recording");
-        driver.findElement(deleteRecording).click();
-        waitElement.until(invisibilityOfElementLocated(deleteRecording));*/
+        // Disable view recording due to problem in Jenkins
+        /*
+         * driver.findElement(By.id("view_recording")).click();
+         * sleep(SECONDS.toMillis(navigationTimeSec));
+         * driver.findElement(By.id("close_dialog")).click();
+         * waitElement.until(invisibilityOfElementLocated(
+         * By.cssSelector("md-dialog-container")));
+         */
+
+        // Disable delete recording due to timeout in Jenkins
+        /*
+         * By deleteRecording = By.id("delete_recording");
+         * driver.findElement(deleteRecording).click();
+         * waitElement.until(invisibilityOfElementLocated(deleteRecording));
+         */
     }
 
     void startTestSupportService(WebDriver driver, String supportServiceLabel) {
-    	WebElement tssNavButton = driver.findElement(By.id("nav_support_services"));
-		if(!tssNavButton.isDisplayed()) {
-			driver.findElement(By.id("main_menu")).click();
-		}
+        WebElement tssNavButton = driver
+                .findElement(By.id("nav_support_services"));
+        if (!tssNavButton.isDisplayed()) {
+            driver.findElement(By.id("main_menu")).click();
+        }
         tssNavButton.click();
         driver.findElement(By.className("mat-select-trigger")).click();
         driver.findElement(By.xpath("//md-option[contains(string(), '"
