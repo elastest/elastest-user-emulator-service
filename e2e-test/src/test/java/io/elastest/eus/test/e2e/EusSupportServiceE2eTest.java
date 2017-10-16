@@ -111,6 +111,8 @@ public class EusSupportServiceE2eTest {
         log.info("View recording and delete it");
         driver.findElement(By.id("view_recording")).click();
         sleep(SECONDS.toMillis(navigationTimeSec));
+        log.info("Screenshot (in Base64) after view recording:\n{}",
+                getBase64Screenshot(driver));
         driver.findElement(By.id("close_dialog")).click();
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
@@ -118,6 +120,8 @@ public class EusSupportServiceE2eTest {
         By deleteRecording = By.id("delete_recording");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
+        log.info("Screenshot (in Base64) at the end of test:\n{}",
+                getBase64Screenshot(driver));
     }
 
     void startTestSupportService(WebDriver driver, String supportServiceLabel) {
