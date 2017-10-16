@@ -38,6 +38,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
@@ -57,6 +58,7 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -437,6 +439,20 @@ public class DockerService {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         }
+    }
+
+    public String getContainerIpAddress(String containerName)
+            throws IOException {
+        String ipAddress;
+        if (IS_OS_WINDOWS) {
+            ipAddress = getDockerServerIp();
+        } else {
+            Map<String, ContainerNetwork> networks = dockerClient
+                    .inspectContainerCmd(containerName).exec()
+                    .getNetworkSettings().getNetworks();
+            ipAddress = networks.values().iterator().next().getIpAddress();
+        }
+        return ipAddress;
     }
 
 }
