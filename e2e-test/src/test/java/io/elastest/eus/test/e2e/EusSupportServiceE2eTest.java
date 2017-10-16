@@ -86,6 +86,7 @@ public class EusSupportServiceE2eTest {
         By iframe = By.id("eus_iframe");
         WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
         waitBrowser.until(visibilityOfElementLocated(iframe));
+        driver.switchTo().frame(driver.findElement(iframe));
 
         log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
