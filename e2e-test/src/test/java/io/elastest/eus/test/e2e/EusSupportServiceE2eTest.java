@@ -88,8 +88,8 @@ public class EusSupportServiceE2eTest {
         log.info("Click browser navigation bar and navigate");
         WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         By canvasBy = By.id("noVNC_canvas");
-        WebElement canvas = driver.findElement(canvasBy);
         waitElement.until(visibilityOfElementLocated(canvasBy));
+        WebElement canvas = driver.findElement(canvasBy);
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
