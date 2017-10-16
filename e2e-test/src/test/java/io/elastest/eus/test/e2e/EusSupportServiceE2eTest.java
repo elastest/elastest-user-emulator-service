@@ -70,7 +70,7 @@ public class EusSupportServiceE2eTest {
     void testSupportService(ChromeDriver driver) throws InterruptedException {
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
-        driver.manage().timeouts().implicitlyWait(10, SECONDS); // implicit wait
+        driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         driver.get(tormUrl);
         startTestSupportService(driver, "EUS");
 
@@ -86,7 +86,10 @@ public class EusSupportServiceE2eTest {
 
         // Disable interacting with browser due to problem in Jenkins
         log.info("Click browser navigation bar and navigate");
-        WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
+        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
+        By canvasBy = By.id("noVNC_canvas");
+        WebElement canvas = driver.findElement(canvasBy);
+        waitElement.until(visibilityOfElementLocated(canvasBy));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
@@ -98,7 +101,6 @@ public class EusSupportServiceE2eTest {
         log.info("Close browser and wait to dispose iframe");
         driver.switchTo().defaultContent();
         driver.findElement(By.id("close_dialog")).click();
-        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
 
