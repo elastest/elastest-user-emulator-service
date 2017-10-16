@@ -19,14 +19,16 @@ package io.elastest.eus.test.e2e;
 import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.nio.file.Files.readAllBytes;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.Keys.RETURN;
+import static org.openqa.selenium.OutputType.FILE;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.util.Base64;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +38,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
-import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -92,16 +93,7 @@ public class EusSupportServiceE2eTest {
                 driver.findElement(iframe).getAttribute("src"));
         driver.switchTo().frame(driver.findElement(iframe));
         log.info("Click browser navigation bar and navigate");
-        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
-        File file = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        byte[] data = Files.readAllBytes(file.toPath());
-        String encodedfile = new String(
-                Base64.getEncoder().encodeToString(data));
-        System.out.println("data:image/png;base64," + encodedfile);
-
-        By canvasBy = By.id("noVNC_canvas");
-        waitElement.until(visibilityOfElementLocated(canvasBy));
-        WebElement canvas = driver.findElement(canvasBy);
+        WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
@@ -109,29 +101,30 @@ public class EusSupportServiceE2eTest {
         log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
+        log.info("Screenshot (in Base64) after manual navigation:\n{}",
+                getBase64Screenshot(driver));
 
         log.info("Close browser and wait to dispose iframe");
         driver.switchTo().defaultContent();
         driver.findElement(By.id("close_dialog")).click();
+        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
 
         log.info("View recording and delete it");
-        // Disable view recording due to problem in Jenkins
-        /*
-         * driver.findElement(By.id("view_recording")).click();
-         * sleep(SECONDS.toMillis(navigationTimeSec));
-         * driver.findElement(By.id("close_dialog")).click();
-         * waitElement.until(invisibilityOfElementLocated(
-         * By.cssSelector("md-dialog-container")));
-         */
+        driver.findElement(By.id("view_recording")).click();
+        sleep(SECONDS.toMillis(navigationTimeSec));
+        log.info("Screenshot (in Base64) after view recording:\n{}",
+                getBase64Screenshot(driver));
+        driver.findElement(By.id("close_dialog")).click();
+        waitElement.until(invisibilityOfElementLocated(
+                By.cssSelector("md-dialog-container")));
 
-        // Disable delete recording due to timeout in Jenkins
-        /*
-         * By deleteRecording = By.id("delete_recording");
-         * driver.findElement(deleteRecording).click();
-         * waitElement.until(invisibilityOfElementLocated(deleteRecording));
-         */
+        By deleteRecording = By.id("delete_recording");
+        driver.findElement(deleteRecording).click();
+        waitElement.until(invisibilityOfElementLocated(deleteRecording));
+        log.info("Screenshot (in Base64) at the end of test:\n{}",
+                getBase64Screenshot(driver));
     }
 
     void startTestSupportService(WebDriver driver, String supportServiceLabel) {
@@ -152,6 +145,14 @@ public class EusSupportServiceE2eTest {
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
         driver.findElement(serviceDetailButton).click();
+    }
+
+    String getBase64Screenshot(WebDriver driver) throws IOException {
+        File file = ((TakesScreenshot) driver).getScreenshotAs(FILE);
+        byte[] data = readAllBytes(file.toPath());
+        String encodedfile = new String(
+                Base64.getEncoder().encodeToString(data));
+        return "data:image/png;base64," + encodedfile;
     }
 
 }
