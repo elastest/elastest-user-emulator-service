@@ -53,6 +53,18 @@ public class EusBaseTest {
         log.info("Using URL {} to connect to TORM", tormUrl);
     }
 
+    protected void createNewProject(WebDriver driver, String projectName) {
+        driver.findElement(
+                By.xpath("//button[contains(string(), 'New Project')]"))
+                .click();
+        driver.findElement(By.name("project.name")).sendKeys(projectName);
+        driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
+                .click();
+        driver.findElement(
+                By.xpath("//span[contains(string(), '" + projectName + "')]"))
+                .click();
+    }
+
     protected void startTestSupportService(WebDriver driver,
             String supportServiceLabel) {
         WebElement tssNavButton = driver
