@@ -77,7 +77,7 @@ public class EusBaseTest {
     protected String getBase64Screenshot(WebDriver driver) throws IOException {
         String screenshotBase64 = ((TakesScreenshot) driver)
                 .getScreenshotAs(BASE64);
-        return "http://data:image/png;base64," + screenshotBase64;
+        return "data:image/png;base64," + screenshotBase64;
     }
 
 }
