@@ -151,7 +151,7 @@ Then we create a new TJob filling the form with test values:
                 .click();
 ```
 
-Finally we execute the TJob, asserting that the the EUS GUI is present, and also the proper traces in the logging view. These operations can be time-consuming, and therefore, we need to implement explicit wait using the WebDriver API (`WebDriverWait`):
+Finally we execute the TJob, asserting that the the EUS GUI is present. This operation can be time-consuming, and therefore, we need to implement explicit wait using the WebDriver API (`WebDriverWait`):
 
 ```java
         log.info("Run TJob and wait for EUS GUI");
@@ -160,11 +160,6 @@ Finally we execute the TJob, asserting that the the EUS GUI is present, and also
                 .xpath("//md-card-title[contains(string(), 'elastest-eus')]");
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
         waitEus.until(visibilityOfElementLocated(eusCard));
-
-        log.info("Wait for build sucess traces");
-        WebDriverWait waitLogs = new WebDriverWait(driver, 120);
-        waitLogs.until(textToBePresentInElementLocated(By.tagName("logs-view"),
-                "BUILD SUCCESS"));
 ```
 
 [Selenium WebDriver]: http://www.seleniumhq.org/projects/webdriver/
