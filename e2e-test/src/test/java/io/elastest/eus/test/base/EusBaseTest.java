@@ -73,9 +73,31 @@ public class EusBaseTest {
             driver.findElement(By.id("main_menu")).click();
         }
         tssNavButton.click();
-        driver.findElement(By.className("mat-select-trigger")).click();
-        driver.findElement(By.xpath("//md-option[contains(string(), '"
-                + supportServiceLabel + "')]")).click();
+
+        WebDriverWait waitElement = new WebDriverWait(driver, 3);
+        By supportService;
+        int numRetries = 1;
+        do {
+            driver.findElement(By.className("mat-select-trigger")).click();
+            supportService = By.xpath("//md-option[contains(string(), '"
+                    + supportServiceLabel + "')]");
+            try {
+                waitElement.until(visibilityOfElementLocated(supportService));
+                log.info("Element {} already available", supportService);
+                break;
+
+            } catch (Exception e) {
+                numRetries++;
+                if (numRetries > 4) {
+                    log.warn("Max retries ({}) reached ... leaving",
+                            numRetries);
+                    break;
+                }
+                log.warn("Element {} not available ... retrying",
+                        supportService);
+            }
+        } while (true);
+        driver.findElement(supportService).click();
 
         log.info("Create and wait instance");
         driver.findElement(By.id("create_instance")).click();

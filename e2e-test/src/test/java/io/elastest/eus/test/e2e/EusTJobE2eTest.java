@@ -18,6 +18,7 @@ package io.elastest.eus.test.e2e;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentInElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -81,6 +82,11 @@ public class EusTJobE2eTest extends EusBaseTest {
                 .xpath("//md-card-title[contains(string(), 'elastest-eus')]");
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
         waitEus.until(visibilityOfElementLocated(eusCard));
+
+        log.info("Wait for build sucess traces");
+        WebDriverWait waitLogs = new WebDriverWait(driver, 120);
+        waitLogs.until(textToBePresentInElementLocated(By.tagName("logs-view"),
+                "BUILD SUCCESS"));
     }
 
 }
