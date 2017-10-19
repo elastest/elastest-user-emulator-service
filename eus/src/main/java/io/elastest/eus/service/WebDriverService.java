@@ -189,7 +189,7 @@ public class WebDriverService {
                     "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } } else . end)");
             requestBody = jsonQuery.apply(input).iterator().next().toString();
             log.debug("POST requestBody after mangling: {}", requestBody);
-            httpEntity = new HttpEntity<String>(requestBody);
+            httpEntity = new HttpEntity<>(requestBody);
 
             // If live, no timeout
             liveSession = isLive(requestBody);
@@ -254,21 +254,14 @@ public class WebDriverService {
                             "{\"type\":\"browser\"} ", WebDriverLog.class)
                             .getBody();
                     if (!response.getValue().isEmpty()) {
-                        response.getValue()
-                                .forEach(value -> System.err.println(value));
+                        response.getValue().forEach(System.err::println);
                     }
+                    sleep(logPollMs);
 
                 } catch (Exception e) {
                     log.debug("Exception in log monitor (URL={}) (error={})",
                             postUrl, e.getMessage());
                     break;
-                } finally {
-                    try {
-                        sleep(logPollMs);
-                    } catch (InterruptedException e) {
-                        log.debug("Interrupted exception in log monitor");
-                        break;
-                    }
                 }
             }
         });

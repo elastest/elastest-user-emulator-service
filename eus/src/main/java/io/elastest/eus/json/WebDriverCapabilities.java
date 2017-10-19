@@ -80,6 +80,7 @@ public class WebDriverCapabilities {
         boolean live;
 
         public DesiredCapabilities() {
+            // Empty default construct
         }
 
         public DesiredCapabilities(String browserName, String version,
@@ -134,6 +135,7 @@ public class WebDriverCapabilities {
         String browser;
 
         public LoggingPrefs() {
+            // Empty default construct
         }
 
         public String getBrowser() {
