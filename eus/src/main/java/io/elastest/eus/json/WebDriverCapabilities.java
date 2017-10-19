@@ -71,6 +71,7 @@ public class WebDriverCapabilities {
     }
 
     public class DesiredCapabilities {
+        LoggingPrefs loggingPrefs;
         String browserName;
         Object chromeOptions;
         String version;
@@ -86,6 +87,10 @@ public class WebDriverCapabilities {
             this.browserName = browserName;
             this.version = version;
             this.platform = platform;
+        }
+
+        public LoggingPrefs getLoggingPrefs() {
+            return loggingPrefs;
         }
 
         public String getBrowserName() {
@@ -114,12 +119,30 @@ public class WebDriverCapabilities {
 
         @Override
         public String toString() {
-            return "DesiredCapabilities [getBrowserName()=" + getBrowserName()
+            return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
+                    + ", getBrowserName()=" + getBrowserName()
                     + ", getVersion()=" + getVersion() + ", getPlatform()="
                     + getPlatform() + ", isLive()=" + isLive()
                     + ", getChromeOptions()=" + getChromeOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
                     + "]";
+        }
+
+    }
+
+    public static class LoggingPrefs {
+        String browser;
+
+        public LoggingPrefs() {
+        }
+
+        public String getBrowser() {
+            return browser;
+        }
+
+        @Override
+        public String toString() {
+            return "LoggingPrefs [getBrowser()=" + getBrowser() + "]";
         }
 
     }

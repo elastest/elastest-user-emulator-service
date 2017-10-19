@@ -19,8 +19,11 @@ package io.elastest.eus.service;
 import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
+import static java.util.Optional.empty;
+import static net.thisptr.jackson.jq.JsonQuery.compile;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
@@ -31,9 +34,16 @@ import static org.springframework.http.HttpStatus.OK;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -47,16 +57,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
+import io.elastest.eus.json.WebDriverLog;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.session.SessionInfo;
+import net.thisptr.jackson.jq.JsonQuery;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -101,6 +115,15 @@ public class WebDriverService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
+    @Value("${log.poll.ms}")
+    private int logPollMs;
+
+    @Value("${log.executor.size}")
+    private int logExecutorSize;
+
+    private ExecutorService logExecutor;
+    private Map<String, Future<?>> logFutureMap;
+
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
@@ -119,6 +142,17 @@ public class WebDriverService {
         this.sessionService = sessionService;
         this.vncService = vncService;
         this.recordingService = recordingService;
+    }
+
+    @PostConstruct
+    public void init() {
+        logExecutor = Executors.newFixedThreadPool(logExecutorSize);
+        logFutureMap = new HashMap<>(logExecutorSize);
+    }
+
+    @PreDestroy
+    public void cleanUp() {
+        logExecutor.shutdown();
     }
 
     public ResponseEntity<String> getStatus() throws JsonProcessingException {
@@ -143,13 +177,22 @@ public class WebDriverService {
 
         SessionInfo sessionInfo;
         boolean liveSession = false;
-        Optional<HttpEntity<String>> optionalHttpEntity = Optional.empty();
+        Optional<HttpEntity<String>> optionalHttpEntity = empty();
 
         // Intercept create session
         if (isPostSessionRequest(method, requestContext)) {
-            liveSession = isLive(requestBody);
+            // JSON "mangling" to activate always the browser logging
+            log.debug("POST requestBody before mangling: {}", requestBody);
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode input = objectMapper.readTree(requestBody);
+            JsonQuery jsonQuery = compile(
+                    "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } } else . end)");
+            requestBody = jsonQuery.apply(input).iterator().next().toString();
+            log.debug("POST requestBody after mangling: {}", requestBody);
+            httpEntity = new HttpEntity<String>(requestBody);
 
             // If live, no timeout
+            liveSession = isLive(requestBody);
             if (liveSession) {
                 hubTimeout = "0";
             }
@@ -189,7 +232,46 @@ public class WebDriverService {
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
 
+        // Browser log thread
+        String sessionId = sessionInfo.getSessionId();
+        if (!logFutureMap.containsKey(sessionId)) {
+            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
+                    + "/log";
+            logFutureMap.put(sessionId, launchLogMonitor(postUrl));
+        }
+
         return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    private Future<?> launchLogMonitor(final String postUrl) {
+        log.info("Launching log monitor using URL {}", postUrl);
+
+        return logExecutor.submit(() -> {
+            while (true) {
+                try {
+                    RestTemplate restTemplate = new RestTemplate();
+                    WebDriverLog response = restTemplate.postForEntity(postUrl,
+                            "{\"type\":\"browser\"} ", WebDriverLog.class)
+                            .getBody();
+                    if (!response.getValue().isEmpty()) {
+                        response.getValue()
+                                .forEach(value -> System.err.println(value));
+                    }
+
+                } catch (Exception e) {
+                    log.debug("Exception in log monitor (URL={}) (error={})",
+                            postUrl, e.getMessage());
+                    break;
+                } finally {
+                    try {
+                        sleep(logPollMs);
+                    } catch (InterruptedException e) {
+                        log.debug("Interrupted exception in log monitor");
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
@@ -351,6 +433,12 @@ public class WebDriverService {
 
     private void stopBrowser(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
+
+        String sessionId = sessionInfo.getSessionId();
+        if (logFutureMap.containsKey(sessionId)) {
+            logFutureMap.get(sessionId).cancel(true);
+        }
+
         if (sessionInfo.getVncContainerName() != null) {
             recordingService.stopRecording(sessionInfo);
             recordingService.storeRecording(sessionInfo);

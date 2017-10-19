@@ -48,6 +48,7 @@
         <docker-java.version>3.0.13</docker-java.version>
         <guava.version>23.0</guava.version>
         <retrofit.version>2.3.0</retrofit.version>
+        <jackson-jq.version>0.0.8</jackson-jq.version>
 
         <!-- Test dependencies version -->
         <junit.jupiter.version>5.0.0</junit.jupiter.version>
@@ -143,6 +144,11 @@
             <groupId>com.squareup.retrofit2</groupId>
             <artifactId>converter-gson</artifactId>
             <version>${retrofit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.thisptr</groupId>
+            <artifactId>jackson-jq</artifactId>
+            <version>${jackson-jq.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
