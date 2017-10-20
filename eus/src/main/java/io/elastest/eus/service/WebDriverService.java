@@ -247,9 +247,9 @@ public class WebDriverService {
         log.info("Launching log monitor using URL {}", postUrl);
 
         return logExecutor.submit(() -> {
+            RestTemplate restTemplate = new RestTemplate();
             while (true) {
                 try {
-                    RestTemplate restTemplate = new RestTemplate();
                     WebDriverLog response = restTemplate.postForEntity(postUrl,
                             "{\"type\":\"browser\"} ", WebDriverLog.class)
                             .getBody();
