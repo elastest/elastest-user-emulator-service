@@ -33,7 +33,7 @@ node('TESTDOCKER') {
                     usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
                     eusImage.push()
-                    novncImage.push()
+                    // novncImage.push()
                 }
         }
 }
