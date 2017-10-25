@@ -25,7 +25,7 @@ node('TESTDOCKER') {
 
             stage "Run images"
                 eusImage.run()
-                novncImage.run()
+                // novncImage.run()
 
             stage "Publish"
                 echo ("Publishing")
