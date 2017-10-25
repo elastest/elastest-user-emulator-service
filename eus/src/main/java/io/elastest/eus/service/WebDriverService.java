@@ -153,6 +153,15 @@ public class WebDriverService {
     @PreDestroy
     public void cleanUp() {
         logExecutor.shutdown();
+        
+        //Before shutting down the EUS, all recording files must have been processed
+        sessionService.getSessionRegistry().forEach((sessionId, sessionInfo) -> {
+        	try {
+				stopBrowser(sessionInfo);
+			}catch (Exception e) {
+	            log.error("Exception handling response for session", e);
+	        }
+        });
     }
 
     public ResponseEntity<String> getStatus() throws JsonProcessingException {
