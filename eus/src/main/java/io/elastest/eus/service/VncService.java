@@ -130,11 +130,16 @@ public class VncService {
         dockerService.waitForHostIsReachable(vncUrl);
 
         String etHost = getenv(etHostEnv);
-        if (etHost != null && etHost.equalsIgnoreCase("localhost")) {
-            vncContainerIp = dockerService
-                    .getContainerIpAddress(vncContainerName);
-            hubContainerIp = dockerService
-                    .getContainerIpAddress(sessionInfo.getHubContainerName());
+        if (etHost != null) {
+            if (etHost.equalsIgnoreCase("localhost")){
+                vncContainerIp = dockerService
+                        .getContainerIpAddress(vncContainerName);
+                hubContainerIp = dockerService
+                        .getContainerIpAddress(sessionInfo.getHubContainerName());
+            }else{
+                vncContainerIp = etHost;
+                hubContainerIp = etHost;
+            }
             vncUrl = format(vncUrlFormat, vncContainerIp, noVncExposedPort,
                     hubContainerIp, hubVncExposedPort);
         }
