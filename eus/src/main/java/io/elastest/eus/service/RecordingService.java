@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -138,7 +139,7 @@ public class RecordingService {
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recording is stored locally
-            String target = registryFolder + recordingFileName;
+            String target = registryFolder + "/"+ recordingFileName;
 
             InputStream inputStream = dockerService.getFileFromContainer(
                     noNvcContainerName, recordingFileName);
@@ -183,7 +184,7 @@ public class RecordingService {
             // If EDM Alluxio is not available, metadata is stored locally
 
             FileUtils.writeStringToFile(
-                    new File(registryFolder + metadataFileName),
+                    new File(registryFolder + "/" + metadataFileName),
                     sessionInfoToJson, defaultCharset());
 
         } else {
@@ -206,7 +207,7 @@ public class RecordingService {
 
         if (!edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is available, recording is store in Alluxio
-            File targetFile = new File(registryFolder + recordingFileName);
+            File targetFile = new File(registryFolder + "/" + recordingFileName);
             if (!targetFile.exists()) {
                 byte[] file = alluxioService.getFile(recordingFileName);
                 writeByteArrayToFile(targetFile, file);
@@ -227,9 +228,9 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
             deleteRecording = Files.deleteIfExists(
-                    Paths.get(registryFolder + recordingFileName));
+                    Paths.get(registryFolder + "/" + recordingFileName));
             deleteMetadata = Files.deleteIfExists(
-                    Paths.get(registryFolder + metadataFileName));
+                    Paths.get(registryFolder + "/" + metadataFileName));
 
         } else {
             // If EDM Alluxio is available, deleting is done in Alluxio
@@ -244,7 +245,7 @@ public class RecordingService {
     }
 
     public List<String> getStoredMetadataContent() throws IOException {
-        List<String> metadataContent;
+        List<String> metadataContent = new ArrayList<>();
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recordings and metadata are
@@ -252,8 +253,10 @@ public class RecordingService {
             File[] metadataFiles = new File(registryFolder)
                     .listFiles((dir, name) -> name.toLowerCase()
                             .endsWith(registryMetadataExtension));
-            metadataContent = stream(metadataFiles)
-                    .map(this::getLocalFileContent).collect(toList());
+            if (metadataFiles != null){
+                metadataContent = stream(metadataFiles)
+                        .map(this::getLocalFileContent).collect(toList());
+            }
 
         } else {
             // If EDM Alluxio is available, recordings and metadata are stored
