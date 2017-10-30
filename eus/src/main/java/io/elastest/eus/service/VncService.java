@@ -126,6 +126,8 @@ public class VncService {
                 + "?host=%s&port=%d&resize=scale&autoconnect=true&password="
                 + hubVncPassword;
 
+        String vncUrl = "";
+        
         String etHost = getenv(etHostEnv);
         if (etHost != null) {
             if (etHost.equalsIgnoreCase("localhost")) {
@@ -133,14 +135,16 @@ public class VncService {
                         .getContainerIpAddress(vncContainerName);
                 hubContainerIp = dockerService.getContainerIpAddress(
                         sessionInfo.getHubContainerName());
+                vncUrl = format(vncUrlFormat, vncContainerIp, noVncExposedPort,
+                        hubContainerIp, hubVncExposedPort);
             } else {
                 vncContainerIp = etHost;
                 hubContainerIp = etHost;
+                vncUrl = format(vncUrlFormat, vncContainerIp, noVncBindPort,
+                        hubContainerIp, hubVncBindPort);
             }
         }
-
-        String vncUrl = format(vncUrlFormat, vncContainerIp, noVncBindPort,
-                hubContainerIp, hubVncBindPort);
+        
         dockerService.waitForHostIsReachable(vncUrl);
 
         sessionInfo.setVncContainerName(vncContainerName);
