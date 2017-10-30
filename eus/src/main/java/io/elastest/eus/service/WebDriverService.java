@@ -130,18 +130,21 @@ public class WebDriverService {
     private SessionService sessionService;
     private VncService vncService;
     private RecordingService recordingService;
+    private LogstashService logstashService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
             SessionService sessionService, VncService vncService,
-            RecordingService recordingService) {
+            RecordingService recordingService,
+            LogstashService logstashService) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
         this.vncService = vncService;
         this.recordingService = recordingService;
+        this.logstashService = logstashService;
     }
 
     @PostConstruct
@@ -153,15 +156,17 @@ public class WebDriverService {
     @PreDestroy
     public void cleanUp() {
         logExecutor.shutdown();
-        
-        //Before shutting down the EUS, all recording files must have been processed
-        sessionService.getSessionRegistry().forEach((sessionId, sessionInfo) -> {
-        	try {
-				stopBrowser(sessionInfo);
-			}catch (Exception e) {
-	            log.error("Exception handling response for session", e);
-	        }
-        });
+
+        // Before shutting down the EUS, all recording files must have been
+        // processed
+        sessionService.getSessionRegistry()
+                .forEach((sessionId, sessionInfo) -> {
+                    try {
+                        stopBrowser(sessionInfo);
+                    } catch (Exception e) {
+                        log.error("Exception handling response for session", e);
+                    }
+                });
     }
 
     public ResponseEntity<String> getStatus() throws JsonProcessingException {
@@ -246,13 +251,13 @@ public class WebDriverService {
         if (!logFutureMap.containsKey(sessionId)) {
             String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
                     + "/log";
-            logFutureMap.put(sessionId, launchLogMonitor(postUrl));
+            logFutureMap.put(sessionId, launchLogMonitor(postUrl, sessionId));
         }
 
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 
-    private Future<?> launchLogMonitor(final String postUrl) {
+    private Future<?> launchLogMonitor(final String postUrl, String sessionId) {
         log.info("Launching log monitor using URL {}", postUrl);
 
         return logExecutor.submit(() -> {
@@ -263,7 +268,11 @@ public class WebDriverService {
                             "{\"type\":\"browser\"} ", WebDriverLog.class)
                             .getBody();
                     if (!response.getValue().isEmpty()) {
-                        response.getValue().forEach(System.err::println);
+                        String jsonMessages = logstashService
+                                .getJsonMessageFromValueList(
+                                        response.getValue());
+                        logstashService.sendBrowserConsoleToLogstash(
+                                jsonMessages, sessionId);
                     }
                     sleep(logPollMs);
 
@@ -310,8 +319,7 @@ public class WebDriverService {
         ResponseEntity<String> exchange = restTemplate
                 .exchange(hubUrl + requestContext, method,
                         optionalHttpEntity.isPresent()
-                                ? optionalHttpEntity.get()
-                                : httpEntity,
+                                ? optionalHttpEntity.get() : httpEntity,
                         String.class);
         return exchange.getBody();
     }
