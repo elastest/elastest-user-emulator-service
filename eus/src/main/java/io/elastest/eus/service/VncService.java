@@ -126,7 +126,8 @@ public class VncService {
                 + "?host=%s&port=%d&resize=scale&autoconnect=true&password="
                 + hubVncPassword;
 
-        String vncUrl = "";
+        String vncUrl = format(vncUrlFormat, vncContainerIp, noVncBindPort,
+                hubContainerIp, hubVncBindPort);
         
         String etHost = getenv(etHostEnv);
         if (etHost != null) {
