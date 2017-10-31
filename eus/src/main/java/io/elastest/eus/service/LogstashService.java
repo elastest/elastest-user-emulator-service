@@ -1,9 +1,6 @@
 package io.elastest.eus.service;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static okhttp3.MediaType.parse;
-import static okhttp3.RequestBody.create;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
@@ -15,16 +12,12 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.external.EtmLogstashApi;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
+
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
