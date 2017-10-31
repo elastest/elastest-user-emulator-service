@@ -128,6 +128,7 @@ public class VncService {
 
         String vncUrl = format(vncUrlFormat, vncContainerIp, noVncBindPort,
                 hubContainerIp, hubVncBindPort);
+        dockerService.waitForHostIsReachable(vncUrl);
         
         String etHost = getenv(etHostEnv);
         if (etHost != null) {
@@ -146,7 +147,7 @@ public class VncService {
             }
         }
         
-        dockerService.waitForHostIsReachable(vncUrl);
+        
 
         sessionInfo.setVncContainerName(vncContainerName);
         sessionInfo.setVncUrl(vncUrl);
