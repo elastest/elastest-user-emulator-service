@@ -210,7 +210,7 @@ public class WebDriverService {
             if (liveSession) {
                 hubTimeout = "0";
             }
-            sessionInfo = starBrowser(requestBody, hubTimeout);
+            sessionInfo = startBrowser(requestBody, hubTimeout);
             optionalHttpEntity = optionalHttpEntity(requestBody);
 
         } else {
@@ -378,7 +378,7 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private SessionInfo starBrowser(String jsonCapabilities, String timeout)
+    private SessionInfo startBrowser(String jsonCapabilities, String timeout)
             throws IOException, InterruptedException {
         String browserName = jsonService
                 .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
