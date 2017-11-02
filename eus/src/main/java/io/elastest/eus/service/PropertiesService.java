@@ -118,6 +118,9 @@ public class PropertiesService {
         log.debug("Capabilities: browserName={}, version={}, platform={}",
                 browserName, version, platform);
 
+        //Transform 61.0 in 61
+        version = version.replace(".0", "");
+        
         String out = null;
         for (String key : browsers.keySet()) {
             if (key.contains(browserName)) {
