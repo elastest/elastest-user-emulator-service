@@ -19,6 +19,7 @@ package io.elastest.eus.service;
 import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
+import static java.lang.Integer.parseInt;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -319,7 +320,8 @@ public class WebDriverService {
         ResponseEntity<String> exchange = restTemplate
                 .exchange(hubUrl + requestContext, method,
                         optionalHttpEntity.isPresent()
-                                ? optionalHttpEntity.get() : httpEntity,
+                                ? optionalHttpEntity.get()
+                                : httpEntity,
                         String.class);
         return exchange.getBody();
     }
@@ -362,7 +364,8 @@ public class WebDriverService {
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
 
-        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
+        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")
+                && parseInt(version) < 55) {
             WebDriverCapabilities firefox = new WebDriverCapabilities("firefox",
                     "", "ANY");
             log.debug("Using empty firefox capabilities {}", firefox);
