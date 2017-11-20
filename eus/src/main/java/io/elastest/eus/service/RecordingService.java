@@ -90,10 +90,10 @@ public class RecordingService {
     @PostConstruct
     private void postConstruct() {
         // Ensure several attributes ends with "/"
-        if (edmAlluxioUrl != null && !edmAlluxioUrl.endsWith("/")) {
+        if (!edmAlluxioUrl.isEmpty() && !edmAlluxioUrl.endsWith("/")) {
             edmAlluxioUrl += "/";
         }
-        if (registryFolder != null && !registryFolder.endsWith("/")) {
+        if (!registryFolder.isEmpty() && !registryFolder.endsWith("/")) {
             registryFolder += "/";
         }
     }
