@@ -1,74 +1,50 @@
+/*
+ * (C) Copyright 2017-2019 ElasTest (http://elastest.io/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package io.elastest.eus.service;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.external.EtmLogstashApi;
-
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
-
+/**
+ * Logstash service.
+ *
+ * @since 0.5.0-alpha2
+ */
 @Service
 public class LogstashService {
+
     @Value("${et.mon.lshttp.api:#{null}}")
     private String lsHttpApi;
 
     @Value("${et.mon.exec:#{null}}")
     private String etMonExec;
 
-    private EtmLogstashApi logstash;
     final Logger log = getLogger(lookup().lookupClass());
-
-    @PostConstruct
-    public void postConstruct() {
-        if (lsHttpApi != null && !lsHttpApi.isEmpty()) {
-            Retrofit retrofit = new Retrofit.Builder()
-                    .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .baseUrl(lsHttpApi).build();
-            logstash = retrofit.create(EtmLogstashApi.class);
-        }
-    }
-
-    // public void sendBrowserConsoleToLogstash(String jsonMessages,
-    // String sessionId) {
-    //
-    // if (lsHttpApi == null || etMonExec == null) {
-    // return;
-    // }
-    // try {
-    // String component = "tss_eus_browser_" + sessionId;
-    //
-    // String body = "{" + "\"component\":\"" + component + "\""
-    // + ",\"exec\":\"" + etMonExec + "\""
-    // + ",\"stream\":\"console\"" + ",\"messages\":"
-    // + jsonMessages + "}";
-    //
-    // System.out.println("json " + body);
-    //
-    // RequestBody data = create(parse(APPLICATION_JSON), body);
-    // Call<ResponseBody> response = logstash.sendMessages(data);
-    //
-    // System.out.println("response " + response.request());
-    //
-    // } catch (Exception e) {
-    // log.error("Exception in send browser console log trace", e);
-    // }
-    // }
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             String sessionId) {
@@ -89,8 +65,8 @@ public class LogstashService {
                     + ",\"exec\":\"" + etMonExec + "\""
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
-            byte[] out = body.getBytes(StandardCharsets.UTF_8);
-            System.out.println(body);
+            byte[] out = body.getBytes(UTF_8);
+            log.debug("Sending browser log to logstash: {}", body);
             int length = out.length;
 
             http.setFixedLengthStreamingMode(length);
@@ -108,18 +84,19 @@ public class LogstashService {
 
     public String getJsonMessageFromValueList(
             List<io.elastest.eus.json.WebDriverLog.Value> values) {
-        String jsonMessage = "[";
+        StringBuilder stringBuilder = new StringBuilder("[");
+
         int counter = 0;
         for (io.elastest.eus.json.WebDriverLog.Value value : values) {
-            jsonMessage += formatJsonMessage(value.toString());
+            stringBuilder.append(formatJsonMessage(value.toString()));
             if (counter < values.size() - 1) {
-                jsonMessage += ",";
+                stringBuilder.append(",");
             } else {
-                jsonMessage += "]";
+                stringBuilder.append("]");
             }
             counter++;
         }
-        return jsonMessage;
+        return stringBuilder.toString();
     }
 
     public static String formatJsonMessage(String msg) {
