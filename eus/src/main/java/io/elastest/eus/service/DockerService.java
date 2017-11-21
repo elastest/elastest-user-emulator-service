@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -55,6 +56,7 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
@@ -64,6 +66,7 @@ import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 
 import io.elastest.eus.docker.DockerContainer;
 import io.elastest.eus.docker.DockerException;
@@ -95,6 +98,18 @@ public class DockerService {
     @Value("${docker.server.port}")
     private int dockerServerPort;
 
+    @Value("${docker.read.timeout}")
+    private int readTimeout;
+
+    @Value("${docker.connection.timeout}")
+    private int connectTimeout;
+
+    @Value("${docker.max.total.connections}")
+    private int maxTotalConnections;
+
+    @Value("${docker.max.route.connections}")
+    private int maxPerRouteConnections;
+
     private ShellService shellService;
 
     private DockerClient dockerClient;
@@ -107,9 +122,19 @@ public class DockerService {
     }
 
     @PostConstruct
+    @SuppressWarnings("resource")
     private void postConstruct() throws IOException {
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
+                .withReadTimeout(readTimeout).withConnectTimeout(connectTimeout)
+                .withMaxTotalConnections(maxTotalConnections)
+                .withMaxPerRouteConnections(maxPerRouteConnections);
         dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())
-                .build();
+                .withDockerCmdExecFactory(dockerCmdExecFactory).build();
+    }
+
+    @PreDestroy
+    private void teardown() throws IOException {
+        dockerClient.close();
     }
 
     public String getDockerServerUrl() throws IOException {
@@ -226,6 +251,7 @@ public class DockerService {
     }
 
     public void stopAndRemoveContainer(String containerName) {
+        log.trace("Stop and remove container {}", containerName);
         stopContainer(containerName);
         removeContainer(containerName);
     }
@@ -334,11 +360,12 @@ public class DockerService {
     public boolean existsContainer(String containerName) {
         boolean exists = true;
         try {
+            log.trace("Checking if container {} exists", containerName);
             dockerClient.inspectContainerCmd(containerName).exec();
-            log.trace("Container {} already exist", containerName);
+            log.debug("Container {} already exist", containerName);
 
         } catch (NotFoundException e) {
-            log.trace("Container {} does not exist", containerName);
+            log.debug("Container {} does not exist", containerName);
             exists = false;
         }
         return exists;

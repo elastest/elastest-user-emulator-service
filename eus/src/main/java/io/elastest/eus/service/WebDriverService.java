@@ -124,7 +124,6 @@ public class WebDriverService {
 
     private ExecutorService logExecutor;
     private Map<String, Future<?>> logFutureMap;
-
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
@@ -446,20 +445,16 @@ public class WebDriverService {
 
     private void stopBrowser(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
+        sessionService.deleteSession(sessionInfo, false);
 
         String sessionId = sessionInfo.getSessionId();
         if (logFutureMap.containsKey(sessionId)) {
-            logFutureMap.get(sessionId).cancel(true);
+            Future<?> future = logFutureMap.get(sessionId);
+            if (!future.isCancelled()) {
+                future.cancel(true);
+            }
+            logFutureMap.remove(sessionId);
         }
-
-        if (sessionInfo.getVncContainerName() != null) {
-            recordingService.stopRecording(sessionInfo);
-            recordingService.storeRecording(sessionInfo);
-            recordingService.storeMetadata(sessionInfo);
-
-            sessionService.sendRecordingToAllClients(sessionInfo);
-        }
-        sessionService.deleteSession(sessionInfo, false);
     }
 
     private boolean isPostSessionRequest(HttpMethod method, String context) {

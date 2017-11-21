@@ -231,10 +231,17 @@ public class SessionService extends TextWebSocketHandler {
 
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
         try {
+            if (sessionInfo.getVncContainerName() != null) {
+                recordingService.stopRecording(sessionInfo);
+                recordingService.storeRecording(sessionInfo);
+                recordingService.storeMetadata(sessionInfo);
+                sendRecordingToAllClients(sessionInfo);
+            }
+
             shutdownSessionTimer(sessionInfo);
 
             if (timeout) {
-                log.info("Deleting session {} due to timeout of {} seconds",
+                log.warn("Deleting session {} due to timeout of {} seconds",
                         sessionInfo.getSessionId(), hubTimeout);
             } else {
                 log.info("Deleting session {}", sessionInfo.getSessionId());
@@ -246,7 +253,7 @@ public class SessionService extends TextWebSocketHandler {
                 sendRemoveSessionToAllClients(sessionInfo);
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             String errorMessage = "Exception session message for removing session "
                     + sessionInfo;
             // Not propagating Exception to improve readability

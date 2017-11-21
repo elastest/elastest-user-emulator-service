@@ -132,6 +132,8 @@ public class RecordingService {
 
     public void storeRecording(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
+        log.trace("Storing recording for session {}", sessionInfo);
+
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionId + registryRecordingExtension;
