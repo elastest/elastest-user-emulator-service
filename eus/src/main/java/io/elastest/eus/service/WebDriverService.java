@@ -54,6 +54,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -263,11 +264,13 @@ public class WebDriverService {
         return logExecutor.submit(() -> {
             RestTemplate restTemplate = new RestTemplate();
             while (true) {
+                WebDriverLog response = null;
                 try {
-                    WebDriverLog response = restTemplate.postForEntity(postUrl,
+                    response = restTemplate.postForEntity(postUrl,
                             "{\"type\":\"browser\"} ", WebDriverLog.class)
                             .getBody();
                     if (!response.getValue().isEmpty()) {
+
                         String jsonMessages = logstashService
                                 .getJsonMessageFromValueList(
                                         response.getValue());
@@ -276,6 +279,9 @@ public class WebDriverService {
                     }
                     sleep(logPollMs);
 
+                } catch (HttpMessageNotReadableException e) {
+                    log.warn("Exception in log monitor due to JSON parsing {}",
+                            response, e);
                 } catch (Exception e) {
                     log.debug("Exception in log monitor (URL={}) (error={})",
                             postUrl, e.getMessage());
