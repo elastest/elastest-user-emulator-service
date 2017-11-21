@@ -88,7 +88,7 @@ public class SessionService extends TextWebSocketHandler {
             throws IOException {
         String sessionId = session.getId();
         String payload = message.getPayload();
-        log.debug("Incomming message {} from session {}", payload, sessionId);
+        log.debug("Incoming message {} from session {}", payload, sessionId);
 
         if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
             log.trace("{} received", payload);
