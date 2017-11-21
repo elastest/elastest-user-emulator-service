@@ -101,7 +101,11 @@ public class LogstashService {
     }
 
     public static String formatJsonMessage(String msg) {
-        return "\"" + msg + "\"";
+        return "\"" + parseMsg(msg) + "\"";
+    }
+
+    public static String parseMsg(String msg) {
+        return msg.replaceAll("\"", "\\\""); // replace " to \"
     }
 
 }
