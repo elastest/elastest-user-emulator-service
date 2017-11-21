@@ -187,6 +187,7 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public void removeSession(String sessionId) {
+        log.debug("Remove session {}", sessionId);
         sessionRegistry.remove(sessionId);
     }
 
@@ -231,15 +232,6 @@ public class SessionService extends TextWebSocketHandler {
 
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
         try {
-            if (sessionInfo.getVncContainerName() != null) {
-                recordingService.stopRecording(sessionInfo);
-                recordingService.storeRecording(sessionInfo);
-                recordingService.storeMetadata(sessionInfo);
-                sendRecordingToAllClients(sessionInfo);
-            }
-
-            shutdownSessionTimer(sessionInfo);
-
             if (timeout) {
                 log.warn("Deleting session {} due to timeout of {} seconds",
                         sessionInfo.getSessionId(), hubTimeout);
@@ -247,11 +239,20 @@ public class SessionService extends TextWebSocketHandler {
                 log.info("Deleting session {}", sessionInfo.getSessionId());
             }
 
+            if (sessionInfo.getVncContainerName() != null) {
+                recordingService.stopRecording(sessionInfo);
+                recordingService.storeRecording(sessionInfo);
+                recordingService.storeMetadata(sessionInfo);
+                sendRecordingToAllClients(sessionInfo);
+            }
+
             stopAllContainerOfSession(sessionInfo);
             removeSession(sessionInfo.getSessionId());
             if (!sessionInfo.isLiveSession()) {
                 sendRemoveSessionToAllClients(sessionInfo);
             }
+
+            shutdownSessionTimer(sessionInfo);
 
         } catch (Exception e) {
             throw new EusException(e);

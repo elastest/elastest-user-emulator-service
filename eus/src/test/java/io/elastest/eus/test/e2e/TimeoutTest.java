@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static java.lang.Thread.sleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -48,7 +50,7 @@ import io.elastest.eus.EusSpringBootApp;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "hub.timeout=1",
+@TestPropertySource(properties = { "hub.timeout=5",
         "novnc.image.id=elastest/eus-novnc" })
 public class TimeoutTest {
 
@@ -70,7 +72,11 @@ public class TimeoutTest {
     }
 
     @Test
-    void testTimeout() {
+    void testTimeout() throws InterruptedException {
+        long waitSeconds = 10;
+        log.debug("Waiting {} seconds to force timeout", waitSeconds);
+        sleep(SECONDS.toMillis(waitSeconds));
+
         Throwable exception = assertThrows(WebDriverException.class,
                 () -> driver.get("http://elastest.io/"));
         log.debug("Exception {} -- due to timeout", exception.getMessage());

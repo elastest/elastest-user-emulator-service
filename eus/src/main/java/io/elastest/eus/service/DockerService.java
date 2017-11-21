@@ -248,7 +248,7 @@ public class DockerService {
     }
 
     public void stopAndRemoveContainer(String containerName) {
-        log.trace("Stop and remove container {}", containerName);
+        log.debug("Stop and remove container {}", containerName);
         stopContainer(containerName);
         removeContainer(containerName);
     }
@@ -359,7 +359,7 @@ public class DockerService {
         try {
             log.trace("Checking if container {} exists", containerName);
             dockerClient.inspectContainerCmd(containerName).exec();
-            log.debug("Container {} already exist", containerName);
+            log.trace("Container {} already exist", containerName);
 
         } catch (NotFoundException e) {
             log.debug("Container {} does not exist", containerName);

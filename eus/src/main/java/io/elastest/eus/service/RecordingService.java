@@ -148,28 +148,32 @@ public class RecordingService {
 
             InputStream inputStream = dockerService.getFileFromContainer(
                     noNvcContainerName, recordingFileName);
+            if (inputStream != null) {
+                // -------------
+                // Workaround due to strange behavior of docker-java
+                // it seems that copyArchiveFromContainerCmd not works correctly
 
-            // -------------
-            // Workaround due to strange behavior of docker-java
-            // it seems that copyArchiveFromContainerCmd not works correctly
+                byte[] bytes = toByteArray(inputStream);
 
-            byte[] bytes = toByteArray(inputStream);
-
-            int i = 0;
-            for (; i < bytes.length; i++) {
-                char c1 = (char) bytes[i];
-                if (c1 == 'f') {
-                    char c2 = (char) bytes[i + 1];
-                    char c3 = (char) bytes[i + 2];
-                    if (c2 == 't' && c3 == 'y') {
-                        break;
+                int i = 0;
+                for (; i < bytes.length; i++) {
+                    char c1 = (char) bytes[i];
+                    if (c1 == 'f') {
+                        char c2 = (char) bytes[i + 1];
+                        char c3 = (char) bytes[i + 2];
+                        if (c2 == 't' && c3 == 'y') {
+                            break;
+                        }
                     }
                 }
-            }
 
-            writeByteArrayToFile(new File(target),
-                    copyOfRange(bytes, i - 4, bytes.length));
-            // -------------
+                writeByteArrayToFile(new File(target),
+                        copyOfRange(bytes, i - 4, bytes.length));
+                // -------------
+            } else {
+                log.warn("Recording {} not available in container {}",
+                        recordingFileName, noNvcContainerName);
+            }
 
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
