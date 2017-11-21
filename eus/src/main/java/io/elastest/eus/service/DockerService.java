@@ -98,9 +98,6 @@ public class DockerService {
     @Value("${docker.server.port}")
     private int dockerServerPort;
 
-    @Value("${docker.read.timeout}")
-    private int readTimeout;
-
     @Value("${docker.connection.timeout}")
     private int connectTimeout;
 
@@ -125,7 +122,7 @@ public class DockerService {
     @SuppressWarnings("resource")
     private void postConstruct() throws IOException {
         DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
-                .withReadTimeout(readTimeout).withConnectTimeout(connectTimeout)
+                .withConnectTimeout(connectTimeout)
                 .withMaxTotalConnections(maxTotalConnections)
                 .withMaxPerRouteConnections(maxPerRouteConnections);
         dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())

@@ -254,10 +254,7 @@ public class SessionService extends TextWebSocketHandler {
             }
 
         } catch (Exception e) {
-            String errorMessage = "Exception session message for removing session "
-                    + sessionInfo;
-            // Not propagating Exception to improve readability
-            throw new EusException(errorMessage, e);
+            throw new EusException(e);
         }
     }
 

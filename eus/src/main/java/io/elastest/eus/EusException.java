@@ -30,4 +30,8 @@ public class EusException extends RuntimeException {
         super(msg, e);
     }
 
+    public EusException(Throwable e) {
+        super(e);
+    }
+
 }
