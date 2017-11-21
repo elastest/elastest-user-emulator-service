@@ -16,6 +16,8 @@
  */
 package io.elastest.eus.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Utility class for serialize JSON messages (remove session).
  *
@@ -73,6 +75,10 @@ public class WebDriverCapabilities {
     public class DesiredCapabilities {
         LoggingPrefs loggingPrefs;
         String browserName;
+
+        @JsonProperty("firefox_profile")
+        String firefoxProfile;
+
         Object chromeOptions;
         String version;
         String platform;
@@ -118,6 +124,10 @@ public class WebDriverCapabilities {
             return acceptInsecureCerts;
         }
 
+        public String getFirefoxProfile() {
+            return firefoxProfile;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -126,7 +136,7 @@ public class WebDriverCapabilities {
                     + getPlatform() + ", isLive()=" + isLive()
                     + ", getChromeOptions()=" + getChromeOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
-                    + "]";
+                    + ", getFirefoxProfile()=" + getFirefoxProfile() + "]";
         }
 
     }
