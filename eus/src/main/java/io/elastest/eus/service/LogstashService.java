@@ -105,9 +105,8 @@ public class LogstashService {
     }
 
     public static String parseMsg(String msg) {
-        System.out.println("msg: " + msg);
-        System.out.println("replace: " + msg.replaceAll("(?<!\\\\)\\\"", "\\\\\""));
-        return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\""); // replace " to \" only if " is not preceded by \
+        // replace " to \" only if " is not preceded by \
+        return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\"");
     }
 
 }
