@@ -443,8 +443,7 @@ public class WebDriverService {
         return sessionInfo;
     }
 
-    private void stopBrowser(SessionInfo sessionInfo)
-            throws IOException, InterruptedException {
+    private void stopBrowser(SessionInfo sessionInfo) {
         sessionService.deleteSession(sessionInfo, false);
 
         String sessionId = sessionInfo.getSessionId();

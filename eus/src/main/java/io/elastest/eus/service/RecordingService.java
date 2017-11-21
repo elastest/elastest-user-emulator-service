@@ -149,27 +149,7 @@ public class RecordingService {
             InputStream inputStream = dockerService.getFileFromContainer(
                     noNvcContainerName, recordingFileName);
             if (inputStream != null) {
-                // -------------
-                // Workaround due to strange behavior of docker-java
-                // it seems that copyArchiveFromContainerCmd not works correctly
-
-                byte[] bytes = toByteArray(inputStream);
-
-                int i = 0;
-                for (; i < bytes.length; i++) {
-                    char c1 = (char) bytes[i];
-                    if (c1 == 'f') {
-                        char c2 = (char) bytes[i + 1];
-                        char c3 = (char) bytes[i + 2];
-                        if (c2 == 't' && c3 == 'y') {
-                            break;
-                        }
-                    }
-                }
-
-                writeByteArrayToFile(new File(target),
-                        copyOfRange(bytes, i - 4, bytes.length));
-                // -------------
+                copyInputStreamToFile(target, inputStream);
             } else {
                 log.warn("Recording {} not available in container {}",
                         recordingFileName, noNvcContainerName);
@@ -180,6 +160,29 @@ public class RecordingService {
             dockerService.execCommand(noNvcContainerName, true, novncScript,
                     "--upload", edmAlluxioUrl, recordingFileName);
         }
+    }
+
+    private void copyInputStreamToFile(String target, InputStream inputStream)
+            throws IOException {
+        // Workaround due to strange behavior of docker-java
+        // it seems that copyArchiveFromContainerCmd not works correctly
+        byte[] bytes = toByteArray(inputStream);
+
+        int i = 0;
+        for (; i < bytes.length; i++) {
+            char c1 = (char) bytes[i];
+            if (c1 == 'f') {
+                char c2 = (char) bytes[i + 1];
+                char c3 = (char) bytes[i + 2];
+                if (c2 == 't' && c3 == 'y') {
+                    break;
+                }
+            }
+        }
+
+        writeByteArrayToFile(new File(target),
+                copyOfRange(bytes, i - 4, bytes.length));
+
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
