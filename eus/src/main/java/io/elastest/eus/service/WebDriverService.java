@@ -54,7 +54,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -248,29 +247,30 @@ public class WebDriverService {
                 sessionInfo, liveSession, responseBody);
 
         // Browser log thread
-        String sessionId = sessionInfo.getSessionId();
-        if (!logFutureMap.containsKey(sessionId)) {
-            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
-                    + "/log";
-            logFutureMap.put(sessionId, launchLogMonitor(postUrl, sessionId));
+        if (isPostSessionRequest(method, requestContext)) {
+            String sessionId = sessionInfo.getSessionId();
+            if (!logFutureMap.containsKey(sessionId)) {
+                String postUrl = sessionInfo.getHubUrl() + "/session/"
+                        + sessionId + "/log";
+                logFutureMap.put(sessionId,
+                        launchLogMonitor(postUrl, sessionId));
+            }
         }
 
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 
-    private Future<?> launchLogMonitor(final String postUrl, String sessionId) {
+    private Future<?> launchLogMonitor(String postUrl, String sessionId) {
         log.info("Launching log monitor using URL {}", postUrl);
 
         return logExecutor.submit(() -> {
             RestTemplate restTemplate = new RestTemplate();
             while (true) {
-                WebDriverLog response = null;
                 try {
-                    response = restTemplate.postForEntity(postUrl,
+                    WebDriverLog response = restTemplate.postForEntity(postUrl,
                             "{\"type\":\"browser\"} ", WebDriverLog.class)
                             .getBody();
                     if (!response.getValue().isEmpty()) {
-
                         String jsonMessages = logstashService
                                 .getJsonMessageFromValueList(
                                         response.getValue());
@@ -279,12 +279,9 @@ public class WebDriverService {
                     }
                     sleep(logPollMs);
 
-                } catch (HttpMessageNotReadableException e) {
-                    log.warn("Exception in log monitor due to JSON parsing {}",
-                            response, e);
                 } catch (Exception e) {
-                    log.debug("Exception in log monitor (URL={}) (error={})",
-                            postUrl, e.getMessage());
+                    log.debug("Termimating log monitor due to {}",
+                            e.getMessage());
                     break;
                 }
             }
