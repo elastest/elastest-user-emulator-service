@@ -50,7 +50,7 @@ public class EusTJobE2eTest extends EusBaseTest {
 
     @Test
     @DisplayName("EUS in a TJob")
-    void testSupportService(ChromeDriver driver) throws InterruptedException {
+    void testTJob(ChromeDriver driver) throws InterruptedException {
         log.info("Navigate to TORM and start new project");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
@@ -83,7 +83,7 @@ public class EusTJobE2eTest extends EusBaseTest {
         waitEus.until(visibilityOfElementLocated(eusCard));
 
         log.info("Wait for build sucess traces");
-        WebDriverWait waitLogs = new WebDriverWait(driver, 120);
+        WebDriverWait waitLogs = new WebDriverWait(driver, 180);
         waitLogs.until(textToBePresentInElementLocated(By.tagName("logs-view"),
                 "BUILD SUCCESS"));
     }
