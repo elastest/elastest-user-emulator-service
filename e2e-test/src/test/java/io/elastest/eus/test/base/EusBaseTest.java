@@ -42,7 +42,7 @@ public class EusBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    protected String tormUrl = "http://localhost:37006/"; // local by default
+    protected String tormUrl = "http://localhost:37000/"; // local by default
 
     @BeforeEach
     void setup() {
@@ -60,9 +60,10 @@ public class EusBaseTest {
         driver.findElement(By.name("project.name")).sendKeys(projectName);
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
-        driver.findElement(
-                By.xpath("//span[contains(string(), '" + projectName + "')]"))
-                .click();
+        WebDriverWait waitElement = new WebDriverWait(driver, 3);
+        By projectNameElement = By.xpath("//div[.='" + projectName + "']");
+        waitElement.until(visibilityOfElementLocated(projectNameElement));
+        driver.findElement(projectNameElement).click();
     }
 
     protected void startTestSupportService(WebDriver driver,

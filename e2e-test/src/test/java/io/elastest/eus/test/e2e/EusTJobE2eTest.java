@@ -68,7 +68,6 @@ public class EusTJobE2eTest extends EusBaseTest {
         driver.findElement(By.className("mat-select-trigger")).click();
         driver.findElement(By.xpath("//md-option[contains(string(), 'None')]"))
                 .click();
-        driver.findElement(By.className("mat-slide-toggle-bar")).click();
         driver.findElement(By.name("commands")).sendKeys(
                 "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;");
         driver.findElement(By.xpath("//md-checkbox[contains(string(), 'EUS')]"))
