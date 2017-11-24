@@ -16,7 +16,14 @@
  */
 package io.elastest.eus.session;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
 
 /**
  * Session information.
@@ -25,6 +32,8 @@ import java.util.concurrent.Future;
  * @since 0.0.1
  */
 public class SessionInfo {
+    final Logger log = getLogger(lookup().lookupClass());
+
     private String sessionId;
     private String hubUrl;
     private String hubContainerName;
@@ -34,7 +43,7 @@ public class SessionInfo {
     private String browser;
     private String version;
     private boolean liveSession;
-    private Future<?> timeoutFuture;
+    private List<Future<?>> timeoutFutures = new CopyOnWriteArrayList<>();
     private int hubBindPort;
     private int hubVncBindPort;
     private int noVncBindPort;
@@ -111,12 +120,12 @@ public class SessionInfo {
         this.liveSession = liveSession;
     }
 
-    public Future<?> getTimeoutFuture() {
-        return timeoutFuture;
+    public List<Future<?>> getTimeoutFutures() {
+        return timeoutFutures;
     }
 
-    public void setTimeoutFuture(Future<?> timeoutFuture) {
-        this.timeoutFuture = timeoutFuture;
+    public void addTimeoutFuture(Future<?> timeoutFuture) {
+        this.timeoutFutures.add(timeoutFuture);
     }
 
     public int getHubBindPort() {

@@ -48,7 +48,7 @@ public class LogstashService {
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             String sessionId) {
-        log.debug("lsHttpApi: {} . etMonExec: {}", lsHttpApi, etMonExec);
+        log.trace("lsHttpApi: {}. etMonExec: {}", lsHttpApi, etMonExec);
         if (lsHttpApi == null || etMonExec == null) {
             return;
         }

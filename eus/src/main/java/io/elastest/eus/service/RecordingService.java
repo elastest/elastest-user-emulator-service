@@ -124,15 +124,16 @@ public class RecordingService {
     public void stopRecording(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
         String noNvcContainerName = sessionInfo.getVncContainerName();
-        log.trace("Stopping recording of container {}", noNvcContainerName);
+        log.debug("Stopping recording of container {}", noNvcContainerName);
 
-        dockerService.execCommand(noNvcContainerName, true, novncScript,
+        dockerService.execCommand(noNvcContainerName, false, novncScript,
                 "--end");
     }
 
     public void storeRecording(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
-        log.trace("Storing recording for session {}", sessionInfo);
+        log.debug("Storing recording for session {}",
+                sessionInfo.getSessionId());
 
         String sessionId = sessionInfo.getSessionId();
         String noNvcContainerName = sessionInfo.getVncContainerName();

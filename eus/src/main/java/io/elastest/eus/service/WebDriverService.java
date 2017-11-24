@@ -20,7 +20,6 @@ import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.Integer.parseInt;
-import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static java.util.Optional.empty;
@@ -35,15 +34,9 @@ import static org.springframework.http.HttpStatus.OK;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 
@@ -64,14 +57,15 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
 
+import io.elastest.eus.EusException;
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
-import io.elastest.eus.json.WebDriverLog;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.session.SessionInfo;
 import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -116,56 +110,35 @@ public class WebDriverService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
-    @Value("${log.poll.ms}")
-    private int logPollMs;
-
-    @Value("${log.executor.size}")
-    private int logExecutorSize;
-
-    private ExecutorService logExecutor;
-    private Map<String, Future<?>> logFutureMap;
     private DockerService dockerService;
     private PropertiesService propertiesService;
     private JsonService jsonService;
     private SessionService sessionService;
     private VncService vncService;
     private RecordingService recordingService;
-    private LogstashService logstashService;
+    private TimeoutService timeoutService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             PropertiesService propertiesService, JsonService jsonService,
             SessionService sessionService, VncService vncService,
-            RecordingService recordingService,
-            LogstashService logstashService) {
+            RecordingService recordingService, TimeoutService timeoutService) {
         this.dockerService = dockerService;
         this.propertiesService = propertiesService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
         this.vncService = vncService;
         this.recordingService = recordingService;
-        this.logstashService = logstashService;
-    }
-
-    @PostConstruct
-    public void init() {
-        logExecutor = Executors.newFixedThreadPool(logExecutorSize);
-        logFutureMap = new HashMap<>(logExecutorSize);
+        this.timeoutService = timeoutService;
     }
 
     @PreDestroy
     public void cleanUp() {
-        logExecutor.shutdown();
-
         // Before shutting down the EUS, all recording files must have been
         // processed
         sessionService.getSessionRegistry()
                 .forEach((sessionId, sessionInfo) -> {
-                    try {
-                        stopBrowser(sessionInfo);
-                    } catch (Exception e) {
-                        log.error("Exception handling response for session", e);
-                    }
+                    stopBrowser(sessionInfo);
                 });
     }
 
@@ -196,13 +169,7 @@ public class WebDriverService {
         // Intercept create session
         if (isPostSessionRequest(method, requestContext)) {
             // JSON "mangling" to activate always the browser logging
-            log.debug("POST requestBody before mangling: {}", requestBody);
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode input = objectMapper.readTree(requestBody);
-            JsonQuery jsonQuery = compile(
-                    "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } } else . end)");
-            requestBody = jsonQuery.apply(input).iterator().next().toString();
-            log.debug("POST requestBody after mangling: {}", requestBody);
+            requestBody = activateBrowserLogging(requestBody);
             httpEntity = new HttpEntity<>(requestBody);
 
             // If live, no timeout
@@ -232,12 +199,6 @@ public class WebDriverService {
             }
         }
 
-        // Only using timer for non-live sessions
-        if (!liveSession) {
-            sessionService.shutdownSessionTimer(sessionInfo);
-            sessionService.startSessionTimer(sessionInfo);
-        }
-
         // Proxy request to Selenium Hub
         String responseBody = exchange(httpEntity, requestContext, method,
                 sessionInfo, optionalHttpEntity);
@@ -249,43 +210,36 @@ public class WebDriverService {
         // Browser log thread
         if (isPostSessionRequest(method, requestContext)) {
             String sessionId = sessionInfo.getSessionId();
-            if (!logFutureMap.containsKey(sessionId)) {
-                String postUrl = sessionInfo.getHubUrl() + "/session/"
-                        + sessionId + "/log";
-                logFutureMap.put(sessionId,
-                        launchLogMonitor(postUrl, sessionId));
+            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
+                    + "/log";
+            timeoutService.launchLogMonitor(postUrl, sessionId);
+        }
+
+        // Only using timer for non-live sessions
+        if (!liveSession) {
+            timeoutService.shutdownSessionTimer(sessionInfo);
+            Runnable deleteSession = () -> deleteSession(sessionInfo, true);
+
+            if (!isDeleteSessionRequest(method, requestContext)) {
+                int timeout = parseInt(hubTimeout);
+                timeoutService.startSessionTimer(sessionInfo, timeout,
+                        deleteSession);
             }
         }
 
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 
-    private Future<?> launchLogMonitor(String postUrl, String sessionId) {
-        log.info("Launching log monitor using URL {}", postUrl);
-
-        return logExecutor.submit(() -> {
-            RestTemplate restTemplate = new RestTemplate();
-            while (true) {
-                try {
-                    WebDriverLog response = restTemplate.postForEntity(postUrl,
-                            "{\"type\":\"browser\"} ", WebDriverLog.class)
-                            .getBody();
-                    if (!response.getValue().isEmpty()) {
-                        String jsonMessages = logstashService
-                                .getJsonMessageFromValueList(
-                                        response.getValue());
-                        logstashService.sendBrowserConsoleToLogstash(
-                                jsonMessages, sessionId);
-                    }
-                    sleep(logPollMs);
-
-                } catch (Exception e) {
-                    log.debug("Termimating log monitor due to {}",
-                            e.getMessage());
-                    break;
-                }
-            }
-        });
+    private String activateBrowserLogging(String requestBody)
+            throws IOException, JsonQueryException {
+        log.debug("POST requestBody before mangling: {}", requestBody);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode input = objectMapper.readTree(requestBody);
+        JsonQuery jsonQuery = compile(
+                "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } } else . end)");
+        requestBody = jsonQuery.apply(input).iterator().next().toString();
+        log.debug("POST requestBody after mangling: {}", requestBody);
+        return requestBody;
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
@@ -446,17 +400,38 @@ public class WebDriverService {
         return sessionInfo;
     }
 
-    private void stopBrowser(SessionInfo sessionInfo) {
-        sessionService.deleteSession(sessionInfo, false);
-
-        String sessionId = sessionInfo.getSessionId();
-        if (logFutureMap.containsKey(sessionId)) {
-            Future<?> future = logFutureMap.get(sessionId);
-            if (!future.isCancelled()) {
-                future.cancel(true);
+    public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
+        try {
+            if (timeout) {
+                log.warn("Deleting session {} due to timeout of {} seconds",
+                        sessionInfo.getSessionId(), hubTimeout);
+            } else {
+                log.info("Deleting session {}", sessionInfo.getSessionId());
             }
-            logFutureMap.remove(sessionId);
+
+            if (sessionInfo.getVncContainerName() != null) {
+                recordingService.stopRecording(sessionInfo);
+                recordingService.storeRecording(sessionInfo);
+                recordingService.storeMetadata(sessionInfo);
+                sessionService.sendRecordingToAllClients(sessionInfo);
+            }
+
+            sessionService.stopAllContainerOfSession(sessionInfo);
+            if (!sessionInfo.isLiveSession()) {
+                sessionService.sendRemoveSessionToAllClients(sessionInfo);
+            }
+
+            sessionService.removeSession(sessionInfo.getSessionId());
+
+            timeoutService.shutdownSessionTimer(sessionInfo);
+
+        } catch (Exception e) {
+            throw new EusException(e);
         }
+    }
+
+    private void stopBrowser(SessionInfo sessionInfo) {
+        deleteSession(sessionInfo, false);
     }
 
     private boolean isPostSessionRequest(HttpMethod method, String context) {

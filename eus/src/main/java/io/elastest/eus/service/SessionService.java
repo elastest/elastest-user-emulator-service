@@ -16,18 +16,13 @@
  */
 package io.elastest.eus.service;
 
-import static java.lang.Integer.parseInt;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.util.concurrent.Executors.newScheduledThreadPool;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +31,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import io.elastest.eus.EusException;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
@@ -69,8 +63,6 @@ public class SessionService extends TextWebSocketHandler {
 
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
-    private ScheduledExecutorService timeoutExecutor = newScheduledThreadPool(
-            1);
 
     private DockerService dockerService;
     private JsonService jsonService;
@@ -205,58 +197,6 @@ public class SessionService extends TextWebSocketHandler {
 
     public Map<String, SessionInfo> getSessionRegistry() {
         return sessionRegistry;
-    }
-
-    public void startSessionTimer(SessionInfo sessionInfo) {
-        if (sessionInfo != null) {
-            Runnable deleteSession = () -> deleteSession(sessionInfo, true);
-
-            int timeout = parseInt(hubTimeout);
-            Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
-                    timeout, SECONDS);
-
-            sessionInfo.setTimeoutFuture(timeoutFuture);
-
-            log.trace("Starting timer of {} seconds", hubTimeout);
-        }
-    }
-
-    public void shutdownSessionTimer(SessionInfo sessionInfo) {
-        if (sessionInfo != null) {
-            Future<?> timeoutFuture = sessionInfo.getTimeoutFuture();
-            if (timeoutFuture != null) {
-                timeoutFuture.cancel(true);
-            }
-        }
-    }
-
-    public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
-        try {
-            if (timeout) {
-                log.warn("Deleting session {} due to timeout of {} seconds",
-                        sessionInfo.getSessionId(), hubTimeout);
-            } else {
-                log.info("Deleting session {}", sessionInfo.getSessionId());
-            }
-
-            if (sessionInfo.getVncContainerName() != null) {
-                recordingService.stopRecording(sessionInfo);
-                recordingService.storeRecording(sessionInfo);
-                recordingService.storeMetadata(sessionInfo);
-                sendRecordingToAllClients(sessionInfo);
-            }
-
-            stopAllContainerOfSession(sessionInfo);
-            removeSession(sessionInfo.getSessionId());
-            if (!sessionInfo.isLiveSession()) {
-                sendRemoveSessionToAllClients(sessionInfo);
-            }
-
-            shutdownSessionTimer(sessionInfo);
-
-        } catch (Exception e) {
-            throw new EusException(e);
-        }
     }
 
     public void stopAllContainerOfSession(SessionInfo sessionInfo) {

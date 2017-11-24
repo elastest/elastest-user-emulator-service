@@ -56,6 +56,7 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
@@ -65,6 +66,7 @@ import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 
 import io.elastest.eus.docker.DockerContainer;
 import io.elastest.eus.docker.DockerException;
@@ -96,6 +98,9 @@ public class DockerService {
     @Value("${docker.server.port}")
     private int dockerServerPort;
 
+    @Value("${docker.max.route.connections}")
+    private int dockerMaxRouteConnections;
+
     private ShellService shellService;
 
     private DockerClient dockerClient;
@@ -108,9 +113,12 @@ public class DockerService {
     }
 
     @PostConstruct
+    @SuppressWarnings("resource")
     private void postConstruct() throws IOException {
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
+                .withMaxPerRouteConnections(dockerMaxRouteConnections);
         dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())
-                .build();
+                .withDockerCmdExecFactory(dockerCmdExecFactory).build();
     }
 
     @PreDestroy
@@ -264,6 +272,7 @@ public class DockerService {
 
         log.trace("Executing command {} in container {} (await completion {})",
                 commandStr, containerName, awaitCompletion);
+
         if (existsContainer(containerName)) {
             ExecCreateCmdResponse exec = dockerClient
                     .execCreateCmd(containerName).withCmd(command).withTty(true)
