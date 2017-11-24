@@ -123,7 +123,7 @@ public class TimeoutService {
 
     public void shutdownSessionTimer(SessionInfo sessionInfo) {
         if (sessionInfo != null) {
-            sessionInfo.getTimeoutFutures().forEach((timeoutFuture) -> {
+            sessionInfo.getTimeoutFutures().forEach(timeoutFuture -> {
                 if (timeoutFuture != null) {
                     timeoutFuture.cancel(true);
                     log.trace("Canceling timer in session {} (future {}) ",

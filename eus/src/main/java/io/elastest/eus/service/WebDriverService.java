@@ -137,9 +137,7 @@ public class WebDriverService {
         // Before shutting down the EUS, all recording files must have been
         // processed
         sessionService.getSessionRegistry()
-                .forEach((sessionId, sessionInfo) -> {
-                    stopBrowser(sessionInfo);
-                });
+                .forEach((sessionId, sessionInfo) -> stopBrowser(sessionInfo));
     }
 
     public ResponseEntity<String> getStatus() throws JsonProcessingException {
@@ -231,7 +229,7 @@ public class WebDriverService {
     }
 
     private String activateBrowserLogging(String requestBody)
-            throws IOException, JsonQueryException {
+            throws IOException {
         log.debug("POST requestBody before mangling: {}", requestBody);
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode input = objectMapper.readTree(requestBody);
