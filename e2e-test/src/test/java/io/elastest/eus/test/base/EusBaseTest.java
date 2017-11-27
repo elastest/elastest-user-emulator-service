@@ -24,6 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TakesScreenshot;
@@ -44,6 +45,8 @@ public class EusBaseTest {
 
     protected String tormUrl = "http://localhost:37000/"; // local by default
 
+    protected WebDriver driver;
+
     @BeforeEach
     void setup() {
         String etmApi = getProperty("etEmpApi");
@@ -51,6 +54,14 @@ public class EusBaseTest {
             tormUrl = etmApi;
         }
         log.info("Using URL {} to connect to TORM", tormUrl);
+    }
+
+    @AfterEach
+    void teardown() throws IOException {
+        if (driver != null) {
+            log.info("Screenshot (in Base64) at the end of the test:\n{}",
+                    getBase64Screenshot(driver));
+        }
     }
 
     protected void createNewProject(WebDriver driver, String projectName) {

@@ -51,6 +51,8 @@ public class EusTJobE2eTest extends EusBaseTest {
     @Test
     @DisplayName("EUS in a TJob")
     void testTJob(ChromeDriver driver) throws InterruptedException {
+        this.driver = driver;
+
         log.info("Navigate to TORM and start new project");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS);

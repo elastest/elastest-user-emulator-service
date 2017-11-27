@@ -32,6 +32,9 @@ node('docker') {
                 returnStdout: true
             ).trim()
             echo "ETM container IP=${etEmpApi}"
+            sh "docker inspect elastest_etm-proxy_1"
+            sh "docker inspect ${containerId}"
+            sh "docker ps"
          }
 
          stage ("E2E tests") {

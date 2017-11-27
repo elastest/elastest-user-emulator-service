@@ -55,6 +55,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(ChromeDriver driver) throws Exception {
+        this.driver = driver;
+
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
