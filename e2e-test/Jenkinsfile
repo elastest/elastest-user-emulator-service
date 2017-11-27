@@ -16,8 +16,8 @@ node('docker') {
                echo "Error: $e"
             }
 
-            sh "docker run --name elastest-platform -d --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform start --lite" 
-            sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform wait --running=420"
+            sh "docker run --name elastest-platform -d --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform start --mode=experimental-lite"
+            sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform wait --running=240"
             sh "docker logs elastest-platform"
 
             containerId= sh (
