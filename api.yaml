@@ -39,6 +39,10 @@ paths:
           description: Forbidden
         '404':
           description: No such element
+        '500':
+          description: Internal server error
+          schema:
+            type: string
     post:
       tags:
         - W3C WebDriver
@@ -67,6 +71,10 @@ paths:
           description: Forbidden
         '404':
           description: No such element
+        '500':
+          description: Internal server error
+          schema:
+            type: string
     delete:
       tags:
         - W3C WebDriver
@@ -95,6 +103,10 @@ paths:
           description: Forbidden
         '404':
           description: No such element
+        '500':
+          description: Internal server error
+          schema:
+            type: string
   '/session/{sessionId}/element/{elementId}/audio':
     get:
       tags:
@@ -398,6 +410,75 @@ paths:
           description: Forbidden
         '404':
           description: Subscription not found
+  '/session/{sessionId}/recording':
+    get:
+      tags:
+        - Remote control
+      summary: Handle recordings
+      operationId: recordingUsingGET
+      consumes:
+        - application/json
+      produces:
+        - text/plain
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '400':
+          description: Invalid session identifier
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal server error
+          schema:
+            type: string
+    delete:
+      tags:
+        - Remote control
+      summary: Handle recordings
+      operationId: recordingUsingDELETE
+      consumes:
+        - application/json
+      produces:
+        - text/plain
+      parameters:
+        - name: sessionId
+          in: path
+          description: Session identifier (previously established)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            type: string
+        '204':
+          description: No Content
+        '400':
+          description: Invalid session identifier
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+          schema:
+            type: string
   '/session/{sessionId}/stats':
     get:
       tags:
@@ -506,40 +587,6 @@ paths:
           description: Internal server error
           schema:
             type: string
-    delete:
-      tags:
-        - Remote control
-      summary: Get VNC session
-      operationId: vncUsingDELETE
-      consumes:
-        - application/json
-      produces:
-        - text/plain
-      parameters:
-        - name: sessionId
-          in: path
-          description: Session identifier (previously established)
-          required: true
-          type: string
-      responses:
-        '200':
-          description: Successful operation
-          schema:
-            type: string
-        '204':
-          description: No Content
-        '400':
-          description: Invalid session identifier
-          schema:
-            type: string
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '500':
-          description: Internal server error
-          schema:
-            type: string
   /status:
     get:
       tags:
@@ -561,6 +608,10 @@ paths:
           description: Forbidden
         '404':
           description: Not Found
+        '500':
+          description: Internal server error
+          schema:
+            type: string
 definitions:
   AudioLevel:
     type: object
@@ -577,7 +628,7 @@ definitions:
   Event:
     type: object
     properties:
-      event:
+      eventName:
         type: string
         description: Event name
   EventSubscription:
