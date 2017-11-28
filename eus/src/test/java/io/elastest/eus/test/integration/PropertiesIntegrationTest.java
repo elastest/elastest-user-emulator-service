@@ -95,7 +95,7 @@ public class PropertiesIntegrationTest {
                 Arguments.of("chrome", null, null,
                         "selenium/standalone-chrome-debug:3.7.1"),
                 Arguments.of("firefox", null, null,
-                        "selenium/standalone-firefox-debug:3.7.1"),
+                        "elastest/eus-browser-firefox:3.7.1"),
                 Arguments.of("chrome", "58", null,
                         "selenium/standalone-chrome-debug:3.4.0-chromium"),
                 Arguments.of("firefox", "53", null,
