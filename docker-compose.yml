@@ -1,7 +1,7 @@
 version: '2.1'
 services:
    elastest-eus:
-      image: elastest/eus
+      image: elastest/eus:0.5.0
       environment:
          - USE_TORM=true
       expose:
