@@ -65,7 +65,6 @@ import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.session.SessionInfo;
 import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -172,10 +171,8 @@ public class WebDriverService {
 
             // If live, no timeout
             liveSession = isLive(requestBody);
-            if (liveSession) {
-                hubTimeout = "0";
-            }
-            sessionInfo = startBrowser(requestBody, hubTimeout);
+            String timeout = liveSession ? "0" : hubTimeout;
+            sessionInfo = startBrowser(requestBody, timeout);
             optionalHttpEntity = optionalHttpEntity(requestBody);
 
         } else {
@@ -219,9 +216,8 @@ public class WebDriverService {
             Runnable deleteSession = () -> deleteSession(sessionInfo, true);
 
             if (!isDeleteSessionRequest(method, requestContext)) {
-                int timeout = parseInt(hubTimeout);
-                timeoutService.startSessionTimer(sessionInfo, timeout,
-                        deleteSession);
+                timeoutService.startSessionTimer(sessionInfo,
+                        parseInt(hubTimeout), deleteSession);
             }
         }
 
@@ -402,7 +398,7 @@ public class WebDriverService {
         try {
             if (timeout) {
                 log.warn("Deleting session {} due to timeout of {} seconds",
-                        sessionInfo.getSessionId(), hubTimeout);
+                        sessionInfo.getSessionId(), timeout);
             } else {
                 log.info("Deleting session {}", sessionInfo.getSessionId());
             }
@@ -447,10 +443,12 @@ public class WebDriverService {
             out = jsonService
                     .jsonToObject(jsonMessage, WebDriverCapabilities.class)
                     .getDesiredCapabilities().isLive();
-            log.trace("Received message from a live session");
         } catch (Exception e) {
-            log.trace("Received message from a regular session (non-live)");
+            log.warn(
+                    "Exception {} checking if session is live. JSON message: {}",
+                    e.getMessage(), jsonMessage);
         }
+        log.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
         return out;
     }
 
