@@ -6,7 +6,7 @@
     <groupId>io.elastest.eus</groupId>
     <artifactId>e2e-test</artifactId>
     <packaging>jar</packaging>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.5.1-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>ElasTest E2E (end-to-end) test with User Emulator Service (EUS).</description>
