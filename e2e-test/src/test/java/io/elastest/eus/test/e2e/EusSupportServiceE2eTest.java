@@ -82,8 +82,6 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
-        log.info("Screenshot (in Base64) after manual navigation:\n{}",
-                getBase64Screenshot(driver));
 
         log.info("Close browser and wait to dispose iframe");
         driver.switchTo().defaultContent();
@@ -95,8 +93,6 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         log.info("View recording");
         driver.findElement(By.id("view_recording")).click();
         sleep(SECONDS.toMillis(navigationTimeSec));
-        log.info("Screenshot (in Base64) after view recording:\n{}",
-                getBase64Screenshot(driver));
         driver.findElement(By.id("close_dialog")).click();
         waitElement.until(invisibilityOfElementLocated(
                 By.cssSelector("md-dialog-container")));
@@ -105,8 +101,6 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         By deleteRecording = By.id("delete_recording");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
-        log.info("Screenshot (in Base64) at the end of test:\n{}",
-                getBase64Screenshot(driver));
     }
 
 }

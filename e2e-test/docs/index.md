@@ -14,7 +14,7 @@ The following sections of this document summarizes the main parts of these tests
 
 ## Use of EUS as support service
 
-This test in implemented in the test [EusSupportServiceE2eTest.java]. As can be seen, this class extends a parent class: [EusBaseTest.java]. This parent class contains a common setup for tests (annotated with JUnit 5's `@BeforeEach`):
+This test in implemented in the test [EusSupportServiceE2eTest.java]. As can be seen, this class extends a parent class: [EusBaseTest.java]. This parent class contains a common setup for tests (annotated with JUnit 5's `@BeforeEach`) and also a common teardown (annotated with JUnit 5's `@AfterEach`):
 
 ```java
     @BeforeEach
@@ -32,7 +32,7 @@ This piece of code read the JVM argument called `etEmpApi` to find out the TORM 
 ```
 stage ("E2E tests") {
    try {
-      sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:8091/"
+      sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/"
    } catch(e) {
       sh 'docker ps | awk "{print $NF}" | grep eus | xargs docker logs'
    }
@@ -40,7 +40,24 @@ stage ("E2E tests") {
 }
 ```
 
-The structure of the actual test (method annotated with JUnit 5's annotation `@Test` in ) is as follows:
+The parent class [EusBaseTest.java] also defines a common teardown logic (method annotated with JUnit 5's `@AfterEach`):
+
+```java
+    @AfterEach
+    void teardown() throws IOException {
+        if (driver != null) {
+            log.info("Screenshot (in Base64) at the end of the test:\n{}",
+                    getBase64Screenshot(driver));
+        }
+    }
+```
+
+This code is used for logging and debugging purposes. The objective is to trace to E2E tests, which as you might experienced, are difficult per nature (in fact making this process more easy for developers and testers is one of the main objectives of ElasTest). At this stage of the project, we use the capability provided by Selenium WebDriver to get screeshots of the web application under test, logging it as a Base64 string. This string can be later recover from the Jenkins logs, and this string can be directly pasted in a web browser as watched as a PNG picture. For example:   
+
+![EUS screenshot examaple](img/eus-e2e-screenshot.png)
+
+
+Regarding the end-to-end test, its structure is as follows:
 
 
 ```java
@@ -60,7 +77,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 }
 ```
 
-In addition to the JUnit 5 annotation for tagging and naming (`@Tag` and `@DisplayName`), we see that we are using the [selenium-jupiter] extension, declaring it using the annotation `@ExtendWith(SeleniumExtension.class)`. Thanks to the dependency injection feature of JUnit 5, the extension creates propoer WebDriver instances for tests. In this case, simply declaring this instance in the test arguments (in this case, `ChromeDriver driver`), we can use a browser (in this case Chrome) in our test is a seamless way. The Jenkins job is configured properly to use a Docker image ([elastest/ci-docker-e2e]) in which several browsers (Chrome and Firefox) are ready to be used by tests.
+The actual test is coded in the method annotated with JUnit 5's annotation `@Test`. In this method, in addition to the JUnit 5 annotation for tagging and naming (`@Tag` and `@DisplayName`), we see that we are using the [selenium-jupiter] extension, declared by means of the annotation `@ExtendWith(SeleniumExtension.class)`. Thanks to the dependency injection feature of JUnit 5, the extension creates proper WebDriver instances for tests. In this case, simply declaring this instance in the test arguments (in this case, `ChromeDriver driver`), we can use a browser (in this case Chrome) in our test is a seamless way. The Jenkins job is configured properly to use a Docker image ([elastest/ci-docker-e2e]) in which several browsers (Chrome and Firefox) are ready to be used by tests.
 
 Regarding the test logic, it is basically an specific application of Selenium WebDriver to test the web GUI provided by the TORM. For instance, the first part of the test is the following:
 
@@ -105,14 +122,7 @@ After that, we move to the EUS iframe, interacting with the HTML5 Canvas in whic
         log.info("Waiting {} secons (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
-        log.info("Screenshot (in Base64) after manual navigation:\n{}",
-                getBase64Screenshot(driver));
-
 ```
-
-Notice also that a method of the parent class is called at the end of this snippet: `getBase64Screenshot`. This is basically used for logging and debugging purposes. The objective is able to trace to E2E tests, which as you can see, are difficult per nature (in fact making this process more easy for developers and testers is one of the main objectives of ElasTest). At this stage of the project, we use the capability provided by Selenium WebDriver to get screeshots of the web application under test, logging it as a Base64 string. This string can be later recover from the Jenkins logs, and this string can be directly pasted in a web browsers as a PNG picture. In this test, the first screenshot would be as follows:   
-
-![EUS screenshot examaple](img/eus-e2e-screenshot.png)
 
 The rest of the test follows the same guidelines, i.e. the use of WebDriver API to interact with the GUI, explicit waits when needed, and logging screenshots for debugging purposes. 
 
