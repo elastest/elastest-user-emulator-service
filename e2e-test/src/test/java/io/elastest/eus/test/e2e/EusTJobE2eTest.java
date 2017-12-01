@@ -18,6 +18,9 @@ package io.elastest.eus.test.e2e;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.logging.Level.ALL;
+import static org.openqa.selenium.logging.LogType.BROWSER;
+import static org.openqa.selenium.remote.CapabilityType.LOGGING_PREFS;
 import static org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentInElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -29,10 +32,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.logging.LoggingPreferences;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
 import io.elastest.eus.test.base.EusBaseTest;
+import io.github.bonigarcia.DriverCapabilities;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -47,6 +53,14 @@ import io.github.bonigarcia.SeleniumExtension;
 public class EusTJobE2eTest extends EusBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
+
+    @DriverCapabilities
+    DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+    {
+        LoggingPreferences logPrefs = new LoggingPreferences();
+        logPrefs.enable(BROWSER, ALL);
+        capabilities.setCapability(LOGGING_PREFS, logPrefs);
+    }
 
     @Test
     @DisplayName("EUS in a TJob")

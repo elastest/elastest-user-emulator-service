@@ -19,10 +19,12 @@ package io.elastest.eus.test.base;
 import static java.lang.System.getProperty;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.openqa.selenium.OutputType.BASE64;
+import static org.openqa.selenium.logging.LogType.BROWSER;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
@@ -61,6 +64,12 @@ public class EusBaseTest {
         if (driver != null) {
             log.info("Screenshot (in Base64) at the end of the test:\n{}",
                     getBase64Screenshot(driver));
+
+            log.info("Browser console at the end of the test");
+            LogEntries logEntries = driver.manage().logs().get(BROWSER);
+            logEntries.forEach((entry) -> log.info("[{}] {} {}",
+                    new Date(entry.getTimestamp()), entry.getLevel(),
+                    entry.getMessage()));
         }
     }
 
