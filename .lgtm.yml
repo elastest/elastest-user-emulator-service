@@ -1,0 +1,10 @@
+# This file contains configuration for elastest-user-emulator-service on
+# lgtm.com (https://lgtm.com/projects/g/elastest/elastest-user-emulator-service/)
+
+extraction:
+  java:
+    index:
+      build_command:
+      - mvn package -Dmaven.javadoc.skip -DskipTests -Dmaven.test.skip.exec -f tjob-test/pom.xml
+      - mvn package -Dmaven.javadoc.skip -DskipTests -Dmaven.test.skip.exec -f eus/pom.xml
+      - mvn package -Dmaven.javadoc.skip -DskipTests -Dmaven.test.skip.exec -f e2e-test/pom.xml
