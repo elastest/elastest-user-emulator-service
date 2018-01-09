@@ -1,0 +1,12 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+
+spawn ssh -o "StrictHostKeyChecking no" "IEUser@localhost" -p2222
+expect "IEUser@localhost\'s password: "
+send "Passw0rd!\r"
+expect -- "-sh-4.1\$ "
+send "powershell \"C:\\script.ps1\"\r"
+expect -- "-sh-4.1\$ "
+send "exit\r"
+

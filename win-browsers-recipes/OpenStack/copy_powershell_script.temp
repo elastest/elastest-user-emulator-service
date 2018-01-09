@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+
+spawn scp -o "StrictHostKeyChecking no" script.ps1 "IEUser@WINDOWS_IP:\\\\script.ps1" 
+expect "IEUser@WINDOWS_IP\'s password: "
+send "Passw0rd!\r"
+interact
+
