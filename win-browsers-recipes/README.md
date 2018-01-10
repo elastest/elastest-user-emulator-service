@@ -7,7 +7,7 @@ In this repo you'll find the necessary scripts to deploy a Dockerized version of
 
 The idea behind those scripts is to allow you to test your applications on Windows environment.
 
-We've worked on three different providers: *AWS*, *VirtualBox* and *OpenStack* and it basically has four steps:
+We've worked on three different providers: *AWS*, *VirtualBox* and *OpenStack*, and it basically has four steps:
 
 1. Download the OVA from Microsoft Web Site.
 2. Register the image with the provider.
@@ -17,6 +17,8 @@ We've worked on three different providers: *AWS*, *VirtualBox* and *OpenStack* a
 Please, choose the provider best fit your needs. We assume you have enough knowledge of the provider you choose.
 
 ## Amazon Web Services (AWS)
+
+![alt text](https://github.com/elastest/elastest-user-emulator-service/blob/master/win-browsers-recipes/images/aws.png "Diagram")
 
 We assume you have a valid AWS Account and a Linux Box with aws cli installed. In this scripts you **must** fill your AWS credentials, that is:
 
@@ -37,7 +39,7 @@ ova2ec2.sh
 
 from the AWS folder. Please, remind to set up the credentials.
 
-This process tooks a while, like an hour or so. Please be patient. When the process has finished we can find the AMI in AWS Dashboard. We'll need the ID in the next step.
+This process takes a while, like an hour or so. Please be patient. When the process has finished we can find the AMI in AWS Dashboard. You'll need the ID in the next step.
 
 ### Running CloudFormation
 
@@ -57,7 +59,7 @@ SELENIUM_HUB_YAML=https://s3-eu-west-1.amazonaws.com/YOUR_BUCKET_NAME/CFN-Seleni
 WINDOWS_YAML=https://s3-eu-west-1.amazonaws.com/YOUR_BUCKET_NAME/CFN-SeleniumHub.yaml
 ```
 
-replace *YOUR_BUCKET_NAME* for an apropiate value,  and then run the script:
+replace *YOUR_BUCKET_NAME* for an apropiate value, and then run the script:
 
 ```
 deploy_windows_AWS.sh
@@ -69,9 +71,11 @@ By the end of the process you will find a script
 run_selenium_server.exp
 ```
 
-which will allow you to launch Selenium in the Windows Machine to register it in the hub. Also you can, check the **Output** Tab in **AWS CloudFormation** Dashboard to see the URL to access the Hub with a browser.
+which will allow you to launch Selenium in the Windows Machine to register it in the hub. Also you can check the **Output** Tab in **AWS CloudFormation** Dashboard to see the URL to access the Hub with a browser.
 
 ## VirtualBox
+
+![alt text](https://github.com/elastest/elastest-user-emulator-service/blob/master/win-browsers-recipes/images/virtualbox.png "Diagram")
 
 We've been working with Ubuntu 16.04 OpenSource version of VirtualBox. It's `5.0.40_Ubuntur115130` right now. We know the script works fine with VirtualBox 5.1.
 
@@ -101,6 +105,8 @@ to access Selenium Hub. Alternatively, you can access from any instance whithin 
 
 ## OpenStack
 
+![alt text](https://github.com/elastest/elastest-user-emulator-service/blob/master/win-browsers-recipes/images/openstack.png "Diagram")
+
 We assume you have a running OpenStack installation. We've been working with Ocata but it should works version independent.
 
 We are running the commands from the controller node.
@@ -117,7 +123,7 @@ ova2qcow2.sh
 
 from the *OpenStack* folder.
 
-Next, register the image in Glance. First, load the OpenStack credentials as **env vars**:
+Next, register the image in Glance. First, load the OpenStack credentials as **environment variabless**:
 
 ```
 . user-openrc
@@ -146,7 +152,7 @@ openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port
 openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 4444:4444 --remote-ip 0.0.0.0/0
 ```
 
-Now, we are gonna build a volume for the intance, change *IMAGE_ID* with the apropiate value:
+Now, we are gonna build a volume for the instance, change *IMAGE_ID* with the apropiate value:
 
 ```
 openstack volume create \
