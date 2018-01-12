@@ -1,0 +1,47 @@
+---
+heat_template_version: 2017-02-24
+description: Heat Orchestration Template for Windows 10 EDGE Preview
+
+parameters: 
+  ImageId:
+    description: ID of Windows Image.
+    type: string
+  NetworkId:
+    description: Network to join
+    type: string
+  WinInstanceFlavor:
+    description: Windwos instance size
+    type: string
+
+resources:
+  WindowsSecurityGroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: "OS::stack_name" }
+      rules:
+        - protocol: tcp
+          port_range_min: 5900
+          port_range_max: 5900
+        - protocol: tcp
+          port_range_min: 3389
+          port_range_max: 3389
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - protocol: tcp
+          port_range_min: 5556
+          port_range_max: 5556
+
+  WindowsMachine:
+    type: OS::Nova::Server
+    properties: 
+      image: { get_param: ImageId }
+      flavor: { get_param: WinInstanceFlavor }
+      networks:
+        - network: { get_param: NetworkId }
+      security_groups: [{ get_resource: WindowsSecurityGroup }]
+
+outputs:
+  Public_IP:
+    description: Public IP of Windows Machine
+    value: { get_attr: [WindowsMachine, first_address] }

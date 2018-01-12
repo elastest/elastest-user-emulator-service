@@ -111,8 +111,6 @@ We assume you have a running OpenStack installation. We've been working with Oca
 
 We are running the commands from the controller node.
 
-In this scenario, Selenium Hub is running in 192.168.0.106.
-
 ### Registering the image
 
 First of all, you need to convert from *ova* to *qcow2*, so run this script:
@@ -123,7 +121,7 @@ ova2qcow2.sh
 
 from the *OpenStack* folder.
 
-Next, register the image in Glance. First, load the OpenStack credentials as **environment variabless**:
+Next, register the image in Glance. First, load the OpenStack credentials as **environment variables**:
 
 ```
 . user-openrc
@@ -141,44 +139,22 @@ openstack image create "Elastest-Win10-image" \
   --public
 ```
 
-This command will return the new image id we need for the next one. But before we'll create the security groups:
-
-```
-openstack security group create Elastest-SecGroup --description "Elastest Security rules"
-openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 3389:3389 --remote-ip 0.0.0.0/0
-openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 22:22 --remote-ip 0.0.0.0/0
-openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 5900:5900 --remote-ip 0.0.0.0/0
-openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 5556:5556 --remote-ip 0.0.0.0/0
-openstack security group rule create Elastest-SecGroup --protocol tcp --dst-port 4444:4444 --remote-ip 0.0.0.0/0
-```
-
-Now, we are gonna build a volume for the instance, change *IMAGE_ID* with the apropiate value:
-
-```
-openstack volume create \
-  --image IMAGE_ID \
-  --size 40 \
-  --availability-zone nova \
-  Elastest-win10-volume
-```
-
-Check out the volume ID, and now, the instance, change *VOLUME_ID* and *NET_ID* with the apropiate values:
-
-```
-openstack server create \
-  --flavor m1.large \
-  --volume VOLUME_ID \
-  --nic net-id=NET_ID \
-  --security-group WINDOWS \
-  --availability-zone nova \
-  Elastest-Win10
-```
-
-Assuming you don't need public IP to access your instance you can follow with the provisioning.
+You'll need the image ID for the next step.
 
 ### Provisioning the instance
 
-From the OpenStack folder launch this script:
+Now, you need to provide some information to the script `deploy_windows_OS.sh`:
+
+```
+KEYPAIR= key pair to access Selenium Hub instance when it's ready.
+WINIMAGEID= ID of windows image you create previously
+UBUNTUIMAGE= ID of your ubuntu xenial image
+NETWORKID= ID of the network you want to attach your instances
+INSTANCEFLAVOR= Size of Ubuntu xenial instance
+WINFLAVOR= Size of Windows instance
+```
+
+and then run the script:
 
 ```
 deploy_windows_OS.sh
@@ -190,4 +166,4 @@ By the end of this process you will be able to register the instance in the hub 
 run_selenium_server.exp
 ```
 
-You can access `http://192.168.0.106:4444` to check the hub.
+Also, the script will output the URL to access the Selenium Console.

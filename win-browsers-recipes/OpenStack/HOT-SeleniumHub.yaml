@@ -1,0 +1,61 @@
+---
+heat_template_version: 2017-02-24
+description: Heat Orchestration Template for Selenium Hub
+
+parameters: 
+  KeyName:
+    description: Name of an existing key pair for SSH access to the instance.
+    type: string
+  NetworkId:
+    description: Network to join
+    type: string
+  InstanceFlavor:
+    description: Instance Size
+    type: string
+  Image:
+    description: Name of the image
+    type: string
+
+resources:
+  SeleniumHubSecurityGroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: "OS::stack_name" }
+      rules:
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - protocol: tcp
+          port_range_min: 4444
+          port_range_max: 4444
+
+  SeleniumHub:
+    type: OS::Nova::Server
+    properties: 
+      key_name: { get_param: KeyName }
+      image: { get_param: Image }
+      flavor: { get_param: InstanceFlavor }
+      networks:
+        - network: { get_param: NetworkId }
+      security_groups: [{ get_resource: SeleniumHubSecurityGroup }]
+      user_data: |
+        #!/bin/bash
+        # Setting hostname
+        sed -i "s/localhost/localhost $(uname -n)/" /etc/hosts
+        # installing Docker
+        apt-get update \
+          && apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+        echo deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable > \
+          /etc/apt/sources.list.d/docker.list
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        apt-get update
+        apt-get install -y docker-ce
+        docker run -d -p 4444:4444 --restart always --name selenium-hub selenium/hub
+        exit 0
+
+
+outputs:
+  Public_IP:
+    description: Public IP of Selenium Hub
+    value:
+      list_join: ['', [ "http://", { get_attr: [SeleniumHub, first_address] }, ":4444" ] ] 
