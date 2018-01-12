@@ -63,7 +63,7 @@ Resources:
             c_docker:
               command: "apt-get install -y docker-ce"
             d_run_selenium:
-              command: "docker run -d -p 4444:4444 --name selenium-hub selenium/hub"
+              command: "docker run -d -p 4444:4444 --restart always --name selenium-hub selenium/hub"
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
