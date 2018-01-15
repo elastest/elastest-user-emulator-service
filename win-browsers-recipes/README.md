@@ -39,7 +39,7 @@ ova2ec2.sh
 
 from the AWS folder. Please, remind to set up the credentials.
 
-This process takes a while, like an hour or so. Please be patient. When the process has finished we can find the AMI in AWS Dashboard. You'll need the ID in the next step.
+This process takes a while, like an hour or so. Please be patient. When the process has finished you can find the AMI in AWS Dashboard. You'll need the ID in the next step.
 
 ### Running CloudFormation
 
@@ -79,7 +79,7 @@ which will allow you to launch Selenium in the Windows Machine to register it in
 
 We've been working with Ubuntu 16.04 OpenSource version of VirtualBox. It's `5.0.40_Ubuntur115130` right now. We know the script works fine with VirtualBox 5.1.
 
-We assume that you have a machine with VirtualBox and Docker installed. So in this scenario Selenium Hub and Server are running on the same machine.
+We assume that you have a machine with VirtualBox and Docker installed. So in this scenario Selenium Hub and Windows are running on the same machine.
 
 To deploy in VirtualBox run this command from the machine with VirtualBox and Docker installed:
 
