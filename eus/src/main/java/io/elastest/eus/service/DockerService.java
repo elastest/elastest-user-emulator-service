@@ -89,14 +89,11 @@ public class DockerService {
     @Value("${docker.poll.time.ms}")
     private int dockerPollTimeMs;
 
-    @Value("${docker.server.url}")
+    @Value("${docker.server.url:#{null}}")
     private String dockerServerUrl;
 
     @Value("${docker.default.host.ip}")
     private String dockerDefaultHostIp;
-
-    @Value("${docker.server.port}")
-    private int dockerServerPort;
 
     @Value("${docker.max.route.connections}")
     private int dockerMaxRouteConnections;
@@ -117,7 +114,14 @@ public class DockerService {
     private void postConstruct() throws IOException {
         DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
                 .withMaxPerRouteConnections(dockerMaxRouteConnections);
-        dockerClient = DockerClientBuilder.getInstance(getDockerServerUrl())
+
+        DockerClientBuilder dockerClientBuilder = DockerClientBuilder
+                .getInstance();
+        if (dockerServerUrl != null && !dockerServerUrl.isEmpty()) {
+            dockerClientBuilder = DockerClientBuilder
+                    .getInstance(dockerServerUrl);
+        }
+        dockerClient = dockerClientBuilder
                 .withDockerCmdExecFactory(dockerCmdExecFactory).build();
     }
 
@@ -126,15 +130,8 @@ public class DockerService {
         dockerClient.close();
     }
 
-    public String getDockerServerUrl() throws IOException {
-        String out;
-        if (dockerServerUrl != null && !dockerServerUrl.equals("")) {
-            out = dockerServerUrl;
-        } else {
-            out = "tcp://" + getDockerServerIp() + ":" + dockerServerPort;
-        }
-        log.debug("Docker server URL: {}", out);
-        return out;
+    public String getDockerServerUrl() {
+        return dockerServerUrl;
     }
 
     public String getDockerServerIp() throws IOException {
