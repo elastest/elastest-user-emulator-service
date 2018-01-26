@@ -20,6 +20,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
@@ -29,12 +30,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
-import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
@@ -111,7 +110,7 @@ public class DockerService {
 
     @PostConstruct
     @SuppressWarnings("resource")
-    private void postConstruct() throws IOException {
+    private void postConstruct() {
         DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
                 .withMaxPerRouteConnections(dockerMaxRouteConnections);
 
@@ -203,6 +202,11 @@ public class DockerService {
                 if (envs.isPresent()) {
                     log.trace("Using envs: {}", envs.get());
                     createContainer.withEnv(envs.get());
+                }
+                Optional<List<String>> cmd = dockerContainer.getCmd();
+                if (cmd.isPresent()) {
+                    log.trace("Using cmd: {}", cmd.get());
+                    createContainer.withCmd(cmd.get());
                 }
 
                 createContainer.exec();
@@ -444,9 +448,7 @@ public class DockerService {
     }
 
     public String generateContainerName(String prefix) {
-        String randomSufix = new BigInteger(130, new SecureRandom())
-                .toString(32);
-        return prefix + randomSufix;
+        return prefix + randomUUID().toString();
     }
 
     public int findRandomOpenPort() throws IOException {

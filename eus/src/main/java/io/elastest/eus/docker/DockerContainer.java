@@ -39,6 +39,7 @@ public class DockerContainer {
     private final Optional<List<Volume>> volumes;
     private final Optional<List<Bind>> binds;
     private final Optional<List<String>> envs;
+    private final Optional<List<String>> cmd;
     private final Optional<String> network;
 
     private DockerContainer(DockerBuilder builder) {
@@ -50,10 +51,12 @@ public class DockerContainer {
         this.volumes = builder.volumes != null ? of(builder.volumes) : empty();
         this.binds = builder.binds != null ? of(builder.binds) : empty();
         this.envs = builder.envs != null ? of(builder.envs) : empty();
+        this.cmd = builder.cmd != null ? of(builder.cmd) : empty();
         this.network = builder.network != null ? of(builder.network) : empty();
     }
 
-    public static DockerBuilder dockerBuilder(String imageId, String containerName) {
+    public static DockerBuilder dockerBuilder(String imageId,
+            String containerName) {
         return new DockerBuilder(imageId, containerName);
     }
 
@@ -81,6 +84,10 @@ public class DockerContainer {
         return envs;
     }
 
+    public Optional<List<String>> getCmd() {
+        return cmd;
+    }
+
     public Optional<String> getNetwork() {
         return network;
     }
@@ -92,6 +99,7 @@ public class DockerContainer {
         private List<Volume> volumes;
         private List<Bind> binds;
         private List<String> envs;
+        private List<String> cmd;
         private String network;
 
         public DockerBuilder(String imageId, String containerName) {
@@ -121,6 +129,11 @@ public class DockerContainer {
 
         public DockerBuilder network(String network) {
             this.network = network;
+            return this;
+        }
+
+        public DockerBuilder cmd(List<String> cmd) {
+            this.cmd = cmd;
             return this;
         }
 
