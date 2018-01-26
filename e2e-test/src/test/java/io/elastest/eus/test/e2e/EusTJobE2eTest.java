@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static io.github.bonigarcia.BrowserType.CHROME;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentInElementLocated;
@@ -28,11 +29,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
 import io.elastest.eus.test.base.EusBaseTest;
+import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -50,7 +52,8 @@ public class EusTJobE2eTest extends EusBaseTest {
 
     @Test
     @DisplayName("EUS in a TJob")
-    void testTJob(ChromeDriver driver) throws InterruptedException {
+    void testTJob(@DockerBrowser(type = CHROME) RemoteWebDriver driver)
+            throws InterruptedException {
         this.driver = driver;
 
         log.info("Navigate to TORM and start new project");
