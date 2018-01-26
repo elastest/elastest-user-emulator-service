@@ -38,9 +38,10 @@ node('docker') {
             try {
                sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/"
             } catch(e) {
-                sh 'docker ps | awk "{print $NF}" | grep eus | xargs docker logs'
+                sh 'docker ps | awk "{print $NF}" | grep eus | xargs docker logs || true'
+            } finally {
+                step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
             }
-            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
          }
      }
   }
