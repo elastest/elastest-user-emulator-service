@@ -8,8 +8,11 @@ node('TESTDOCKER') {
 
             stage "Tests"
                 echo ("Starting tests")
-                sh 'cd eus; mvn clean test -Djenkins=true'
-                step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+                try {
+                    sh 'cd eus; mvn clean test -Djenkins=true'
+                } finally {
+                    step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+                }
 
             stage "Package"
                 echo ("Packaging")
