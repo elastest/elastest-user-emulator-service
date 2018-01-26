@@ -58,6 +58,11 @@ public class EusBaseTest {
 
     // selenium-jupiter configuration
     static {
+        // screenshots
+        setProperty("sel.jup.screenshot.at.the.end.of.tests", "whenfailure");
+        setProperty("sel.jup.screenshot.format", "base64");
+
+        // recordings
         setProperty("sel.jup.recording", "true");
         setProperty("sel.jup.output.folder", "surefire-reports");
     }
