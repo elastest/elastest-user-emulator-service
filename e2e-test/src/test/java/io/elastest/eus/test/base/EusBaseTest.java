@@ -17,9 +17,12 @@
 package io.elastest.eus.test.base;
 
 import static java.lang.System.getProperty;
+import static java.lang.System.setProperty;
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.openqa.selenium.OutputType.BASE64;
+import static java.util.logging.Level.ALL;
 import static org.openqa.selenium.logging.LogType.BROWSER;
+import static org.openqa.selenium.remote.CapabilityType.LOGGING_PREFS;
+import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,12 +32,15 @@ import java.util.Date;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LoggingPreferences;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
+
+import io.github.bonigarcia.DriverCapabilities;
 
 /**
  * Parent for E2E EUS tests.
@@ -50,6 +56,20 @@ public class EusBaseTest {
 
     protected WebDriver driver;
 
+    // selenium-jupiter configuration
+    static {
+        setProperty("sel.jup.recording", "true");
+        setProperty("sel.jup.output.folder", "surefire-reports");
+    }
+
+    @DriverCapabilities
+    DesiredCapabilities capabilities = chrome();
+    {
+        LoggingPreferences logPrefs = new LoggingPreferences();
+        logPrefs.enable(BROWSER, ALL);
+        capabilities.setCapability(LOGGING_PREFS, logPrefs);
+    }
+
     @BeforeEach
     void setup() {
         String etmApi = getProperty("etEmpApi");
@@ -62,9 +82,6 @@ public class EusBaseTest {
     @AfterEach
     void teardown() throws IOException {
         if (driver != null) {
-            log.info("Screenshot (in Base64) at the end of the test:\n{}",
-                    getBase64Screenshot(driver));
-
             log.info("Browser console at the end of the test");
             LogEntries logEntries = driver.manage().logs().get(BROWSER);
             logEntries.forEach((entry) -> log.info("[{}] {} {}",
@@ -127,12 +144,6 @@ public class EusBaseTest {
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
         driver.findElement(serviceDetailButton).click();
-    }
-
-    protected String getBase64Screenshot(WebDriver driver) throws IOException {
-        String screenshotBase64 = ((TakesScreenshot) driver)
-                .getScreenshotAs(BASE64);
-        return "data:image/png;base64," + screenshotBase64;
     }
 
 }
