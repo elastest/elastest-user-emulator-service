@@ -43,9 +43,9 @@ import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
+import io.elastest.eus.service.DockerHubService;
 import io.elastest.eus.service.DockerService;
 import io.elastest.eus.service.JsonService;
-import io.elastest.eus.service.PropertiesService;
 
 /**
  * Tests for Docker service.
@@ -65,7 +65,7 @@ public class DockerIntegrationTest {
     private DockerService dockerService;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private DockerHubService dockerHubService;
 
     @Autowired
     private JsonService jsonService;
@@ -103,8 +103,8 @@ public class DockerIntegrationTest {
 
         log.debug("Starting Hub from JSON message {}", jsonCapabilities);
 
-        String imageId = propertiesService
-                .getDockerImageFromCapabilities(browserName, version, platform);
+        String imageId = dockerHubService.getBrowserImageFromCapabilities(
+                browserName, version, platform);
 
         String containerName = dockerService
                 .generateContainerName("eus-hub-for-test-");

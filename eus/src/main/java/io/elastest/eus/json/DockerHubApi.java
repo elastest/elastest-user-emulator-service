@@ -14,28 +14,20 @@
  * limitations under the License.
  *
  */
-package io.elastest.eus;
+package io.elastest.eus.json;
+
+import retrofit2.Call;
+import retrofit2.http.GET;
 
 /**
- * EUS exception.
+ * Docker Hub API.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
- * @since 0.0.1
+ * @since 0.5.1
  */
-public class EusException extends RuntimeException {
+public interface DockerHubApi {
 
-    private static final long serialVersionUID = 1L;
-
-    public EusException(String msg, Throwable e) {
-        super(msg, e);
-    }
-
-    public EusException(String msg) {
-        super(msg);
-    }
-
-    public EusException(Throwable e) {
-        super(e);
-    }
+    @GET("/v2/repositories/selenoid/vnc/tags/?page_size=1024")
+    Call<DockerHubTags> listTags();
 
 }

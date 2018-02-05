@@ -98,9 +98,16 @@ public class SessionIntegrationTest {
         });
 
         log.debug("POST /session");
-        String jsonMessage = "{\"desiredCapabilities\": {"
-                + "\"browserName\": \"firefox\"," + "\"version\": \"54\","
-                + "\"platform\": \"ANY\"" + "}" + "}";
+        String firefoxVersion = "58.0";
+        String jsonMessage = "{\"capabilities\":{\"alwaysMatch\":{\"acceptInsecureCerts\":true},"
+                + "\"desiredCapabilities\":{\"acceptInsecureCerts\":true,\"browserName\":\"firefox\","
+                + "\"platform\":\"ANY\"," + "\"version\":\"" + firefoxVersion
+                + "\",\"loggingPrefs\":{\"browser\":\"ALL\"}},"
+                + "\"firstMatch\":[{\"browserName\":\"firefox\"}],\"requiredCapabilities\":{}},"
+                + "\"desiredCapabilities\":{\"acceptInsecureCerts\":true,\"browserName\":\"firefox\","
+                + "\"platform\":\"ANY\",\"version\":\"" + firefoxVersion
+                + "\",\"loggingPrefs\":{\"browser\":\"ALL\"}},"
+                + "\"requiredCapabilities\":{}}";
         ResponseEntity<String> response = restTemplate.postForEntity("/session",
                 jsonMessage, String.class);
         assertEquals(OK, response.getStatusCode());

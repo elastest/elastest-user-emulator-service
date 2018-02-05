@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -28,7 +29,7 @@ public class WebDriverSessionResponse {
 
     String sessionId;
     int status;
-    Object value;
+    Value value;
     Object os;
     Object state;
     Object hCode;
@@ -41,7 +42,7 @@ public class WebDriverSessionResponse {
     }
 
     public String getSessionId() {
-        return sessionId;
+        return sessionId != null ? sessionId : value.getSessionId();
     }
 
     public int getStatus() {
@@ -75,6 +76,20 @@ public class WebDriverSessionResponse {
                 + ", getOs()=" + getOs() + ", getState()=" + getState()
                 + ", gethCode()=" + gethCode() + ", getClazz()=" + getClazz()
                 + "]";
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class Value {
+        String sessionId;
+        Object capabilities;
+
+        public Value() {
+            // Empty default construct (needed by Jackson)
+        }
+
+        public String getSessionId() {
+            return sessionId;
+        }
     }
 
 }

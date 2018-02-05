@@ -16,10 +16,12 @@
  */
 package io.elastest.eus.service;
 
+import static com.github.dockerjava.api.model.Capability.SYS_ADMIN;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -209,6 +211,7 @@ public class DockerService {
                     createContainer.withCmd(cmd.get());
                 }
 
+                createContainer.withCapAdd(SYS_ADMIN);
                 createContainer.exec();
                 dockerClient.startContainerCmd(containerName).exec();
                 waitForContainer(containerName);
@@ -259,7 +262,7 @@ public class DockerService {
     public void removeContainer(String containerName) {
         if (existsContainer(containerName)) {
             log.trace("Removing container {}", containerName);
-            dockerClient.removeContainerCmd(containerName)
+            dockerClient.removeContainerCmd(containerName).withForce(true)
                     .withRemoveVolumes(true).exec();
         }
     }
@@ -423,7 +426,7 @@ public class DockerService {
                 connection.setRequestMethod("GET");
                 responseCode = connection.getResponseCode();
 
-                if (responseCode == HTTP_OK) {
+                if (responseCode == HTTP_OK || responseCode == HTTP_NOT_FOUND) {
                     log.debug("URL already reachable");
                     break;
                 } else {

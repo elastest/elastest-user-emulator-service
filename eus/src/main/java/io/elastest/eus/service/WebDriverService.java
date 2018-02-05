@@ -110,7 +110,7 @@ public class WebDriverService {
     private String dockerNetwork;
 
     private DockerService dockerService;
-    private PropertiesService propertiesService;
+    private DockerHubService dockerHubService;
     private JsonService jsonService;
     private SessionService sessionService;
     private VncService vncService;
@@ -119,11 +119,11 @@ public class WebDriverService {
 
     @Autowired
     public WebDriverService(DockerService dockerService,
-            PropertiesService propertiesService, JsonService jsonService,
+            DockerHubService dockerHubService, JsonService jsonService,
             SessionService sessionService, VncService vncService,
             RecordingService recordingService, TimeoutService timeoutService) {
         this.dockerService = dockerService;
-        this.propertiesService = propertiesService;
+        this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
         this.vncService = vncService;
@@ -314,13 +314,11 @@ public class WebDriverService {
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getVersion();
 
-        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")
-                && parseInt(version) < 55) {
-            WebDriverCapabilities firefox = new WebDriverCapabilities("firefox",
-                    "", "ANY");
-            log.debug("Using empty firefox capabilities {}", firefox);
-            return Optional.of(
-                    new HttpEntity<String>(jsonService.objectToJson(firefox)));
+        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
+            String jsonFirefox = requestBody.replaceAll(version, "");
+            log.debug("Using firefox capabilities with empty version {}",
+                    jsonFirefox);
+            return Optional.of(new HttpEntity<String>(jsonFirefox));
         }
         return Optional.empty();
     }
@@ -343,11 +341,13 @@ public class WebDriverService {
                 .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getPlatform();
 
-        String propertiesKey = propertiesService
-                .getKeyFromCapabilities(browserName, version, platform);
-        String imageId = propertiesService.getDockerImageFromKey(propertiesKey);
+        String imageId = dockerHubService.getBrowserImageFromCapabilities(
+                browserName, version, platform);
+
+        log.info("Using {} as Docker image for {}", imageId, browserName);
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
+
         List<String> env = asList(
                 "SE_OPTS=-timeout " + timeout + " -browserTimeout " + timeout);
         log.debug(
@@ -374,8 +374,10 @@ public class WebDriverService {
         }
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
+        String hubPath = browserName.equalsIgnoreCase("chrome") ? "/"
+                : "/wd/hub";
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
-                + hubBindPort + "/wd/hub";
+                + hubBindPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
 
         log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
@@ -384,8 +386,7 @@ public class WebDriverService {
         sessionInfo.setHubUrl(hubUrl);
         sessionInfo.setHubContainerName(hubContainerName);
         sessionInfo.setBrowser(browserName);
-        sessionInfo
-                .setVersion(propertiesService.getVersionFromKey(propertiesKey));
+        sessionInfo.setVersion(version);
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubBindPort);
