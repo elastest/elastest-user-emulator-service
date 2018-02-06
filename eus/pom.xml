@@ -45,7 +45,7 @@
 
         <!-- Dependencies version -->
         <springfox.version>2.7.0</springfox.version>
-        <docker-java.version>3.0.13</docker-java.version>
+        <docker-java.version>3.0.14</docker-java.version>
         <guava.version>23.0</guava.version>
         <retrofit.version>2.3.0</retrofit.version>
         <jackson-jq.version>0.0.8</jackson-jq.version>

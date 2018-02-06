@@ -41,6 +41,7 @@ public class DockerContainer {
     private final Optional<List<String>> envs;
     private final Optional<List<String>> cmd;
     private final Optional<String> network;
+    private final Optional<Long> shmSize;
 
     private DockerContainer(DockerBuilder builder) {
         this.imageId = builder.imageId;
@@ -53,6 +54,7 @@ public class DockerContainer {
         this.envs = builder.envs != null ? of(builder.envs) : empty();
         this.cmd = builder.cmd != null ? of(builder.cmd) : empty();
         this.network = builder.network != null ? of(builder.network) : empty();
+        this.shmSize = builder.shmSize != null ? of(builder.shmSize) : empty();
     }
 
     public static DockerBuilder dockerBuilder(String imageId,
@@ -92,6 +94,10 @@ public class DockerContainer {
         return network;
     }
 
+    public Optional<Long> getShmSize() {
+        return shmSize;
+    }
+
     public static class DockerBuilder {
         private String imageId;
         private String containerName;
@@ -101,6 +107,7 @@ public class DockerContainer {
         private List<String> envs;
         private List<String> cmd;
         private String network;
+        private Long shmSize;
 
         public DockerBuilder(String imageId, String containerName) {
             this.imageId = imageId;
@@ -134,6 +141,11 @@ public class DockerContainer {
 
         public DockerBuilder cmd(List<String> cmd) {
             this.cmd = cmd;
+            return this;
+        }
+
+        public DockerBuilder shmSize(Long shmSize) {
+            this.shmSize = shmSize;
             return this;
         }
 

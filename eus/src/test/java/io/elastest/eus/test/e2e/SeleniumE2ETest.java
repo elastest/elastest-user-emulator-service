@@ -74,12 +74,12 @@ public class SeleniumE2ETest {
     }
 
     @ParameterizedTest(name = "Using {1} as browser")
-    @DisplayName("Visit Wikipedia using a browser provided by EUS")
+    @DisplayName("Visit elastest.io using a browser provided by EUS")
     @MethodSource("capabilitiesProvider")
     void test(DesiredCapabilities capability, String expectedBrowserName)
             throws MalformedURLException {
         String eusUrl = "http://localhost:" + serverPort + contextPath;
-        String sutUrl = "https://en.wikipedia.org/wiki/Main_Page";
+        String sutUrl = "http://elastest.io/";
 
         log.debug("EUS URL: {}", eusUrl);
         log.debug("SUT URL: {}", sutUrl);
@@ -89,7 +89,7 @@ public class SeleniumE2ETest {
 
         String title = driver.getTitle();
         log.debug("SUT title: {}", title);
-        assertEquals(title, "Wikipedia, the free encyclopedia");
+        assertEquals(title, "ElasTest Home");
 
         Capabilities caps = ((RemoteWebDriver) driver).getCapabilities();
         String realBrowserName = caps.getBrowserName();

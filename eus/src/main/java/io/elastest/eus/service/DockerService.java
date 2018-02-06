@@ -20,8 +20,8 @@ import static com.github.dockerjava.api.model.Capability.SYS_ADMIN;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -62,6 +62,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -209,6 +210,13 @@ public class DockerService {
                 if (cmd.isPresent()) {
                     log.trace("Using cmd: {}", cmd.get());
                     createContainer.withCmd(cmd.get());
+                }
+
+                Optional<Long> shmSize = dockerContainer.getShmSize();
+                if (shmSize.isPresent()) {
+                    HostConfig hostConfig = createContainer.getHostConfig();
+                    hostConfig.withShmSize(shmSize.get());
+                    createContainer.withHostConfig(hostConfig);
                 }
 
                 createContainer.withCapAdd(SYS_ADMIN);

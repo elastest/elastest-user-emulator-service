@@ -97,6 +97,9 @@ public class WebDriverService {
     @Value("${hub.timeout}")
     private String hubTimeout;
 
+    @Value("${browser.shm.size}")
+    private long shmSize;
+
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
@@ -361,7 +364,7 @@ public class WebDriverService {
                 new PortBinding(bindHubVncPort, exposedHubVncPort));
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
-                .portBindings(portBindings);
+                .portBindings(portBindings).shmSize(shmSize);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
