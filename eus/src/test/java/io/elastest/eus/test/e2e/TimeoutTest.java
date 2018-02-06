@@ -51,7 +51,7 @@ import io.elastest.eus.EusSpringBootApp;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "hub.timeout=5",
-        "novnc.image.id=elastest/eus-novnc" })
+        "novnc.image.id=elastest/eus-novnc:latest" })
 public class TimeoutTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
@@ -73,7 +73,7 @@ public class TimeoutTest {
 
     @Test
     void testTimeout() throws InterruptedException {
-        long waitSeconds = 10;
+        long waitSeconds = 20;
         log.debug("Waiting {} seconds to force timeout", waitSeconds);
         sleep(SECONDS.toMillis(waitSeconds));
 
