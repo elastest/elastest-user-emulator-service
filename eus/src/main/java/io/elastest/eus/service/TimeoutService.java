@@ -116,6 +116,7 @@ public class TimeoutService {
             Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
                     timeout, SECONDS);
             sessionInfo.addTimeoutFuture(timeoutFuture);
+            sessionInfo.setTimeout(timeout);
             log.trace("Starting timer in session {} (future {}) ({} seconds)",
                     sessionInfo.getSessionId(), timeoutFuture, timeout);
         }

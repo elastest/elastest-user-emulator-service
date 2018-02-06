@@ -171,8 +171,7 @@ public class WebDriverService {
 
             // If live, no timeout
             liveSession = isLive(requestBody);
-            String timeout = liveSession ? "0" : hubTimeout;
-            sessionInfo = startBrowser(requestBody, timeout);
+            sessionInfo = startBrowser(requestBody);
             optionalHttpEntity = optionalHttpEntity(requestBody);
 
         } else {
@@ -329,7 +328,7 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private SessionInfo startBrowser(String jsonCapabilities, String timeout)
+    private SessionInfo startBrowser(String jsonCapabilities)
             throws IOException, InterruptedException {
         String browserName = jsonService
                 .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
@@ -348,12 +347,6 @@ public class WebDriverService {
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
 
-        List<String> env = asList(
-                "SE_OPTS=-timeout " + timeout + " -browserTimeout " + timeout);
-        log.debug(
-                "Starting browser with container name {} and environment variables {}",
-                hubContainerName, env);
-
         // Port binding
         int hubBindPort = dockerService.findRandomOpenPort();
         Binding bindPort = bindPort(hubBindPort);
@@ -368,7 +361,7 @@ public class WebDriverService {
                 new PortBinding(bindHubVncPort, exposedHubVncPort));
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
-                .portBindings(portBindings).envs(env);
+                .portBindings(portBindings);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
@@ -399,7 +392,7 @@ public class WebDriverService {
         try {
             if (timeout) {
                 log.warn("Deleting session {} due to timeout of {} seconds",
-                        sessionInfo.getSessionId(), timeout);
+                        sessionInfo.getSessionId(), sessionInfo.getTimeout());
             } else {
                 log.info("Deleting session {}", sessionInfo.getSessionId());
             }
@@ -422,6 +415,10 @@ public class WebDriverService {
 
         } catch (Exception e) {
             throw new EusException(e);
+        }
+        if (timeout) {
+            throw new EusException("Timeout of " + sessionInfo.getTimeout()
+                    + " seconds in session " + sessionInfo.getSessionId());
         }
     }
 

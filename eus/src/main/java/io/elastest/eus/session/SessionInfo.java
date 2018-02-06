@@ -47,6 +47,7 @@ public class SessionInfo {
     private int hubBindPort;
     private int hubVncBindPort;
     private int noVncBindPort;
+    private int timeout;
 
     public String getHubUrl() {
         return hubUrl;
@@ -150,6 +151,14 @@ public class SessionInfo {
 
     public void setNoVncBindPort(int noVncBindPort) {
         this.noVncBindPort = noVncBindPort;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 
 }
