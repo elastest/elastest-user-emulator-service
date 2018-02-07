@@ -60,7 +60,12 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
-        driver.get(tormUrl);
+        if (secureElastest) {   
+            driver.get(secureTorm);
+        }
+        else {
+            driver.get(tormUrl);
+        }
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");
