@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 
@@ -42,6 +43,7 @@ public class DockerContainer {
     private final Optional<List<String>> cmd;
     private final Optional<String> network;
     private final Optional<Long> shmSize;
+    private final Optional<List<ExposedPort>> exposedPorts;
 
     private DockerContainer(DockerBuilder builder) {
         this.imageId = builder.imageId;
@@ -55,6 +57,9 @@ public class DockerContainer {
         this.cmd = builder.cmd != null ? of(builder.cmd) : empty();
         this.network = builder.network != null ? of(builder.network) : empty();
         this.shmSize = builder.shmSize != null ? of(builder.shmSize) : empty();
+        this.exposedPorts = builder.exposedPorts != null
+                ? of(builder.exposedPorts)
+                : empty();
     }
 
     public static DockerBuilder dockerBuilder(String imageId,
@@ -98,6 +103,10 @@ public class DockerContainer {
         return shmSize;
     }
 
+    public Optional<List<ExposedPort>> getExposedPorts() {
+        return exposedPorts;
+    }
+
     public static class DockerBuilder {
         private String imageId;
         private String containerName;
@@ -108,6 +117,7 @@ public class DockerContainer {
         private List<String> cmd;
         private String network;
         private Long shmSize;
+        private List<ExposedPort> exposedPorts;
 
         public DockerBuilder(String imageId, String containerName) {
             this.imageId = imageId;
@@ -146,6 +156,11 @@ public class DockerContainer {
 
         public DockerBuilder shmSize(Long shmSize) {
             this.shmSize = shmSize;
+            return this;
+        }
+
+        public DockerBuilder exposedPorts(List<ExposedPort> exposedPorts) {
+            this.exposedPorts = exposedPorts;
             return this;
         }
 

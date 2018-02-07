@@ -351,20 +351,22 @@ public class WebDriverService {
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
 
         // Port binding
-        int hubBindPort = dockerService.findRandomOpenPort();
-        Binding bindPort = bindPort(hubBindPort);
-        ExposedPort exposedPort = tcp(hubExposedPort);
+        int hubPort = dockerService.findRandomOpenPort();
+        Binding bindHubPort = bindPort(hubPort);
+        ExposedPort exposedHubPort = tcp(hubExposedPort);
 
-        int hubVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindHubVncPort = bindPort(hubVncBindPort);
-        ExposedPort exposedHubVncPort = tcp(hubVncExposedPort);
+        int vncPort = dockerService.findRandomOpenPort();
+        Binding bindVncPort = bindPort(vncPort);
+        ExposedPort exposedVncPort = tcp(hubVncExposedPort);
 
         List<PortBinding> portBindings = asList(
-                new PortBinding(bindPort, exposedPort),
-                new PortBinding(bindHubVncPort, exposedHubVncPort));
+                new PortBinding(bindHubPort, exposedHubPort),
+                new PortBinding(bindVncPort, exposedVncPort));
+        List<ExposedPort> exposedPorts = asList(exposedHubPort, exposedVncPort);
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
-                .portBindings(portBindings).shmSize(shmSize);
+                .exposedPorts(exposedPorts).portBindings(portBindings)
+                .shmSize(shmSize);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
@@ -373,7 +375,7 @@ public class WebDriverService {
         String hubPath = browserName.equalsIgnoreCase("chrome") ? "/"
                 : "/wd/hub";
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
-                + hubBindPort + hubPath;
+                + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
 
         log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
@@ -385,8 +387,8 @@ public class WebDriverService {
         sessionInfo.setVersion(version);
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
-        sessionInfo.setHubBindPort(hubBindPort);
-        sessionInfo.setHubVncBindPort(hubVncBindPort);
+        sessionInfo.setHubBindPort(hubPort);
+        sessionInfo.setHubVncBindPort(vncPort);
 
         return sessionInfo;
     }

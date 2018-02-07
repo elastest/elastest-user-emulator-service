@@ -25,6 +25,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -62,6 +63,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
@@ -182,33 +184,42 @@ public class DockerService {
 
                 Optional<String> network = dockerContainer.getNetwork();
                 if (network.isPresent()) {
-                    log.trace("Using network: {}", network.get());
+                    log.trace("Using network {}", network.get());
                     createContainer.withNetworkMode(network.get());
+                }
+                Optional<List<ExposedPort>> exposedPorts = dockerContainer
+                        .getExposedPorts();
+                if (exposedPorts.isPresent()) {
+                    log.trace("Using exposed ports {}", exposedPorts.get());
+                    createContainer.withExposedPorts(exposedPorts.get());
                 }
                 Optional<List<PortBinding>> portBindings = dockerContainer
                         .getPortBindings();
                 if (portBindings.isPresent()) {
-                    log.trace("Using port binding: {}", portBindings.get());
+                    portBindings.get().stream()
+                            .peek(pb -> log.trace("Using port binding {}:{}",
+                                    pb.getBinding(), pb.getExposedPort()))
+                            .collect(toList());
                     createContainer.withPortBindings(portBindings.get());
                 }
                 Optional<List<Volume>> volumes = dockerContainer.getVolumes();
                 if (volumes.isPresent()) {
-                    log.trace("Using volumes: {}", volumes.get());
+                    log.trace("Using volumes {}", volumes.get());
                     createContainer.withVolumes(volumes.get());
                 }
                 Optional<List<Bind>> binds = dockerContainer.getBinds();
                 if (binds.isPresent()) {
-                    log.trace("Using binds: {}", binds.get());
+                    log.trace("Using binds {}", binds.get());
                     createContainer.withBinds(binds.get());
                 }
                 Optional<List<String>> envs = dockerContainer.getEnvs();
                 if (envs.isPresent()) {
-                    log.trace("Using envs: {}", envs.get());
+                    log.trace("Using envs {}", envs.get());
                     createContainer.withEnv(envs.get());
                 }
                 Optional<List<String>> cmd = dockerContainer.getCmd();
                 if (cmd.isPresent()) {
-                    log.trace("Using cmd: {}", cmd.get());
+                    log.trace("Using cmd {}", cmd.get());
                     createContainer.withCmd(cmd.get());
                 }
 
@@ -216,6 +227,7 @@ public class DockerService {
                 if (shmSize.isPresent()) {
                     HostConfig hostConfig = createContainer.getHostConfig();
                     hostConfig.withShmSize(shmSize.get());
+                    log.trace("Using shm size {}", shmSize.get());
                     createContainer.withHostConfig(hostConfig);
                 }
 
