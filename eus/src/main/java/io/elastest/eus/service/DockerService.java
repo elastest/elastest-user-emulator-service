@@ -181,55 +181,12 @@ public class DockerService {
 
             try (CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName)) {
-
-                Optional<String> network = dockerContainer.getNetwork();
-                if (network.isPresent()) {
-                    log.trace("Using network {}", network.get());
-                    createContainer.withNetworkMode(network.get());
-                }
-                Optional<List<ExposedPort>> exposedPorts = dockerContainer
-                        .getExposedPorts();
-                if (exposedPorts.isPresent()) {
-                    log.trace("Using exposed ports {}", exposedPorts.get());
-                    createContainer.withExposedPorts(exposedPorts.get());
-                }
-                Optional<List<PortBinding>> portBindings = dockerContainer
-                        .getPortBindings();
-                if (portBindings.isPresent()) {
-                    portBindings.get().stream()
-                            .peek(pb -> log.trace("Using port binding {}:{}",
-                                    pb.getBinding(), pb.getExposedPort()))
-                            .collect(toList());
-                    createContainer.withPortBindings(portBindings.get());
-                }
-                Optional<List<Volume>> volumes = dockerContainer.getVolumes();
-                if (volumes.isPresent()) {
-                    log.trace("Using volumes {}", volumes.get());
-                    createContainer.withVolumes(volumes.get());
-                }
-                Optional<List<Bind>> binds = dockerContainer.getBinds();
-                if (binds.isPresent()) {
-                    log.trace("Using binds {}", binds.get());
-                    createContainer.withBinds(binds.get());
-                }
-                Optional<List<String>> envs = dockerContainer.getEnvs();
-                if (envs.isPresent()) {
-                    log.trace("Using envs {}", envs.get());
-                    createContainer.withEnv(envs.get());
-                }
-                Optional<List<String>> cmd = dockerContainer.getCmd();
-                if (cmd.isPresent()) {
-                    log.trace("Using cmd {}", cmd.get());
-                    createContainer.withCmd(cmd.get());
-                }
-
-                Optional<Long> shmSize = dockerContainer.getShmSize();
-                if (shmSize.isPresent()) {
-                    HostConfig hostConfig = createContainer.getHostConfig();
-                    hostConfig.withShmSize(shmSize.get());
-                    log.trace("Using shm size {}", shmSize.get());
-                    createContainer.withHostConfig(hostConfig);
-                }
+                handleNetwork(dockerContainer, createContainer);
+                handlePorts(dockerContainer, createContainer);
+                handleVolumes(dockerContainer, createContainer);
+                handleEnvs(dockerContainer, createContainer);
+                handleCmd(dockerContainer, createContainer);
+                handleShm(dockerContainer, createContainer);
 
                 createContainer.withCapAdd(SYS_ADMIN);
                 createContainer.exec();
@@ -238,6 +195,79 @@ public class DockerService {
             }
         } else {
             log.warn("Container {} already running", containerName);
+        }
+    }
+
+    private void handleShm(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<Long> shmSize = dockerContainer.getShmSize();
+        if (shmSize.isPresent()) {
+            HostConfig hostConfig = createContainer.getHostConfig();
+            if (hostConfig != null) {
+                hostConfig.withShmSize(shmSize.get());
+                log.trace("Using shm size {}", shmSize.get());
+                createContainer.withHostConfig(hostConfig);
+            }
+        }
+    }
+
+    private void handleCmd(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<List<String>> cmd = dockerContainer.getCmd();
+        if (cmd.isPresent()) {
+            log.trace("Using cmd {}", cmd.get());
+            createContainer.withCmd(cmd.get());
+        }
+    }
+
+    private void handleEnvs(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<List<String>> envs = dockerContainer.getEnvs();
+        if (envs.isPresent()) {
+            log.trace("Using envs {}", envs.get());
+            createContainer.withEnv(envs.get());
+        }
+    }
+
+    private void handleVolumes(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<List<Volume>> volumes = dockerContainer.getVolumes();
+        if (volumes.isPresent()) {
+            log.trace("Using volumes {}", volumes.get());
+            createContainer.withVolumes(volumes.get());
+        }
+        Optional<List<Bind>> binds = dockerContainer.getBinds();
+        if (binds.isPresent()) {
+            log.trace("Using binds {}", binds.get());
+            createContainer.withBinds(binds.get());
+        }
+    }
+
+    private void handleNetwork(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<String> network = dockerContainer.getNetwork();
+        if (network.isPresent()) {
+            log.trace("Using network {}", network.get());
+            createContainer.withNetworkMode(network.get());
+        }
+    }
+
+    private void handlePorts(DockerContainer dockerContainer,
+            CreateContainerCmd createContainer) {
+        Optional<List<ExposedPort>> exposedPorts = dockerContainer
+                .getExposedPorts();
+        if (exposedPorts.isPresent()) {
+            log.trace("Using exposed ports {}", exposedPorts.get());
+            createContainer.withExposedPorts(exposedPorts.get());
+        }
+        Optional<List<PortBinding>> portBindings = dockerContainer
+                .getPortBindings();
+        if (portBindings.isPresent()) {
+            portBindings.get().stream()
+                    .peek(pb -> log.trace("Using port binding {}:{}",
+                            pb.getBinding(), pb.getExposedPort()))
+                    .collect(toList());
+            createContainer.withPortBindings(portBindings.get());
         }
     }
 
