@@ -127,14 +127,18 @@ public class DockerHubService {
         List<DockerHubTag> tagList = listTags();
         log.debug("Selenoid browser tag list: {}", tagList);
 
-        String imagePreffix = browser + "_";
+        final String browserName = browser.equalsIgnoreCase("operablink")
+                ? "opera"
+                : browser;
+
+        String imagePreffix = browserName + "_";
         List<String> browserList = tagList.stream()
-                .filter(p -> p.getName().startsWith(browser))
+                .filter(p -> p.getName().startsWith(browserName))
                 .map(p -> p.getName().replace(imagePreffix, ""))
                 .sorted(this::compareVersions).collect(toList());
-        log.debug("Browser list for {}: {}", browser, browserList);
+        log.debug("Browser list for {}: {}", browserName, browserList);
 
-        return format(browserImageFormat, browser,
+        return format(browserImageFormat, browserName,
                 getVersionFromList(browserList, version));
     }
 

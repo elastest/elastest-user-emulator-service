@@ -234,8 +234,16 @@ public class WebDriverService {
         log.debug("POST requestBody before mangling: {}", requestBody);
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode input = objectMapper.readTree(requestBody);
+
+        String newCapabilities = "{ \"loggingPrefs\": { \"browser\" : \"ALL\" } ";
+        if (requestBody.contains("operablink")) {
+            newCapabilities += ", \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] }";
+        }
+        newCapabilities += "}";
+
         JsonQuery jsonQuery = compile(
-                "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } } else . end)");
+                "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += "
+                        + newCapabilities + " else . end)");
         requestBody = jsonQuery.apply(input).iterator().next().toString();
         log.debug("POST requestBody after mangling: {}", requestBody);
         return requestBody;
@@ -379,8 +387,8 @@ public class WebDriverService {
         }
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
-        String hubPath = browserName.equalsIgnoreCase("chrome") ? "/"
-                : "/wd/hub";
+        String hubPath = browserName.equalsIgnoreCase("firefox") ? "/wd/hub"
+                : "/";
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);

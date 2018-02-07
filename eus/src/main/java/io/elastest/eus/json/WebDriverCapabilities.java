@@ -80,6 +80,7 @@ public class WebDriverCapabilities {
         String firefoxProfile;
 
         Object chromeOptions;
+        Object operaOptions;
         String version;
         String platform;
         boolean acceptInsecureCerts;
@@ -120,6 +121,10 @@ public class WebDriverCapabilities {
             return chromeOptions;
         }
 
+        public Object getOperaOptions() {
+            return operaOptions;
+        }
+
         public boolean isAcceptInsecureCerts() {
             return acceptInsecureCerts;
         }
@@ -135,6 +140,7 @@ public class WebDriverCapabilities {
                     + ", getVersion()=" + getVersion() + ", getPlatform()="
                     + getPlatform() + ", isLive()=" + isLive()
                     + ", getChromeOptions()=" + getChromeOptions()
+                    + ", getOperaOptions()=" + getOperaOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
                     + ", getFirefoxProfile()=" + getFirefoxProfile() + "]";
         }

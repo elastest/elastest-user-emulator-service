@@ -20,6 +20,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
+import static org.openqa.selenium.remote.DesiredCapabilities.operaBlink;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -69,15 +69,14 @@ public class SeleniumE2ETest {
     String contextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
-        return Stream.of(Arguments.of(chrome(), "chrome"),
-                Arguments.of(firefox(), "firefox"));
+        return Stream.of(Arguments.of(chrome()), Arguments.of(firefox()),
+                Arguments.of(operaBlink()));
     }
 
-    @ParameterizedTest(name = "Using {1} as browser")
+    @ParameterizedTest(name = "Using {0}")
     @DisplayName("Visit elastest.io using a browser provided by EUS")
     @MethodSource("capabilitiesProvider")
-    void test(DesiredCapabilities capability, String expectedBrowserName)
-            throws MalformedURLException {
+    void test(DesiredCapabilities capability) throws MalformedURLException {
         String eusUrl = "http://localhost:" + serverPort + contextPath;
         String sutUrl = "http://elastest.io/";
 
@@ -90,14 +89,6 @@ public class SeleniumE2ETest {
         String title = driver.getTitle();
         log.debug("SUT title: {}", title);
         assertEquals(title, "ElasTest Home");
-
-        Capabilities caps = ((RemoteWebDriver) driver).getCapabilities();
-        String realBrowserName = caps.getBrowserName();
-
-        log.debug("Expected browser: {} -- Real browser: {}",
-                expectedBrowserName, realBrowserName);
-
-        assertEquals(expectedBrowserName, realBrowserName);
     }
 
     @AfterEach
