@@ -89,18 +89,18 @@ public class EusBaseTest {
         }
         String elastestUser = getProperty("eUser");
         if (elastestUser != null) {
-        	eUser = elastestUser;
-        	
-        	String elastestPassword = getProperty("ePass");
-        	if (elastestPassword != null) {
-        		ePassword = elastestPassword;
-        		secureElastest = true;
-        	}
+            eUser = elastestUser;
+            
+            String elastestPassword = getProperty("ePass");
+            if (elastestPassword != null) {
+                ePassword = elastestPassword;
+                secureElastest = true;
+            }
         
         }
         if (secureElastest) {
-        	String split_url[] = tormUrl.split("//");
-        	secureTorm = split_url[0]+"//"+eUser+":"+ePassword+"@"+split_url[1];
+            String split_url[] = tormUrl.split("//");
+            secureTorm = split_url[0]+"//"+eUser+":"+ePassword+"@"+split_url[1];
         }
         
         log.info("Using URL {} to connect to {} TORM", tormUrl, secureElastest? "secure": "unsecure");

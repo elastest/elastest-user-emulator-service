@@ -57,9 +57,11 @@ public class EusTJobE2eTest extends EusBaseTest {
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
         if (secureElastest) {
-        	driver.get(secureTorm);
+            driver.get(secureTorm);
         }
-        driver.get(tormUrl);
+        else {
+            driver.get(tormUrl);
+        }
         createNewProject(driver, "my-test-project");
 
         log.info("Create new TJob using EUS");
