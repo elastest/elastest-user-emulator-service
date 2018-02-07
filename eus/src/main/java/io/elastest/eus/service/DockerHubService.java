@@ -24,7 +24,11 @@ import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,10 +94,10 @@ public class DockerHubService {
             int v1Part = i < v1split.length ? parseInt(v1split[i]) : 0;
             int v2Part = i < v2split.length ? parseInt(v2split[i]) : 0;
             if (v1Part < v2Part) {
-                return -1;
+                return 1;
             }
             if (v1Part > v2Part) {
-                return 1;
+                return -1;
             }
         }
         return 0;
@@ -102,7 +106,7 @@ public class DockerHubService {
     private String getVersionFromList(List<String> browserList,
             String version) {
         if (version.isEmpty()) {
-            return browserList.get(browserList.size() - 1);
+            return browserList.get(0);
         }
 
         if (browserList.contains(version)) {
@@ -140,6 +144,30 @@ public class DockerHubService {
 
         return format(browserImageFormat, browserName,
                 getVersionFromList(browserList, version));
+    }
+
+    public Map<String, List<String>> getBrowsers() throws IOException {
+        Map<String, List<String>> result = new TreeMap<>();
+        for (DockerHubTag dockerHubTag : listTags()) {
+            String tagName = dockerHubTag.getName();
+            String browser = tagName.substring(0, tagName.indexOf('_'));
+            String version = tagName.substring(tagName.indexOf('_') + 1);
+
+            if (result.containsKey(browser)) {
+                List<String> list = result.get(browser);
+                list.add(version);
+            } else {
+                List<String> entry = new ArrayList<>();
+                entry.add(version);
+                result.put(browser, entry);
+            }
+        }
+
+        for (List<String> list : result.values()) {
+            Collections.sort(list, this::compareVersions);
+        }
+
+        return result;
     }
 
 }
