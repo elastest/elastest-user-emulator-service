@@ -100,6 +100,9 @@ public class WebDriverService {
     @Value("${browser.shm.size}")
     private long shmSize;
 
+    @Value("${browser.screen.resolution}")
+    private String browserScreenResolution;
+
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
@@ -364,9 +367,13 @@ public class WebDriverService {
                 new PortBinding(bindVncPort, exposedVncPort));
         List<ExposedPort> exposedPorts = asList(exposedHubPort, exposedVncPort);
 
+        // Envs
+        List<String> envs = asList(
+                "SCREEN_RESOLUTION=" + browserScreenResolution);
+
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
                 .exposedPorts(exposedPorts).portBindings(portBindings)
-                .shmSize(shmSize);
+                .shmSize(shmSize).envs(envs);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
