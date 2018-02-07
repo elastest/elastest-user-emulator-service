@@ -24,4 +24,4 @@ RUN apk update upgrade && apk add ffmpeg build-base python python-dev py-pip cur
 
 RUN pip install vnc2flv
 
-RUN echo secret > passwd_file
+RUN echo selenoid > passwd_file
