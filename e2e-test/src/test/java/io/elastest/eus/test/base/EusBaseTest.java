@@ -53,7 +53,13 @@ public class EusBaseTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     protected String tormUrl = "http://localhost:37000/"; // local by default
-
+    protected String secureTorm= "http://user:pass@localhost:37000/";
+    
+    protected String eUser = null; 
+    protected String ePassword = null; 
+    
+    protected boolean secureElastest = false;
+    
     protected WebDriver driver;
 
     // selenium-jupiter configuration
@@ -81,7 +87,23 @@ public class EusBaseTest {
         if (etmApi != null) {
             tormUrl = etmApi;
         }
-        log.info("Using URL {} to connect to TORM", tormUrl);
+        String elastestUser = getProperty("eUser");
+        if (elastestUser != null) {
+        	eUser = elastestUser;
+        	
+        	String elastestPassword = getProperty("ePass");
+        	if (elastestPassword != null) {
+        		ePassword = elastestPassword;
+        		secureElastest = true;
+        	}
+        
+        }
+        if (secureElastest) {
+        	String split_url[] = tormUrl.split("//");
+        	secureTorm = split_url[0]+"//"+eUser+":"+ePassword+"@"+split_url[1];
+        }
+        
+        log.info("Using URL {} to connect to {} TORM", tormUrl, secureElastest? "secure": "unsecure");
     }
 
     @AfterEach
