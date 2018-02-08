@@ -153,6 +153,11 @@ public class DockerHubService {
             String browser = tagName.substring(0, tagName.indexOf('_'));
             String version = tagName.substring(tagName.indexOf('_') + 1);
 
+            if (browser.equalsIgnoreCase("opera")
+                    && version.equalsIgnoreCase("12.16")) {
+                continue;
+            }
+
             if (result.containsKey(browser)) {
                 List<String> list = result.get(browser);
                 list.add(version);
