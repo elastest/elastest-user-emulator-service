@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.json;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Utility class for serialize JSON messages (create project).
  *
@@ -26,14 +29,17 @@ public class WebDriverStatus {
 
     boolean ready;
     String message;
+    Map<String, List<String>> browsers;
 
     public WebDriverStatus() {
         // Empty default construct (needed by Jackson)
     }
 
-    public WebDriverStatus(boolean ready, String message) {
+    public WebDriverStatus(boolean ready, String message,
+            Map<String, List<String>> browsers) {
         this.ready = ready;
         this.message = message;
+        this.browsers = browsers;
     }
 
     public boolean isReady() {
@@ -44,10 +50,14 @@ public class WebDriverStatus {
         return message;
     }
 
+    public Map<String, List<String>> getBrowsers() {
+        return browsers;
+    }
+
     @Override
     public String toString() {
-        return "WebDriverStatusStatus [isReady()=" + isReady()
-                + ", getMessage()=" + getMessage() + "]";
+        return "WebDriverStatus [isReady()=" + isReady() + ", getMessage()="
+                + getMessage() + ", getBrowsers()=" + getBrowsers() + "]";
     }
 
 }

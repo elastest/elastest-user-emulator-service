@@ -50,7 +50,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -145,8 +144,9 @@ public class WebDriverService {
                 .forEach((sessionId, sessionInfo) -> stopBrowser(sessionInfo));
     }
 
-    public ResponseEntity<String> getStatus() throws JsonProcessingException {
-        WebDriverStatus eusStatus = new WebDriverStatus(true, "EUS ready");
+    public ResponseEntity<String> getStatus() throws IOException {
+        WebDriverStatus eusStatus = new WebDriverStatus(true, "EUS ready",
+                dockerHubService.getBrowsers());
         log.debug("EUS status {}", eusStatus);
         String statusBody = jsonService.objectToJson(eusStatus);
         return new ResponseEntity<>(statusBody, OK);
