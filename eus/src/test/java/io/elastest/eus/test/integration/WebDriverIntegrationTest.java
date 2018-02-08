@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -34,8 +35,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.elastest.eus.service.JsonService;
 import io.elastest.eus.service.WebDriverService;
@@ -62,7 +61,7 @@ public class WebDriverIntegrationTest {
 
     @Test
     @DisplayName("Get status")
-    void testStatus() throws JsonProcessingException {
+    void testStatus() throws IOException {
         // Exercise
         String status = webDriverService.getStatus().getBody();
         log.debug("EUS status {}", status);
