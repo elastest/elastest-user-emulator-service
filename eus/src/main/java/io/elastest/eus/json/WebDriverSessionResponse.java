@@ -41,6 +41,10 @@ public class WebDriverSessionResponse {
         // Empty default construct (needed by Jackson)
     }
 
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
     public String getSessionId() {
         return sessionId != null ? sessionId : value.getSessionId();
     }

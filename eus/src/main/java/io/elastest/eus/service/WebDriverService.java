@@ -27,6 +27,7 @@ import static net.thisptr.jackson.jq.JsonQuery.compile;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpStatus.FOUND;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
@@ -50,6 +51,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -199,7 +201,7 @@ public class WebDriverService {
             }
         }
 
-        // Proxy request to Selenium Hub
+        // Proxy request to browser
         String responseBody = exchange(httpEntity, requestContext, method,
                 sessionInfo, optionalHttpEntity);
 
@@ -277,7 +279,8 @@ public class WebDriverService {
 
     private String exchange(HttpEntity<String> httpEntity,
             String requestContext, HttpMethod method, SessionInfo sessionInfo,
-            Optional<HttpEntity<String>> optionalHttpEntity) {
+            Optional<HttpEntity<String>> optionalHttpEntity)
+            throws JsonProcessingException {
         String hubUrl = sessionInfo.getHubUrl();
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> exchange = restTemplate
@@ -286,11 +289,23 @@ public class WebDriverService {
                                 ? optionalHttpEntity.get()
                                 : httpEntity,
                         String.class);
-        return exchange.getBody();
+        HttpStatus statusCode = exchange.getStatusCode();
+
+        String result = exchange.getBody();
+        if (statusCode == FOUND) {
+            WebDriverSessionResponse sessionResponse = new WebDriverSessionResponse();
+            String path = exchange.getHeaders().getLocation().getPath();
+            sessionResponse
+                    .setSessionId(path.substring(path.lastIndexOf("/") + 1));
+
+            result = jsonService.objectToJson(sessionResponse);
+        }
+        return result;
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
             String responseBody) throws IOException, InterruptedException {
+        log.trace("Session response: JSON: {}", responseBody);
         WebDriverSessionResponse sessionResponse = jsonService
                 .jsonToObject(responseBody, WebDriverSessionResponse.class);
         log.debug("Session response: JSON: {} -- Java: {}", responseBody,

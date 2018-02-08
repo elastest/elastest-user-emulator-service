@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WebDriverCapabilities {
 
     DesiredCapabilities desiredCapabilities;
