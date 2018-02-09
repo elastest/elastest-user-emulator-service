@@ -74,6 +74,7 @@ public class WebDriverCapabilities {
                 + "]";
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class DesiredCapabilities {
         LoggingPrefs loggingPrefs;
         String browserName;
@@ -87,6 +88,8 @@ public class WebDriverCapabilities {
         String platform;
         boolean acceptInsecureCerts;
         boolean live;
+
+        String browserId;
 
         public DesiredCapabilities() {
             // Empty default construct
@@ -135,6 +138,10 @@ public class WebDriverCapabilities {
             return firefoxProfile;
         }
 
+        public String getBrowserId() {
+            return browserId;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -144,7 +151,8 @@ public class WebDriverCapabilities {
                     + ", getChromeOptions()=" + getChromeOptions()
                     + ", getOperaOptions()=" + getOperaOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
-                    + ", getFirefoxProfile()=" + getFirefoxProfile() + "]";
+                    + ", getFirefoxProfile()=" + getFirefoxProfile()
+                    + ", getBrowserId()=" + getBrowserId() + "]";
         }
 
     }
@@ -164,7 +172,6 @@ public class WebDriverCapabilities {
         public String toString() {
             return "LoggingPrefs [getBrowser()=" + getBrowser() + "]";
         }
-
     }
 
 }

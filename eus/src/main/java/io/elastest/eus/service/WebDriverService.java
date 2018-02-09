@@ -23,7 +23,6 @@ import static java.lang.Integer.parseInt;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static java.util.Optional.empty;
-import static net.thisptr.jackson.jq.JsonQuery.compile;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
@@ -52,8 +51,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
@@ -61,11 +58,11 @@ import com.github.dockerjava.api.model.Ports.Binding;
 import io.elastest.eus.EusException;
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
+import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.session.SessionInfo;
-import net.thisptr.jackson.jq.JsonQuery;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -123,12 +120,14 @@ public class WebDriverService {
     private VncService vncService;
     private RecordingService recordingService;
     private TimeoutService timeoutService;
+    private JqService jqService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             DockerHubService dockerHubService, JsonService jsonService,
             SessionService sessionService, VncService vncService,
-            RecordingService recordingService, TimeoutService timeoutService) {
+            RecordingService recordingService, TimeoutService timeoutService,
+            JqService jqService) {
         this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
@@ -136,6 +135,7 @@ public class WebDriverService {
         this.vncService = vncService;
         this.recordingService = recordingService;
         this.timeoutService = timeoutService;
+        this.jqService = jqService;
     }
 
     @PreDestroy
@@ -173,14 +173,37 @@ public class WebDriverService {
 
         // Intercept create session
         if (isPostSessionRequest(method, requestContext)) {
-            // JSON "mangling" to activate always the browser logging
-            requestBody = activateBrowserLogging(requestBody);
-            httpEntity = new HttpEntity<>(requestBody);
+            String browserName = jsonService
+                    .jsonToObject(requestBody, WebDriverCapabilities.class)
+                    .getDesiredCapabilities().getBrowserName();
+            String version = jsonService
+                    .jsonToObject(requestBody, WebDriverCapabilities.class)
+                    .getDesiredCapabilities().getVersion();
+
+            // JSON processing to activate always the browser logging
+            String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
+            String newRequestBody = jqService.processJsonWithJq(requestBody,
+                    jqActivateBrowserLogging);
+
+            // JSON processing to add binary path if opera
+            if (browserName.equalsIgnoreCase("operablink")) {
+                String jqOperaBinary = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] } }  else . end)";
+                newRequestBody = jqService.processJsonWithJq(newRequestBody,
+                        jqOperaBinary);
+            }
+
+            // JSON processing to remove browserId
+            String jqRemoveBrowserId = "walk(if type == \"object\" then del(.browserId) else . end)";
+            newRequestBody = jqService.processJsonWithJq(newRequestBody,
+                    jqRemoveBrowserId);
+
+            httpEntity = new HttpEntity<>(newRequestBody);
 
             // If live, no timeout
             liveSession = isLive(requestBody);
-            sessionInfo = startBrowser(requestBody);
-            optionalHttpEntity = optionalHttpEntity(requestBody);
+            sessionInfo = startBrowser(newRequestBody, requestBody);
+            optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
+                    version);
 
         } else {
             Optional<String> sessionIdFromPath = getSessionIdFromPath(
@@ -229,26 +252,6 @@ public class WebDriverService {
         }
 
         return new ResponseEntity<>(responseBody, responseStatus);
-    }
-
-    private String activateBrowserLogging(String requestBody)
-            throws IOException {
-        log.debug("POST requestBody before mangling: {}", requestBody);
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode input = objectMapper.readTree(requestBody);
-
-        String newCapabilities = "{ \"loggingPrefs\": { \"browser\" : \"ALL\" } ";
-        if (requestBody.contains("operablink")) {
-            newCapabilities += ", \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] }";
-        }
-        newCapabilities += "}";
-
-        JsonQuery jsonQuery = compile(
-                "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += "
-                        + newCapabilities + " else . end)");
-        requestBody = jsonQuery.apply(input).iterator().next().toString();
-        log.debug("POST requestBody after mangling: {}", requestBody);
-        return requestBody;
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
@@ -319,7 +322,13 @@ public class WebDriverService {
             log.debug("Response value {}", responseValue);
             sessionId = responseValue.getValue().getSessionId();
         }
-        sessionInfo.setSessionId(sessionId);
+
+        String finalSessionId = sessionId;
+        if (sessionInfo.getBrowserId() != null
+                && !sessionInfo.getBrowserId().isEmpty()) {
+            finalSessionId = sessionInfo.getBrowserId() + "_" + sessionId;
+        }
+        sessionInfo.setSessionId(finalSessionId);
         sessionInfo.setLiveSession(isLive);
 
         sessionService.putSession(sessionId, sessionInfo);
@@ -331,19 +340,14 @@ public class WebDriverService {
         }
     }
 
-    private Optional<HttpEntity<String>> optionalHttpEntity(String requestBody)
-            throws IOException {
+    private Optional<HttpEntity<String>> optionalHttpEntity(String requestBody,
+            String browserName, String version) throws IOException {
         // Workaround due to bug of selenium-server 3.4.0
         // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-        String browserName = jsonService
-                .jsonToObject(requestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getBrowserName();
-        String version = jsonService
-                .jsonToObject(requestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getVersion();
-
         if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
-            String jsonFirefox = requestBody.replaceAll(version, "");
+            String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
+            String jsonFirefox = jqService.processJsonWithJq(requestBody,
+                    jqRemoveVersionContent);
             log.debug("Using firefox capabilities with empty version {}",
                     jsonFirefox);
             return Optional.of(new HttpEntity<String>(jsonFirefox));
@@ -357,18 +361,18 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private SessionInfo startBrowser(String jsonCapabilities)
+    private SessionInfo startBrowser(String requestBody,
+            String originalRequestBody)
             throws IOException, InterruptedException {
-        String browserName = jsonService
-                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getBrowserName();
-        String version = jsonService
-                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getVersion();
-        String platform = jsonService
-                .jsonToObject(jsonCapabilities, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getPlatform();
+        DesiredCapabilities capabilities = jsonService
+                .jsonToObject(requestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities();
 
+        String browserName = capabilities.getBrowserName();
+        browserName = browserName.equalsIgnoreCase("operablink") ? "opera"
+                : browserName;
+        String version = capabilities.getVersion();
+        String platform = capabilities.getPlatform();
         String imageId = dockerHubService.getBrowserImageFromCapabilities(
                 browserName, version, platform);
 
@@ -414,11 +418,16 @@ public class WebDriverService {
         sessionInfo.setHubUrl(hubUrl);
         sessionInfo.setHubContainerName(hubContainerName);
         sessionInfo.setBrowser(browserName);
-        sessionInfo.setVersion(version);
+        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubPort);
         sessionInfo.setHubVncBindPort(vncPort);
+
+        String browserId = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().getBrowserId();
+        sessionInfo.setBrowserId(browserId);
 
         return sessionInfo;
     }
