@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.service.JqService;
+import io.elastest.eus.service.JsonService;
 
 /**
  * Tests for JQ service (JSON processor).
@@ -46,7 +46,7 @@ import io.elastest.eus.service.JqService;
 public class JqIntegrationTest {
 
     @Autowired
-    private JqService jqService;
+    private JsonService jsonService;
 
     @Test
     @DisplayName("JQ test version test")
@@ -58,7 +58,7 @@ public class JqIntegrationTest {
                 + "      \"platform\":\"ANY\",\n" + "      \"version\":\""
                 + version + "\"\n" + "   } }";
         String jq = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
-        String result = jqService.processJsonWithJq(json, jq);
+        String result = jsonService.processJsonWithJq(json, jq);
 
         assertThat(result, not(containsString(version)));
     }

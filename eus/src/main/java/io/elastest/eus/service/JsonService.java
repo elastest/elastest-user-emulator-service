@@ -17,6 +17,7 @@
 package io.elastest.eus.service;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static net.thisptr.jackson.jq.JsonQuery.compile;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -25,7 +26,10 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.thisptr.jackson.jq.JsonQuery;
 
 /**
  * Service implementation for JSON utilities.
@@ -63,6 +67,17 @@ public class JsonService {
             return false;
         }
         return true;
+    }
+
+    public String processJsonWithJq(String json, String jq) throws IOException {
+        log.debug("JSON message before processing: {}", json);
+        log.debug("jq command: {}", jq);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode input = objectMapper.readTree(json);
+        JsonQuery jsonQuery = compile(jq);
+        String result = jsonQuery.apply(input).iterator().next().toString();
+        log.debug("JSON message after processing: {}", result);
+        return result;
     }
 
 }

@@ -149,7 +149,7 @@ public class DockerHubService {
     }
 
     public String getVersionFromImage(String image) {
-        return image.substring(image.indexOf("_") + 1);
+        return image.substring(image.indexOf('_') + 1);
     }
 
     public Map<String, List<String>> getBrowsers() throws IOException {

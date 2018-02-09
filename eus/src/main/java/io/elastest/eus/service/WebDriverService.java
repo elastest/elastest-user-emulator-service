@@ -120,14 +120,12 @@ public class WebDriverService {
     private VncService vncService;
     private RecordingService recordingService;
     private TimeoutService timeoutService;
-    private JqService jqService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             DockerHubService dockerHubService, JsonService jsonService,
             SessionService sessionService, VncService vncService,
-            RecordingService recordingService, TimeoutService timeoutService,
-            JqService jqService) {
+            RecordingService recordingService, TimeoutService timeoutService) {
         this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
@@ -135,7 +133,6 @@ public class WebDriverService {
         this.vncService = vncService;
         this.recordingService = recordingService;
         this.timeoutService = timeoutService;
-        this.jqService = jqService;
     }
 
     @PreDestroy
@@ -182,19 +179,19 @@ public class WebDriverService {
 
             // JSON processing to activate always the browser logging
             String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
-            String newRequestBody = jqService.processJsonWithJq(requestBody,
+            String newRequestBody = jsonService.processJsonWithJq(requestBody,
                     jqActivateBrowserLogging);
 
             // JSON processing to add binary path if opera
             if (browserName.equalsIgnoreCase("operablink")) {
                 String jqOperaBinary = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] } }  else . end)";
-                newRequestBody = jqService.processJsonWithJq(newRequestBody,
+                newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                         jqOperaBinary);
             }
 
             // JSON processing to remove browserId
             String jqRemoveBrowserId = "walk(if type == \"object\" then del(.browserId) else . end)";
-            newRequestBody = jqService.processJsonWithJq(newRequestBody,
+            newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                     jqRemoveBrowserId);
 
             httpEntity = new HttpEntity<>(newRequestBody);
@@ -299,7 +296,7 @@ public class WebDriverService {
             WebDriverSessionResponse sessionResponse = new WebDriverSessionResponse();
             String path = exchange.getHeaders().getLocation().getPath();
             sessionResponse
-                    .setSessionId(path.substring(path.lastIndexOf("/") + 1));
+                    .setSessionId(path.substring(path.lastIndexOf('/') + 1));
 
             result = jsonService.objectToJson(sessionResponse);
         }
@@ -347,7 +344,7 @@ public class WebDriverService {
         if (browserName.equalsIgnoreCase("firefox")
                 && (version == null || version.isEmpty())) {
             String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
-            String jsonFirefox = jqService.processJsonWithJq(requestBody,
+            String jsonFirefox = jsonService.processJsonWithJq(requestBody,
                     jqRemoveVersionContent);
             log.debug("Using firefox capabilities with empty version {}",
                     jsonFirefox);
