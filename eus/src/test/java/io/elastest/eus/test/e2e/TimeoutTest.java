@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +76,7 @@ public class TimeoutTest {
         log.debug("Waiting {} seconds to force timeout", waitSeconds);
         sleep(SECONDS.toMillis(waitSeconds));
 
-        Throwable exception = assertThrows(WebDriverException.class,
+        Throwable exception = assertThrows(Exception.class,
                 () -> driver.get("http://elastest.io/"));
         log.debug("Exception {} -- due to timeout", exception.getMessage());
         driver = null;
