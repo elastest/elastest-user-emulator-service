@@ -20,6 +20,7 @@ import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static java.lang.String.format;
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -61,10 +62,15 @@ public class DockerHubService {
     @Value("${browser.image.format}")
     String browserImageFormat;
 
+    @Value("${browser.docker.hub.timeout}")
+    int browserDockerHubTimeout;
+
     DockerHubApi dockerHubApi;
 
     private void initDockerHubApi() {
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(browserDockerHubTimeout, SECONDS)
+                .readTimeout(browserDockerHubTimeout, SECONDS).build();
         Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())

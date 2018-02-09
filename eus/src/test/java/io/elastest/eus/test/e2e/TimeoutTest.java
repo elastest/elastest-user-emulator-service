@@ -16,7 +16,6 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
@@ -30,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,9 +74,9 @@ public class TimeoutTest {
     void testTimeout() throws InterruptedException {
         long waitSeconds = 20;
         log.debug("Waiting {} seconds to force timeout", waitSeconds);
-        sleep(SECONDS.toMillis(waitSeconds));
+        SECONDS.sleep(waitSeconds);
 
-        Throwable exception = assertThrows(Exception.class,
+        Throwable exception = assertThrows(WebDriverException.class,
                 () -> driver.get("http://elastest.io/"));
         log.debug("Exception {} -- due to timeout", exception.getMessage());
         driver = null;
