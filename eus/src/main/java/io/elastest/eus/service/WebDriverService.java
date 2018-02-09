@@ -344,7 +344,8 @@ public class WebDriverService {
             String browserName, String version) throws IOException {
         // Workaround due to bug of selenium-server 3.4.0
         // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-        if (browserName.equalsIgnoreCase("firefox") && !version.equals("")) {
+        if (browserName.equalsIgnoreCase("firefox")
+                && (version == null || version.isEmpty())) {
             String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
             String jsonFirefox = jqService.processJsonWithJq(requestBody,
                     jqRemoveVersionContent);
