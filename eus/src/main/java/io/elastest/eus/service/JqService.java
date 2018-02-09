@@ -35,7 +35,8 @@ import net.thisptr.jackson.jq.JsonQuery;
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.5.1
- * @see https://stedolan.github.io/jq/
+ * @see <a href=
+ *      "https://stedolan.github.io/jq/">https://stedolan.github.io/jq/</a>
  */
 @Service
 public class JqService {
