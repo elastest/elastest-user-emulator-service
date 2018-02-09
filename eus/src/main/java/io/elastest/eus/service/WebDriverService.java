@@ -448,11 +448,10 @@ public class WebDriverService {
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 
-            sessionService.stopAllContainerOfSession(sessionInfo);
             if (!sessionInfo.isLiveSession()) {
                 sessionService.sendRemoveSessionToAllClients(sessionInfo);
             }
-
+            sessionService.stopAllContainerOfSession(sessionInfo);
             sessionService.removeSession(sessionInfo.getSessionId());
 
             timeoutService.shutdownSessionTimer(sessionInfo);
