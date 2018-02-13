@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.test.e2e;
 
+import static io.github.bonigarcia.BrowserType.CHROME;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -31,12 +32,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
 import io.elastest.eus.test.base.EusBaseTest;
+import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
@@ -54,16 +56,17 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 
     @Test
     @DisplayName("EUS as support service")
-    void testSupportService(ChromeDriver driver) throws InterruptedException {
+    void testSupportService(
+            @DockerBrowser(type = CHROME) RemoteWebDriver driver)
+            throws InterruptedException {
         this.driver = driver;
 
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
-        if (secureElastest) {   
+        if (secureElastest) {
             driver.get(secureTorm);
-        }
-        else {
+        } else {
             driver.get(tormUrl);
         }
         startTestSupportService(driver, "EUS");
