@@ -53,7 +53,7 @@
 
         <!-- Test dependencies version -->
         <junit.jupiter.version>5.0.3</junit.jupiter.version>
-        <junit.platform.version>5.0.3</junit.platform.version>
+        <junit.platform.version>1.0.3</junit.platform.version>
         <wiremock.version>2.15.0</wiremock.version>
 
         <!-- Plugins versions -->
