@@ -83,7 +83,8 @@ public class DockerHubService {
             initDockerHubApi();
         }
 
-        log.debug("Getting browser image list from Docker Hub");
+        log.debug("Getting browser image list from Docker Hub: {}",
+                dockerHubUrl);
         Response<DockerHubTags> listTagsResponse = dockerHubApi.listTags()
                 .execute();
         if (!listTagsResponse.isSuccessful()) {

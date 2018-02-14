@@ -171,8 +171,6 @@ public class SessionInfo {
     }
 
     public String getIdForFiles() {
-        String sessionId = getSessionId();
-        String browserId = getBrowserId();
         return browserId != null && !browserId.isEmpty()
                 ? browserId + "_" + sessionId
                 : sessionId;

@@ -81,7 +81,8 @@ public class ShellService {
             }
 
         } catch (IOException e) {
-            log.trace("Not running inside a Docker container");
+            log.trace("Not running inside a Docker container ({})",
+                    e.getMessage());
         }
         return isRunningInContainer;
     }

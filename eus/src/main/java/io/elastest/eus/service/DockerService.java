@@ -477,7 +477,7 @@ public class DockerService {
                 responseCode = connection.getResponseCode();
 
                 if (responseCode == HTTP_OK || responseCode == HTTP_NOT_FOUND) {
-                    log.debug("URL already reachable");
+                    log.debug("URL {} already reachable", url);
                     break;
                 } else {
                     log.trace(

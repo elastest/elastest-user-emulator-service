@@ -243,7 +243,8 @@ public class DockerComposeService {
     }
 
     public List<DockerComposeProject> listProjects() throws IOException {
-        log.debug("List Docker Compose projects");
+        log.debug("List Docker Compose projects (using {})",
+                dockerComposeUiImageId);
         List<DockerComposeProject> projects = new ArrayList<>();
 
         Response<DockerComposeList> response = dockerComposeApi.listProjects()

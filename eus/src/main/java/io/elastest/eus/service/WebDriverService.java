@@ -262,7 +262,7 @@ public class WebDriverService {
 
             // Intercept destroy session
             if (isDeleteSessionRequest(method, requestContext)) {
-                log.trace("Intercepted DELETE session");
+                log.trace("Intercepted DELETE session ({})", method);
                 stopBrowser(sessionInfo);
             }
 
