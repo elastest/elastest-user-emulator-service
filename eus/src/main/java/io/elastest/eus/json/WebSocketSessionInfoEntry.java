@@ -37,7 +37,7 @@ public class WebSocketSessionInfoEntry {
     }
 
     public WebSocketSessionInfoEntry(SessionInfo sessionInfo) {
-        this.id = sessionInfo.getSessionId();
+        this.id = sessionInfo.getIdForFiles();
         this.url = sessionInfo.getVncUrl();
         this.browser = sessionInfo.getBrowser();
         this.version = sessionInfo.getVersion();

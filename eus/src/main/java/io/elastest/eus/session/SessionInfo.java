@@ -170,4 +170,12 @@ public class SessionInfo {
         this.browserId = browserId;
     }
 
+    public String getIdForFiles() {
+        String sessionId = getSessionId();
+        String browserId = getBrowserId();
+        return browserId != null && !browserId.isEmpty()
+                ? browserId + "_" + sessionId
+                : sessionId;
+    }
+
 }

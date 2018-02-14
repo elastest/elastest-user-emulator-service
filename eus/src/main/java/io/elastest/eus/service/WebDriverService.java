@@ -319,13 +319,7 @@ public class WebDriverService {
             log.debug("Response value {}", responseValue);
             sessionId = responseValue.getValue().getSessionId();
         }
-
-        String finalSessionId = sessionId;
-        if (sessionInfo.getBrowserId() != null
-                && !sessionInfo.getBrowserId().isEmpty()) {
-            finalSessionId = sessionInfo.getBrowserId() + "_" + sessionId;
-        }
-        sessionInfo.setSessionId(finalSessionId);
+        sessionInfo.setSessionId(sessionId);
         sessionInfo.setLiveSession(isLive);
 
         sessionService.putSession(sessionId, sessionInfo);

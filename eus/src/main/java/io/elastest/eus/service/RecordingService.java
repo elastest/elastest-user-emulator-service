@@ -136,8 +136,9 @@ public class RecordingService {
                 sessionInfo.getSessionId());
 
         String sessionId = sessionInfo.getSessionId();
+        String idForFiles = sessionInfo.getIdForFiles();
         String noNvcContainerName = sessionInfo.getVncContainerName();
-        String recordingFileName = sessionId + registryRecordingExtension;
+        String recordingFileName = idForFiles + registryRecordingExtension;
 
         // Convert format of recording to mp4
         dockerService.execCommand(noNvcContainerName, true, novncScript,
@@ -187,8 +188,8 @@ public class RecordingService {
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
-        String sessionId = sessionInfo.getSessionId();
-        String metadataFileName = sessionId + registryMetadataExtension;
+        String idForFiles = sessionInfo.getIdForFiles();
+        String metadataFileName = idForFiles + registryMetadataExtension;
         WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(
                 sessionInfo);
         log.debug("Storing metadata {}", recordedSession);
