@@ -64,7 +64,7 @@ public class VncService {
     @Value("${novnc.exposedport}")
     private int noVncExposedPort;
 
-    @Value("${novnc.image.id}")
+    @Value("${et.docker.img.novnc}")
     private String noVncImageId;
 
     @Value("${hub.vnc.password}")
