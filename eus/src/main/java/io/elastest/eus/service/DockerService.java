@@ -30,8 +30,9 @@ import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.ServerSocket;
@@ -52,6 +53,9 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -352,17 +356,35 @@ public class DockerService {
         return output;
     }
 
-    public InputStream getFileFromContainer(String containerName,
-            String fileName) {
-        InputStream inputStream = null;
+    public void copyFileFromContainer(String containerName,
+            String containerFile, String hostFile) throws IOException {
         if (existsContainer(containerName)) {
-            log.trace("Copying {} from container {}", fileName, containerName);
+            log.trace("Copying {} from container {} to host {}", containerFile,
+                    containerName, hostFile);
 
-            inputStream = dockerClient
-                    .copyArchiveFromContainerCmd(containerName, fileName)
-                    .exec();
+            try (TarArchiveInputStream tarStream = new TarArchiveInputStream(
+                    dockerClient.copyArchiveFromContainerCmd(containerName,
+                            containerFile).exec())) {
+                unTar(tarStream, new File(hostFile));
+            }
         }
-        return inputStream;
+    }
+
+    private void unTar(TarArchiveInputStream tis, File destFile)
+            throws IOException {
+        TarArchiveEntry tarEntry = null;
+        while ((tarEntry = tis.getNextTarEntry()) != null) {
+            if (tarEntry.isDirectory()) {
+                if (!destFile.exists()) {
+                    destFile.mkdirs();
+                }
+            } else {
+                FileOutputStream fos = new FileOutputStream(destFile);
+                IOUtils.copy(tis, fos);
+                fos.close();
+            }
+        }
+        tis.close();
     }
 
     public void waitForContainer(String containerName)

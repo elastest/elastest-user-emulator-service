@@ -20,18 +20,15 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Paths.get;
-import static java.util.Arrays.copyOfRange;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
-import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -147,44 +144,14 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recording is stored locally
             String target = registryFolder + recordingFileName;
-
-            InputStream inputStream = dockerService.getFileFromContainer(
-                    noNvcContainerName, recordingFileName);
-            if (inputStream != null) {
-                copyInputStreamToFile(target, inputStream);
-            } else {
-                log.warn("Recording {} not available in container {}",
-                        recordingFileName, noNvcContainerName);
-            }
+            dockerService.copyFileFromContainer(noNvcContainerName,
+                    recordingFileName, target);
 
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
             dockerService.execCommand(noNvcContainerName, true, novncScript,
                     "--upload", edmAlluxioUrl, recordingFileName);
         }
-    }
-
-    private void copyInputStreamToFile(String target, InputStream inputStream)
-            throws IOException {
-        // Workaround due to strange behavior of docker-java
-        // it seems that copyArchiveFromContainerCmd not works correctly
-        byte[] bytes = toByteArray(inputStream);
-
-        int i = 0;
-        for (; i < bytes.length; i++) {
-            char c1 = (char) bytes[i];
-            if (c1 == 'f') {
-                char c2 = (char) bytes[i + 1];
-                char c3 = (char) bytes[i + 2];
-                if (c2 == 't' && c3 == 'y') {
-                    break;
-                }
-            }
-        }
-
-        writeByteArrayToFile(new File(target),
-                copyOfRange(bytes, i - 4, bytes.length));
-
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
