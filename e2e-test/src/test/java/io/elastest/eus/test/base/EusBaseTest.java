@@ -124,10 +124,6 @@ public class EusBaseTest {
         driver.findElement(By.name("project.name")).sendKeys(projectName);
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
-        WebDriverWait waitElement = new WebDriverWait(driver, 3);
-        By projectNameElement = By.xpath("//div[.='" + projectName + "']");
-        waitElement.until(visibilityOfElementLocated(projectNameElement));
-        driver.findElement(projectNameElement).click();
     }
 
     protected void startTestSupportService(WebDriver driver,
