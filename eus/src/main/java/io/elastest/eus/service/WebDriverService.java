@@ -409,7 +409,7 @@ public class WebDriverService {
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
-        log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
+        log.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
 
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setHubUrl(hubUrl);
