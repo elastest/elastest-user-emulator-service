@@ -306,7 +306,7 @@ public class DockerService {
     public void stopContainer(String containerName) {
         if (isRunningContainer(containerName)) {
             log.trace("Stopping container {}", containerName);
-            dockerClient.killContainerCmd(containerName).exec();
+            dockerClient.stopContainerCmd(containerName).exec();
 
         } else {
             log.debug("Container {} is not running", containerName);
