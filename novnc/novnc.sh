@@ -15,7 +15,7 @@ case $key in
     ;;
     -c|--convert)
     touch $3
-    ffmpeg -y -i $2.flv -c:v libx264 -crf 19 -strict experimental $3
+    ffmpeg -y -i $2.flv -pix_fmt yuv420p -c:v libx264 -crf 19 -strict experimental $3
     shift
     ;;
     -u|--upload)
