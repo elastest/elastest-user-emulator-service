@@ -125,7 +125,7 @@ public class SessionService extends TextWebSocketHandler {
             for (SessionInfo sessionInfo : sessionRegistry.values()) {
                 WebSocketNewSession newSession = new WebSocketNewSession(
                         sessionInfo);
-                log.debug("Sending newSession message {} to session {}",
+                log.debug("Sending newSession message {} to session {} [all]",
                         newSession, session);
                 sendTextMessage(session, jsonService.objectToJson(newSession));
             }

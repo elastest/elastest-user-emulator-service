@@ -283,24 +283,30 @@ public class WebDriverService {
             throws JsonProcessingException {
         String hubUrl = sessionInfo.getHubUrl();
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> exchange = restTemplate
-                .exchange(hubUrl + requestContext, method,
-                        optionalHttpEntity.isPresent()
-                                ? optionalHttpEntity.get()
-                                : httpEntity,
-                        String.class);
-        HttpStatus statusCode = exchange.getStatusCode();
 
-        String result = exchange.getBody();
-        if (statusCode == FOUND) {
+        String finalUrl = hubUrl + requestContext;
+        HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
+                ? optionalHttpEntity.get()
+                : httpEntity;
+
+        log.debug("-> Request to browser: {} {} {}", method.name(), finalUrl,
+                finalHttpEntity.getBody());
+        ResponseEntity<String> response = restTemplate.exchange(finalUrl,
+                method, finalHttpEntity, String.class);
+        HttpStatus responseStatusCode = response.getStatusCode();
+        String responseBody = response.getBody();
+        log.debug("<- Response from browser: {} {}", responseStatusCode,
+                responseBody);
+
+        if (responseStatusCode == FOUND) {
             WebDriverSessionResponse sessionResponse = new WebDriverSessionResponse();
-            String path = exchange.getHeaders().getLocation().getPath();
+            String path = response.getHeaders().getLocation().getPath();
             sessionResponse
                     .setSessionId(path.substring(path.lastIndexOf('/') + 1));
 
-            result = jsonService.objectToJson(sessionResponse);
+            responseBody = jsonService.objectToJson(sessionResponse);
         }
-        return result;
+        return responseBody;
     }
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
@@ -399,11 +405,10 @@ public class WebDriverService {
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
         String hubPath = browserName.equalsIgnoreCase("firefox") ? "/wd/hub"
-                : "/";
+                : "";
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
-
         log.trace("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
 
         SessionInfo sessionInfo = new SessionInfo();
