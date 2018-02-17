@@ -58,8 +58,7 @@ public class EusTJobE2eTest extends EusBaseTest {
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
         if (secureElastest) {
             driver.get(secureTorm);
-        }
-        else {
+        } else {
             driver.get(tormUrl);
         }
         createNewProject(driver, "my-test-project");
