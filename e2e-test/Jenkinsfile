@@ -36,8 +36,9 @@ node('docker') {
 
          stage ("E2E tests") {
             try {
-               env.DOCKER_API_VERSION='1.35'
-               sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.output.folder=surefire-reports"
+               withEnv(['DOCKER_API_VERSION=1.35']) {
+                  sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.output.folder=surefire-reports"
+               }
             } catch(e) {
                 sh 'docker ps | awk "{print $NF}" | grep eus | xargs docker logs || true'
             } finally {
