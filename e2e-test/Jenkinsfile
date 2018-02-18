@@ -1,12 +1,9 @@
 node('docker') {
-   environment {
-      DOCKER_API_VERSION = '1.35'
-   }
 
    stage('Preparation') {
       def mycontainer = docker.image('elastest/ci-docker-e2e:latest')
       mycontainer.pull()
-      mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v /dev/shm:/dev/shm") {
+      mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v /dev/shm:/dev/shm -e DOCKER_API_VERSION=1.35") {
          sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
          git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
