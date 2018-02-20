@@ -7,7 +7,7 @@ node('docker') {
          git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
          stage('ElasTest starting') {
-            sh "docker stop $(docker ps -a -q) -t=0 && docker rm $(docker ps -a -q) --force"
+            sh 'docker stop $(docker ps -a -q) -t=0 && docker rm $(docker ps -a -q) --force'
             sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform stop" 
             try {
                sh "docker rm -f elastest-platform"
