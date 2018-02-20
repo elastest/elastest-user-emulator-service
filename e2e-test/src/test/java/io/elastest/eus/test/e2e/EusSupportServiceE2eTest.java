@@ -72,7 +72,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");
-        WebDriverWait waitElement = new WebDriverWait(driver, 60); // seconds
+        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
         By chromeRadioButton = By.id("chrome_radio");
         waitElement.until(visibilityOfElementLocated(chromeRadioButton));
         driver.findElement(chromeRadioButton).click();
