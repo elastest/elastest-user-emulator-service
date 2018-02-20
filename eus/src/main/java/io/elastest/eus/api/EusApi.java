@@ -247,7 +247,7 @@ public interface EusApi {
     /**
      * GET/DELETE /session/{sessionId}/recording
      *
-     * Get VNC session
+     * Get MP4 recording
      */
     @ApiOperation(value = "Handle recordings", notes = "", response = String.class, tags = {
             "Remote control" })
