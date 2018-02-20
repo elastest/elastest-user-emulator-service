@@ -136,14 +136,14 @@ public class DockerHubService {
                 "Getting browser image from capabilities: browser={} version={} platform={}",
                 browser, version, platform);
         List<DockerHubTag> tagList = listTags();
-        log.debug("Selenoid browser tag list: {}", tagList);
+        log.trace("Selenoid browser tag list: {}", tagList);
 
         String imagePreffix = browser + "_";
         List<String> browserList = tagList.stream()
                 .filter(p -> p.getName().startsWith(browser))
                 .map(p -> p.getName().replace(imagePreffix, ""))
                 .sorted(this::compareVersions).collect(toList());
-        log.debug("Browser list for {}: {}", browser, browserList);
+        log.trace("Browser list for {}: {}", browser, browserList);
 
         return format(browserImageFormat, browser,
                 getVersionFromList(browserList, version));

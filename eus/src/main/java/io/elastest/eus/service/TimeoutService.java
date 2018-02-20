@@ -101,7 +101,7 @@ public class TimeoutService {
                         sleep(logPollMs);
 
                     } catch (Exception e) {
-                        log.debug("Termimating log monitor due to {}",
+                        log.trace("Termimating log monitor due to {}",
                                 e.getMessage());
                         break;
                     }

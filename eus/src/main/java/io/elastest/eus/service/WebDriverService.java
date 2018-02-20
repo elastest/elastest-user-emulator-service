@@ -23,6 +23,7 @@ import static java.lang.Integer.parseInt;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static java.util.Optional.empty;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
@@ -47,6 +48,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -113,6 +115,12 @@ public class WebDriverService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
+    @Value("${create.session.timeout.sec}")
+    private int createSessionTimeoutSec;
+
+    @Value("${create.session.retries}")
+    private int createSessionRetries;
+
     private DockerService dockerService;
     private DockerHubService dockerHubService;
     private JsonService jsonService;
@@ -169,7 +177,8 @@ public class WebDriverService {
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
 
         // Intercept create session
-        if (isPostSessionRequest(method, requestContext)) {
+        boolean isCreateSession = isPostSessionRequest(method, requestContext);
+        if (isCreateSession) {
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
                     .getDesiredCapabilities().getBrowserName();
@@ -223,14 +232,14 @@ public class WebDriverService {
 
         // Proxy request to browser
         String responseBody = exchange(httpEntity, requestContext, method,
-                sessionInfo, optionalHttpEntity);
+                sessionInfo, optionalHttpEntity, isCreateSession);
 
         // Handle response
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
 
         // Browser log thread
-        if (isPostSessionRequest(method, requestContext)) {
+        if (isCreateSession) {
             String sessionId = sessionInfo.getSessionId();
             String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
                     + "/log";
@@ -279,20 +288,57 @@ public class WebDriverService {
 
     private String exchange(HttpEntity<String> httpEntity,
             String requestContext, HttpMethod method, SessionInfo sessionInfo,
-            Optional<HttpEntity<String>> optionalHttpEntity)
-            throws JsonProcessingException {
+            Optional<HttpEntity<String>> optionalHttpEntity,
+            boolean isCreateSession) throws JsonProcessingException {
         String hubUrl = sessionInfo.getHubUrl();
-        RestTemplate restTemplate = new RestTemplate();
+
+        RestTemplate restTemplate;
+        if (isCreateSession) {
+            HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+            int timeoutMillis = (int) SECONDS.toMillis(createSessionTimeoutSec);
+            httpRequestFactory.setConnectTimeout(timeoutMillis);
+            httpRequestFactory.setConnectionRequestTimeout(timeoutMillis);
+            httpRequestFactory.setReadTimeout(timeoutMillis);
+            restTemplate = new RestTemplate(httpRequestFactory);
+        } else {
+            restTemplate = new RestTemplate();
+        }
 
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
                 ? optionalHttpEntity.get()
                 : httpEntity;
-
+        ResponseEntity<String> response = null;
         log.debug("-> Request to browser: {} {} {}", method.name(), finalUrl,
                 finalHttpEntity.getBody());
-        ResponseEntity<String> response = restTemplate.exchange(finalUrl,
-                method, finalHttpEntity, String.class);
+
+        boolean exchangeAgain = false;
+        int numRetries = 0;
+        do {
+            try {
+                response = restTemplate.exchange(finalUrl, method,
+                        finalHttpEntity, String.class);
+            } catch (Exception e) {
+                log.warn("Exception exchanging request", e);
+                if (isCreateSession) {
+                    exchangeAgain = numRetries <= createSessionRetries;
+                    if (exchangeAgain) {
+                        numRetries++;
+                        log.debug(
+                                "*** The exception happened in a POST /session request ... trying again {}/{}",
+                                numRetries, createSessionRetries);
+                    } else {
+                        throw new EusException(
+                                "Exception creating session in remote browser (num retries "
+                                        + createSessionRetries + ")",
+                                e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        } while (exchangeAgain);
+
         HttpStatus responseStatusCode = response.getStatusCode();
         String responseBody = response.getBody();
         log.debug("<- Response from browser: {} {}", responseStatusCode,

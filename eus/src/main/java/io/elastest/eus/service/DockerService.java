@@ -357,31 +357,48 @@ public class DockerService {
     }
 
     public void copyFileFromContainer(String containerName,
-            String containerFile, String hostFile) throws IOException {
+            String containerFile, String hostFolder) throws IOException {
         if (existsContainer(containerName)) {
-            log.trace("Copying {} from container {} to host {}", containerFile,
-                    containerName, hostFile);
+            log.trace("Copying {} from container {} to host folder {}",
+                    containerFile, containerName, hostFolder);
 
             try (TarArchiveInputStream tarStream = new TarArchiveInputStream(
                     dockerClient.copyArchiveFromContainerCmd(containerName,
                             containerFile).exec())) {
-                unTar(tarStream, new File(hostFile));
+                unTar(tarStream, new File(hostFolder));
             }
         }
     }
 
-    private void unTar(TarArchiveInputStream tis, File destFile)
+    private void unTar(TarArchiveInputStream tis, File destFolder)
             throws IOException {
-        TarArchiveEntry tarEntry = null;
-        while ((tarEntry = tis.getNextTarEntry()) != null) {
-            if (tarEntry.isDirectory()) {
-                if (!destFile.exists()) {
-                    destFile.mkdirs();
+        TarArchiveEntry entry = null;
+        while ((entry = tis.getNextTarEntry()) != null) {
+            FileOutputStream fos = null;
+            try {
+                if (entry.isDirectory()) {
+                    continue;
                 }
-            } else {
-                FileOutputStream fos = new FileOutputStream(destFile);
+                File curfile = new File(destFolder, entry.getName());
+                File parent = curfile.getParentFile();
+                if (!parent.exists()) {
+                    parent.mkdirs();
+                }
+                fos = new FileOutputStream(curfile);
                 IOUtils.copy(tis, fos);
-                fos.close();
+            } catch (Exception e) {
+                log.warn("Exception extracting recording {} to {}", tis,
+                        destFolder, e);
+            } finally {
+                try {
+                    if (fos != null) {
+                        fos.flush();
+                        fos.getFD().sync();
+                        fos.close();
+                    }
+                } catch (IOException e) {
+                    log.warn("Exception closing {}", fos, e);
+                }
             }
         }
         tis.close();
@@ -431,7 +448,7 @@ public class DockerService {
             log.trace("Container {} already exist", containerName);
 
         } catch (NotFoundException e) {
-            log.debug("Container {} does not exist", containerName);
+            log.trace("Container {} does not exist", containerName);
             exists = false;
         }
         return exists;

@@ -143,9 +143,8 @@ public class RecordingService {
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recording is stored locally
-            String target = registryFolder + recordingFileName;
             dockerService.copyFileFromContainer(noNvcContainerName,
-                    recordingFileName, target);
+                    recordingFileName, registryFolder);
 
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
