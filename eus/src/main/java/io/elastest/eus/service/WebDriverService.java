@@ -353,8 +353,12 @@ public class WebDriverService {
             response = restTemplate.exchange(finalUrl, method, finalHttpEntity,
                     String.class);
         } catch (Exception e) {
-            log.debug("## Exception exchanging request", e);
-            return null;
+            if (isCreateSession) {
+                log.debug("## Exception exchanging request", e);
+                return null;
+            } else {
+                throw e;
+            }
         }
         HttpStatus responseStatusCode = response.getStatusCode();
         String responseBody = response.getBody();
