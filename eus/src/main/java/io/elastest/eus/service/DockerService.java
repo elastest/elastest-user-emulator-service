@@ -401,7 +401,6 @@ public class DockerService {
                 }
             }
         }
-        tis.close();
     }
 
     public void waitForContainer(String containerName)
