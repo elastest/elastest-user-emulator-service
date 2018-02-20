@@ -318,7 +318,7 @@ public class WebDriverService {
             } catch (Exception e) {
                 log.warn("Exception exchanging request", e);
                 if (isCreateSession) {
-                    exchangeAgain = numRetries <= createSessionRetries;
+                    exchangeAgain = numRetries < createSessionRetries;
                     if (exchangeAgain) {
                         numRetries++;
                         log.debug(
