@@ -39,7 +39,7 @@ node('docker') {
                 sh '''\
                    docker ps --all
                    docker ps --filter name=eus -q
-                   docker ps --filter name=eus -q | xargs docker logs || true
+                   docker ps --filter name=eus -q | xargs -L 1 docker logs || true
                 '''
             } finally {
                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
