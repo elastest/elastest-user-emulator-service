@@ -187,23 +187,8 @@ public class WebDriverService {
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
                     .getDesiredCapabilities().getVersion();
 
-            // JSON processing to activate always the browser logging
-            String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
-            newRequestBody = jsonService.processJsonWithJq(requestBody,
-                    jqActivateBrowserLogging);
-
-            // JSON processing to add binary path if opera
-            if (browserName.equalsIgnoreCase("operablink")) {
-                String jqOperaBinary = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] } }  else . end)";
-                newRequestBody = jsonService.processJsonWithJq(newRequestBody,
-                        jqOperaBinary);
-            }
-
-            // JSON processing to remove browserId
-            String jqRemoveBrowserId = "walk(if type == \"object\" then del(.browserId) else . end)";
-            newRequestBody = jsonService.processJsonWithJq(newRequestBody,
-                    jqRemoveBrowserId);
-
+            newRequestBody = processStartSessionRequest(requestBody,
+                    browserName);
             httpEntity = new HttpEntity<>(newRequestBody);
 
             // If live, no timeout
@@ -283,6 +268,29 @@ public class WebDriverService {
         }
 
         return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    private String processStartSessionRequest(String requestBody,
+            String browserName) throws IOException {
+        String newRequestBody;
+        // JSON processing to activate always the browser logging
+        String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
+        newRequestBody = jsonService.processJsonWithJq(requestBody,
+                jqActivateBrowserLogging);
+
+        // JSON processing to add binary path if opera
+        if (browserName.equalsIgnoreCase("operablink")) {
+            String jqOperaBinary = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] } }  else . end)";
+            newRequestBody = jsonService.processJsonWithJq(newRequestBody,
+                    jqOperaBinary);
+        }
+
+        // JSON processing to remove browserId
+        String jqRemoveBrowserId = "walk(if type == \"object\" then del(.browserId) else . end)";
+        newRequestBody = jsonService.processJsonWithJq(newRequestBody,
+                jqRemoveBrowserId);
+
+        return newRequestBody;
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
