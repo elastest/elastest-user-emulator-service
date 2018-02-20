@@ -292,25 +292,24 @@ public class WebDriverService {
             boolean isCreateSession) throws JsonProcessingException {
         String hubUrl = sessionInfo.getHubUrl();
 
-        RestTemplate restTemplate;
+        HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
         if (isCreateSession) {
-            HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
             int timeoutMillis = (int) SECONDS.toMillis(createSessionTimeoutSec);
             httpRequestFactory.setConnectTimeout(timeoutMillis);
             httpRequestFactory.setConnectionRequestTimeout(timeoutMillis);
             httpRequestFactory.setReadTimeout(timeoutMillis);
-            restTemplate = new RestTemplate(httpRequestFactory);
-        } else {
-            restTemplate = new RestTemplate();
         }
+        RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
 
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
                 ? optionalHttpEntity.get()
                 : httpEntity;
         ResponseEntity<String> response = null;
-        log.debug("-> Request to browser: {} {} {}", method.name(), finalUrl,
-                finalHttpEntity.getBody());
+        if (log.isDebugEnabled()) {
+            log.debug("-> Request to browser: {} {} {}", method.name(),
+                    finalUrl, finalHttpEntity.getBody());
+        }
 
         boolean exchangeAgain = false;
         int numRetries = 0;
@@ -325,7 +324,7 @@ public class WebDriverService {
                     if (exchangeAgain) {
                         numRetries++;
                         log.debug(
-                                "*** The exception happened in a POST /session request ... trying again {}/{}",
+                                "The exception happened in a POST /session request ... retrying {}/{}",
                                 numRetries, createSessionRetries);
                     } else {
                         throw new EusException(
