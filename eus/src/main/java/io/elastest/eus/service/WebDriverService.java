@@ -178,6 +178,7 @@ public class WebDriverService {
 
         // Intercept create session
         boolean isCreateSession = isPostSessionRequest(method, requestContext);
+        String newRequestBody = requestBody;
         if (isCreateSession) {
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
@@ -188,7 +189,7 @@ public class WebDriverService {
 
             // JSON processing to activate always the browser logging
             String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
-            String newRequestBody = jsonService.processJsonWithJq(requestBody,
+            newRequestBody = jsonService.processJsonWithJq(requestBody,
                     jqActivateBrowserLogging);
 
             // JSON processing to add binary path if opera
@@ -231,8 +232,30 @@ public class WebDriverService {
         }
 
         // Proxy request to browser
-        String responseBody = exchange(httpEntity, requestContext, method,
-                sessionInfo, optionalHttpEntity, isCreateSession);
+        String responseBody = null;
+        boolean exchangeAgain = false;
+        int numRetries = 0;
+        do {
+            responseBody = exchange(httpEntity, requestContext, method,
+                    sessionInfo, optionalHttpEntity, isCreateSession);
+            if (responseBody == null && isCreateSession) {
+                exchangeAgain = numRetries < createSessionRetries;
+                if (exchangeAgain) {
+                    log.debug("Stopping browser and starting new one {}",
+                            sessionInfo);
+                    stopBrowser(sessionInfo);
+                    sessionInfo = startBrowser(newRequestBody, requestBody);
+                    numRetries++;
+                    log.debug(
+                            "Problem in POST /session request ... retrying {}/{}",
+                            numRetries, createSessionRetries);
+                } else {
+                    throw new EusException(
+                            "Exception creating session in remote browser (num retries "
+                                    + createSessionRetries + ")");
+                }
+            }
+        } while (exchangeAgain);
 
         // Handle response
         HttpStatus responseStatus = sessionResponse(requestContext, method,
@@ -249,7 +272,9 @@ public class WebDriverService {
         // Only using timer for non-live sessions
         if (!liveSession) {
             timeoutService.shutdownSessionTimer(sessionInfo);
-            Runnable deleteSession = () -> deleteSession(sessionInfo, true);
+            final SessionInfo finalSessionInfo = sessionInfo;
+            Runnable deleteSession = () -> deleteSession(finalSessionInfo,
+                    true);
 
             if (!isDeleteSessionRequest(method, requestContext)) {
                 timeoutService.startSessionTimer(sessionInfo,
@@ -308,34 +333,13 @@ public class WebDriverService {
         ResponseEntity<String> response = null;
         log.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
-
-        boolean exchangeAgain = false;
-        int numRetries = 0;
-        do {
-            try {
-                response = restTemplate.exchange(finalUrl, method,
-                        finalHttpEntity, String.class);
-            } catch (Exception e) {
-                log.warn("Exception exchanging request", e);
-                if (isCreateSession) {
-                    exchangeAgain = numRetries < createSessionRetries;
-                    if (exchangeAgain) {
-                        numRetries++;
-                        log.debug(
-                                "The exception happened in a POST /session request ... retrying {}/{}",
-                                numRetries, createSessionRetries);
-                    } else {
-                        throw new EusException(
-                                "Exception creating session in remote browser (num retries "
-                                        + createSessionRetries + ")",
-                                e);
-                    }
-                } else {
-                    throw e;
-                }
-            }
-        } while (exchangeAgain);
-
+        try {
+            response = restTemplate.exchange(finalUrl, method, finalHttpEntity,
+                    String.class);
+        } catch (Exception e) {
+            log.debug("## Exception exchanging request", e);
+            return null;
+        }
         HttpStatus responseStatusCode = response.getStatusCode();
         String responseBody = response.getBody();
         log.debug("<- Response from browser: {} {}", responseStatusCode,
