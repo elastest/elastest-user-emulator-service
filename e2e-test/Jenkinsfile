@@ -6,7 +6,8 @@ node('docker') {
          sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
          git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
-         stage('ElasTest starting'){
+         stage('ElasTest starting') {
+            sh "docker stop $(docker ps -a -q) -t=0 && docker rm $(docker ps -a -q) --force"
             sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock elastest/platform stop" 
             try {
                sh "docker rm -f elastest-platform"
@@ -38,6 +39,7 @@ node('docker') {
             } catch(e) {
                 sh '''\
                    docker ps --all
+                   docker ps --filter name=eus -q
                    docker ps --filter name=eus -q | xargs docker logs || true
                 '''
             } finally {
