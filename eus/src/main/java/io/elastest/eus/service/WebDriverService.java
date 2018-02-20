@@ -306,10 +306,8 @@ public class WebDriverService {
                 ? optionalHttpEntity.get()
                 : httpEntity;
         ResponseEntity<String> response = null;
-        if (log.isDebugEnabled()) {
-            log.debug("-> Request to browser: {} {} {}", method.name(),
-                    finalUrl, finalHttpEntity.getBody());
-        }
+        log.debug("-> Request to browser: {} {} {}", method, finalUrl,
+                finalHttpEntity);
 
         boolean exchangeAgain = false;
         int numRetries = 0;
