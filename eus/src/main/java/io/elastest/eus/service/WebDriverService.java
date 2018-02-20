@@ -234,11 +234,11 @@ public class WebDriverService {
                     log.debug(
                             "Problem in POST /session request ... retrying {}/{}",
                             numRetries, createSessionRetries);
-                } else {
-                    throw new EusException(
-                            "Exception creating session in remote browser (num retries "
-                                    + createSessionRetries + ")");
+                    continue;
                 }
+                throw new EusException(
+                        "Exception creating session in remote browser (num retries "
+                                + createSessionRetries + ")");
             }
         } while (exchangeAgain);
 
