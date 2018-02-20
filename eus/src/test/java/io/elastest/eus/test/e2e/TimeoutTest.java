@@ -72,7 +72,7 @@ public class TimeoutTest {
 
     @Test
     void testTimeout() throws InterruptedException {
-        long waitSeconds = 30;
+        long waitSeconds = 20;
         log.debug("Waiting {} seconds to force timeout", waitSeconds);
         SECONDS.sleep(waitSeconds);
 
