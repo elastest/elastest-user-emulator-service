@@ -223,7 +223,7 @@ public class WebDriverService {
         do {
             responseBody = exchange(httpEntity, requestContext, method,
                     sessionInfo, optionalHttpEntity, isCreateSession);
-            if (responseBody == null && isCreateSession) {
+            if (responseBody == null) {
                 exchangeAgain = numRetries < createSessionRetries;
                 if (exchangeAgain) {
                     log.debug("Stopping browser and starting new one {}",
@@ -246,6 +246,16 @@ public class WebDriverService {
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
 
+        // Handle timeout
+        handleTimeout(requestContext, method, sessionInfo, liveSession,
+                isCreateSession);
+
+        return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    private void handleTimeout(String requestContext, HttpMethod method,
+            SessionInfo sessionInfo, boolean liveSession,
+            boolean isCreateSession) {
         // Browser log thread
         if (isCreateSession) {
             String sessionId = sessionInfo.getSessionId();
@@ -266,8 +276,6 @@ public class WebDriverService {
                         parseInt(hubTimeout), deleteSession);
             }
         }
-
-        return new ResponseEntity<>(responseBody, responseStatus);
     }
 
     private String processStartSessionRequest(String requestBody,
