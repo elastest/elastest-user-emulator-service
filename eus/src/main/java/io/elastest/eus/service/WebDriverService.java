@@ -515,15 +515,16 @@ public class WebDriverService {
             if (!sessionInfo.isLiveSession()) {
                 sessionService.sendRemoveSessionToAllClients(sessionInfo);
             }
-            sessionService.stopAllContainerOfSession(sessionInfo);
-            sessionService.removeSession(sessionInfo.getSessionId());
-
-            timeoutService.shutdownSessionTimer(sessionInfo);
 
         } catch (Exception e) {
             log.error("There was a problem deleting session {}",
                     sessionInfo.getSessionId(), e);
             throw new EusException(e);
+        } finally {
+            sessionService.stopAllContainerOfSession(sessionInfo);
+            sessionService.removeSession(sessionInfo.getSessionId());
+
+            timeoutService.shutdownSessionTimer(sessionInfo);
         }
         if (timeout) {
             throw new EusException("Timeout of " + sessionInfo.getTimeout()
