@@ -179,8 +179,10 @@ public class SessionService extends TextWebSocketHandler {
     }
 
     public void removeSession(String sessionId) {
-        log.debug("Remove session {}", sessionId);
-        sessionRegistry.remove(sessionId);
+        if (sessionId != null) {
+            log.debug("Remove session {}", sessionId);
+            sessionRegistry.remove(sessionId);
+        }
     }
 
     public void putSession(String sessionId, SessionInfo sessionEntry) {
