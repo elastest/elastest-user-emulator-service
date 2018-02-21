@@ -223,9 +223,9 @@ public class WebDriverService {
         do {
             responseBody = exchange(httpEntity, requestContext, method,
                     sessionInfo, optionalHttpEntity, isCreateSession);
-            if (responseBody == null) {
-                exchangeAgain = numRetries < createSessionRetries;
-                if (exchangeAgain) {
+            exchangeAgain = responseBody == null;
+            if (exchangeAgain) {
+                if (numRetries < createSessionRetries) {
                     log.debug("Stopping browser and starting new one {}",
                             sessionInfo);
                     stopBrowser(sessionInfo);
