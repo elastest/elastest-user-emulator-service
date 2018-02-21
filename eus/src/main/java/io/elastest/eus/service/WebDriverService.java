@@ -521,6 +521,8 @@ public class WebDriverService {
             timeoutService.shutdownSessionTimer(sessionInfo);
 
         } catch (Exception e) {
+            log.error("There was a problem deleting session {}",
+                    sessionInfo.getSessionId(), e);
             throw new EusException(e);
         }
         if (timeout) {
