@@ -366,6 +366,9 @@ public class DockerService {
                     dockerClient.copyArchiveFromContainerCmd(containerName,
                             containerFile).exec())) {
                 unTar(tarStream, new File(hostFolder));
+            } catch (Exception e) {
+                log.warn("Exception getting tar file from container {}",
+                        e.getMessage());
             }
         }
     }
