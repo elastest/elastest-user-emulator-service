@@ -19,7 +19,6 @@ package io.elastest.eus.api;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
@@ -185,11 +184,8 @@ public class EusController implements EusApi {
         try {
             response = webDriverService.session(httpEntity, request);
         } catch (Exception e) {
-            String errorMessage = "Exception handling session in EUS: "
-                    + e.getMessage();
-            log.error(errorMessage, e);
-            response = new ResponseEntity<>(errorMessage,
-                    INTERNAL_SERVER_ERROR);
+            response = webDriverService
+                    .getErrorResponse("Exception handling session", e);
         }
         return response;
     }
@@ -200,10 +196,8 @@ public class EusController implements EusApi {
         try {
             response = webDriverService.getStatus();
         } catch (Exception e) {
-            String errorMessage = "Exception getting status";
-            log.error(errorMessage, e);
-            response = new ResponseEntity<>(errorMessage,
-                    INTERNAL_SERVER_ERROR);
+            response = webDriverService
+                    .getErrorResponse("Exception getting status", e);
         }
         return response;
     }
@@ -215,10 +209,8 @@ public class EusController implements EusApi {
         try {
             response = vncService.getVnc(sessionId);
         } catch (Exception e) {
-            String errorMessage = "Exception getting VNC session";
-            log.error(errorMessage, e);
-            response = new ResponseEntity<>(errorMessage,
-                    INTERNAL_SERVER_ERROR);
+            response = webDriverService
+                    .getErrorResponse("Exception getting VNC session", e);
         }
         return response;
     }
@@ -237,10 +229,8 @@ public class EusController implements EusApi {
                 response = recordingService.deleteRecording(sessionId);
             }
         } catch (Exception e) {
-            String errorMessage = "Exception handling recording";
-            log.error(errorMessage, e);
-            response = new ResponseEntity<>(errorMessage,
-                    INTERNAL_SERVER_ERROR);
+            response = webDriverService
+                    .getErrorResponse("Exception handling recording", e);
         }
         return response;
     }

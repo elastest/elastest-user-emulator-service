@@ -61,6 +61,7 @@ import io.elastest.eus.EusException;
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.json.WebDriverError;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
@@ -251,6 +252,21 @@ public class WebDriverService {
                 isCreateSession);
 
         return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    public ResponseEntity<String> getErrorResponse(String message,
+            Exception exception) {
+        WebDriverError webDriverError = new WebDriverError("EUS internal error",
+                message, exception);
+        log.error("{}", webDriverError);
+        String errorMessage = message;
+        try {
+            errorMessage = jsonService.objectToJson(webDriverError);
+        } catch (JsonProcessingException e) {
+            log.warn("Exception parsing error message: {} {}", message,
+                    exception, e);
+        }
+        return new ResponseEntity<>(errorMessage, INTERNAL_SERVER_ERROR);
     }
 
     private void handleTimeout(String requestContext, HttpMethod method,
