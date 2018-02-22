@@ -318,28 +318,22 @@ public class WebDriverService {
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
-            SessionInfo sessionInfo, boolean isLive, String responseBody) {
+            SessionInfo sessionInfo, boolean isLive, String responseBody)
+            throws IOException, InterruptedException {
         HttpStatus responseStatus = OK;
-        try {
-            // Intercept again create session
-            if (isPostSessionRequest(method, requestContext)) {
-                postSessionRequest(sessionInfo, isLive, responseBody);
-            }
 
-            // Intercept destroy session
-            if (isDeleteSessionRequest(method, requestContext)) {
-                log.trace("Intercepted DELETE session ({})", method);
-                stopBrowser(sessionInfo);
-            }
-
-        } catch (Exception e) {
-            log.error("Exception handling response for session", e);
-            responseStatus = INTERNAL_SERVER_ERROR;
-
-        } finally {
-            log.debug("<< Response: {} -- body: {}", responseStatus,
-                    responseBody);
+        // Intercept again create session
+        if (isPostSessionRequest(method, requestContext)) {
+            postSessionRequest(sessionInfo, isLive, responseBody);
         }
+
+        // Intercept destroy session
+        if (isDeleteSessionRequest(method, requestContext)) {
+            log.trace("Intercepted DELETE session ({})", method);
+            stopBrowser(sessionInfo);
+        }
+
+        log.debug("<< Response: {} -- body: {}", responseStatus, responseBody);
         return responseStatus;
     }
 
