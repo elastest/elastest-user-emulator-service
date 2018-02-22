@@ -34,14 +34,13 @@ node('docker') {
 
          stage ("E2E tests") {
             try {
-               sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
+               sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
             } catch(e) {
                 sh '''\
                    docker ps --all
                    docker ps --filter name=eus -q
                    docker ps --filter name=eus -q | xargs -L 1 docker logs || true
                    docker ps --filter name=eus -q | xargs -L 1 docker inspect || true
-                   ls **/target/surefire-reports/
                 '''
             } finally {
                 step([$class: 'JUnitResultArchiver', testDataPublishers: [[$class: 'AttachmentPublisher']], testResults: '**/target/surefire-reports/TEST-*.xml'])
