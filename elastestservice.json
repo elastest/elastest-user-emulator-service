@@ -47,6 +47,13 @@
       "manifest_type": "docker-compose",
       "plan_id": "b4cfc681-0e28-41f0-b88c-dde69169a256",
       "service_id": "29216b91-497c-43b7-a5c4-6613f13fa0e9",
+      "config": {
+         "webRtcStats": {
+           "type": "boolean",
+           "label": "Gather WebRTC Statistics",
+           "default": false
+         }
+      },
       "endpoints": {
          "elastest-eus": {
             "description": "W3C WebDriver standard sessions operations",
