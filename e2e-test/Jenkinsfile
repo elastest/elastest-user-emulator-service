@@ -34,7 +34,7 @@ node('docker') {
 
          stage ("E2E tests") {
             try {
-               sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.output.folder=surefire-reports"
+               sh "cd e2e-test; mvn -B clean test -DetEmpApi=http://${etEmpApi}:37000/ -Dsel.jup.recording=true -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
             } catch(e) {
                 sh '''\
                    docker ps --all
