@@ -139,7 +139,7 @@ public class EusBaseTest {
 
             } catch (Exception e) {
                 numRetries++;
-                if (numRetries > 4) {
+                if (numRetries > 6) {
                     log.warn("Max retries ({}) reached ... leaving",
                             numRetries);
                     break;
