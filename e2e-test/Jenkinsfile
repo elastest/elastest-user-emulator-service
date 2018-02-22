@@ -41,8 +41,7 @@ node('docker') {
                    docker ps --filter name=eus -q
                    docker ps --filter name=eus -q | xargs -L 1 docker logs || true
                    docker ps --filter name=eus -q | xargs -L 1 docker inspect || true
-                   docker inspect elastest_etm_1 || true
-                   docker ps --filter name=eus -q | xargs -L 1 docker inspect --format="{{.NetworkSettings.Networks.elastest_elastest.IPAddress}}" | xargs -L 1 docker exec elastest_etm_1 ping -c 1 || true
+                   ls **/target/surefire-reports/
                 '''
             } finally {
                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
