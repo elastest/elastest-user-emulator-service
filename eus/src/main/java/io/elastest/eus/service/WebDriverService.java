@@ -34,6 +34,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -41,12 +42,16 @@ import java.util.Optional;
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -109,6 +114,9 @@ public class WebDriverService {
 
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
+
+    @Value("${webdriver.navigation.get.message}")
+    private String webdriverNavigationGetMessage;
 
     @Value("${use.torm}")
     private boolean useTorm;
@@ -225,6 +233,10 @@ public class WebDriverService {
             responseBody = exchange(httpEntity, requestContext, method,
                     sessionInfo, optionalHttpEntity, isCreateSession);
             exchangeAgain = responseBody == null;
+            if (this.isPostUrlRequest(method, requestContext)) {
+
+                this.manageWebRtcMonitoring(sessionInfo);
+            }
             if (exchangeAgain) {
                 if (numRetries < createSessionRetries) {
                     log.debug("Stopping browser and starting new one {}",
@@ -252,6 +264,47 @@ public class WebDriverService {
                 isCreateSession);
 
         return new ResponseEntity<>(responseBody, responseStatus);
+    }
+
+    public void manageWebRtcMonitoring(SessionInfo sessionInfo) {
+        String activated = System.getenv("ET_CONFIG_WEB_RTC_STATS");
+        if (activated != null && ("true".equals(activated))) {
+            log.debug("WebRtc monitoring activated");
+            try {
+                String configLocalStorageStr = this.timeoutService
+                        .getWebRtcMonitoringConfigLocalStorage(
+                                sessionInfo.getSessionId());
+                this.postScript(sessionInfo, configLocalStorageStr,
+                        new ArrayList<>());
+            } catch (JsonProcessingException e) {
+                log.error(
+                        "Error on send WebRtc LocalStorage variable for monitoring. {}",
+                        e);
+            } catch (Exception e) {
+                log.error("Error obtaining monitoring configuration. {}", e);
+            }
+        }
+    }
+
+    public void postScript(SessionInfo sessionInfo, String script,
+            ArrayList<Object> args)
+            throws JsonProcessingException, JSONException {
+        String requestContext = webdriverSessionMessage + "/"
+                + sessionInfo.getSessionId() + "/execute";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        JSONObject scriptObj = new JSONObject();
+        scriptObj.put("script", script);
+        scriptObj.put("args", args);
+        String body = scriptObj.toString();
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(body, headers);
+
+        Optional<HttpEntity<String>> optionalHttpEntity = empty();
+        exchange(httpEntity, requestContext, POST, sessionInfo,
+                optionalHttpEntity, false);
     }
 
     public ResponseEntity<String> getErrorResponse(String message,
@@ -354,8 +407,7 @@ public class WebDriverService {
 
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
-                ? optionalHttpEntity.get()
-                : httpEntity;
+                ? optionalHttpEntity.get() : httpEntity;
         ResponseEntity<String> response = null;
         log.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
@@ -548,6 +600,11 @@ public class WebDriverService {
 
     private boolean isPostSessionRequest(HttpMethod method, String context) {
         return method == POST && context.equals(webdriverSessionMessage);
+    }
+
+    private boolean isPostUrlRequest(HttpMethod method, String context) {
+        return method == POST
+                && context.endsWith(webdriverNavigationGetMessage);
     }
 
     private boolean isDeleteSessionRequest(HttpMethod method, String context) {

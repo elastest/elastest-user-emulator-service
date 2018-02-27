@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,11 @@ public class LogstashService {
     @Value("${et.mon.exec:#{null}}")
     private String etMonExec;
 
+    @Value("${et.mon.interval}")
+    private String etMonInterval;
+
+    String etInstrumentationKey = "elastest-instrumentation";
+
     final Logger log = getLogger(lookup().lookupClass());
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
@@ -61,7 +67,7 @@ public class LogstashService {
             http.setRequestMethod("POST");
             http.setDoOutput(true);
 
-            String component = "tss_eus_browser_" + sessionId;
+            String component = this.getComponentBySessionId(sessionId);
             String body = "{" + "\"component\":\"" + component + "\""
                     + ",\"exec\":\"" + etMonExec + "\""
                     + ",\"stream\":\"console\"" + ",\"messages\":"
@@ -107,6 +113,45 @@ public class LogstashService {
     public static String parseMsg(String msg) {
         // replace " to \" only if " is not preceded by \
         return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\"");
+    }
+
+    public JSONObject getWebRtcMonitoringConfig(String sessionId)
+            throws Exception {
+        if (lsHttpApi == null || etMonExec == null) {
+            throw new Exception(
+                    "Logstash Http Api Url or Monitoring Execution not found");
+        }
+
+        JSONObject configJson = new JSONObject();
+        JSONObject elastestInstrumentationJson = new JSONObject();
+        JSONObject webRtcJson = new JSONObject();
+        String component = this.getComponentBySessionId(sessionId);
+
+        webRtcJson.put("interval", etMonInterval);
+        webRtcJson.put("httpEndpoint", lsHttpApi);
+
+        elastestInstrumentationJson.put("webrtc", webRtcJson);
+        elastestInstrumentationJson.put("exec", etMonExec);
+        elastestInstrumentationJson.put("component", component);
+
+        configJson.put(etInstrumentationKey,
+                elastestInstrumentationJson.toString());
+
+        return configJson;
+    }
+
+    public String getWebRtcMonitoringLocalStorageStr(String sessionId)
+            throws Exception {
+        JSONObject config = this.getWebRtcMonitoringConfig(sessionId);
+        String content = config.get(etInstrumentationKey).toString().replace("\"", "\\\"");
+        String localStorageStr = "localStorage.setItem(\""
+                + etInstrumentationKey + "\"," + "\"" + content + "\"" + ");";
+        return localStorageStr;
+
+    }
+
+    public String getComponentBySessionId(String sessionId) {
+        return "tss_eus_browser_" + sessionId;
     }
 
 }

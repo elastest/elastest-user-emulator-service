@@ -110,6 +110,10 @@ public class TimeoutService {
         }
     }
 
+    public String getWebRtcMonitoringConfigLocalStorage(String sessionId) throws Exception {
+        return this.logstashService.getWebRtcMonitoringLocalStorageStr(sessionId);
+    }
+
     public void startSessionTimer(SessionInfo sessionInfo, int timeout,
             Runnable deleteSession) {
         if (sessionInfo != null) {
