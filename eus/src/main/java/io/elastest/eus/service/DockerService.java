@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
@@ -563,6 +564,16 @@ public class DockerService {
             ipAddress = networks.values().iterator().next().getIpAddress();
         }
         return ipAddress;
+    }
+
+    public String doPing(String ip) throws IOException {
+        InetAddress ping;
+        ping = InetAddress.getByName(ip);
+        if (ping.isReachable(5000)) {
+            return ping.getHostAddress().toString();
+        } else {
+            throw new IOException("Ip " + ip + " non reachable");
+        }
     }
 
 }

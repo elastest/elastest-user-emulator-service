@@ -314,11 +314,9 @@ public class WebDriverService {
         String component = etBrowserComponentPrefix + sessionId;
 
         URL lsUrl = new URL(lsHttpApi);
-        String realLsHttpApi = lsHttpApi;
-        if (!"localhost".equals(lsUrl.getHost())) {
-            String ip = dockerService.getContainerIpAddress(lsUrl.getHost());
-            realLsHttpApi = "http://" + ip + ":" + lsUrl.getPort();
-        }
+        String ip = dockerService.doPing(lsUrl.getHost());
+        String realLsHttpApi = "http://" + ip + ":" + lsUrl.getPort();
+
         webRtcJson.put("httpEndpoint", realLsHttpApi);
         webRtcJson.put("interval", etMonInterval);
 
@@ -343,7 +341,7 @@ public class WebDriverService {
 
     }
 
-    public void postScript(SessionInfo sessionInfo, String script,
+    public String postScript(SessionInfo sessionInfo, String script,
             ArrayList<Object> args)
             throws JsonProcessingException, JSONException {
         String requestContext = webdriverSessionMessage + "/"
@@ -360,8 +358,8 @@ public class WebDriverService {
         HttpEntity<String> httpEntity = new HttpEntity<>(body, headers);
 
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
-        String exchange = exchange(httpEntity, requestContext, POST,
-                sessionInfo, optionalHttpEntity, false);
+        return exchange(httpEntity, requestContext, POST, sessionInfo,
+                optionalHttpEntity, false);
 
     }
 
