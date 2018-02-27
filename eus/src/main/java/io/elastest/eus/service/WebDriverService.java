@@ -33,6 +33,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -129,6 +130,22 @@ public class WebDriverService {
 
     @Value("${create.session.retries}")
     private int createSessionRetries;
+
+    @Value("${et.config.web.rtc.stats}")
+    private String etConfigWebRtcStats;
+
+    @Value("${et.mon.lshttp.api:#{null}}")
+    private String lsHttpApi;
+
+    @Value("${et.mon.exec:#{null}}")
+    private String etMonExec;
+
+    @Value("${et.mon.interval}")
+    private String etMonInterval;
+
+    @Value("${et.browser.component.prefix}")
+    private String etBrowserComponentPrefix;
+    String etInstrumentationKey = "elastest-instrumentation";
 
     private DockerService dockerService;
     private DockerHubService dockerHubService;
@@ -234,7 +251,6 @@ public class WebDriverService {
                     sessionInfo, optionalHttpEntity, isCreateSession);
             exchangeAgain = responseBody == null;
             if (this.isPostUrlRequest(method, requestContext)) {
-
                 this.manageWebRtcMonitoring(sessionInfo);
             }
             if (exchangeAgain) {
@@ -267,12 +283,11 @@ public class WebDriverService {
     }
 
     public void manageWebRtcMonitoring(SessionInfo sessionInfo) {
-        String activated = System.getenv("ET_CONFIG_WEB_RTC_STATS");
-        if (activated != null && ("true".equals(activated))) {
+        if (etConfigWebRtcStats != null && "true".equals(etConfigWebRtcStats)) {
             log.debug("WebRtc monitoring activated");
             try {
-                String configLocalStorageStr = this.timeoutService
-                        .getWebRtcMonitoringConfigLocalStorage(
+                String configLocalStorageStr = this
+                        .getWebRtcMonitoringLocalStorageStr(
                                 sessionInfo.getSessionId());
                 this.postScript(sessionInfo, configLocalStorageStr,
                         new ArrayList<>());
@@ -284,6 +299,48 @@ public class WebDriverService {
                 log.error("Error obtaining monitoring configuration. {}", e);
             }
         }
+    }
+
+    public JSONObject getWebRtcMonitoringConfig(String sessionId)
+            throws Exception {
+        if (lsHttpApi == null || etMonExec == null) {
+            throw new Exception(
+                    "Logstash Http Api Url or Monitoring Execution not found");
+        }
+
+        JSONObject configJson = new JSONObject();
+        JSONObject elastestInstrumentationJson = new JSONObject();
+        JSONObject webRtcJson = new JSONObject();
+        String component = etBrowserComponentPrefix + sessionId;
+
+        URL lsUrl = new URL(lsHttpApi);
+        String realLsHttpApi = lsHttpApi;
+        if (!"localhost".equals(lsUrl.getHost())) {
+            String ip = dockerService.getContainerIpAddress(lsUrl.getHost());
+            realLsHttpApi = "http://" + ip + ":" + lsUrl.getPort();
+        }
+        webRtcJson.put("httpEndpoint", realLsHttpApi);
+        webRtcJson.put("interval", etMonInterval);
+
+        elastestInstrumentationJson.put("webrtc", webRtcJson);
+        elastestInstrumentationJson.put("exec", etMonExec);
+        elastestInstrumentationJson.put("component", component);
+
+        configJson.put(etInstrumentationKey,
+                elastestInstrumentationJson.toString());
+
+        return configJson;
+    }
+
+    public String getWebRtcMonitoringLocalStorageStr(String sessionId)
+            throws Exception {
+        JSONObject config = this.getWebRtcMonitoringConfig(sessionId);
+        String content = config.get(etInstrumentationKey).toString()
+                .replace("\"", "\\\"");
+        String localStorageStr = "localStorage.setItem(\""
+                + etInstrumentationKey + "\"," + "\"" + content + "\"" + ");";
+        return localStorageStr;
+
     }
 
     public void postScript(SessionInfo sessionInfo, String script,
@@ -303,8 +360,9 @@ public class WebDriverService {
         HttpEntity<String> httpEntity = new HttpEntity<>(body, headers);
 
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
-        exchange(httpEntity, requestContext, POST, sessionInfo,
-                optionalHttpEntity, false);
+        String exchange = exchange(httpEntity, requestContext, POST,
+                sessionInfo, optionalHttpEntity, false);
+
     }
 
     public ResponseEntity<String> getErrorResponse(String message,
