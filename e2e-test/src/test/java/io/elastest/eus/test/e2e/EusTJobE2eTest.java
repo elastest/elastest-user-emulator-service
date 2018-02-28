@@ -79,7 +79,7 @@ public class EusTJobE2eTest extends EusBaseTest {
                 .click();
         driver.findElement(By.name("commands")).sendKeys(
                 "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;");
-        driver.findElement(By.xpath("//md-checkbox[contains(string(), 'EUS')]"))
+        driver.findElement(By.id("serviceEUS"))
                 .click();
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
