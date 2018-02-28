@@ -335,15 +335,12 @@ public class WebDriverService {
         JSONObject config = this.getWebRtcMonitoringConfig(sessionId);
         String content = config.get(etInstrumentationKey).toString()
                 .replace("\"", "\\\"");
-        String localStorageStr = "localStorage.setItem(\""
-                + etInstrumentationKey + "\"," + "\"" + content + "\"" + ");";
-        return localStorageStr;
-
+        return "localStorage.setItem(\"" + etInstrumentationKey + "\"," + "\""
+                + content + "\"" + ");";
     }
 
     public String postScript(SessionInfo sessionInfo, String script,
-            ArrayList<Object> args)
-            throws JsonProcessingException, JSONException {
+            List<Object> args) throws JsonProcessingException, JSONException {
         String requestContext = webdriverSessionMessage + "/"
                 + sessionInfo.getSessionId() + "/execute";
 

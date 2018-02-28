@@ -119,7 +119,7 @@ After that, we move to the EUS iframe, interacting with the HTML5 Canvas in whic
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
         int navigationTimeSec = 5;
-        log.info("Waiting {} secons (simulation of manual navigation)",
+        log.info("Waiting {} seconds (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
 ```
@@ -155,7 +155,7 @@ Then we create a new TJob filling the form with test values:
         driver.findElement(By.className("mat-slide-toggle-bar")).click();
         driver.findElement(By.name("commands")).sendKeys(
                 "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;");
-        driver.findElement(By.xpath("//md-checkbox[contains(string(), 'EUS')]"))
+        driver.findElement(By.xpath("//md-checkbox[@title='Select EUS']"))
                 .click();
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
