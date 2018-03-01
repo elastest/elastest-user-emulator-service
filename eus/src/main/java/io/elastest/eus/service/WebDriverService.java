@@ -33,7 +33,6 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -134,8 +133,8 @@ public class WebDriverService {
     @Value("${et.config.web.rtc.stats}")
     private String etConfigWebRtcStats;
 
-    @Value("${et.mon.lshttp.api:#{null}}")
-    private String lsHttpApi;
+    @Value("${et.mon.lshttps.api:#{null}}")
+    private String lsSSLHttpApi;
 
     @Value("${et.mon.exec:#{null}}")
     private String etMonExec;
@@ -303,7 +302,7 @@ public class WebDriverService {
 
     public JSONObject getWebRtcMonitoringConfig(String sessionId)
             throws Exception {
-        if (lsHttpApi == null || etMonExec == null) {
+        if (lsSSLHttpApi == null || etMonExec == null) {
             throw new Exception(
                     "Logstash Http Api Url or Monitoring Execution not found");
         }
@@ -313,11 +312,7 @@ public class WebDriverService {
         JSONObject webRtcJson = new JSONObject();
         String component = etBrowserComponentPrefix + sessionId;
 
-        URL lsUrl = new URL(lsHttpApi);
-        String ip = dockerService.doPing(lsUrl.getHost());
-        String realLsHttpApi = "http://" + ip + ":" + lsUrl.getPort();
-
-        webRtcJson.put("httpEndpoint", realLsHttpApi);
+        webRtcJson.put("httpEndpoint", lsSSLHttpApi);
         webRtcJson.put("interval", etMonInterval);
 
         elastestInstrumentationJson.put("webrtc", webRtcJson);
