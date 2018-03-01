@@ -20,7 +20,7 @@ elastest_lib.pipeline({
             sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
           
             stage ('prepare')
-                git 'https://github.com/gtunon/elastest-user-emulator-service.git'
+                git 'https://github.com/elastest/elastest-user-emulator-service.git'
                 elastest.connect2ElastestNetwork()
                 def elastestURL = elastest.getEtmUrl()
                 
