@@ -281,15 +281,18 @@ public class WebDriverService {
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 
-    public void manageWebRtcMonitoring(SessionInfo sessionInfo) {
+    public boolean manageWebRtcMonitoring(SessionInfo sessionInfo) {
+        boolean manageSuccessful = false;
         if (etConfigWebRtcStats != null && "true".equals(etConfigWebRtcStats)) {
             log.debug("WebRtc monitoring activated");
             try {
                 String configLocalStorageStr = this
                         .getWebRtcMonitoringLocalStorageStr(
                                 sessionInfo.getSessionId());
-                this.postScript(sessionInfo, configLocalStorageStr,
-                        new ArrayList<>());
+                String postResponse = this.postScript(sessionInfo,
+                        configLocalStorageStr, new ArrayList<>());
+                manageSuccessful = postResponse != null;
+
             } catch (JsonProcessingException e) {
                 log.error(
                         "Error on send WebRtc LocalStorage variable for monitoring. {}",
@@ -298,6 +301,7 @@ public class WebDriverService {
                 log.error("Error obtaining monitoring configuration. {}", e);
             }
         }
+        return manageSuccessful;
     }
 
     public JSONObject getWebRtcMonitoringConfig(String sessionId)
