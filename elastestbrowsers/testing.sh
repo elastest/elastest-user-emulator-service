@@ -1,7 +1,7 @@
 #!/bin/bash -x
 set -e
 
-DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900 -v /home/nordri/temp:/home/ubuntu/recordings"
+DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900"
 
 for BROWSER_VERSION in latest nightly beta 
 do
