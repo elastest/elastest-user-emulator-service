@@ -1,0 +1,2 @@
+xterm &
+exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1 

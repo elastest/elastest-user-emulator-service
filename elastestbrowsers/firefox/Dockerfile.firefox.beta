@@ -1,0 +1,34 @@
+# X11 - Selenoid
+# Firefox beta
+
+FROM elastestbrowsers/utils-x11-base:1.1
+
+########################################################
+# Firefox
+########################################################
+
+RUN  \
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21 && \
+        echo "deb http://ppa.launchpad.net/mozillateam/firefox-next/ubuntu xenial main" >> /etc/apt/sources.list.d/firefox-beta.list && \
+        apt-get update -qqy && \
+        apt-get -qqy --no-install-recommends install firefox && \
+        rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+
+########################################################
+# Selenoid
+########################################################
+ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
+ADD image/selenoid/geckodriver /usr/local/bin/geckodriver
+ADD image/selenoid/browsers.json.beta /etc/browsers.json
+
+RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \
+      $DOCKER_HOME/.fluxbox/startup && \
+    echo '/usr/local/bin/video-recording.sh &' >> \
+      $DOCKER_HOME/.fluxbox/startup && \
+    echo 'exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1' >> \
+      $DOCKER_HOME/.fluxbox/startup && \
+    chown -R $DOCKER_USER:$DOCKER_GROUP $DOCKER_HOME
+
+USER $DOCKER_USER
+WORKDIR $DOCKER_HOME
+ENTRYPOINT [ "/usr/local/bin/startvnc.sh" ]

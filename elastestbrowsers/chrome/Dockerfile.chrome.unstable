@@ -1,0 +1,34 @@
+# Chrome
+FROM elastestbrowsers/utils-x11-base:1.1
+
+########################################################
+# Chrome
+########################################################
+
+RUN  \
+        curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+        echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
+        apt-get update && \
+        apt-get -y --no-install-recommends install google-chrome-unstable && \
+        chown root:root /opt/google/chrome-unstable/chrome-sandbox && \
+        chmod 4755 /opt/google/chrome-unstable/chrome-sandbox && \
+        rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+
+########################################################
+# Selenoid
+########################################################
+ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
+ADD image/selenoid/chromedriver /usr/local/bin/chromedriver
+ADD image/selenoid/browsers.json.unstable /etc/browsers.json
+
+RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \
+      $DOCKER_HOME/.fluxbox/startup && \
+    echo '/usr/local/bin/video-recording.sh &' >> \
+      $DOCKER_HOME/.fluxbox/startup && \
+    echo 'exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1' >> \
+      $DOCKER_HOME/.fluxbox/startup && \
+    chown -R $DOCKER_USER:$DOCKER_GROUP $DOCKER_HOME
+
+USER $DOCKER_USER
+WORKDIR $DOCKER_HOME
+ENTRYPOINT [ "/usr/local/bin/startvnc.sh" ]
