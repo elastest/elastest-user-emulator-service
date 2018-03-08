@@ -1,8 +1,6 @@
 #!/bin/bash -x
 set -e
 
-UPLOAD=${PUSH:=false}
-
 WORKDIR=$PWD/workdir
 [ -d $WORKDIR ] || mkdir -p $WORKDIR
 rm $WORKDIR/* || true
@@ -66,23 +64,5 @@ popd
 rm chrome/image/selenoid/chromedriver
 rm chrome/image/selenoid/selenoid_linux_amd64
 
-rm -rf $WORKDIR
 docker images
 
-if [ "$UPLOAD" == true ]; then
-  docker login
-  
-  docker push elastestbrowsers/utils-x11-base:1.1
-  
-  docker push elastestbrowsers/chrome:latest
-  docker push elastestbrowsers/chrome:$CHROME_VER
-  docker push elastestbrowsers/chrome:beta
-  docker push elastestbrowsers/chrome:unstable
-
-  docker push elastestbrowsers/firefox:latest
-  docker push elastestbrowsers/firefox:$FIREFOX_VER
-  docker push elastestbrowsers/firefox:beta
-  docker push elastestbrowsers/firefox:nightly
-  
-  docker logout
-fi
