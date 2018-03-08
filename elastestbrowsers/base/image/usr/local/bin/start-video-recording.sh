@@ -7,6 +7,13 @@ RESOLUTION="${RESOLUTION:-1440x900}"
 VIDEO_NAME=video-$(date +%s)
 DISPLAY=:0.0
 
+### Only one recording at a time
+FFMPEG_PID=$(ps ax | grep [f]fmpeg | awk '{ print $1'} )
+if [ ! -z "$FFMPEG_PID" ]; then
+	echo "There is a recording in progress..."
+	exit 1
+fi
+
 touch stop
 
 ### Start recording with ffmpeg ###
