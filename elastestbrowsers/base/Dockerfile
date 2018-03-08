@@ -83,22 +83,19 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 # https://bugs.launchpad.net/ubuntu/+source/x11vnc/+bug/1686084
 # https://gist.github.com/mangoliou/407d6a39a60d128610c20c4143f39f0d
 # TODO - increase the image size in 200MB
-# RUN apt-get update && \
-#    apt-get install -y libxtst-dev libssl-dev libjpeg-dev build-essential && \
-#    \
-#    mkdir -p /tmp/x11vnc-0.9.14 && \
-#    curl -s -L http://x11vnc.sourceforge.net/dev/x11vnc-0.9.14-dev.tar.gz | \
-#        bsdtar zxf - -C /tmp/x11vnc-0.9.14 --strip-components 1 && \
-#    cd /tmp/x11vnc-0.9.14 && \
-#    ./configure --prefix=/usr/local CFLAGS='-O2 -fno-stack-protector -Wall' && \
-#    make && \
-#    make install && \
-#    apt-get -y remove libxtst-dev libssl-dev libjpeg-dev && \
-#    apt-get -y autoremove && \
-#    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-
-#
+RUN apt-get update && \
+   apt-get install -y libxtst-dev libssl-dev libjpeg-dev build-essential && \
+   \
+   mkdir -p /tmp/x11vnc-0.9.14 && \
+   curl -s -L http://x11vnc.sourceforge.net/dev/x11vnc-0.9.14-dev.tar.gz | \
+       bsdtar zxf - -C /tmp/x11vnc-0.9.14 --strip-components 1 && \
+   cd /tmp/x11vnc-0.9.14 && \
+   ./configure --prefix=/usr/local CFLAGS='-O2 -fno-stack-protector -Wall' && \
+   make && \
+   make install && \
+   apt-get -y remove libxtst-dev libssl-dev libjpeg-dev && \
+   apt-get -y autoremove && \
+   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ########################################################
 # Customization for user and location
