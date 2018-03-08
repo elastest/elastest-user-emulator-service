@@ -5,8 +5,7 @@ set -e
 [ -d "$DOCKER_HOME/recordings" ] || mkdir $DOCKER_HOME/recordings
 RESOLUTION="${RESOLUTION:-1440x900}"
 VIDEO_NAME=video-$(date +%s)
-
-pulseaudio -D
+DISPLAY=:0.0
 
 touch stop
 

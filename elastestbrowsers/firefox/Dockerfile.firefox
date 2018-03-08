@@ -20,8 +20,6 @@ ADD image/selenoid/browsers.json /etc/browsers.json
 
 RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \
       $DOCKER_HOME/.fluxbox/startup && \
-    echo '/usr/local/bin/video-recording.sh &' >> \
-      $DOCKER_HOME/.fluxbox/startup && \
     echo 'exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1' >> \
       $DOCKER_HOME/.fluxbox/startup && \
     chown -R $DOCKER_USER:$DOCKER_GROUP $DOCKER_HOME
