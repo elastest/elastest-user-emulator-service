@@ -1,7 +1,7 @@
 #!/bin/bash -x
 set -e
 
-UPLOAD=${PUSH:=true}
+UPLOAD=${PUSH:=false}
 
 WORKDIR=$PWD/workdir
 [ -d $WORKDIR ] || mkdir -p $WORKDIR
