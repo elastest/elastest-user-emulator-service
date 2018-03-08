@@ -87,7 +87,7 @@ public class LogstashIntegrationTest {
         // Values injected with Spring properties
         String mockLogstashUrl = "http://localhost:" + port + "/";
         FieldSetter.setField(logstashService,
-                LogstashService.class.getDeclaredField("lsHttpApi"),
+                LogstashService.class.getDeclaredField("lsSSLHttpApi"),
                 mockLogstashUrl);
 
         // Stubbing service

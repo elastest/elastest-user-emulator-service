@@ -37,8 +37,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class LogstashService {
 
-    @Value("${et.mon.lshttp.api:#{null}}")
-    private String lsHttpApi;
+    @Value("${et.mon.lshttps.api:#{null}}")
+    private String lsSSLHttpApi;
 
     @Value("${et.mon.exec:#{null}}")
     private String etMonExec;
@@ -48,18 +48,18 @@ public class LogstashService {
 
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
-    
+
     final Logger log = getLogger(lookup().lookupClass());
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             String sessionId) {
-        log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, etMonExec);
-        if (lsHttpApi == null || etMonExec == null) {
+        log.trace("lsSSLHttpApi: {} etMonExec: {}", lsSSLHttpApi, etMonExec);
+        if (lsSSLHttpApi == null || etMonExec == null) {
             return;
         }
 
         try {
-            URL url = new URL(lsHttpApi);
+            URL url = new URL(lsSSLHttpApi);
 
             URLConnection con = url.openConnection();
             HttpURLConnection http = (HttpURLConnection) con;
@@ -72,7 +72,8 @@ public class LogstashService {
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);
-            log.debug("Sending browser log to logstash: {}", body);
+            log.debug("Sending browser log to logstash ({}): {}", lsSSLHttpApi,
+                    body);
             int length = out.length;
 
             http.setFixedLengthStreamingMode(length);
@@ -113,5 +114,5 @@ public class LogstashService {
         // replace " to \" only if " is not preceded by \
         return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\"");
     }
-    
+
 }
