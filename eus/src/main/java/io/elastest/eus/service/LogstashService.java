@@ -48,7 +48,7 @@ public class LogstashService {
 
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
-    
+
     final Logger log = getLogger(lookup().lookupClass());
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
@@ -72,7 +72,8 @@ public class LogstashService {
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);
-            log.debug("Sending browser log to logstash: {}", body);
+            log.debug("Sending browser log to logstash ({}): {}", lsHttpApi,
+                    body);
             int length = out.length;
 
             http.setFixedLengthStreamingMode(length);
@@ -113,5 +114,5 @@ public class LogstashService {
         // replace " to \" only if " is not preceded by \
         return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\"");
     }
-    
+
 }
