@@ -8,7 +8,7 @@ WORKDIR=$PWD/workdir
 rm $WORKDIR/* || true
 
 # Get browsers versions
-docker run -ti --rm -v $WORKDIR:/workdir elastestbrowsers/utils-get_browsers_version:1.0
+docker run -d --rm -v $WORKDIR:/workdir elastestbrowsers/utils-get_browsers_version:1.0
 . $WORKDIR/versions.txt
 
 # Build base image
