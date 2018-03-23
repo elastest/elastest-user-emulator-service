@@ -1,24 +1,40 @@
 node('docker') {
-  stage "Container Prep"
-    def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
-    mycontainer.pull()
-    mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
-      git 'https://github.com/elastest/elastest-user-emulator-service.git'
+  try {
+    stage "Container Prep"
+      def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
+      mycontainer.pull()
+      mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
+        git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
-    stage "Build Docker image"
-      echo ("Building...")
-      sh 'cd elastestbrowsers && ./build_containers.sh'
+        stage "Build Docker image"
+          echo ("Building...")
+          sh 'cd elastestbrowsers && ./build_containers.sh'
 
-    stage "Testing image"
-      echo ("testing...")
-      sh 'cd elastestbrowsers && ./testing.sh'
+          stage "Testing image"
+            echo ("testing...")
+            sh 'cd elastestbrowsers && ./testing.sh'
 
-    stage "Publish"
-      echo ("Publishing...")
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
-        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-        sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
-        sh 'cd elastestbrowsers && ./push.sh'
+          stage "Publish"
+            echo ("Publishing...")
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
+            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+              sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
+              sh 'cd elastestbrowsers && ./push.sh'
+            }
         }
-    }
+  } catch (e) {
+    currentBuild.result = "FAILED"
+    notifyFailed()
+    throw e
+  }
+}
+ 
+def notifyFailed() {
+  emailext (
+      subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+      body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
+      replyTo: '${BUILD_USER_EMAIL}',
+      to: 'federico.diaz@urjc.es'
+    )
 }
