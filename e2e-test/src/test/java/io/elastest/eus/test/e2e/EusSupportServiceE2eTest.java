@@ -93,7 +93,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 		log.info("Close browser and wait to dispose iframe");
 		driver.switchTo().defaultContent();
 		driver.findElement(By.id("close_dialog")).click();
-		waitElement = new WebDriverWait(driver, 40); // seconds
+		waitElement = new WebDriverWait(driver, 80); // seconds
 		waitElement.until(invisibilityOfElementLocated(By.cssSelector("md-dialog-container")));
 
 		log.info("View recording");
