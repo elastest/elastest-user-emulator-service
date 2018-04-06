@@ -18,6 +18,7 @@ package io.elastest.eus.json;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.Path;
 
 /**
  * Docker Hub API.
@@ -27,7 +28,13 @@ import retrofit2.http.GET;
  */
 public interface DockerHubApi {
 
-    @GET("/v2/repositories/selenoid/vnc/tags/?page_size=1024")
-    Call<DockerHubTags> listTags();
+    @GET("/v2/repositories/{namespace}/?page_size=1024")
+    Call<DockerHubNameSpaceImages> listImages(
+            @Path("namespace") String namespace);
 
+    @GET("/v2/repositories/{imageName}/tags/?page_size=1024")
+    Call<DockerHubTags> listTags(@Path("imageName") String imageName);
+
+    @GET("/v2/repositories/selenoid/vnc/tags/?page_size=1024")
+    Call<DockerHubTags> listSelenoidVncTags();
 }

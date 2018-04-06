@@ -190,10 +190,7 @@ public class WebDriverService {
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request)
             throws IOException, InterruptedException {
-
-        StringBuffer requestUrl = request.getRequestURL();
-        String requestContext = requestUrl.substring(
-                requestUrl.lastIndexOf(contextPath) + contextPath.length());
+        String requestContext = this.getRequestContext(request);
         HttpMethod method = HttpMethod.resolve(request.getMethod());
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
@@ -459,7 +456,6 @@ public class WebDriverService {
             httpRequestFactory.setReadTimeout(timeoutMillis);
         }
         RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
-
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
                 ? optionalHttpEntity.get()
@@ -526,12 +522,17 @@ public class WebDriverService {
             String browserName, String version) throws IOException {
         // Workaround due to bug of selenium-server 3.4.0
         // More info on: https://github.com/SeleniumHQ/selenium/issues/3808
-        if (browserName.equalsIgnoreCase("firefox")
-                && (version == null || version.isEmpty())) {
+        boolean firefoxWithVersion = browserName.equalsIgnoreCase("firefox")
+                && (version == null || version.isEmpty());
+        boolean betaUnstable = version != null
+                && (version.equalsIgnoreCase("latest")
+                        || version.equalsIgnoreCase("unstable")
+                        || version.equalsIgnoreCase("beta"));
+        if (firefoxWithVersion || betaUnstable) {
             String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
             String jsonFirefox = jsonService.processJsonWithJq(requestBody,
                     jqRemoveVersionContent);
-            log.debug("Using firefox capabilities with empty version {}",
+            log.debug("Using capabilities with empty version {}",
                     jsonFirefox);
             return Optional.of(new HttpEntity<String>(jsonFirefox));
         }
@@ -544,7 +545,7 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    private SessionInfo startBrowser(String requestBody,
+    public SessionInfo startBrowser(String requestBody,
             String originalRequestBody)
             throws IOException, InterruptedException {
         DesiredCapabilities capabilities = jsonService
@@ -590,8 +591,7 @@ public class WebDriverService {
         }
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
-        String hubPath = browserName.equalsIgnoreCase("firefox") ? "/wd/hub"
-                : "";
+        String hubPath = "/wd/hub";
         String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
                 + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
@@ -712,6 +712,12 @@ public class WebDriverService {
             }
         }
         return count;
+    }
+
+    public String getRequestContext(HttpServletRequest request) {
+        StringBuffer requestUrl = request.getRequestURL();
+        return requestUrl.substring(
+                requestUrl.lastIndexOf(contextPath) + contextPath.length());
     }
 
 }

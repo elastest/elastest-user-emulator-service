@@ -70,7 +70,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 		startTestSupportService(driver, "EUS");
 
 		log.info("Select Chrome as browser and start session");
-		WebDriverWait waitElement = new WebDriverWait(driver, 45); // seconds
+		WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
 		By chromeRadioButton = By.id("chrome_radio");
 		waitElement.until(visibilityOfElementLocated(chromeRadioButton));
 		driver.findElement(chromeRadioButton).click();
@@ -93,7 +93,6 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 		log.info("Close browser and wait to dispose iframe");
 		driver.switchTo().defaultContent();
 		driver.findElement(By.id("close_dialog")).click();
-		waitElement = new WebDriverWait(driver, 40); // seconds
 		waitElement.until(invisibilityOfElementLocated(By.cssSelector("md-dialog-container")));
 
 		log.info("View recording");

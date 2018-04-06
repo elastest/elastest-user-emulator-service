@@ -21,12 +21,11 @@ import static java.lang.Math.max;
 import static java.lang.String.format;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -37,6 +36,8 @@ import org.springframework.stereotype.Service;
 
 import io.elastest.eus.EusException;
 import io.elastest.eus.json.DockerHubApi;
+import io.elastest.eus.json.DockerHubNameSpaceImages;
+import io.elastest.eus.json.DockerHubNameSpaceImages.DockerHubNameSpaceImage;
 import io.elastest.eus.json.DockerHubTags;
 import io.elastest.eus.json.DockerHubTags.DockerHubTag;
 import okhttp3.OkHttpClient;
@@ -62,8 +63,17 @@ public class DockerHubService {
     @Value("${browser.image.format}")
     String browserImageFormat;
 
+    @Value("${browser.image.namespace}")
+    String browserImageNamespace;
+
     @Value("${browser.docker.hub.timeout}")
     int browserDockerHubTimeout;
+
+    @Value("${browser.image.skip.prefix}")
+    String browserImageSkipPrefix;
+
+    @Value("${browser.image.latest.version}")
+    String browserImageLatestVersion;
 
     DockerHubApi dockerHubApi;
 
@@ -78,15 +88,32 @@ public class DockerHubService {
         dockerHubApi = retrofit.create(DockerHubApi.class);
     }
 
-    private List<DockerHubTag> listTags() throws IOException {
+    private List<DockerHubNameSpaceImage> listImages() throws IOException {
         if (dockerHubApi == null) {
             initDockerHubApi();
         }
 
         log.debug("Getting browser image list from Docker Hub: {}",
                 dockerHubUrl);
-        Response<DockerHubTags> listTagsResponse = dockerHubApi.listTags()
-                .execute();
+        Response<DockerHubNameSpaceImages> listImagesResponse = dockerHubApi
+                .listImages(browserImageNamespace).execute();
+
+        if (!listImagesResponse.isSuccessful()) {
+            throw new EusException(listImagesResponse.errorBody().string());
+        }
+        return listImagesResponse.body().getResults();
+    }
+
+    private List<DockerHubTag> listTags(String browserImage)
+            throws IOException {
+        if (dockerHubApi == null) {
+            initDockerHubApi();
+        }
+
+        log.debug("Getting browser {} version list from Docker Hub: {}",
+                browserImage, dockerHubUrl);
+        Response<DockerHubTags> listTagsResponse = dockerHubApi
+                .listTags(browserImage).execute();
         if (!listTagsResponse.isSuccessful()) {
             throw new EusException(listTagsResponse.errorBody().string());
         }
@@ -94,20 +121,44 @@ public class DockerHubService {
     }
 
     private int compareVersions(String v1, String v2) {
-        String[] v1split = v1.split("\\.");
-        String[] v2split = v2.split("\\.");
-        int length = max(v1split.length, v2split.length);
-        for (int i = 0; i < length; i++) {
-            int v1Part = i < v1split.length ? parseInt(v1split[i]) : 0;
-            int v2Part = i < v2split.length ? parseInt(v2split[i]) : 0;
-            if (v1Part < v2Part) {
+        if (this.isNumericVersion(v1) && this.isNumericVersion(v2)) {
+            String[] v1split = v1.split("\\.");
+            String[] v2split = v2.split("\\.");
+            int length = max(v1split.length, v2split.length);
+            for (int i = 0; i < length; i++) {
+                int v1Part = i < v1split.length ? parseInt(v1split[i]) : 0;
+                int v2Part = i < v2split.length ? parseInt(v2split[i]) : 0;
+                if (v1Part < v2Part) {
+                    return 1;
+                }
+                if (v1Part > v2Part) {
+                    return -1;
+                }
+            }
+        } else if (this.isNumericVersion(v1) && !this.isNumericVersion(v2)) {
+            if (browserImageLatestVersion.equals(v2)) {
+                return 1;
+            } else {
+                return -1;
+            }
+        } else if (!this.isNumericVersion(v1) && this.isNumericVersion(v2)) {
+            if (browserImageLatestVersion.equals(v1)) {
+                return -1;
+            } else {
                 return 1;
             }
-            if (v1Part > v2Part) {
+        } else {
+            if (browserImageLatestVersion.equals(v2)) {
+                return 1;
+            } else if (browserImageLatestVersion.equals(v1)) {
                 return -1;
             }
         }
         return 0;
+    }
+
+    public boolean isNumericVersion(String version) {
+        return version.matches("-?\\d+(\\.\\d+(\\.\\d+)?)?");
     }
 
     private String getVersionFromList(List<String> browserList,
@@ -135,51 +186,57 @@ public class DockerHubService {
         log.debug(
                 "Getting browser image from capabilities: browser={} version={} platform={}",
                 browser, version, platform);
-        List<DockerHubTag> tagList = listTags();
-        log.trace("Selenoid browser tag list: {}", tagList);
 
-        String imagePreffix = browser + "_";
-        List<String> browserList = tagList.stream()
-                .filter(p -> p.getName().startsWith(browser))
-                .map(p -> p.getName().replace(imagePreffix, ""))
-                .sorted(this::compareVersions).collect(toList());
-        log.trace("Browser list for {}: {}", browser, browserList);
+        Map<String, List<String>> browsers = this.getBrowsers();
 
         return format(browserImageFormat, browser,
-                getVersionFromList(browserList, version));
+                getVersionFromList(browsers.get(browser), version));
+    }
+
+    public Map<String, List<String>> getBrowsers() throws IOException {
+        Map<String, List<String>> result = new TreeMap<>();
+        List<DockerHubNameSpaceImage> imagesList = listImages();
+
+        log.trace("{} browser image list: {}", browserImageNamespace,
+                imagesList);
+
+        for (DockerHubNameSpaceImage currentBrowserImage : imagesList) {
+            String browser = currentBrowserImage.getName();
+            if (!browser.toLowerCase()
+                    .startsWith(browserImageSkipPrefix.toLowerCase())) {
+                List<DockerHubTag> tagList = listTags(
+                        browserImageNamespace + "/" + browser);
+                log.trace("{} browser tag list: {}", browser, tagList);
+
+                for (DockerHubTag dockerHubTag : tagList) {
+                    String tagName = dockerHubTag.getName();
+                    String version = tagName;
+
+                    if (browser.equalsIgnoreCase("opera")
+                            && version.equalsIgnoreCase("12.16")) {
+                        continue;
+                    }
+
+                    if (result.containsKey(browser)) {
+                        List<String> list = result.get(browser);
+                        list.add(version);
+
+                        list = list.stream().sorted(this::compareVersions)
+                                .collect(toList());
+                        result.put(browser, list);
+                    } else {
+                        List<String> entry = new ArrayList<>();
+                        entry.add(version);
+
+                        result.put(browser, entry);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public String getVersionFromImage(String image) {
         return image.substring(image.indexOf('_') + 1);
     }
-
-    public Map<String, List<String>> getBrowsers() throws IOException {
-        Map<String, List<String>> result = new TreeMap<>();
-        for (DockerHubTag dockerHubTag : listTags()) {
-            String tagName = dockerHubTag.getName();
-            String browser = tagName.substring(0, tagName.indexOf('_'));
-            String version = tagName.substring(tagName.indexOf('_') + 1);
-
-            if (browser.equalsIgnoreCase("opera")
-                    && version.equalsIgnoreCase("12.16")) {
-                continue;
-            }
-
-            if (result.containsKey(browser)) {
-                List<String> list = result.get(browser);
-                list.add(version);
-            } else {
-                List<String> entry = new ArrayList<>();
-                entry.add(version);
-                result.put(browser, entry);
-            }
-        }
-
-        for (List<String> list : result.values()) {
-            Collections.sort(list, this::compareVersions);
-        }
-
-        return result;
-    }
-
 }
