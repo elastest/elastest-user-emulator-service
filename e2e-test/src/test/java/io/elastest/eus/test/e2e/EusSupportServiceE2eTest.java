@@ -20,6 +20,7 @@ import static io.github.bonigarcia.BrowserType.CHROME;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openqa.selenium.Keys.RETURN;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,6 +31,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -77,18 +80,18 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 		By iframe = By.id("eus_iframe");
 		WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
 		waitBrowser.until(visibilityOfElementLocated(iframe));
-//		driver.switchTo().frame(driver.findElement(iframe));
-//
-//		log.info("Click browser navigation bar and navigate");
-//		WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
-//		new Actions(driver).moveToElement(canvas, 142, 45).click().build().perform();
-//		canvas.sendKeys("elastest.io" + RETURN);
+		driver.switchTo().frame(driver.findElement(iframe));
+
+		log.info("Click browser navigation bar and navigate");
+		WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
+		new Actions(driver).moveToElement(canvas, 142, 45).click().build().perform();
+		canvas.sendKeys("elastest.io" + RETURN);
 		int navigationTimeSec = 5;
 		log.info("Waiting {} secons (simulation of manual navigation)", navigationTimeSec);
 		sleep(SECONDS.toMillis(navigationTimeSec));
 
 		log.info("Close browser and wait to dispose iframe");
-//		driver.switchTo().defaultContent();
+		driver.switchTo().defaultContent();
 		driver.findElement(By.id("close_dialog")).click();
 		waitElement = new WebDriverWait(driver, 40); // seconds
 		waitElement.until(invisibilityOfElementLocated(By.cssSelector("md-dialog-container")));
