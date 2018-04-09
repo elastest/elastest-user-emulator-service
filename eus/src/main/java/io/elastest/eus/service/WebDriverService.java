@@ -109,6 +109,9 @@ public class WebDriverService {
     @Value("${browser.screen.resolution}")
     private String browserScreenResolution;
 
+    @Value("${browser.timezone}")
+    private String browserTimezone;
+
     @Value("${ws.dateformat}")
     private String wsDateFormat;
 
@@ -459,7 +462,8 @@ public class WebDriverService {
 
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
-                ? optionalHttpEntity.get() : httpEntity;
+                ? optionalHttpEntity.get()
+                : httpEntity;
         ResponseEntity<String> response = null;
         log.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
@@ -575,7 +579,8 @@ public class WebDriverService {
 
         // Envs
         List<String> envs = asList(
-                "SCREEN_RESOLUTION=" + browserScreenResolution);
+                "SCREEN_RESOLUTION=" + browserScreenResolution,
+                "TZ=" + browserTimezone);
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
                 .exposedPorts(exposedPorts).portBindings(portBindings)
