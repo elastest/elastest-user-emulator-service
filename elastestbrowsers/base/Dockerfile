@@ -93,7 +93,7 @@ RUN apt-get update && \
    ./configure --prefix=/usr/local CFLAGS='-O2 -fno-stack-protector -Wall' && \
    make && \
    make install && \
-   apt-get -y remove libxtst-dev libssl-dev libjpeg-dev && \
+   apt-get -y remove libxtst-dev libssl-dev libjpeg-dev build-essential build-essential && \
    apt-get -y autoremove && \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
