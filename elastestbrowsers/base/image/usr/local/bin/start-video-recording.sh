@@ -4,8 +4,25 @@ set -e
 ### Variables ###
 [ -d "$DOCKER_HOME/recordings" ] || mkdir $DOCKER_HOME/recordings
 RESOLUTION="${RESOLUTION:-1440x900}"
-VIDEO_NAME=video-$(date +%s)
 DISPLAY=:0.0
+VIDEO_FORMAT="${VIDEO_FORMAT:-mp4}"
+
+if [ "$#" -lt 3 ]; then
+  echo "Usage: $0 -n VIDEO_NAME"
+  exit 1
+fi
+
+while getopts "n:" opt; do
+  case "${opt}" in
+    n)
+      VIDEO_NAME=${OPTARG}
+      ;;
+    *)
+      echo "Usage: $0 -n VIDEO_NAME"
+      exit 1
+      ;;
+  esac
+done
 
 ### Only one recording at a time
 FFMPEG_PID=$(ps ax | grep [f]fmpeg | awk '{ print $1'} )
@@ -14,9 +31,8 @@ if [ ! -z "$FFMPEG_PID" ]; then
 	exit 1
 fi
 
-touch stop
+touch /tmp/stop
 
 ### Start recording with ffmpeg ###
 
-<./stop ffmpeg -y -f alsa -i pulse -f x11grab -framerate 25 -video_size $RESOLUTION -i $DISPLAY -c:a libfdk_aac -c:v libx264 -preset ultrafast -crf 28 -refs 4 -qmin 4 -pix_fmt yuv420p -filter:v fps=25 ~/recordings/${VIDEO_NAME}.mkv
-
+</tmp/stop ffmpeg -y -f alsa -i pulse -f x11grab -framerate 25 -video_size $RESOLUTION -i $DISPLAY -c:a libfdk_aac -c:v libx264 -preset ultrafast -crf 28 -refs 4 -qmin 4 -pix_fmt yuv420p -filter:v fps=25 ~/recordings/${VIDEO_NAME}.${VIDEO_FORMAT}

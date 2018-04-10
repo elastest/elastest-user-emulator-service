@@ -43,6 +43,7 @@ RUN locale-gen $LANG && \
         mesa-utils \
         libgl1-mesa-dri \
         pulseaudio \
+        xvfb \
         x11vnc && \
         \
     apt-get -y autoremove && \
@@ -61,7 +62,7 @@ RUN apt-get update && \
 ########################################################
 RUN add-apt-repository -y ppa:mc3man/xerus-media && \
     apt-get update && \
-    apt-get install --yes --no-install-recommends ffmpeg && \
+    apt-get install --yes ffmpeg && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -82,7 +83,6 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 # Install x-related to compile x11vnc from source code.
 # https://bugs.launchpad.net/ubuntu/+source/x11vnc/+bug/1686084
 # https://gist.github.com/mangoliou/407d6a39a60d128610c20c4143f39f0d
-# TODO - increase the image size in 200MB
 RUN apt-get update && \
    apt-get install -y libxtst-dev libssl-dev libjpeg-dev build-essential && \
    \
