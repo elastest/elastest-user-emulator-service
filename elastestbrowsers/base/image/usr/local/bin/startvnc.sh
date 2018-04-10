@@ -44,6 +44,9 @@ x11vnc -display :0 -xkb -norepeat 2 -forever -shared  -usepw >> $DOCKER_HOME/.lo
 
 sudo service dbus start > $DOCKER_HOME/.log/dbus.log 2>&1
 
+# start pulseaudio
+pulseaudio -D
+
 echo "Open your web browser with URL:"
 echo "    http://localhost:6080/vnc.html?resize=downscale&autoconnect=1&password=$VNCPASS"
 
