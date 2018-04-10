@@ -7,7 +7,7 @@ RESOLUTION="${RESOLUTION:-1440x900}"
 DISPLAY=:0.0
 VIDEO_FORMAT="${VIDEO_FORMAT:-mp4}"
 
-if [ "$#" -eq 2 ]; then
+if [ ! "$#" -eq 2 ]; then
   echo "Usage: $0 -n VIDEO_NAME"
   exit 1
 fi
