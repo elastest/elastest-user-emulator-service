@@ -8,8 +8,10 @@ ARG VERSION
 ########################################################
 
 RUN  \
-        apt-get update && \
-        apt-get -y --no-install-recommends install firefox=$VERSION
+        curl -O http://download-origin.cdn.mozilla.net/pub/firefox/releases/$VERSION/linux-x86_64/en-US/firefox-$VERSION.tar.bz2 && \
+        tar jxf firefox-$VERSION.tar.bz2 -C /opt && \
+        ln -s /opt/firefox/firefox /usr/local/bin && \
+        rm firefox-$VERSION.tar.bz2
 
 ########################################################
 # Selenoid

@@ -1,6 +1,9 @@
 #!/bin/bash -x
 set -e
 
+
+FIREFOX_OLD_VERSIONS="56.0 57.0 58.0"
+
 WORKDIR=$PWD/workdir
 [ -d $WORKDIR ] || mkdir -p $WORKDIR
 rm $WORKDIR/* || true
@@ -34,6 +37,14 @@ sed "s/VERSION/nightly/g" image/selenoid/browsers.json.templ > image/selenoid/br
 docker build -t elastestbrowsers/firefox:nightly -f Dockerfile.firefox.nightly .
 rm image/selenoid/browsers.json.nightly
 popd
+
+# Firefox old versions
+for V in $FIREFOX_OLD_VERSIONS
+do
+sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
+docker build --build-arg VERSION=$V -t elastestbrowsers/firefox:$V -f Dockerfile.firefox .
+rm image/selenoid/browsers.json
+done
 
 # cleaning
 rm firefox/image/selenoid/geckodriver

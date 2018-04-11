@@ -44,6 +44,7 @@ RUN locale-gen $LANG && \
         libgl1-mesa-dri \
         pulseaudio \
         xvfb \
+        bzip2 \
         x11vnc && \
         \
     apt-get -y autoremove && \
