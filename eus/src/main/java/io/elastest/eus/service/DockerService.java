@@ -182,7 +182,7 @@ public class DockerService {
         String imageId = dockerContainer.getImageId();
 
         if (!isRunningContainer(containerName)) {
-            pullImageIfNecessary(imageId);
+            pullImage(imageId);
 
             try (CreateContainerCmd createContainer = dockerClient
                     .createContainerCmd(imageId).withName(containerName)) {
@@ -276,13 +276,11 @@ public class DockerService {
         }
     }
 
-    public void pullImageIfNecessary(String imageId) {
-        if (!existsImage(imageId)) {
-            log.info("Pulling Docker image {} ... please wait", imageId);
-            dockerClient.pullImageCmd(imageId)
-                    .exec(new PullImageResultCallback()).awaitSuccess();
-            log.debug("Docker image {} downloaded", imageId);
-        }
+    public void pullImage(String imageId) {
+        log.info("Pulling Docker image {} ... please wait", imageId);
+        dockerClient.pullImageCmd(imageId).exec(new PullImageResultCallback())
+                .awaitSuccess();
+        log.debug("Docker image {} downloaded", imageId);
     }
 
     public boolean existsImage(String imageId) {

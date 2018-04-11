@@ -91,5 +91,19 @@ public class WebDriverIntegrationTest {
                         || (countCharsInString > 1 && sessionId.isPresent()),
                 errorMessage);
     }
+//
+//    @Test
+//    @DisplayName("Tests Manage WebRtc Monitoring")
+//    void testManageWebRtcMonitoring() throws Exception {
+//        String jsonCapabilities = "{ \"url\":\"http://elastest.io/\", \"desiredCapabilities\": {"
+//                + "\"browserName\": \"chrome\"," + " \"version\": \"\","
+//                + "\"platform\": \"ANY\"" + " }" + "}";
+//
+//        String newRequestBody = jsonCapabilities;
+//        String requestBody = jsonCapabilities;
+//        SessionInfo sessionInfo = webDriverService.startBrowser(newRequestBody,
+//                requestBody);
+//        assertTrue(webDriverService.manageWebRtcMonitoring(sessionInfo));
+//    }
 
 }

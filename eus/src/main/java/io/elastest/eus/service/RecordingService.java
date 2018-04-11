@@ -77,8 +77,14 @@ public class RecordingService {
     @Value("${edm.alluxio.url}")
     private String edmAlluxioUrl;
 
-    @Value("${novnc.script.filename}")
-    private String novncScript;
+    @Value("${start.recording.script.filename}")
+    private String startRecordingScript;
+
+    @Value("${stop.recording.script.filename}")
+    private String stopRecordingScript;
+
+    @Value("${container.recording.folder}")
+    private String containerRecordingFolder;
 
     private DockerService dockerService;
     private JsonService jsonService;
@@ -114,8 +120,10 @@ public class RecordingService {
         log.debug("Recording session {} in container {} ({}:{})", sessionId,
                 noNvcContainerName, hubContainerIp, hubContainerPort);
 
-        dockerService.execCommand(noNvcContainerName, false, novncScript,
-                "--start", sessionId, hubContainerIp, hubContainerPort);
+        String recordingFileName = sessionInfo.getIdForFiles();
+        
+        dockerService.execCommand(noNvcContainerName, false,
+                startRecordingScript, "-n", recordingFileName);
     }
 
     public void stopRecording(SessionInfo sessionInfo)
@@ -123,34 +131,8 @@ public class RecordingService {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         log.debug("Stopping recording of container {}", noNvcContainerName);
 
-        dockerService.execCommand(noNvcContainerName, false, novncScript,
-                "--end");
-    }
-
-    public void storeRecording(SessionInfo sessionInfo)
-            throws IOException, InterruptedException {
-        log.debug("Storing recording for session {}",
-                sessionInfo.getSessionId());
-
-        String sessionId = sessionInfo.getSessionId();
-        String idForFiles = sessionInfo.getIdForFiles();
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        String recordingFileName = idForFiles + registryRecordingExtension;
-
-        // Convert format of recording to mp4
-        dockerService.execCommand(noNvcContainerName, true, novncScript,
-                "--convert", sessionId, recordingFileName);
-
-        if (edmAlluxioUrl.isEmpty()) {
-            // If EDM Alluxio is not available, recording is stored locally
-            dockerService.copyFileFromContainer(noNvcContainerName,
-                    recordingFileName, registryFolder);
-
-        } else {
-            // If EDM Alluxio is available, recording is stored in Alluxio
-            dockerService.execCommand(noNvcContainerName, true, novncScript,
-                    "--upload", edmAlluxioUrl, recordingFileName);
-        }
+        dockerService.execCommand(noNvcContainerName, false,
+                stopRecordingScript);
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {

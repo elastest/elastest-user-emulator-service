@@ -20,6 +20,7 @@ import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.Integer.parseInt;
+import static java.lang.String.format;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static java.util.Optional.empty;
@@ -58,9 +59,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
+import com.github.dockerjava.api.model.Volume;
 
 import io.elastest.eus.EusException;
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
@@ -95,8 +98,17 @@ public class WebDriverService {
     @Value("${hub.vnc.exposedport}")
     private int hubVncExposedPort;
 
+    @Value("${hub.novnc.exposedport}")
+    private int noVncExposedPort;
+
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
+
+    @Value("${novnc.html}")
+    private String vncHtml;
+
+    @Value("${hub.vnc.password}")
+    private String hubVncPassword;
 
     // Defined as String instead of integer for testing purposes (inject with
     // @TestPropertySource)
@@ -147,26 +159,31 @@ public class WebDriverService {
 
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
+
+    @Value("${registry.folder}")
+    private String registryFolder;
+
+    @Value("${container.recording.folder}")
+    private String containerRecordingFolder;
+
     String etInstrumentationKey = "elastest-instrumentation";
 
     private DockerService dockerService;
     private DockerHubService dockerHubService;
     private JsonService jsonService;
     private SessionService sessionService;
-    private VncService vncService;
     private RecordingService recordingService;
     private TimeoutService timeoutService;
 
     @Autowired
     public WebDriverService(DockerService dockerService,
             DockerHubService dockerHubService, JsonService jsonService,
-            SessionService sessionService, VncService vncService,
-            RecordingService recordingService, TimeoutService timeoutService) {
+            SessionService sessionService, RecordingService recordingService,
+            TimeoutService timeoutService) {
         this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
-        this.vncService = vncService;
         this.recordingService = recordingService;
         this.timeoutService = timeoutService;
     }
@@ -204,6 +221,7 @@ public class WebDriverService {
         // Intercept create session
         boolean isCreateSession = isPostSessionRequest(method, requestContext);
         String newRequestBody = requestBody;
+
         if (isCreateSession) {
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
@@ -273,6 +291,11 @@ public class WebDriverService {
         // Handle response
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
+
+        if (isCreateSession) {
+            // Start Recording
+            recordingService.startRecording(sessionInfo);
+        }
 
         // Handle timeout
         handleTimeout(requestContext, method, sessionInfo, liveSession,
@@ -510,8 +533,6 @@ public class WebDriverService {
         sessionInfo.setLiveSession(isLive);
 
         sessionService.putSession(sessionId, sessionInfo);
-        vncService.startVncContainer(sessionInfo);
-        recordingService.startRecording(sessionInfo);
 
         if (sessionService.activeWebSocketSessions() && !isLive) {
             sessionService.sendNewSessionToAllClients(sessionInfo);
@@ -525,15 +546,15 @@ public class WebDriverService {
         boolean firefoxWithVersion = browserName.equalsIgnoreCase("firefox")
                 && (version == null || version.isEmpty());
         boolean betaUnstable = version != null
-                && (version.equalsIgnoreCase("latest")
+                && (version.isEmpty() || version.equalsIgnoreCase("latest")
                         || version.equalsIgnoreCase("unstable")
-                        || version.equalsIgnoreCase("beta"));
+                        || version.equalsIgnoreCase("beta")
+                        || version.equalsIgnoreCase("nightly"));
         if (firefoxWithVersion || betaUnstable) {
             String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
             String jsonFirefox = jsonService.processJsonWithJq(requestBody,
                     jqRemoveVersionContent);
-            log.debug("Using capabilities with empty version {}",
-                    jsonFirefox);
+            log.debug("Using capabilities with empty version {}", jsonFirefox);
             return Optional.of(new HttpEntity<String>(jsonFirefox));
         }
         return Optional.empty();
@@ -564,6 +585,13 @@ public class WebDriverService {
         String hubContainerName = dockerService
                 .generateContainerName(eusContainerPrefix + hubContainerSufix);
 
+        // Recording Volume
+        Volume recordings = new Volume(containerRecordingFolder);
+        List<Volume> volumes = asList(recordings);
+
+        List<Bind> volumeBinds = asList(
+                new Bind(registryFolder + "/" + hubContainerName, recordings));
+
         // Port binding
         int hubPort = dockerService.findRandomOpenPort();
         Binding bindHubPort = bindPort(hubPort);
@@ -573,10 +601,16 @@ public class WebDriverService {
         Binding bindVncPort = bindPort(vncPort);
         ExposedPort exposedVncPort = tcp(hubVncExposedPort);
 
+        int noVncPort = dockerService.findRandomOpenPort();
+        Binding bindNoVncPort = bindPort(noVncPort);
+        ExposedPort exposedNoVncPort = tcp(noVncExposedPort);
+
         List<PortBinding> portBindings = asList(
                 new PortBinding(bindHubPort, exposedHubPort),
-                new PortBinding(bindVncPort, exposedVncPort));
-        List<ExposedPort> exposedPorts = asList(exposedHubPort, exposedVncPort);
+                new PortBinding(bindVncPort, exposedVncPort),
+                new PortBinding(bindNoVncPort, exposedNoVncPort));
+        List<ExposedPort> exposedPorts = asList(exposedHubPort, exposedVncPort,
+                exposedNoVncPort);
 
         // Envs
         List<String> envs = asList(
@@ -585,18 +619,22 @@ public class WebDriverService {
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
                 .exposedPorts(exposedPorts).portBindings(portBindings)
-                .shmSize(shmSize).envs(envs);
+                .volumes(volumes).binds(volumeBinds).shmSize(shmSize).envs(envs);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
+
+        // Start
         dockerService.startAndWaitContainer(dockerBuilder.build());
 
+        // Wait Reachable
         String hubPath = "/wd/hub";
-        String hubUrl = "http://" + dockerService.getDockerServerIp() + ":"
-                + hubPort + hubPath;
+        String hubIp = dockerService.getDockerServerIp();
+        String hubUrl = "http://" + hubIp + ":" + hubPort + hubPath;
         dockerService.waitForHostIsReachable(hubUrl);
         log.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
 
+        // Save info into SessionInfo
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setHubUrl(hubUrl);
         sessionInfo.setHubContainerName(hubContainerName);
@@ -605,7 +643,14 @@ public class WebDriverService {
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubPort);
-        sessionInfo.setHubVncBindPort(vncPort);
+        sessionInfo.setHubVncBindPort(hubPort);
+
+        String vncUrlFormat = "http://%s:%d/" + vncHtml
+                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
+        String vncUrl = format(vncUrlFormat, hubIp, noVncPort);
+        sessionInfo.setVncContainerName(hubContainerName);
+        sessionInfo.setVncUrl(vncUrl);
+        sessionInfo.setNoVncBindPort(noVncPort);
 
         String browserId = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
@@ -626,7 +671,6 @@ public class WebDriverService {
 
             if (sessionInfo.getVncContainerName() != null) {
                 recordingService.stopRecording(sessionInfo);
-                recordingService.storeRecording(sessionInfo);
                 recordingService.storeMetadata(sessionInfo);
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
