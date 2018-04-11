@@ -164,7 +164,6 @@ public class DockerHubService {
     private String getVersionFromList(List<String> browserList,
             String version) {
         if (version == null || version.isEmpty()) {
-            log.debug("browserList {}", browserList);
             return browserList.get(0);
         }
 

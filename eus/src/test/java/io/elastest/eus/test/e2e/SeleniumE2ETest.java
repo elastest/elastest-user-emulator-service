@@ -20,7 +20,6 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
-import static org.openqa.selenium.remote.DesiredCapabilities.operaBlink;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -69,8 +68,7 @@ public class SeleniumE2ETest {
     String contextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
-        return Stream.of(Arguments.of(chrome()), Arguments.of(firefox()),
-                Arguments.of(operaBlink()));
+        return Stream.of(Arguments.of(chrome()), Arguments.of(firefox()));
     }
 
     @ParameterizedTest(name = "Using {0}")
