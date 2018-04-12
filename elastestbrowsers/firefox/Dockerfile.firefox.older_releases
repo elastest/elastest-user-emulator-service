@@ -1,26 +1,23 @@
-# Chrome
+# Firefox
 FROM elastestbrowsers/utils-x11-base:1.1
 
 ARG VERSION
 
 ########################################################
-# Chrome
+# Firefox
 ########################################################
 
 RUN  \
-        curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-        echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
-        apt-get update && \
-        apt-get -y --no-install-recommends install google-chrome-stable=$VERSION && \
-        chown root:root /opt/google/chrome/chrome-sandbox && \
-        chmod 4755 /opt/google/chrome/chrome-sandbox && \
-		rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+        curl -O http://download-origin.cdn.mozilla.net/pub/firefox/releases/$VERSION/linux-x86_64/en-US/firefox-$VERSION.tar.bz2 && \
+        tar jxf firefox-$VERSION.tar.bz2 -C /opt && \
+        ln -s /opt/firefox/firefox /usr/local/bin && \
+        rm firefox-$VERSION.tar.bz2
 
 ########################################################
 # Selenoid
 ########################################################
 ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
-ADD image/selenoid/chromedriver /usr/local/bin/chromedriver
+ADD image/selenoid/geckodriver /usr/local/bin/geckodriver
 ADD image/selenoid/browsers.json /etc/browsers.json
 
 RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \

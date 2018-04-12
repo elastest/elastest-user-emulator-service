@@ -8,13 +8,14 @@ ARG VERSION
 ########################################################
 
 RUN  \
-        curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-        echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
+        curl -L -o google-chrome.deb -O "https://www.slimjet.com/chrome/download-chrome.php?file=lnx%2Fchrome64_$VERSION.deb" && \
+        dpkg -i google-chrome.deb || true && \
         apt-get update && \
-        apt-get -y --no-install-recommends install google-chrome-stable=$VERSION && \
-        chown root:root /opt/google/chrome/chrome-sandbox && \
-        chmod 4755 /opt/google/chrome/chrome-sandbox && \
-		rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+        apt-get install --fix-broken --yes && \
+        rm google-chrome.deb && \
+        apt-get clean && \
+        apt-get autoremove && \
+        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ########################################################
 # Selenoid
