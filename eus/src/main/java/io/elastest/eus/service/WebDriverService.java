@@ -207,7 +207,9 @@ public class WebDriverService {
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request)
             throws IOException, InterruptedException {
-        String requestContext = this.getRequestContext(request);
+        StringBuffer requestUrl = request.getRequestURL();
+        String requestContext = requestUrl.substring(
+                requestUrl.lastIndexOf(contextPath) + contextPath.length());
         HttpMethod method = HttpMethod.resolve(request.getMethod());
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
@@ -481,8 +483,7 @@ public class WebDriverService {
         RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
         String finalUrl = hubUrl + requestContext;
         HttpEntity<?> finalHttpEntity = optionalHttpEntity.isPresent()
-                ? optionalHttpEntity.get()
-                : httpEntity;
+                ? optionalHttpEntity.get() : httpEntity;
         ResponseEntity<String> response = null;
         log.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
@@ -619,7 +620,8 @@ public class WebDriverService {
 
         DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
                 .exposedPorts(exposedPorts).portBindings(portBindings)
-                .volumes(volumes).binds(volumeBinds).shmSize(shmSize).envs(envs);
+                .volumes(volumes).binds(volumeBinds).shmSize(shmSize)
+                .envs(envs);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
