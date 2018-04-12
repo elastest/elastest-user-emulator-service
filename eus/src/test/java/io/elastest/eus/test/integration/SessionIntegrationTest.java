@@ -98,7 +98,7 @@ public class SessionIntegrationTest {
         });
 
         log.debug("POST /session");
-        String firefoxVersion = "58.0";
+        String firefoxVersion = "59.0";
         String jsonMessage = "{\"capabilities\":{\"alwaysMatch\":{\"acceptInsecureCerts\":true},"
                 + "\"desiredCapabilities\":{\"acceptInsecureCerts\":true,\"browserName\":\"firefox\","
                 + "\"platform\":\"ANY\"," + "\"version\":\"" + firefoxVersion

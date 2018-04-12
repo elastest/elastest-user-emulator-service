@@ -657,16 +657,14 @@ public class WebDriverService {
 
         String etHost = getenv(etHostEnv);
         if (etHost != null) {
-            if (etHost.equalsIgnoreCase("localhost")) {
-                hubIp = dockerService.getContainerIpAddress(hubContainerName);
-
-                vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
-            } else {
+            if (!etHost.equalsIgnoreCase("localhost")) {
                 hubIp = etHost;
                 vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
             }
         }
-        
+
+        dockerService.waitForHostIsReachable(vncUrl);
+
         sessionInfo.setVncContainerName(hubContainerName);
         sessionInfo.setVncUrl(vncUrl);
         sessionInfo.setNoVncBindPort(noVncBindedPort);
