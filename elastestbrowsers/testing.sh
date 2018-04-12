@@ -15,13 +15,15 @@ do
 	docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$BROWSER_VERSION
 	sleep 5
 	CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' firefox)
-	JSON=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"firefox","version":"","platform":"ANY"}}' http://$CONTAINER_IP:4444/wd/hub/session)
+	RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"firefox","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 	docker stop firefox
-	if [ -z $(echo $JSON | jq -r '[ .value | .sessionId ]') ]; then
-		echo "Firefox $BROWSER_VERSION -- Failed!" >> tee $LOG_RESULTS
+	if [[ "$RES" == *200 ]] 
+	then
+		echo "Firefox $BROWSER_VERSION -- Ok!"
+	else
+		echo "Firefox $BROWSER_VERSION -- Fail"
 		exit 1
 	fi
-	echo "Firefox $BROWSER_VERSION -- OK" >> tee $LOG_RESULTS
 done
 
 # Chrome
@@ -39,12 +41,14 @@ do
 	docker run --name chrome $DOCKER_OPS elastestbrowsers/chrome:$BROWSER_VERSION
 	sleep 5
 	CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' chrome)
-	JSON=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"chrome","version":"","platform":"ANY"}}' http://$CONTAINER_IP:4444/wd/hub/session | jq -r '[ .value | .sessionId ]')
+	RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"chrome","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session | jq -r '[ .value | .sessionId ]')
 	docker stop chrome
-	echo $JSON
-	if [ -z "$JSON" ]; then
-		echo "Chrome $BROWSER_VERSION -- Failed!" >> tee $LOG_RESULTS
+	docker stop firefox
+	if [[ "$RES" == *200 ]]
+	then
+		echo "Chrome $BROWSER_VERSION -- Ok!"
+	else
+		echo "Crome $BROWSER_VERSION -- Fail"
 		exit 1
 	fi
-	echo "Chrome $BROWSER_VERSION -- OK" >> tee $LOG_RESULTS
 done
