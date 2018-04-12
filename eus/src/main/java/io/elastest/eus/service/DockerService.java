@@ -149,17 +149,21 @@ public class DockerService {
                 dockerServerIp = getDockerMachineIp();
             } else {
                 if (!containerCheked) {
+                    log.debug("Docker server IP => containerCheked: {}", containerCheked);
                     isRunningInContainer = shellService.isRunningInContainer();
                     containerCheked = true;
                 }
+                log.debug("Docker server IP => isRunningInContainer: {}", isRunningInContainer);
                 if (isRunningInContainer) {
                     dockerServerIp = getContainerIp();
+                    log.debug("Docker server IP => after isrunningincontainer {}", dockerServerIp);
 
                 } else {
                     dockerServerIp = dockerDefaultHostIp;
+                    log.debug("Docker server IP => after NOT isrunningincontainer {}", dockerServerIp);
                 }
             }
-            log.trace("Docker server IP: {}", dockerServerIp);
+            log.debug("Docker server IP: {}", dockerServerIp);
         }
 
         return dockerServerIp;
