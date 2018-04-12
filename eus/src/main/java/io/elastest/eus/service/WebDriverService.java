@@ -32,6 +32,7 @@ import static org.springframework.http.HttpStatus.FOUND;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static java.lang.System.getenv;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -85,6 +86,9 @@ import io.elastest.eus.session.SessionInfo;
 public class WebDriverService {
 
     final Logger log = getLogger(lookup().lookupClass());
+
+    @Value("${et.host.env}")
+    private String etHostEnv;
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
@@ -602,8 +606,8 @@ public class WebDriverService {
         Binding bindVncPort = bindPort(vncPort);
         ExposedPort exposedVncPort = tcp(hubVncExposedPort);
 
-        int noVncPort = dockerService.findRandomOpenPort();
-        Binding bindNoVncPort = bindPort(noVncPort);
+        int noVncBindedPort = dockerService.findRandomOpenPort();
+        Binding bindNoVncPort = bindPort(noVncBindedPort);
         ExposedPort exposedNoVncPort = tcp(noVncExposedPort);
 
         List<PortBinding> portBindings = asList(
@@ -649,10 +653,24 @@ public class WebDriverService {
 
         String vncUrlFormat = "http://%s:%d/" + vncHtml
                 + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = format(vncUrlFormat, hubIp, noVncPort);
+        String vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
+        dockerService.waitForHostIsReachable(vncUrl);
+
+        String etHost = getenv(etHostEnv);
+        if (etHost != null) {
+            if (etHost.equalsIgnoreCase("localhost")) {
+                hubIp = dockerService.getContainerIpAddress(hubContainerName);
+
+                vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
+            } else {
+                hubIp = etHost;
+                vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
+            }
+        }
+
         sessionInfo.setVncContainerName(hubContainerName);
         sessionInfo.setVncUrl(vncUrl);
-        sessionInfo.setNoVncBindPort(noVncPort);
+        sessionInfo.setNoVncBindPort(noVncBindedPort);
 
         String browserId = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
@@ -759,11 +777,4 @@ public class WebDriverService {
         }
         return count;
     }
-
-    public String getRequestContext(HttpServletRequest request) {
-        StringBuffer requestUrl = request.getRequestURL();
-        return requestUrl.substring(
-                requestUrl.lastIndexOf(contextPath) + contextPath.length());
-    }
-
 }
