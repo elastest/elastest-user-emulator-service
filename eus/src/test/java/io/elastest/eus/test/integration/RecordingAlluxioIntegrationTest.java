@@ -67,16 +67,16 @@ public class RecordingAlluxioIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /session/{sessionId}/recording/{hubContainerName}")
+    @DisplayName("GET /session/{sessionId}/recording")
     void testGetRecording() throws Exception {
-        mockMvc.perform(get("/session/sessionId/recording/hubContainerName"))
+        mockMvc.perform(get("/session/sessionId/recording"))
                 .andExpect(status().isInternalServerError());
     }
 
     @Test
-    @DisplayName("DELETE /session/{sessionId}/recording/{hubContainerName}")
+    @DisplayName("DELETE /session/{sessionId}/recording")
     void testDeleteRecording() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/recording/hubContainerName"))
+        mockMvc.perform(delete("/session/sessionId/recording"))
                 .andExpect(status().isInternalServerError());
     }
 

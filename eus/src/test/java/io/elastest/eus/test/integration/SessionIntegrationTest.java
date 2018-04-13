@@ -122,11 +122,6 @@ public class SessionIntegrationTest {
                 .getSessionId();
         log.debug("sessionId {}", sessionId);
         assertNotNull(sessionId);
-        
-        String hubContainerName = jsonService
-                .jsonToObject(responseBody, WebDriverSessionResponse.class)
-                .getHubContainerName();
-        assertNotNull(hubContainerName);
 
         // #2 Get VNC session)
         log.debug("GET /session/{}/vnc", sessionId);
@@ -143,16 +138,16 @@ public class SessionIntegrationTest {
         assertNotNull(sessionId);
 
         // #3 Handle recordings
-        log.debug("GET /session/{}/recording/" + hubContainerName, sessionId);
+        log.debug("GET /session/{}/recording", sessionId);
         response = restTemplate.getForEntity(
-                "/session/" + sessionId + "/recording/" + hubContainerName, String.class);
+                "/session/" + sessionId + "/recording", String.class);
 
         assertEquals(OK, response.getStatusCode());
         assertThat(response.getHeaders().getContentType().toString(),
                 containsString(TEXT_PLAIN_VALUE));
 
-        log.debug("DELETE /session/{}/recording/" + hubContainerName, sessionId);
-        restTemplate.delete("/session/" + sessionId + "/recording/" + hubContainerName);
+        log.debug("DELETE /session/{}/recording", sessionId);
+        restTemplate.delete("/session/" + sessionId + "/recording");
 
         // Exercise #4 Destroy session and close WebSocket
         log.debug("DELETE /session/{}", sessionId);

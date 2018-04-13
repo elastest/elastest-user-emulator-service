@@ -601,8 +601,7 @@ public class WebDriverService {
         Volume recordings = new Volume(containerRecordingFolder);
         List<Volume> volumes = asList(recordings);
 
-        List<Bind> volumeBinds = asList(
-                new Bind(registryFolder + "/" + hubContainerName, recordings));
+        List<Bind> volumeBinds = asList(new Bind(registryFolder, recordings));
 
         // Port binding
         int hubPort = dockerService.findRandomOpenPort();

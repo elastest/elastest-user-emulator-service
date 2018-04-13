@@ -219,18 +219,15 @@ public class EusController implements EusApi {
     @Override
     public ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             HttpServletRequest request) {
         ResponseEntity<String> response;
         try {
             HttpMethod method = HttpMethod.resolve(request.getMethod());
             if (method == GET) {
-                response = recordingService.getRecording(sessionId,
-                        hubContainerName);
+                response = recordingService.getRecording(sessionId);
             } else {
                 // The only option here is DELETE method
-                response = recordingService.deleteRecording(sessionId,
-                        hubContainerName);
+                response = recordingService.deleteRecording(sessionId);
             }
         } catch (Exception e) {
             response = webDriverService.getErrorResponse(

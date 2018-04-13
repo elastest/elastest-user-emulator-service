@@ -161,8 +161,8 @@ public class RecordingService {
         }
     }
 
-    public ResponseEntity<String> getRecording(String sessionId,
-            String hubContainerName) throws IOException {
+    public ResponseEntity<String> getRecording(String sessionId)
+            throws IOException {
         HttpStatus status = OK;
         String recordingFileName = sessionId + registryRecordingExtension;
 
@@ -170,7 +170,7 @@ public class RecordingService {
         // applies to the case of locally stored, and also to the case that the
         // recording has been previously downloaded from Alluxio)
         String urlResponse = contextPath + registryContextPath + "/"
-                + hubContainerName + "/" + recordingFileName;
+                + recordingFileName;
 
         if (!edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is available, recording is store in Alluxio
@@ -184,8 +184,8 @@ public class RecordingService {
         return new ResponseEntity<>(urlResponse, status);
     }
 
-    public ResponseEntity<String> deleteRecording(String sessionId,
-            String hubContainerName) throws IOException {
+    public ResponseEntity<String> deleteRecording(String sessionId)
+            throws IOException {
         log.debug("Deleting recording of session {}", sessionId);
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
@@ -194,8 +194,8 @@ public class RecordingService {
         boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
-            deleteRecording = Files.deleteIfExists(Paths.get(registryFolder
-                    + hubContainerName + "/" + recordingFileName));
+            deleteRecording = Files.deleteIfExists(
+                    Paths.get(registryFolder + recordingFileName));
             deleteMetadata = Files.deleteIfExists(
                     Paths.get(registryFolder + metadataFileName));
 

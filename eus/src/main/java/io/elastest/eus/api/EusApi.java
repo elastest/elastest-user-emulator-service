@@ -256,11 +256,10 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}", produces = {
+    @RequestMapping(value = "/session/{sessionId}/recording", produces = {
             "text/plain" }, method = { GET, DELETE })
     ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             HttpServletRequest request);
 
     /**
