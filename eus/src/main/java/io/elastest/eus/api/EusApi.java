@@ -263,7 +263,7 @@ public interface EusApi {
             HttpServletRequest request);
 
     /**
-     * POST /session/{sessionId}/recording/start/{videoName}
+     * POST /session/{sessionId}/recording/{hubContainerName}/start
      *
      * Start MP4 recording
      */
@@ -273,7 +273,7 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}/start/", produces = {
+    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}/start", produces = {
             "text/plain" }, consumes = { "text/plain" }, method = { POST })
     ResponseEntity<String> startRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
@@ -282,7 +282,7 @@ public interface EusApi {
             HttpServletRequest request);
 
     /**
-     * DELETE /session/{sessionId}/recording/stop
+     * DELETE /session/{sessionId}/recording/{hubContainerName}/stop
      *
      * Stop MP4 recording
      */

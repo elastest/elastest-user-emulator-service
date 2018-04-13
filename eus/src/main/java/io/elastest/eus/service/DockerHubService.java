@@ -237,6 +237,7 @@ public class DockerHubService {
     }
 
     public String getVersionFromImage(String image) {
-        return image.substring(image.indexOf('_') + 1);
+        String version = image.split(":")[1];
+        return version != null ? version : image;
     }
 }

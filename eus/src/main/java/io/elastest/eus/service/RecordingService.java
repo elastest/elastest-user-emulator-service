@@ -111,8 +111,8 @@ public class RecordingService {
 
     public void startRecording(String sessionId, String hubContainerName,
             String recordingFileName) throws IOException, InterruptedException {
-        log.debug("Recording session {} in container {}", sessionId,
-                hubContainerName);
+        log.debug("Recording session {} in container {} with file name {}",
+                sessionId, hubContainerName, recordingFileName);
 
         dockerService.execCommand(hubContainerName, false, startRecordingScript,
                 "-n", recordingFileName);
