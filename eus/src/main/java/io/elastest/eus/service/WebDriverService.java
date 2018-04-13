@@ -298,8 +298,9 @@ public class WebDriverService {
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
 
-        if (isCreateSession) {
+        if (isCreateSession && !sessionInfo.isManualRecording()) {
             // Start Recording
+            log.debug("Session with automatic recording");
             recordingService.startRecording(sessionInfo);
         }
 
@@ -680,6 +681,11 @@ public class WebDriverService {
                 .getDesiredCapabilities().getBrowserId();
         sessionInfo.setBrowserId(browserId);
 
+        boolean manualRecording = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().isManualRecording();
+        sessionInfo.setManualRecording(manualRecording);
+
         return sessionInfo;
     }
 
@@ -693,7 +699,9 @@ public class WebDriverService {
             }
 
             if (sessionInfo.getVncContainerName() != null) {
+                // Stop recording even if manually managed
                 recordingService.stopRecording(sessionInfo);
+                recordingService.storeMetadata(sessionInfo);
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 
@@ -710,13 +718,6 @@ public class WebDriverService {
             sessionService.removeSession(sessionInfo.getSessionId());
 
             timeoutService.shutdownSessionTimer(sessionInfo);
-        }
-
-        try {
-            recordingService.storeMetadata(sessionInfo);
-        } catch (Exception e) {
-            log.error("There was a problem saving session metadata {}",
-                    sessionInfo.getSessionId(), e);
         }
         if (timeout) {
             throw new EusException("Timeout of " + sessionInfo.getTimeout()

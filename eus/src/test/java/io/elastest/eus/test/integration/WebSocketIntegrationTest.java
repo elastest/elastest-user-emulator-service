@@ -141,7 +141,7 @@ public class WebSocketIntegrationTest {
     void testRecordings() throws Exception {
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setBrowser("chrome");
-        sessionInfo.setVersion("59");
+        sessionInfo.setVersion("65");
         String sessionId = "my-session-id";
         sessionService.putSession(sessionId, sessionInfo);
 
@@ -149,9 +149,23 @@ public class WebSocketIntegrationTest {
 
         String sessionInfoToJson = jsonService
                 .objectToJson(new WebSocketRecordedSession(sessionInfo));
-        File file = new File(registryFolder + jsonFileName);
-        writeStringToFile(file, sessionInfoToJson, Charset.defaultCharset());
+        try {
+            File dir = new File(registryFolder);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) {
+                    throw new Exception("The " + registryFolder
+                            + " directory could not be created");
+                }
+            }
+            File file = new File(registryFolder + jsonFileName);
+            log.debug("Saving {} file into {} folder", jsonFileName,
+                    registryFolder);
 
+            writeStringToFile(file, sessionInfoToJson,
+                    Charset.defaultCharset());
+        } catch (Exception e) {
+            log.debug("Error on create {} file", jsonFileName, e);
+        }
         String jsonMessage = jsonService
                 .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);

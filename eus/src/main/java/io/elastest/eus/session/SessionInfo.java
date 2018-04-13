@@ -49,6 +49,7 @@ public class SessionInfo {
     private int noVncBindPort;
     private int timeout;
     private String browserId;
+    private boolean manualRecording;
 
     public String getHubUrl() {
         return hubUrl;
@@ -170,10 +171,17 @@ public class SessionInfo {
         this.browserId = browserId;
     }
 
+    public boolean isManualRecording() {
+        return manualRecording;
+    }
+
+    public void setManualRecording(boolean manualRecording) {
+        this.manualRecording = manualRecording;
+    }
+
     public String getIdForFiles() {
         return browserId != null && !browserId.isEmpty()
-                ? browserId + "_" + sessionId
-                : sessionId;
+                ? browserId + "_" + sessionId : sessionId;
     }
 
 }

@@ -90,6 +90,7 @@ public class WebDriverCapabilities {
         boolean live;
 
         String browserId;
+        boolean manualRecording;
 
         public DesiredCapabilities() {
             // Empty default construct
@@ -142,6 +143,14 @@ public class WebDriverCapabilities {
             return browserId;
         }
 
+        public boolean isManualRecording() {
+            return manualRecording;
+        }
+
+        public void setManualRecording(boolean manualRecording) {
+            this.manualRecording = manualRecording;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -152,7 +161,8 @@ public class WebDriverCapabilities {
                     + ", getOperaOptions()=" + getOperaOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
                     + ", getFirefoxProfile()=" + getFirefoxProfile()
-                    + ", getBrowserId()=" + getBrowserId() + "]";
+                    + ", getBrowserId()=" + getBrowserId()
+                    + ", isManualRecording()=" + isManualRecording() + "]";
         }
 
     }
