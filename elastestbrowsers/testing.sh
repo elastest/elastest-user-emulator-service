@@ -43,7 +43,6 @@ do
 	CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' chrome)
 	RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"chrome","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 	docker stop chrome
-	docker stop firefox
 	if [[ "$RES" == *200 ]]
 	then
 		echo "Chrome $BROWSER_VERSION -- Ok!" | tee $LOG_RESULTS
