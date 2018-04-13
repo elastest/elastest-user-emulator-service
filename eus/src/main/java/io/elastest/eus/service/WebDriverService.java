@@ -694,7 +694,6 @@ public class WebDriverService {
 
             if (sessionInfo.getVncContainerName() != null) {
                 recordingService.stopRecording(sessionInfo);
-                recordingService.storeMetadata(sessionInfo);
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 
@@ -711,6 +710,13 @@ public class WebDriverService {
             sessionService.removeSession(sessionInfo.getSessionId());
 
             timeoutService.shutdownSessionTimer(sessionInfo);
+        }
+
+        try {
+            recordingService.storeMetadata(sessionInfo);
+        } catch (Exception e) {
+            log.error("There was a problem saving session metadata {}",
+                    sessionInfo.getSessionId(), e);
         }
         if (timeout) {
             throw new EusException("Timeout of " + sessionInfo.getTimeout()
