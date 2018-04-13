@@ -9,14 +9,14 @@ node('TESTDOCKER') {
             stage "Tests"
                 echo ("Starting tests")
                 try {
-                    sh 'cd eus; mvn clean test -Djenkins=true'
+                    sh 'cd eus; mvn clean test -Djenkins=true -Det.files.path=/tmp/'
                 } finally {
                     step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                 }
 
             stage "Package"
                 echo ("Packaging")
-                sh 'cd eus; mvn package -DskipTests'
+                sh 'cd eus; mvn package -DskipTests -Det.files.path=/tmp/'
 
             stage "Archive artifacts"
                 archiveArtifacts artifacts: 'eus/target/*.jar'
