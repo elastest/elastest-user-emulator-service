@@ -150,6 +150,18 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, metadata is stored locally
 
+            try {
+                File dir = new File(registryFolder);
+                if (!dir.exists()) {
+                    if (!dir.mkdirs()) {
+                        throw new Exception("The " + registryFolder
+                                + " directory could not be created");
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("Error on create {} file", metadataFileName, e);
+            }
+
             FileUtils.writeStringToFile(
                     new File(registryFolder + metadataFileName),
                     sessionInfoToJson, defaultCharset());
