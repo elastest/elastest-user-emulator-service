@@ -33,6 +33,7 @@ public class WebDriverSessionResponse {
     Object os;
     Object state;
     Object hCode;
+    String hubContainerName;
 
     @JsonProperty("class")
     Object clazz;
@@ -73,13 +74,17 @@ public class WebDriverSessionResponse {
         return clazz;
     }
 
+    public String getHubContainerName() {
+        return hubContainerName;
+    }
+
     @Override
     public String toString() {
         return "WebDriverSessionResponse [getSessionId()=" + getSessionId()
                 + ", getStatus()=" + getStatus() + ", getValue()=" + getValue()
                 + ", getOs()=" + getOs() + ", getState()=" + getState()
                 + ", gethCode()=" + gethCode() + ", getClazz()=" + getClazz()
-                + "]";
+                + ", getHubContainerName()=" + getHubContainerName() + "]";
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

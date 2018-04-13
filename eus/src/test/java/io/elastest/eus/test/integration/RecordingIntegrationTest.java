@@ -67,17 +67,17 @@ public class RecordingIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /session/{sessionId}/recording")
+    @DisplayName("GET /session/{sessionId}/recording/{hubContainerName}")
     void testGetRecording() throws Exception {
-        mockMvc.perform(get("/session/sessionId/recording"))
+        mockMvc.perform(get("/session/sessionId/recording/hubContainerName"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("sessionId.mp4")));
     }
 
     @Test
-    @DisplayName("DELETE /session/{sessionId}/recording")
+    @DisplayName("DELETE /session/{sessionId}/recording/{hubContainerName}")
     void testDeleteRecording() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/recording"))
+        mockMvc.perform(delete("/session/sessionId/recording/hubContainerName"))
                 .andExpect(status().isInternalServerError());
     }
 

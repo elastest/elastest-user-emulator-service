@@ -109,30 +109,34 @@ public class RecordingService {
         this.alluxioService = alluxioService;
     }
 
+    public void startRecording(String sessionId, String hubContainerName,
+            String recordingFileName) throws IOException, InterruptedException {
+        log.debug("Recording session {} in container {}", sessionId,
+                hubContainerName);
+
+        dockerService.execCommand(hubContainerName, false, startRecordingScript,
+                "-n", recordingFileName);
+    }
+
     public void startRecording(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
         String sessionId = sessionInfo.getSessionId();
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        String hubContainerIp = dockerService.getDockerServerIp();
-        String hubContainerPort = String
-                .valueOf(sessionInfo.getHubVncBindPort());
-
-        log.debug("Recording session {} in container {} ({}:{})", sessionId,
-                noNvcContainerName, hubContainerIp, hubContainerPort);
-
+        String noVncContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionInfo.getIdForFiles();
-        
-        dockerService.execCommand(noNvcContainerName, false,
-                startRecordingScript, "-n", recordingFileName);
+
+        this.startRecording(sessionId, noVncContainerName, recordingFileName);
     }
 
     public void stopRecording(SessionInfo sessionInfo)
             throws IOException, InterruptedException {
         String noNvcContainerName = sessionInfo.getVncContainerName();
-        log.debug("Stopping recording of container {}", noNvcContainerName);
+        this.stopRecording(noNvcContainerName);
+    }
 
-        dockerService.execCommand(noNvcContainerName, false,
-                stopRecordingScript);
+    public void stopRecording(String hubContainer)
+            throws IOException, InterruptedException {
+        log.debug("Stopping recording of container {}", hubContainer);
+        dockerService.execCommand(hubContainer, false, stopRecordingScript);
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {
@@ -157,8 +161,8 @@ public class RecordingService {
         }
     }
 
-    public ResponseEntity<String> getRecording(String sessionId)
-            throws IOException {
+    public ResponseEntity<String> getRecording(String sessionId,
+            String hubContainerName) throws IOException {
         HttpStatus status = OK;
         String recordingFileName = sessionId + registryRecordingExtension;
 
@@ -166,7 +170,7 @@ public class RecordingService {
         // applies to the case of locally stored, and also to the case that the
         // recording has been previously downloaded from Alluxio)
         String urlResponse = contextPath + registryContextPath + "/"
-                + recordingFileName;
+                + hubContainerName + "/" + recordingFileName;
 
         if (!edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is available, recording is store in Alluxio
@@ -180,8 +184,8 @@ public class RecordingService {
         return new ResponseEntity<>(urlResponse, status);
     }
 
-    public ResponseEntity<String> deleteRecording(String sessionId)
-            throws IOException {
+    public ResponseEntity<String> deleteRecording(String sessionId,
+            String hubContainerName) throws IOException {
         log.debug("Deleting recording of session {}", sessionId);
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
@@ -190,8 +194,8 @@ public class RecordingService {
         boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
-            deleteRecording = Files.deleteIfExists(
-                    Paths.get(registryFolder + recordingFileName));
+            deleteRecording = Files.deleteIfExists(Paths.get(registryFolder
+                    + hubContainerName + "/" + recordingFileName));
             deleteMetadata = Files.deleteIfExists(
                     Paths.get(registryFolder + metadataFileName));
 

@@ -24,6 +24,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -218,21 +219,61 @@ public class EusController implements EusApi {
     @Override
     public ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             HttpServletRequest request) {
         ResponseEntity<String> response;
         try {
             HttpMethod method = HttpMethod.resolve(request.getMethod());
             if (method == GET) {
-                response = recordingService.getRecording(sessionId);
+                response = recordingService.getRecording(sessionId,
+                        hubContainerName);
             } else {
                 // The only option here is DELETE method
-                response = recordingService.deleteRecording(sessionId);
+                response = recordingService.deleteRecording(sessionId,
+                        hubContainerName);
             }
         } catch (Exception e) {
-            response = webDriverService
-                    .getErrorResponse("Exception handling recording", e);
+            response = webDriverService.getErrorResponse(
+                    "Exception handling recording in session " + sessionId, e);
         }
         return response;
+    }
+
+    @Override
+    public ResponseEntity<String> startRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName,
+            HttpServletRequest request) {
+        try {
+            recordingService.startRecording(sessionId, hubContainerName,
+                    videoName);
+            return new ResponseEntity<String>(OK);
+
+        } catch (Exception e) {
+            ResponseEntity<String> response = webDriverService
+                    .getErrorResponse(
+                            "Exception starting recording with name "
+                                    + videoName + " in session " + sessionId,
+                            e);
+            return response;
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> stopRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            HttpServletRequest request) {
+        try {
+            recordingService.stopRecording(sessionId);
+            return new ResponseEntity<String>(OK);
+
+        } catch (Exception e) {
+            ResponseEntity<String> response = webDriverService.getErrorResponse(
+                    "Exception stopping recording in session " + sessionId, e);
+            return response;
+        }
     }
 
 }

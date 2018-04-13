@@ -307,6 +307,13 @@ public class WebDriverService {
         handleTimeout(requestContext, method, sessionInfo, liveSession,
                 isCreateSession);
 
+        // Send Hub Container name too
+
+        String jqSetHubContainerName = "walk(if type == \"object\" then .hubContainerName += \""
+                + sessionInfo.getHubContainerName() + "\"  else . end)";
+        responseBody = jsonService.processJsonWithJq(responseBody,
+                jqSetHubContainerName);
+
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 

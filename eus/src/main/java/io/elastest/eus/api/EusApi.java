@@ -23,6 +23,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -253,12 +254,50 @@ public interface EusApi {
             "Remote control" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/{sessionId}/recording", produces = {
+    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}", produces = {
             "text/plain" }, method = { GET, DELETE })
     ResponseEntity<String> recording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            HttpServletRequest request);
+
+    /**
+     * POST /session/{sessionId}/recording/start/{videoName}
+     *
+     * Start MP4 recording
+     */
+    @ApiOperation(value = "Start recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}/start/", produces = {
+            "text/plain" }, consumes = { "text/plain" }, method = { POST })
+    ResponseEntity<String> startRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName,
+            HttpServletRequest request);
+
+    /**
+     * DELETE /session/{sessionId}/recording/stop
+     *
+     * Stop MP4 recording
+     */
+    @ApiOperation(value = "Stop recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/recording/{hubContainerName}/stop", produces = {
+            "text/plain" }, method = { DELETE })
+    ResponseEntity<String> stopRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             HttpServletRequest request);
 
 }

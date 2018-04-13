@@ -31,6 +31,7 @@ public class WebSocketSessionInfoEntry {
     String browser;
     String version;
     String creationTime;
+    String hubContainerName;
 
     public WebSocketSessionInfoEntry() {
         // Empty default construct (needed by Jackson)
@@ -42,6 +43,7 @@ public class WebSocketSessionInfoEntry {
         this.browser = sessionInfo.getBrowser();
         this.version = sessionInfo.getVersion();
         this.creationTime = sessionInfo.getCreationTime();
+        this.hubContainerName = sessionInfo.getHubContainerName();
     }
 
     public String getId() {
@@ -64,12 +66,17 @@ public class WebSocketSessionInfoEntry {
         return creationTime;
     }
 
+    public String getHubContainerName() {
+        return hubContainerName;
+    }
+
     @Override
     public String toString() {
         return "WebSocketSessionInfoEntry [getId()=" + getId() + ", getUrl()="
                 + getUrl() + ", getBrowser()=" + getBrowser()
                 + ", getVersion()=" + getVersion() + ", getCreationTime()="
-                + getCreationTime() + "]";
+                + getCreationTime() + ", getHubContainerName()="
+                + getHubContainerName() + "]";
     }
 
 }
