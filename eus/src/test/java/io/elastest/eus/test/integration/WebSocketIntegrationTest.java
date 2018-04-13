@@ -157,15 +157,16 @@ public class WebSocketIntegrationTest {
                             + " directory could not be created");
                 }
             }
-            File file = new File(registryFolder + jsonFileName);
-            log.debug("Saving {} file into {} folder", jsonFileName,
-                    registryFolder);
-
-            writeStringToFile(file, sessionInfoToJson,
-                    Charset.defaultCharset());
         } catch (Exception e) {
             log.debug("Error on create {} file", jsonFileName, e);
         }
+
+        File file = new File(registryFolder + jsonFileName);
+        log.debug("Saving {} file into {} folder", jsonFileName,
+                registryFolder);
+
+        writeStringToFile(file, sessionInfoToJson, Charset.defaultCharset());
+
         String jsonMessage = jsonService
                 .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);
