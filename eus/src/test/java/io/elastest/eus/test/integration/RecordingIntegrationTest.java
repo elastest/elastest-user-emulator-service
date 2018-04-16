@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,6 +65,23 @@ public class RecordingIntegrationTest {
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
+    }
+
+    @Test
+    @DisplayName("POST /session/{sessionId}/recording/null/start")
+    void testStartRecording() throws Exception {
+        String videoName = "video1";
+
+        mockMvc.perform(post("/session/sessionId/recording/null/start")
+                .content(videoName).contentType("text/plain"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("DELETE /session/{sessionId}/recording/null/stop")
+    void testStopRecording() throws Exception {
+        mockMvc.perform(delete("/session/sessionId/recording/null/stop"))
+                .andExpect(status().isOk());
     }
 
     @Test

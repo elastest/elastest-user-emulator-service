@@ -73,7 +73,7 @@ public class DockerHubNameSpaceImages {
 
     }
 
-    class Image {
+    public class Image {
         long size;
         String architecture;
         Object variant;
