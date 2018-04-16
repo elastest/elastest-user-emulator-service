@@ -133,10 +133,10 @@ public class RecordingService {
         this.stopRecording(noNvcContainerName);
     }
 
-    public void stopRecording(String hubContainer)
+    public void stopRecording(String hubContainerName)
             throws IOException, InterruptedException {
-        log.debug("Stopping recording of container {}", hubContainer);
-        dockerService.execCommand(hubContainer, false, stopRecordingScript);
+        log.debug("Stopping recording of container {}", hubContainerName);
+        dockerService.execCommand(hubContainerName, true, stopRecordingScript);
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {

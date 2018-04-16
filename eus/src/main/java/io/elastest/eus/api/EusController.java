@@ -263,7 +263,7 @@ public class EusController implements EusApi {
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             HttpServletRequest request) {
         try {
-            recordingService.stopRecording(sessionId);
+            recordingService.stopRecording(hubContainerName);
             return new ResponseEntity<String>(OK);
 
         } catch (Exception e) {
