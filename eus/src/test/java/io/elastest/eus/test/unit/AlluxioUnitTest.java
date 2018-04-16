@@ -26,6 +26,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -73,6 +74,7 @@ public class AlluxioUnitTest {
 
     // Test data
     String filename = "foo";
+    String nonExistentFilename = "non-existent-file";
     String streamId = "1";
     String contentFile = "dummy";
 
@@ -130,6 +132,14 @@ public class AlluxioUnitTest {
     void testGetFile() throws IOException {
         String response = alluxioService.getFileAsString(filename);
         assertThat(response, equalTo(contentFile));
+    }
+
+    @Test
+    @DisplayName("Get Non-Existent File")
+    void testGetNonExistentFile() throws IOException {
+        assertThrows(Exception.class, () -> {
+            alluxioService.getFileAsString(nonExistentFilename);
+        });
     }
 
     @Test
