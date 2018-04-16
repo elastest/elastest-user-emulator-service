@@ -162,7 +162,7 @@ public class SessionIntegrationTest {
     void notFoundSession() {
         log.debug("GET /session/nofound/vnc");
         ResponseEntity<String> response = restTemplate
-                .getForEntity("/session/nofound/url", String.class);
+                .getForEntity("/session/nofound/vnc", String.class);
 
         assertEquals(NOT_FOUND, response.getStatusCode());
     }

@@ -20,8 +20,12 @@ import static com.github.dockerjava.api.model.ExposedPort.tcp;
 import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
 import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -69,6 +73,22 @@ public class DockerUnitTest {
                     dockerBuilder("", "").portBindings(portBindings).build());
         });
 
+    }
+
+    @Test
+    @DisplayName("Try to start a container with invalid input")
+    void testDoPing() throws IOException {
+        String ip = "localhost";
+        assertThat(dockerService.doPing(ip),
+                anyOf(equalTo("127.0.0.1"), equalTo(ip)));
+    }
+
+    @Test
+    @DisplayName("Try to get a non-existent container ip")
+    void testContainerAndGetIp() throws InterruptedException, IOException {
+        assertThrows(Exception.class, () -> {
+            dockerService.getContainerIpAddress(null);
+        });
     }
 
 }

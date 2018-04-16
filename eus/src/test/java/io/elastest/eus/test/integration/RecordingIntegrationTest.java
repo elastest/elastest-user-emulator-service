@@ -68,19 +68,21 @@ public class RecordingIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /session/{sessionId}/recording/null/start")
+    @DisplayName("POST /session/{sessionId}/recording/hubContainerName/start")
     void testStartRecording() throws Exception {
         String videoName = "video1";
 
-        mockMvc.perform(post("/session/sessionId/recording/null/start")
-                .content(videoName).contentType("text/plain"))
+        mockMvc.perform(
+                post("/session/sessionId/recording/hubContainerName/start")
+                        .content(videoName).contentType("text/plain"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("DELETE /session/{sessionId}/recording/null/stop")
+    @DisplayName("DELETE /session/{sessionId}/recording/hubContainerName/stop")
     void testStopRecording() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/recording/null/stop"))
+        mockMvc.perform(
+                delete("/session/sessionId/recording/hubContainerName/stop"))
                 .andExpect(status().isOk());
     }
 
