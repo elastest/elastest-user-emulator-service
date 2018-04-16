@@ -298,10 +298,27 @@ public class WebDriverService {
         HttpStatus responseStatus = sessionResponse(requestContext, method,
                 sessionInfo, liveSession, responseBody);
 
-        if (isCreateSession && !sessionInfo.isManualRecording()) {
-            // Start Recording
-            log.debug("Session with automatic recording");
-            recordingService.startRecording(sessionInfo);
+        if (isCreateSession) {
+            // Maximize Browser Window
+            String maximizeChrome = "/window/:windowHandle/maximize";
+            String maximizeOther = "/window/maximize";
+            try {
+                exchange(httpEntity,
+                        requestContext + "/" + sessionInfo.getSessionId()
+                                + maximizeChrome,
+                        method, sessionInfo, optionalHttpEntity, false);
+            } catch (Exception e) {
+                exchange(httpEntity,
+                        requestContext + "/" + sessionInfo.getSessionId()
+                                + maximizeOther,
+                        method, sessionInfo, optionalHttpEntity, false);
+            }
+            // Start Recording if not is manual recording
+            if (!sessionInfo.isManualRecording()) {
+                // Start Recording
+                log.debug("Session with automatic recording");
+                recordingService.startRecording(sessionInfo);
+            }
         }
 
         // Handle timeout
@@ -312,6 +329,7 @@ public class WebDriverService {
 
         String jqSetHubContainerName = "walk(if type == \"object\" then .hubContainerName += \""
                 + sessionInfo.getHubContainerName() + "\"  else . end)";
+
         responseBody = jsonService.processJsonWithJq(responseBody,
                 jqSetHubContainerName);
 
@@ -449,6 +467,13 @@ public class WebDriverService {
             String jqOperaBinary = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"operaOptions\": {\"args\": [], \"binary\": \"/usr/bin/opera\", \"extensions\": [] } }  else . end)";
             newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                     jqOperaBinary);
+        }
+
+        // JSON processing to remove banner if chrome
+        if (browserName.equalsIgnoreCase("chrome")) {
+            String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"chromeOptions\": {\"args\": [\"disable-infobars\"]} } else . end)";
+            newRequestBody = jsonService.processJsonWithJq(newRequestBody,
+                    jqChromeBanner);
         }
 
         // JSON processing to remove browserId
