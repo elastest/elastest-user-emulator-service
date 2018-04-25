@@ -471,7 +471,8 @@ public class WebDriverService {
 
         // JSON processing to remove banner if chrome
         if (browserName.equalsIgnoreCase("chrome")) {
-            String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"chromeOptions\": {\"args\": [\"disable-infobars\"]} } else . end)";
+            // Concat 
+            String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities.chromeOptions.args += .desiredCapabilities.chromeOptions.args + [\"disable-infobars\"] else . end)";
             newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                     jqChromeBanner);
         }
