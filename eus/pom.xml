@@ -6,7 +6,7 @@
 	<groupId>io.elastest.eus</groupId>
 	<artifactId>user-emulator-service</artifactId>
 	<packaging>jar</packaging>
-	<version>0.9.0</version>
+	<version>0.9.1-SNAPSHOT</version>
 
 	<name>${project.groupId}:${project.artifactId}</name>
 	<description>ElasTest User Emulator Service (EUS): This service enables the impersonation of end-users’ in their tests through GUI instrumentation and through mechanisms for QoS and QoE evaluation.</description>
