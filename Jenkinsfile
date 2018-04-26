@@ -23,8 +23,8 @@ node('TESTDOCKER') {
 
             stage "Build Docker images"
                 echo ("Building")
-                sh 'docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y-%m-%dT%H:%M:%S) -f eus/Dockerfile . -t elastest/eus'
-                def eusImage = docker.image('elastest/eus')
+                sh 'docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y-%m-%dT%H:%M:%S) -f eus/Dockerfile . -t elastest/eus:0.9.0'
+                def eusImage = docker.image('elastest/eus:0.9.0')
 
             stage "Run images"
                 eusImage.run()
