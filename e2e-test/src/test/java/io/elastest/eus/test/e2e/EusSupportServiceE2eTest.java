@@ -52,59 +52,65 @@ import io.github.bonigarcia.SeleniumExtension;
 @ExtendWith(SeleniumExtension.class)
 public class EusSupportServiceE2eTest extends EusBaseTest {
 
-	final Logger log = getLogger(lookup().lookupClass());
+    final Logger log = getLogger(lookup().lookupClass());
 
-	@Test
-	@DisplayName("EUS as support service")
-	void testSupportService(@DockerBrowser(type = CHROME) RemoteWebDriver driver) throws InterruptedException {
-		this.driver = driver;
+    @Test
+    @DisplayName("EUS as support service")
+    void testSupportService(
+            @DockerBrowser(type = CHROME) RemoteWebDriver driver)
+            throws InterruptedException {
+        this.driver = driver;
 
-		log.info("Navigate to TORM and start support service");
-		driver.manage().window().setSize(new Dimension(1024, 1024));
-		driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
-		if (secureElastest) {
-			driver.get(secureTorm);
-		} else {
-			driver.get(tormUrl);
-		}
-		startTestSupportService(driver, "EUS");
+        log.info("Navigate to TORM and start support service");
+        driver.manage().window().setSize(new Dimension(1024, 1024));
+        driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
+        if (secureElastest) {
+            driver.get(secureTorm);
+        } else {
+            driver.get(tormUrl);
+        }
+        startTestSupportService(driver, "EUS");
 
-		log.info("Select Chrome as browser and start session");
-		WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
-		By chromeRadioButton = By.id("chrome_radio");
-		waitElement.until(visibilityOfElementLocated(chromeRadioButton));
-		driver.findElement(chromeRadioButton).click();
-		driver.findElement(By.id("start_session")).click();
+        log.info("Select Chrome as browser and start session");
+        WebDriverWait waitElement = new WebDriverWait(driver, 30); // seconds
+        By chromeRadioButton = By.id("chrome_radio");
+        waitElement.until(visibilityOfElementLocated(chromeRadioButton));
+        driver.findElement(chromeRadioButton).click();
+        driver.findElement(By.id("start_session")).click();
 
-		log.info("Wait to load browser");
-		By iframe = By.id("eusBrowser");
-		WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
-		waitBrowser.until(visibilityOfElementLocated(iframe));
-		driver.switchTo().frame(driver.findElement(iframe));
+        log.info("Wait to load browser");
+        By eusBrowser = By.id("eusBrowser");
+        WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
+        driver.findElement(eusBrowser).click();
+        waitBrowser.until(invisibilityOfElementLocated(eusBrowser));
 
-		log.info("Click browser navigation bar and navigate");
-		WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
-		new Actions(driver).moveToElement(canvas, 142, 45).click().build().perform();
-		canvas.sendKeys("elastest.io" + RETURN);
-		int navigationTimeSec = 5;
-		log.info("Waiting {} secons (simulation of manual navigation)", navigationTimeSec);
-		sleep(SECONDS.toMillis(navigationTimeSec));
+        log.info("Click browser navigation bar and navigate");
+        WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
+        new Actions(driver).moveToElement(canvas, 142, 45).click().build()
+                .perform();
+        canvas.sendKeys("elastest.io" + RETURN);
+        int navigationTimeSec = 5;
+        log.info("Waiting {} secons (simulation of manual navigation)",
+                navigationTimeSec);
+        sleep(SECONDS.toMillis(navigationTimeSec));
 
-		log.info("Close browser and wait to dispose iframe");
-		driver.switchTo().defaultContent();
-		driver.findElement(By.id("close_dialog")).click();
-		waitElement.until(invisibilityOfElementLocated(By.cssSelector("md-dialog-container")));
+        log.info("Close browser and wait to dispose iframe");
+        driver.switchTo().defaultContent();
+        driver.findElement(By.id("close_dialog")).click();
+        waitElement.until(invisibilityOfElementLocated(
+                By.cssSelector("md-dialog-container")));
 
-		log.info("View recording");
-		driver.findElement(By.id("view_recording")).click();
-		sleep(SECONDS.toMillis(navigationTimeSec));
-		driver.findElement(By.id("close_dialog")).click();
-		waitElement.until(invisibilityOfElementLocated(By.cssSelector("md-dialog-container")));
+        log.info("View recording");
+        driver.findElement(By.id("view_recording")).click();
+        sleep(SECONDS.toMillis(navigationTimeSec));
+        driver.findElement(By.id("close_dialog")).click();
+        waitElement.until(invisibilityOfElementLocated(
+                By.cssSelector("md-dialog-container")));
 
-		log.info("Delete recording");
-		By deleteRecording = By.id("delete_recording");
-		driver.findElement(deleteRecording).click();
-		waitElement.until(invisibilityOfElementLocated(deleteRecording));
-	}
+        log.info("Delete recording");
+        By deleteRecording = By.id("delete_recording");
+        driver.findElement(deleteRecording).click();
+        waitElement.until(invisibilityOfElementLocated(deleteRecording));
+    }
 
 }
