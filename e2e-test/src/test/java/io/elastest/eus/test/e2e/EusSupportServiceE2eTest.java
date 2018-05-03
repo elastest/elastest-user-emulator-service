@@ -85,7 +85,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         waitBrowser.until(visibilityOfElementLocated(eusBrowser));
 
         log.info("Click browser navigation bar and navigate");
-        WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
+        WebElement canvas = driver.findElement(By.id("vnc_canvas"));
         new Actions(driver).moveToElement(canvas, 142, 45).click().build()
                 .perform();
         canvas.sendKeys("elastest.io" + RETURN);
