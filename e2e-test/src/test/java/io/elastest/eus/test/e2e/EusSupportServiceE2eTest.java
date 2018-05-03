@@ -82,7 +82,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         By eusBrowser = By.id("eusBrowser");
         WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
         driver.findElement(eusBrowser).click();
-        waitBrowser.until(invisibilityOfElementLocated(eusBrowser));
+        waitBrowser.until(visibilityOfElementLocated(eusBrowser));
 
         log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("noVNC_canvas"));
