@@ -77,7 +77,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 		driver.findElement(By.id("start_session")).click();
 
 		log.info("Wait to load browser");
-		By iframe = By.id("eus_iframe");
+		By iframe = By.id("eusBrowser");
 		WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
 		waitBrowser.until(visibilityOfElementLocated(iframe));
 		driver.switchTo().frame(driver.findElement(iframe));
