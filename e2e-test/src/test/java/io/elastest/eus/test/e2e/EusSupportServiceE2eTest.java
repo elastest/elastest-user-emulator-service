@@ -72,7 +72,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");
-        WebDriverWait waitElement = new WebDriverWait(driver, 50); // seconds
+        WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
         By chromeRadioButton = By.id("chrome_radio");
         waitElement.until(visibilityOfElementLocated(chromeRadioButton));
         driver.findElement(chromeRadioButton).click();
@@ -85,16 +85,18 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         driver.findElement(eusBrowser).click();
 
         log.info("Click browser navigation bar and navigate");
-        WebElement canvas = driver.findElement(By.id("vnc_canvas"));
-        new Actions(driver).moveToElement(canvas, 182, 45).click().build()
-                .perform();
-        canvas.sendKeys("elastest.io" + RETURN);
+        By vncCanvas = By.id("vnc_canvas");
+        WebElement canvas = driver.findElement(vncCanvas);
+        waitElement.until(visibilityOfElementLocated(vncCanvas));
+        sleep(SECONDS.toMillis(2));
+        new Actions(driver).moveToElement(canvas, 80, 16).click()
+                .sendKeys("elastest.io" + RETURN).build().perform();
         int navigationTimeSec = 5;
-        log.info("Waiting {} secons (simulation of manual navigation)",
+        log.info("Waiting {} seconds (simulation of manual navigation)",
                 navigationTimeSec);
         sleep(SECONDS.toMillis(navigationTimeSec));
 
-        log.info("Close browser and wait to dispose iframe");
+        log.info("Close browser and wait to dispose canvas");
         driver.switchTo().defaultContent();
         driver.findElement(By.id("close_dialog")).click();
         waitElement.until(invisibilityOfElementLocated(
