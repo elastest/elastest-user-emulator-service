@@ -81,8 +81,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         log.info("Wait to load browser");
         By eusBrowser = By.id("eusBrowser");
         WebDriverWait waitBrowser = new WebDriverWait(driver, 240); // seconds
-        driver.findElement(eusBrowser).click();
         waitBrowser.until(visibilityOfElementLocated(eusBrowser));
+        driver.findElement(eusBrowser).click();
 
         log.info("Click browser navigation bar and navigate");
         WebElement canvas = driver.findElement(By.id("vnc_canvas"));
