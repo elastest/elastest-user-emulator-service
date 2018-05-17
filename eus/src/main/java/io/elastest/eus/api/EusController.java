@@ -185,6 +185,7 @@ public class EusController implements EusApi {
         try {
             response = webDriverService.session(httpEntity, request);
         } catch (Exception e) {
+            log.error("Exception handling session {}", request, e);
             response = webDriverService
                     .getErrorResponse("Exception handling session", e);
         }

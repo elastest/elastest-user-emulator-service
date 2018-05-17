@@ -60,6 +60,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
@@ -227,11 +228,25 @@ public class WebDriverService {
         // Intercept create session
         boolean isCreateSession = isPostSessionRequest(method, requestContext);
         String newRequestBody = requestBody;
-
         if (isCreateSession) {
+
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
                     .getDesiredCapabilities().getBrowserName();
+            if (browserName == null) {
+
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    browserName = objectMapper.readTree(requestBody)
+                            .get("capabilities").get("alwaysMatch")
+                            .get("browserName").textValue();
+                } catch (Exception e) {
+                    return new ResponseEntity<String>(
+                            "Browser name not recognized in request",
+                            HttpStatus.BAD_REQUEST);
+                }
+            }
+
             String version = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
                     .getDesiredCapabilities().getVersion();
@@ -471,7 +486,7 @@ public class WebDriverService {
 
         // JSON processing to remove banner if chrome
         if (browserName.equalsIgnoreCase("chrome")) {
-            // Concat 
+            // Concat
             String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities.chromeOptions.args += .desiredCapabilities.chromeOptions.args + [\"disable-infobars\"] else . end)";
             newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                     jqChromeBanner);
@@ -756,6 +771,9 @@ public class WebDriverService {
     }
 
     private boolean isPostSessionRequest(HttpMethod method, String context) {
+        if (context.startsWith("//")) {
+            context = context.substring(1);
+        }
         return method == POST && context.equals(webdriverSessionMessage);
     }
 
