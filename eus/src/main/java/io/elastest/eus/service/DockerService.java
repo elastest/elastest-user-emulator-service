@@ -107,6 +107,9 @@ public class DockerService {
     @Value("${docker.max.route.connections}")
     private int dockerMaxRouteConnections;
 
+    @Value("${et.internet.disabled}")
+    boolean etInternetDisabled;
+
     private ShellService shellService;
 
     private DockerClient dockerClient;
@@ -277,10 +280,12 @@ public class DockerService {
     }
 
     public void pullImage(String imageId) {
-        log.info("Pulling Docker image {} ... please wait", imageId);
-        dockerClient.pullImageCmd(imageId).exec(new PullImageResultCallback())
-                .awaitSuccess();
-        log.debug("Docker image {} downloaded", imageId);
+        if (!etInternetDisabled) {
+            log.info("Pulling Docker image {} ... please wait", imageId);
+            dockerClient.pullImageCmd(imageId)
+                    .exec(new PullImageResultCallback()).awaitSuccess();
+            log.debug("Docker image {} downloaded", imageId);
+        }
     }
 
     public boolean existsImage(String imageId) {
