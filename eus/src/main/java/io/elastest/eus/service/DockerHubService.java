@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.assertj.core.util.Arrays;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -242,6 +241,7 @@ public class DockerHubService {
             }
         } else {
             // If there is not internet connection
+            log.info("Internet is disabled, getting default images list");
             result = this.getDefaultBrowsers();
         }
         return result;
