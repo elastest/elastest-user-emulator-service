@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.assertj.core.util.Arrays;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -74,6 +75,9 @@ public class DockerHubService {
 
     @Value("${browser.image.latest.version}")
     String browserImageLatestVersion;
+
+    @Value("${et.internet.disabled}")
+    boolean etInternetDisabled;
 
     DockerHubApi dockerHubApi;
 
@@ -195,43 +199,50 @@ public class DockerHubService {
 
     public Map<String, List<String>> getBrowsers() throws IOException {
         Map<String, List<String>> result = new TreeMap<>();
-        List<DockerHubNameSpaceImage> imagesList = listImages();
 
-        log.trace("{} browser image list: {}", browserImageNamespace,
-                imagesList);
+        if (!etInternetDisabled) {
+            List<DockerHubNameSpaceImage> imagesList = listImages();
 
-        for (DockerHubNameSpaceImage currentBrowserImage : imagesList) {
-            String browser = currentBrowserImage.getName();
-            if (!browser.toLowerCase()
-                    .startsWith(browserImageSkipPrefix.toLowerCase())) {
-                List<DockerHubTag> tagList = listTags(
-                        browserImageNamespace + "/" + browser);
-                log.trace("{} browser tag list: {}", browser, tagList);
+            // [chrome, firefox, utils-get_browsers_version, utils-x11-base]
+            log.trace("{} browser image list: {}", browserImageNamespace,
+                    imagesList);
 
-                for (DockerHubTag dockerHubTag : tagList) {
-                    String tagName = dockerHubTag.getName();
-                    String version = tagName;
+            for (DockerHubNameSpaceImage currentBrowserImage : imagesList) {
+                String browser = currentBrowserImage.getName();
+                if (!browser.toLowerCase()
+                        .startsWith(browserImageSkipPrefix.toLowerCase())) {
+                    List<DockerHubTag> tagList = listTags(
+                            browserImageNamespace + "/" + browser);
+                    log.trace("{} browser tag list: {}", browser, tagList);
 
-                    if (browser.equalsIgnoreCase("opera")
-                            && version.equalsIgnoreCase("12.16")) {
-                        continue;
-                    }
+                    for (DockerHubTag dockerHubTag : tagList) {
+                        String tagName = dockerHubTag.getName();
+                        String version = tagName;
 
-                    if (result.containsKey(browser)) {
-                        List<String> list = result.get(browser);
-                        list.add(version);
+                        if (browser.equalsIgnoreCase("opera")
+                                && version.equalsIgnoreCase("12.16")) {
+                            continue;
+                        }
 
-                        list = list.stream().sorted(this::compareVersions)
-                                .collect(toList());
-                        result.put(browser, list);
-                    } else {
-                        List<String> entry = new ArrayList<>();
-                        entry.add(version);
+                        if (result.containsKey(browser)) {
+                            List<String> list = result.get(browser);
+                            list.add(version);
 
-                        result.put(browser, entry);
+                            list = list.stream().sorted(this::compareVersions)
+                                    .collect(toList());
+                            result.put(browser, list);
+                        } else {
+                            List<String> entry = new ArrayList<>();
+                            entry.add(version);
+
+                            result.put(browser, entry);
+                        }
                     }
                 }
             }
+        } else {
+            // If there is not internet connection
+            result = this.getDefaultBrowsers();
         }
         return result;
     }
@@ -239,5 +250,36 @@ public class DockerHubService {
     public String getVersionFromImage(String image) {
         String version = image.split(":")[1];
         return version != null ? version : image;
+    }
+
+    public Map<String, List<String>> getDefaultBrowsers() {
+        Map<String, List<String>> browsers = new TreeMap<>();
+        List<String> chromeTags = new ArrayList<>();
+        chromeTags.add("latest");
+        chromeTags.add("66.0");
+        chromeTags.add("65.0");
+        chromeTags.add("64.0");
+        chromeTags.add("63.0");
+        chromeTags.add("62.0");
+        chromeTags.add("61.0");
+        chromeTags.add("60.0");
+        chromeTags.add("unstable");
+        chromeTags.add("beta");
+
+        browsers.put("chrome", chromeTags);
+
+        List<String> firefox = new ArrayList<>();
+        firefox.add("latest");
+        firefox.add("60.0");
+        firefox.add("59.0");
+        firefox.add("58.0");
+        firefox.add("57.0");
+        firefox.add("56.0");
+        firefox.add("nightly");
+        firefox.add("beta");
+
+        browsers.put("firefox", firefox);
+
+        return browsers;
     }
 }
