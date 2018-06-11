@@ -15,19 +15,32 @@
             "metadata": {
                "bullets": "basic plan",
                "costs": {
-                  "components": {
-                  },
-                  "description": "On Demand 5 per deployment, 50 per core, 10 per GB ram and 1 per GB disk",
-                  "fix_cost": {
-                     "deployment": 5
-                  },
-                  "name": "On Demand 5 + Charges",
-                  "type": "ONDEMAND",
-                  "var_rate": {
-                     "cpus": 50,
-                     "disk": 1,
-                     "memory": 10
-                  }
+                  "description": "cost model for eus",
+		          "currency": "eur",
+		          "model": "pay-as-you-go",
+		          "model_param": {
+		            "setup_cost": 3.5
+		          },
+		          "meter_list": [
+		            {
+		              "meter_name": "chrome_browser",
+		              "meter_type": "counter",
+		              "unit_cost": 5,
+		              "unit": "instance-hour"
+		            },
+		            {
+		              "meter_name": "firefox_browser",
+		              "meter_type": "counter",
+		              "unit_cost": 2.5,
+		              "unit": "instance-hour"
+		            },
+		            {
+		              "meter_name": "edge_browser",
+		              "meter_type": "counter",
+		              "unit_cost": 2,
+		              "unit": "instance-hour"
+		            }
+		          ]
                }
             },
             "name": "EUS plan"
