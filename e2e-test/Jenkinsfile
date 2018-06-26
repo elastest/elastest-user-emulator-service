@@ -12,31 +12,43 @@ elastest_lib.setMode('experimental-lite')
 //definition of nodes is managed by the library. Just declare the steps of your pipeline
 //inside the elastest_lib.pipeline({...})
 elastest_lib.pipeline({
+
+	try {
     
-    stage ('docker container')
-        def mycontainer = elastest.ctx.docker.image('elastest/ci-docker-e2e:latest')
-        mycontainer.pull()
-        mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v /dev/shm:/dev/shm")  {
-            sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
-          
-            stage ('prepare')
-                git 'https://github.com/elastest/elastest-user-emulator-service.git'
-                elastest.connect2ElastestNetwork()
-                def elastestURL = elastest.getEtmUrl()
-                
-            stage ("E2E tests")
-                try {
-                   sh "cd e2e-test; mvn -B clean test -DetEmpApi="+elastestURL+" -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
-                } catch(e) {
-                    sh '''\
-                       docker ps --all
-                       docker ps --filter name=eus -q
-                       docker ps --filter name=eus -q | xargs -L 1 docker logs || true
-                       docker ps --filter name=eus -q | xargs -L 1 docker inspect || true
-                    '''
-                } finally {
-                    step([$class: 'JUnitResultArchiver', testDataPublishers: [[$class: 'AttachmentPublisher']], testResults: '**/target/surefire-reports/TEST-*.xml'])
-                }
-        }
+	    stage ('docker container')
+	        def mycontainer = elastest.ctx.docker.image('elastest/ci-docker-e2e:latest')
+	        mycontainer.pull()
+	        mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v /dev/shm:/dev/shm")  {
+	            sh '/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &'
+	          
+	            stage ('prepare')
+	                git 'https://github.com/elastest/elastest-user-emulator-service.git'
+	                elastest.connect2ElastestNetwork()
+	                def elastestURL = elastest.getEtmUrl()
+	                
+	            stage ("E2E tests")
+	                try {
+	                   sh "cd e2e-test; mvn -B clean test -DetEmpApi="+elastestURL+" -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
+	                } catch(e) {
+	                    sh '''\
+	                       docker ps --all
+	                       docker ps --filter name=eus -q
+	                       docker ps --filter name=eus -q | xargs -L 1 docker logs || true
+	                       docker ps --filter name=eus -q | xargs -L 1 docker inspect || true
+	                    '''
+						throw e
+	                } finally {
+	                    step([$class: 'JUnitResultArchiver', testDataPublishers: [[$class: 'AttachmentPublisher']], testResults: '**/target/surefire-reports/TEST-*.xml'])
+	                }
+	        }
+	} catch (err) {
+        echo 'Error!!! Send email to the people responsible for the builds.'
+        emailext body: 'Please go to  ${BUILD_URL}  and verify the build',
+        replyTo: '${BUILD_USER_EMAIL}', 
+        subject: 'Job ${JOB_NAME} - ${BUILD_NUMBER} RESULT: ${BUILD_STATUS}', 
+        to: '${MAIL_LIST}'
+
+        throw err
+    }	       
   })
   
