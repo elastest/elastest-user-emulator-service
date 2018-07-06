@@ -7,7 +7,7 @@ VERSIONS_FILE=$OUTPUT/versions.txt
 # Firefox
 apt-get update
 FIREFOX_PKG=$(apt-cache madison firefox | head -n1 | awk '{ print $3 }')
-FIREFOX_VER=$(echo $FIREFOX_PKG | cut -d"." -f1,2)
+FIREFOX_VER=$(echo $FIREFOX_PKG | cut -d"." -f1)
 
 # Firefox Beta
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21 && \
