@@ -10,9 +10,7 @@ node('docker') {
           echo ("Building...")
           sh 'cd elastestbrowsers && ./build_containers.sh'
 
-          stage "Testing image"
-            echo ("testing...")
-            sh 'cd elastestbrowsers && ./testing.sh'
+         
 
           stage "Publish"
             echo ("Publishing...")
