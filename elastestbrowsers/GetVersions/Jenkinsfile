@@ -1,0 +1,15 @@
+node('docker') {
+    stage "Container preparation"
+    def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
+    mycontainer.pull()
+    mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
+      git 'https://github.com/elastest/elastest-user-emulator-service.git'
+      stage "Build and publish Docker image"
+
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
+usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+      sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
+      sh 'cd elastestbrowsers/GetVersions && ./build.sh 2'
+    }
+  }
+}
