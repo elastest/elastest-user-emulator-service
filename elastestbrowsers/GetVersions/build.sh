@@ -1,9 +1,5 @@
 #!/bin/bash -x
-set -e
+set -eu -o pipefail
 
-docker build -t elastestbrowsers/utils-get_browsers_version:1.0 .
-if [ ! -z $DOCKERHUB_USERNAME ]; then
-	docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASS
-	docker push elastestbrowsers/utils-get_browsers_version:1.0
-	docker logout
-fi
+docker build -t elastestbrowsers/utils-get_browsers_version:$1 .
+docker push elastestbrowsers/utils-get_browsers_version:$1
