@@ -14,27 +14,27 @@ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275
         echo "deb http://ppa.launchpad.net/mozillateam/firefox-next/ubuntu xenial main" >> /etc/apt/sources.list.d/firefox-beta.list && \
         apt-get update -qqy
 FIREFOX_BETA_PKG=$(apt-cache madison firefox | head -n1 | awk '{ print $3 }')
-FIREFOX_BETA_VER=$(echo $FIREFOX_BETA_PKG | cut -d"~" -f1)
+FIREFOX_BETA_VER=$(echo $FIREFOX_BETA_PKG | cut -d"." -f1)
 
 # Firefox Nightly
 add-apt-repository -y ppa:ubuntu-mozilla-daily/ppa && apt-get update
 FIREFOX_NIGHTLY_PKG=$(apt-cache madison firefox-trunk | head -n1 | awk '{print $3'})
-FIREFOX_NIGHTLY_VER=$(echo $FIREFOX_NIGHTLY_PKG | cut -d"~" -f1)
+FIREFOX_NIGHTLY_VER=$(echo $FIREFOX_NIGHTLY_PKG | cut -d"." -f1)
 
 # Crome
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
         echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
         apt-get update 
 CHROME_PKG=$(apt-cache madison google-chrome-stable | head -n1 | awk '{print $3}')
-CHROME_VER=$(echo $CHROME_PKG | cut -d"." -f1,2)
+CHROME_VER=$(echo $CHROME_PKG | cut -d"." -f1)
 
 # Chrome beta
 CHROME_BETA_PKG=$(apt-cache madison google-chrome-beta | head -n1 | awk '{print $3}')
-CHROME_BETA_VER=$(echo $CHROME_BETA_PKG | cut -d"." -f1,2)
+CHROME_BETA_VER=$(echo $CHROME_BETA_PKG | cut -d"." -f1)
 
 # Chrome unstable
 CHROME_UNSTABLE_PKG=$(apt-cache madison google-chrome-unstable | head -n1 | awk '{print $3}')
-CHROME_UNSTABLE_VER=$(echo $CHROME_UNSTABLE_PKG | cut -d"." -f1,2)
+CHROME_UNSTABLE_VER=$(echo $CHROME_UNSTABLE_PKG | cut -d"." -f1)
 
 # Selenoid driver
 wget -O $OUTPUT/selenoid_linux_amd64 https://github.com/aerokube/selenoid/releases/download/1.3.9/selenoid_linux_amd64
