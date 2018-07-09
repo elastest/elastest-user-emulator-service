@@ -45,6 +45,7 @@ RUN locale-gen $LANG && \
         pulseaudio \
         xvfb \
         bzip2 \
+        wget \
         x11vnc && \
         \
     apt-get -y autoremove && \
