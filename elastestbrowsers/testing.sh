@@ -3,12 +3,11 @@ set -e
 
 DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900"
 LOG_RESULTS=output.log
-. browsers_oldreleases
 
 > $LOG_RESULTS
 
 # Firefox
-for BROWSER_VERSION in latest nightly beta $FIREFOX_OLD_VERSIONS
+for BROWSER_VERSION in latest nightly beta
 do
 	echo "* Testing firefox $BROWSER_VERSION"
 	docker rm -f firefox || true
@@ -27,12 +26,7 @@ do
 done
 
 # Chrome
-OLDVERSIONS=""
-for VERSION in $CHROME_OLD_VERSIONS
-do
-	OLDVERSIONS+="$(echo $VERSION | cut -d"." -f1,2) "
-done
-for BROWSER_VERSION in latest unstable beta $OLDVERSIONS
+for BROWSER_VERSION in latest unstable beta
 do
 	echo "*********************************"
 	echo "* Testing chrome $BROWSER_VERSION"
