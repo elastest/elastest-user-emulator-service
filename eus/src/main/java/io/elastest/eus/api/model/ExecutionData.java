@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ExecutionData {
 
+    @JsonProperty("type")
+    String type;
+
     @JsonProperty("tJobId")
     Long tJobId;
 
@@ -22,14 +25,24 @@ public class ExecutionData {
     public ExecutionData() {
     }
 
-    public ExecutionData(Long tJobId, Long tJobExecId, String monitoringIndex,
-            boolean webRtcStatsActivated, String folderPath) {
+    public ExecutionData(String type, Long tJobId, Long tJobExecId,
+            String monitoringIndex, boolean webRtcStatsActivated,
+            String folderPath) {
         super();
+        this.type = type;
         this.tJobId = tJobId;
         this.tJobExecId = tJobExecId;
         this.monitoringIndex = monitoringIndex;
         this.webRtcStatsActivated = webRtcStatsActivated;
         this.folderPath = folderPath;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Long gettJobId() {
@@ -74,13 +87,13 @@ public class ExecutionData {
 
     @Override
     public String toString() {
-        return "ExecutionData [tJobId=" + tJobId + ", tJobExecId=" + tJobExecId
-                + ", monitoringIndex=" + monitoringIndex
-                + ", webRtcStatsActivated=" + webRtcStatsActivated
-                + ", folderPath=" + folderPath + "]";
+        return "EusExecutionData [type=" + type + ", tJobId=" + tJobId
+                + ", tJobExecId=" + tJobExecId + ", monitoringIndex="
+                + monitoringIndex + ", webRtcStatsActivated="
+                + webRtcStatsActivated + ", folderPath=" + folderPath + "]";
     }
 
     public String getKey() {
-        return tJobId + "_" + tJobExecId;
+        return type + "_" + tJobId + "_" + tJobExecId;
     }
 }
