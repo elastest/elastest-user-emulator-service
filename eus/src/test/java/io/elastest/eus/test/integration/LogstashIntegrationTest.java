@@ -42,7 +42,6 @@ import org.mockito.internal.util.reflection.FieldSetter;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -61,7 +60,6 @@ import io.elastest.eus.service.LogstashService;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration test for Logstash Service")
-@TestPropertySource(properties = { "et.mon.exec=normal" })
 public class LogstashIntegrationTest {
 
     final Logger log = getLogger(lookup().lookupClass());
@@ -97,7 +95,7 @@ public class LogstashIntegrationTest {
     @Test
     @DisplayName("Send dummy console logs to mock logstash")
     void test() {
-        logstashService.sendBrowserConsoleToLogstash("{}", "sessionId");
+        logstashService.sendBrowserConsoleToLogstash("{}", "sessionId", "normal");
         verify(postRequestedFor(urlEqualTo("/")).withHeader("Content-Type",
                 equalTo("application/json; charset=UTF-8")));
     }

@@ -42,6 +42,7 @@ import io.elastest.eus.api.model.ColorValue;
 import io.elastest.eus.api.model.Event;
 import io.elastest.eus.api.model.EventSubscription;
 import io.elastest.eus.api.model.EventValue;
+import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
@@ -188,6 +189,50 @@ public class EusController implements EusApi {
             log.error("Exception handling session {}", request, e);
             response = webDriverService
                     .getErrorResponse("Exception handling session", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> sessionFromExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpEntity<String> httpEntity, HttpServletRequest request) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.sessionFromExecution(httpEntity,
+                    request, key);
+        } catch (Exception e) {
+            log.error("Exception handling session {}", request, e);
+            response = webDriverService
+                    .getErrorResponse("Exception handling session", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> registerExecution(
+            @ApiParam(value = "The Execution Data", required = true) @Valid @RequestBody ExecutionData executionData) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.registerExecution(executionData);
+        } catch (Exception e) {
+            log.error("Exception registering execution {}", executionData, e);
+            response = webDriverService
+                    .getErrorResponse("Exception registering execution", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> unregisterExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.unregisterExecution(key);
+        } catch (Exception e) {
+            log.error("Exception unregistering execution {}", key, e);
+            response = webDriverService
+                    .getErrorResponse("Exception registering execution", e);
         }
         return response;
     }

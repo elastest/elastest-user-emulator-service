@@ -40,9 +40,6 @@ public class LogstashService {
     @Value("${et.mon.lshttps.api:#{null}}")
     private String lsSSLHttpApi;
 
-    @Value("${et.mon.exec:#{null}}")
-    private String etMonExec;
-
     @Value("${et.mon.interval}")
     private String etMonInterval;
 
@@ -52,9 +49,10 @@ public class LogstashService {
     final Logger log = getLogger(lookup().lookupClass());
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
-            String sessionId) {
-        log.trace("lsSSLHttpApi: {} etMonExec: {}", lsSSLHttpApi, etMonExec);
-        if (lsSSLHttpApi == null || etMonExec == null) {
+            String sessionId, String monitoringIndex) {
+        log.trace("lsSSLHttpApi: {} etMonExec: {}", lsSSLHttpApi,
+                monitoringIndex);
+        if (lsSSLHttpApi == null || monitoringIndex == null) {
             return;
         }
 
@@ -68,7 +66,7 @@ public class LogstashService {
 
             String component = etBrowserComponentPrefix + sessionId;
             String body = "{" + "\"component\":\"" + component + "\""
-                    + ",\"exec\":\"" + etMonExec + "\""
+                    + ",\"exec\":\"" + monitoringIndex + "\""
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);

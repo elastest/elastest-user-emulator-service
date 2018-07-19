@@ -37,6 +37,7 @@ import io.elastest.eus.api.model.ColorValue;
 import io.elastest.eus.api.model.Event;
 import io.elastest.eus.api.model.EventSubscription;
 import io.elastest.eus.api.model.EventValue;
+import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
@@ -214,6 +215,57 @@ public interface EusApi {
             "application/json" }, method = { GET, POST, DELETE })
     ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request);
+
+    /**
+     * GET/POST/DELETE /execution/{key}/session/**
+     *
+     * W3C WebDriver operations for sessions
+     */
+    @ApiOperation(value = "Start session by given Execution", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation"),
+            @ApiResponse(code = 404, message = "No such element"),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/**", produces = {
+            "application/json" }, method = { GET, POST, DELETE })
+    ResponseEntity<String> sessionFromExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpEntity<String> httpEntity, HttpServletRequest request);
+
+    /**
+     * POST /execution/register
+     *
+     * Start MP4 recording
+     */
+    @ApiOperation(value = "Register execution", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid execution data or not registered", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/register", produces = {
+            "application/json" }, consumes = {
+                    "application/json" }, method = { POST })
+    ResponseEntity<String> registerExecution(
+            @ApiParam(value = "The Execution Data", required = true) @Valid @RequestBody ExecutionData executionData);
+
+    /**
+     * POST /execution/unregister
+     *
+     * Start MP4 recording
+     */
+    @ApiOperation(value = "Unregister execution", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid execution data or not registered", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/unregister/{key}", produces = {
+            "application/json" }, consumes = {
+                    "application/json" }, method = { DELETE })
+    ResponseEntity<String> unregisterExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
 
     /**
      * GET /status

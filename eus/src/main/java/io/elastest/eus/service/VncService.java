@@ -40,7 +40,7 @@ import io.elastest.eus.session.SessionInfo;
 public class VncService {
 
     final Logger log = getLogger(lookup().lookupClass());
-    
+
     SessionService sessionService;
 
     @Autowired
@@ -57,7 +57,8 @@ public class VncService {
                     OK);
         } else {
             responseEntity = new ResponseEntity<>(NOT_FOUND);
-            log.debug("<< Response: {} ", responseEntity.getStatusCode());
+            log.debug("<< Response: Session {} Not found -> {} ", sessionId,
+                    responseEntity.getStatusCode());
         }
 
         return responseEntity;
