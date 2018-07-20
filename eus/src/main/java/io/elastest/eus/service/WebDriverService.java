@@ -244,7 +244,7 @@ public class WebDriverService {
                 etMonExec, webrtcStatsActivated, registryFolder);
     }
 
-    private String getRequestContext(HttpServletRequest request) {
+    public String getRequestContext(HttpServletRequest request) {
         StringBuffer requestUrl = request.getRequestURL();
         return requestUrl.substring(
                 requestUrl.lastIndexOf(contextPath) + contextPath.length());
@@ -258,12 +258,16 @@ public class WebDriverService {
         }
 
         ExecutionData data = executionsMap.get(executionKey);
-        String requestContext = getRequestContext(request);
-        requestContext = requestContext.replaceAll("/execution/[^/]*/", "/");
-        requestContext = requestContext.replaceAll("//", "/");
+        String requestContext = parseRequestContext(getRequestContext(request));
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
                 data.getFolderPath());
+    }
+
+    public String parseRequestContext(String requestContext) {
+        requestContext = requestContext.replaceAll("/execution/[^/]*/", "/");
+        requestContext = requestContext.replaceAll("//", "/");
+        return requestContext;
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,

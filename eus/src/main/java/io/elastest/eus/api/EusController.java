@@ -179,6 +179,10 @@ public class EusController implements EusApi {
         return new ResponseEntity<>(OK);
     }
 
+    /* *************************** */
+    /* ********* Session ********* */
+    /* *************************** */
+
     @Override
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request) {
@@ -209,6 +213,10 @@ public class EusController implements EusApi {
         return response;
     }
 
+    /* ************************************************* */
+    /* ********* Register/Unregister execution ********* */
+    /* ************************************************* */
+
     @Override
     public ResponseEntity<String> registerExecution(
             @ApiParam(value = "The Execution Data", required = true) @Valid @RequestBody ExecutionData executionData) {
@@ -237,6 +245,10 @@ public class EusController implements EusApi {
         return response;
     }
 
+    /* ************************** */
+    /* ********* Status ********* */
+    /* ************************** */
+
     @Override
     public ResponseEntity<String> getStatus() {
         ResponseEntity<String> response;
@@ -250,6 +262,16 @@ public class EusController implements EusApi {
     }
 
     @Override
+    public ResponseEntity<String> getStatusExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
+        return this.getStatus();
+    }
+
+    /* ************************* */
+    /* ********** Vnc ********** */
+    /* ************************* */
+
+    @Override
     public ResponseEntity<String> vnc(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId) {
         ResponseEntity<String> response;
@@ -261,6 +283,17 @@ public class EusController implements EusApi {
         }
         return response;
     }
+
+    @Override
+    public ResponseEntity<String> executionVnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
+        return this.vnc(sessionId);
+    }
+
+    /* *************************** */
+    /* ******** Recording ******** */
+    /* *************************** */
 
     @Override
     public ResponseEntity<String> recording(
@@ -283,11 +316,22 @@ public class EusController implements EusApi {
     }
 
     @Override
+    public ResponseEntity<String> executionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
+        return this.recording(sessionId, request);
+    }
+
+    /* ***************************** */
+    /* ****** Start Recording ****** */
+    /* ***************************** */
+
+    @Override
     public ResponseEntity<String> startRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
-            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName,
-            HttpServletRequest request) {
+            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName) {
         try {
             recordingService.startRecording(sessionId, hubContainerName,
                     videoName);
@@ -304,10 +348,22 @@ public class EusController implements EusApi {
     }
 
     @Override
-    public ResponseEntity<String> stopRecording(
+    public ResponseEntity<String> startExecutionRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
-            HttpServletRequest request) {
+            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
+        return this.startRecording(sessionId, hubContainerName, videoName);
+    }
+
+    /* *************************** */
+    /* ****** Stop Recording****** */
+    /* *************************** */
+
+    @Override
+    public ResponseEntity<String> stopRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName) {
         try {
             recordingService.stopRecording(hubContainerName);
             return new ResponseEntity<String>(OK);
@@ -319,4 +375,12 @@ public class EusController implements EusApi {
         }
     }
 
+    @Override
+    public ResponseEntity<String> stopExecutionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpServletRequest request) {
+        return this.stopRecording(sessionId, hubContainerName);
+    }
 }

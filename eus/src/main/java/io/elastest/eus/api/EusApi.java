@@ -200,6 +200,10 @@ public interface EusApi {
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
             @ApiParam(value = "Event name to be subscribed", required = true) @RequestBody Event body);
 
+    /* *************************** */
+    /* ********* Session ********* */
+    /* *************************** */
+
     /**
      * GET/POST/DELETE /session/**
      *
@@ -233,6 +237,10 @@ public interface EusApi {
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpEntity<String> httpEntity, HttpServletRequest request);
 
+    /* ************************************************* */
+    /* ********* Register/Unregister execution ********* */
+    /* ************************************************* */
+
     /**
      * POST /execution/register
      *
@@ -262,10 +270,13 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid execution data or not registered", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/execution/unregister/{key}", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = { DELETE })
+            "application/json" }, method = { DELETE })
     ResponseEntity<String> unregisterExecution(
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+
+    /* ************************** */
+    /* ********* Status ********* */
+    /* ************************** */
 
     /**
      * GET /status
@@ -280,6 +291,25 @@ public interface EusApi {
     @RequestMapping(value = "/status", produces = {
             "application/json" }, method = { GET })
     ResponseEntity<String> getStatus();
+
+    /**
+     * GET /execution/{key}/status
+     *
+     * W3C WebDriver operations for status
+     */
+    @ApiOperation(value = "W3C WebDriver standard get status operation", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/status", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> getStatusExecution(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+
+    /* ************************* */
+    /* ********** Vnc ********** */
+    /* ************************* */
 
     /**
      * GET /session/{sessionId}/vnc
@@ -298,6 +328,26 @@ public interface EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
 
     /**
+     * GET /execution/{key}/session/{sessionId}/vnc
+     *
+     * Get VNC session
+     */
+    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/vnc", produces = {
+            "text/plain" }, method = { GET })
+    ResponseEntity<String> executionVnc(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+
+    /* *************************** */
+    /* ******** Recording ******** */
+    /* *************************** */
+    /**
      * GET/DELETE /session/{sessionId}/recording
      *
      * Get MP4 recording
@@ -315,6 +365,28 @@ public interface EusApi {
             HttpServletRequest request);
 
     /**
+     * GET/DELETE /execution/{key}/session/{sessionId}/recording
+     *
+     * Get MP4 recording
+     */
+    @ApiOperation(value = "Handle recordings", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/recording", produces = {
+            "text/plain" }, method = { GET, DELETE })
+    ResponseEntity<String> executionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+
+    /* ***************************** */
+    /* ****** Start Recording ****** */
+    /* ***************************** */
+
+    /**
      * POST /session/{sessionId}/recording/{hubContainerName}/start
      *
      * Start MP4 recording
@@ -330,8 +402,31 @@ public interface EusApi {
     ResponseEntity<String> startRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName);
+
+    /**
+     * POST
+     * /execution/{key}/session/{sessionId}/recording/{hubContainerName}/start
+     *
+     * Start MP4 recording
+     */
+    @ApiOperation(value = "Start recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/recording/{hubContainerName}/start", produces = {
+            "text/plain" }, consumes = { "text/plain" }, method = { POST })
+    ResponseEntity<String> startExecutionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName,
-            HttpServletRequest request);
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+
+    /* *************************** */
+    /* ****** Stop Recording****** */
+    /* *************************** */
 
     /**
      * DELETE /session/{sessionId}/recording/{hubContainerName}/stop
@@ -348,7 +443,26 @@ public interface EusApi {
             "text/plain" }, method = { DELETE })
     ResponseEntity<String> stopRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName);
+
+    /**
+     * DELETE
+     * /execution/{key}/session/{sessionId}/recording/{hubContainerName}/stop
+     *
+     * Stop MP4 recording
+     */
+    @ApiOperation(value = "Stop recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier or hub container name", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/recording/{hubContainerName}/stop", produces = {
+            "text/plain" }, method = { DELETE })
+    ResponseEntity<String> stopExecutionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpServletRequest request);
 
 }
