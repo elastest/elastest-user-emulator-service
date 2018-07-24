@@ -50,6 +50,7 @@ public class SessionInfo {
     private int timeout;
     private String browserId;
     private boolean manualRecording;
+    private String folderPath;
 
     public String getHubUrl() {
         return hubUrl;
@@ -179,9 +180,18 @@ public class SessionInfo {
         this.manualRecording = manualRecording;
     }
 
+    public String getFolderPath() {
+        return folderPath;
+    }
+
+    public void setFolderPath(String folderPath) {
+        this.folderPath = folderPath;
+    }
+
     public String getIdForFiles() {
         return browserId != null && !browserId.isEmpty()
-                ? browserId + "_" + sessionId : sessionId;
+                ? browserId + "_" + sessionId
+                : sessionId;
     }
 
 }

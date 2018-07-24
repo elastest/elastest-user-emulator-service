@@ -146,20 +146,22 @@ public class RecordingService {
                 sessionInfo);
         log.debug("Storing metadata {}", recordedSession);
         String sessionInfoToJson = jsonService.objectToJson(recordedSession);
+        String folderPath = sessionInfo.getFolderPath() != null
+                ? sessionInfo.getFolderPath()
+                : registryFolder;
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, metadata is stored locally
 
-            File dir = new File(registryFolder);
+            File dir = new File(folderPath);
             if (!dir.exists()) {
                 if (!dir.mkdirs()) {
-                    throw new IOException("The " + registryFolder
+                    throw new IOException("The " + folderPath
                             + " directory could not be created");
                 }
             }
 
-            FileUtils.writeStringToFile(
-                    new File(registryFolder + metadataFileName),
+            FileUtils.writeStringToFile(new File(folderPath + metadataFileName),
                     sessionInfoToJson, defaultCharset());
 
         } else {
@@ -171,6 +173,11 @@ public class RecordingService {
 
     public ResponseEntity<String> getRecording(String sessionId)
             throws IOException {
+        return this.getRecording(sessionId, registryFolder);
+    }
+
+    public ResponseEntity<String> getRecording(String sessionId,
+            String folderPath) throws IOException {
         HttpStatus status = OK;
         String recordingFileName = sessionId + registryRecordingExtension;
 
@@ -182,7 +189,7 @@ public class RecordingService {
 
         if (!edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is available, recording is store in Alluxio
-            File targetFile = new File(registryFolder + recordingFileName);
+            File targetFile = new File(folderPath + recordingFileName);
             if (!targetFile.exists()) {
                 byte[] file = alluxioService.getFile(recordingFileName);
                 writeByteArrayToFile(targetFile, file);
@@ -194,6 +201,11 @@ public class RecordingService {
 
     public ResponseEntity<String> deleteRecording(String sessionId)
             throws IOException {
+        return this.deleteRecording(sessionId, registryFolder);
+    }
+
+    public ResponseEntity<String> deleteRecording(String sessionId,
+            String folderPath) throws IOException {
         log.debug("Deleting recording of session {}", sessionId);
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
@@ -202,10 +214,10 @@ public class RecordingService {
         boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
-            deleteRecording = Files.deleteIfExists(
-                    Paths.get(registryFolder + recordingFileName));
-            deleteMetadata = Files.deleteIfExists(
-                    Paths.get(registryFolder + metadataFileName));
+            deleteRecording = Files
+                    .deleteIfExists(Paths.get(folderPath + recordingFileName));
+            deleteMetadata = Files
+                    .deleteIfExists(Paths.get(folderPath + metadataFileName));
 
         } else {
             // If EDM Alluxio is available, deleting is done in Alluxio

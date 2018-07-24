@@ -320,7 +320,24 @@ public class EusController implements EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             HttpServletRequest request,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key) {
-        return this.recording(sessionId, request);
+        ResponseEntity<String> response;
+        try {
+            HttpMethod method = HttpMethod.resolve(request.getMethod());
+            if (method == GET) {
+                response = recordingService.getRecording(sessionId,
+                        webDriverService.getExecutionsMap().get(key)
+                                .getFolderPath());
+            } else {
+                // The only option here is DELETE method
+                response = recordingService.deleteRecording(sessionId,
+                        webDriverService.getExecutionsMap().get(key)
+                                .getFolderPath());
+            }
+        } catch (Exception e) {
+            response = webDriverService.getErrorResponse(
+                    "Exception handling recording in session " + sessionId, e);
+        }
+        return response;
     }
 
     /* ***************************** */

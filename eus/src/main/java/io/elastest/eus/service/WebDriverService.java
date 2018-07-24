@@ -206,6 +206,10 @@ public class WebDriverService {
                 .forEach((sessionId, sessionInfo) -> stopBrowser(sessionInfo));
     }
 
+    public Map<String, ExecutionData> getExecutionsMap() {
+        return executionsMap;
+    }
+
     public ResponseEntity<String> registerExecution(
             ExecutionData executionData) {
         log.debug("Registering Execution {}", executionData);
@@ -684,7 +688,7 @@ public class WebDriverService {
     }
 
     public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folder)
+            String originalRequestBody, String folderPath)
             throws IOException, InterruptedException {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
@@ -706,7 +710,7 @@ public class WebDriverService {
         Volume recordings = new Volume(containerRecordingFolder);
         List<Volume> volumes = asList(recordings);
 
-        List<Bind> volumeBinds = asList(new Bind(folder, recordings));
+        List<Bind> volumeBinds = asList(new Bind(folderPath, recordings));
 
         // Port binding
         int hubPort = dockerService.findRandomOpenPort();
@@ -761,6 +765,7 @@ public class WebDriverService {
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubPort);
         sessionInfo.setHubVncBindPort(hubPort);
+        sessionInfo.setFolderPath(folderPath);
 
         String vncUrlFormat = "http://%s:%d/" + vncHtml
                 + "?resize=scale&autoconnect=true&password=" + hubVncPassword;

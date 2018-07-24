@@ -58,9 +58,6 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${registry.folder}")
     private String registryFolder;
 
-    @Value("${registry.metadata.extension}")
-    private String registryMetadataExtension;
-
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
@@ -132,6 +129,7 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    // All recordings from default path (not from executions)
     public void sendAllRecordingsToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (String fileContent : recordingService
