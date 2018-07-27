@@ -12,4 +12,4 @@ LABEL commit_date=$COMMIT_DATE
 ARG VERSION=unspecified
 LABEL version=$VERSION 
 
-CMD exec java -jar /eus.jar
+CMD exec java -jar /eus.jar --spring.profiles.active=required,notdependency

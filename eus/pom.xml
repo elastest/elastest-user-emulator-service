@@ -329,6 +329,7 @@
 		<profile>
 			<id>normal</id>
 			<properties>
+				<activeProfile>normal</activeProfile>
 				<activatedProperties>required,notdependency</activatedProperties>
 			</properties>
 			<activation>
@@ -353,6 +354,7 @@
 		<profile>
 			<id>dependency</id>
 			<properties>
+				<activeProfile>dependency</activeProfile>
 				<activatedProperties>required</activatedProperties>
 			</properties>
 			<build>
