@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
@@ -56,6 +57,9 @@ public class RecordingAlluxioIntegrationTest {
     @LocalServerPort
     int serverPort;
 
+    @Value("${api.context.path}")
+    String apiContextPath;
+
     @Autowired
     WebApplicationContext webContext;
 
@@ -69,14 +73,14 @@ public class RecordingAlluxioIntegrationTest {
     @Test
     @DisplayName("GET /session/{sessionId}/recording")
     void testGetRecording() throws Exception {
-        mockMvc.perform(get("/session/sessionId/recording"))
+        mockMvc.perform(get(apiContextPath + "/session/sessionId/recording"))
                 .andExpect(status().isInternalServerError());
     }
 
     @Test
     @DisplayName("DELETE /session/{sessionId}/recording")
     void testDeleteRecording() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/recording"))
+        mockMvc.perform(delete(apiContextPath + "/session/sessionId/recording"))
                 .andExpect(status().isInternalServerError());
     }
 

@@ -38,7 +38,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.internal.util.reflection.FieldSetter;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -47,7 +46,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
-import io.elastest.eus.service.DynamicDataService;
 import io.elastest.eus.service.EusLogstashService;
 
 /**

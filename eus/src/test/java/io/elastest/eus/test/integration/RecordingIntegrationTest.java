@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -54,6 +55,9 @@ public class RecordingIntegrationTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
+    @Value("${api.context.path}")
+    String apiContextPath;
+
     @LocalServerPort
     int serverPort;
 
@@ -72,8 +76,8 @@ public class RecordingIntegrationTest {
     void testStartRecording() throws Exception {
         String videoName = "video1";
 
-        mockMvc.perform(
-                post("/session/sessionId/recording/hubContainerName/start")
+        mockMvc.perform(post(apiContextPath
+                + "/session/sessionId/recording/hubContainerName/start")
                         .content(videoName).contentType("text/plain"))
                 .andExpect(status().isOk());
     }
@@ -81,15 +85,15 @@ public class RecordingIntegrationTest {
     @Test
     @DisplayName("DELETE /session/{sessionId}/recording/hubContainerName/stop")
     void testStopRecording() throws Exception {
-        mockMvc.perform(
-                delete("/session/sessionId/recording/hubContainerName/stop"))
+        mockMvc.perform(delete(apiContextPath
+                + "/session/sessionId/recording/hubContainerName/stop"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /session/{sessionId}/recording")
     void testGetRecording() throws Exception {
-        mockMvc.perform(get("/session/sessionId/recording"))
+        mockMvc.perform(get(apiContextPath + "/session/sessionId/recording"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("sessionId.mp4")));
     }
@@ -97,7 +101,7 @@ public class RecordingIntegrationTest {
     @Test
     @DisplayName("DELETE /session/{sessionId}/recording")
     void testDeleteRecording() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/recording"))
+        mockMvc.perform(delete(apiContextPath + "/session/sessionId/recording"))
                 .andExpect(status().isInternalServerError());
     }
 

@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -59,8 +59,8 @@ public class ApiServiceIntegrationTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    @LocalServerPort
-    int serverPort;
+    @Value("${api.context.path}")
+    String apiContextPath;
 
     @Autowired
     WebApplicationContext webContext;
@@ -78,43 +78,48 @@ public class ApiServiceIntegrationTest {
     @Test
     @DisplayName("GET /session/{sessionId}/event/{subscriptionId}")
     void testGetSubscription() throws Exception {
-        mockMvc.perform(get("/session/sessionId/event/subscriptionId"))
+        mockMvc.perform(
+                get(apiContextPath + "/session/sessionId/event/subscriptionId"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("DELETE /session/{sessionId}/event/{subscriptionId}")
     void testDeleteSubscription() throws Exception {
-        mockMvc.perform(delete("/session/sessionId/event/subscriptionId"))
+        mockMvc.perform(delete(
+                apiContextPath + "/session/sessionId/event/subscriptionId"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /session/{sessionId}/element/{elementId}/color")
     void testGetColor() throws Exception {
-        mockMvc.perform(get("/session/sessionId/element/elementId/color"))
+        mockMvc.perform(get(
+                apiContextPath + "/session/sessionId/element/elementId/color"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /session/{sessionId}/element/{elementId}/audio")
     void testGetAudio() throws Exception {
-        mockMvc.perform(get("/session/sessionId/element/elementId/audio"))
+        mockMvc.perform(get(
+                apiContextPath + "/session/sessionId/element/elementId/audio"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /session/{sessionId}/stats")
     void testGetStats() throws Exception {
-        mockMvc.perform(get("/session/sessionId/stats"))
+        mockMvc.perform(get(apiContextPath + "/session/sessionId/stats"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /status")
     void testGetStatus() throws Exception {
-        mockMvc.perform(get("/status")).andExpect(status().isOk()).andExpect(
-                content().contentType("application/json;charset=UTF-8"));
+        mockMvc.perform(get(apiContextPath + "/status"))
+                .andExpect(status().isOk()).andExpect(content()
+                        .contentType("application/json;charset=UTF-8"));
     }
 
     @Test
@@ -127,16 +132,18 @@ public class ApiServiceIntegrationTest {
     @DisplayName("POST /session/{sessionId}/usermedia")
     void testPostUsermedia() throws Exception {
         String usermedia = jsonService.objectToJson(new UserMedia());
-        mockMvc.perform(post("/session/sessionId/usermedia").content(usermedia)
-                .contentType("application/json")).andExpect(status().isOk());
+        mockMvc.perform(post(apiContextPath + "/session/sessionId/usermedia")
+                .content(usermedia).contentType("application/json"))
+                .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("POST /session/{sessionId}/element/{elementId}/latency")
     void testPostLatency() throws Exception {
         String latency = jsonService.objectToJson(new Latency());
-        mockMvc.perform(post("/session/sessionId/element/elementId/latency")
-                .content(latency).contentType("application/json"))
+        mockMvc.perform(post(
+                apiContextPath + "/session/sessionId/element/elementId/latency")
+                        .content(latency).contentType("application/json"))
                 .andExpect(status().isOk());
     }
 
@@ -144,8 +151,9 @@ public class ApiServiceIntegrationTest {
     @DisplayName("POST /session/{sessionId}/element/{elementId}/quality")
     void testPostQuality() throws Exception {
         String quality = jsonService.objectToJson(new Quality());
-        mockMvc.perform(post("/session/sessionId/element/elementId/quality")
-                .content(quality).contentType("application/json"))
+        mockMvc.perform(post(
+                apiContextPath + "/session/sessionId/element/elementId/quality")
+                        .content(quality).contentType("application/json"))
                 .andExpect(status().isOk());
     }
 
@@ -153,8 +161,9 @@ public class ApiServiceIntegrationTest {
     @DisplayName("POST /session/{sessionId}/element/{elementId}/event")
     void testPostEvent() throws Exception {
         String event = jsonService.objectToJson(new Event());
-        mockMvc.perform(post("/session/sessionId/element/elementId/event")
-                .content(event).contentType("application/json"))
+        mockMvc.perform(post(
+                apiContextPath + "/session/sessionId/element/elementId/event")
+                        .content(event).contentType("application/json"))
                 .andExpect(status().isOk());
     }
 
