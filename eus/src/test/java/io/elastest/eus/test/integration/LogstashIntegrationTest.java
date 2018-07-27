@@ -47,6 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
+import io.elastest.eus.service.DynamicDataService;
 import io.elastest.eus.service.EusLogstashService;
 
 /**
@@ -84,9 +85,7 @@ public class LogstashIntegrationTest {
 
         // Values injected with Spring properties
         String mockLogstashUrl = "http://localhost:" + port + "/";
-        FieldSetter.setField(logstashService,
-                EusLogstashService.class.getDeclaredField("lsSSLHttpApi"),
-                mockLogstashUrl);
+        logstashService.dynamicDataService.setLogstashHttpsApi(mockLogstashUrl);
 
         // Stubbing service
         stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(200)));
@@ -95,7 +94,8 @@ public class LogstashIntegrationTest {
     @Test
     @DisplayName("Send dummy console logs to mock logstash")
     void test() {
-        logstashService.sendBrowserConsoleToLogstash("{}", "sessionId", "normal");
+        logstashService.sendBrowserConsoleToLogstash("{}", "sessionId",
+                "normal");
         verify(postRequestedFor(urlEqualTo("/")).withHeader("Content-Type",
                 equalTo("application/json; charset=UTF-8")));
     }

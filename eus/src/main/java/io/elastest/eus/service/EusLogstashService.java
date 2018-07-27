@@ -42,7 +42,7 @@ public class EusLogstashService {
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
 
-    DynamicDataService dynamicDataService;
+    public DynamicDataService dynamicDataService;
 
     EusLogstashService(DynamicDataService dynamicDataService) {
         this.dynamicDataService = dynamicDataService;
