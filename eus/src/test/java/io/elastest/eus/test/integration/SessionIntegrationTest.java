@@ -87,7 +87,8 @@ public class SessionIntegrationTest {
     @DisplayName("Create and destroy session")
     void createAndDestroySession() throws Exception {
         // #1 Create session and WebSocket connection
-        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + wsPath;
+        log.debug("Websocket url: {}", wsUrl);
         WebSocketClient webSocketClient = new WebSocketClient(wsUrl);
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override
@@ -108,8 +109,8 @@ public class SessionIntegrationTest {
                 + "\"platform\":\"ANY\",\"version\":\"" + firefoxVersion
                 + "\",\"loggingPrefs\":{\"browser\":\"ALL\"}},"
                 + "\"requiredCapabilities\":{}}";
-        ResponseEntity<String> response = restTemplate.postForEntity("/session",
-                jsonMessage, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                apiContextPath + "/session", jsonMessage, String.class);
         assertEquals(OK, response.getStatusCode());
 
         HttpStatus statusCode = response.getStatusCode();
@@ -125,7 +126,8 @@ public class SessionIntegrationTest {
 
         // #2 Get VNC session)
         log.debug("GET /session/{}/vnc", sessionId);
-        response = restTemplate.getForEntity("/session/" + sessionId + "/vnc",
+        response = restTemplate.getForEntity(
+                apiContextPath + "/session/" + sessionId + "/vnc",
                 String.class);
 
         statusCode = response.getStatusCode();
@@ -140,18 +142,20 @@ public class SessionIntegrationTest {
         // #3 Handle recordings
         log.debug("GET /session/{}/recording", sessionId);
         response = restTemplate.getForEntity(
-                "/session/" + sessionId + "/recording", String.class);
+                apiContextPath + "/session/" + sessionId + "/recording",
+                String.class);
 
         assertEquals(OK, response.getStatusCode());
         assertThat(response.getHeaders().getContentType().toString(),
                 containsString(TEXT_PLAIN_VALUE));
 
         log.debug("DELETE /session/{}/recording", sessionId);
-        restTemplate.delete("/session/" + sessionId + "/recording");
+        restTemplate.delete(
+                apiContextPath + "/session/" + sessionId + "/recording");
 
         // Exercise #4 Destroy session and close WebSocket
         log.debug("DELETE /session/{}", sessionId);
-        restTemplate.delete("/session/" + sessionId);
+        restTemplate.delete(apiContextPath + "/session/" + sessionId);
         webSocketClient.closeSession();
 
         // NOTE: This can be done as an scenario test when available (JUnit 5.1)
@@ -161,8 +165,8 @@ public class SessionIntegrationTest {
     @DisplayName("Get VNC URL of a non-valid session")
     void notFoundSession() {
         log.debug("GET /session/nofound/vnc");
-        ResponseEntity<String> response = restTemplate
-                .getForEntity("/session/nofound/vnc", String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                apiContextPath + "/session/nofound/vnc", String.class);
 
         assertEquals(NOT_FOUND, response.getStatusCode());
     }

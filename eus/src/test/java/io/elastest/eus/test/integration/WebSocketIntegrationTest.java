@@ -68,9 +68,6 @@ public class WebSocketIntegrationTest {
     @Value("${ws.path}")
     private String wsPath;
 
-    @Value("${api.context.path}")
-    private String apiContextPath;
-
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
 
@@ -111,7 +108,7 @@ public class WebSocketIntegrationTest {
         String jsonMessage = jsonService.objectToJson(sessionInfo);
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + wsPath;
 
         final String sentMessage = wsProtocolGetSessions;
         final String[] receivedMessage = { "" };
@@ -171,7 +168,7 @@ public class WebSocketIntegrationTest {
                 .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + wsPath;
 
         final String sentMessage = wsProtocolGetRecordings;
         final String[] receivedMessage = { "" };
