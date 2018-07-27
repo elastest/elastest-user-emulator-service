@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.WebDriverService;
 
 /**
@@ -57,7 +57,7 @@ public class WebDriverIntegrationTest {
     private WebDriverService webDriverService;
 
     @Autowired
-    private JsonService jsonService;
+    private EusJsonService jsonService;
 
     @Test
     @DisplayName("Get status")

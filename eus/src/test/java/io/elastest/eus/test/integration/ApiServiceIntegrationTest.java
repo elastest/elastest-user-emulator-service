@@ -43,7 +43,7 @@ import io.elastest.eus.api.model.Event;
 import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.UserMedia;
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusJsonService;
 
 /**
  * Integration tests for non-implemented service operations.
@@ -66,7 +66,7 @@ public class ApiServiceIntegrationTest {
     WebApplicationContext webContext;
 
     @Autowired
-    JsonService jsonService;
+    EusJsonService jsonService;
 
     MockMvc mockMvc;
 

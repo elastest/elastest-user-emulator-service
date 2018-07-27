@@ -44,7 +44,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.json.WebDriverSessionResponse;
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
@@ -67,7 +67,7 @@ public class SessionIntegrationTest {
     TestRestTemplate restTemplate;
 
     @Autowired
-    JsonService jsonService;
+    EusJsonService jsonService;
 
     @LocalServerPort
     int serverPort;
@@ -75,8 +75,8 @@ public class SessionIntegrationTest {
     @Value("${ws.path}")
     private String wsPath;
 
-    @Value("${server.servlet.context-path}")
-    private String contextPath;
+    @Value("${api.context.path}")
+    private String apiContextPath;
 
     @BeforeEach
     void setup() {
@@ -87,7 +87,7 @@ public class SessionIntegrationTest {
     @DisplayName("Create and destroy session")
     void createAndDestroySession() throws Exception {
         // #1 Create session and WebSocket connection
-        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
         WebSocketClient webSocketClient = new WebSocketClient(wsUrl);
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override

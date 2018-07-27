@@ -20,7 +20,7 @@ node('TESTDOCKER') {
 
                 stage "Package"
                     echo ("Packaging")
-                    sh 'cd eus; mvn package -DskipTests -Det.files.path=/tmp/'
+                    sh 'cd eus; mvn package -Pnormal -DskipTests -Det.files.path=/tmp/'
 
                 stage "Archive artifacts"
                     archiveArtifacts artifacts: 'eus/target/*.jar'

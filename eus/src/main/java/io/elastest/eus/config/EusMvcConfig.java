@@ -28,7 +28,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @since 0.0.1
  */
 @Configuration
-public class MvcConfig implements WebMvcConfigurer {
+public class EusMvcConfig implements WebMvcConfigurer {
 
     @Value("${registry.contextPath}")
     private String registryContextPath;
@@ -36,9 +36,13 @@ public class MvcConfig implements WebMvcConfigurer {
     @Value("${registry.folder}")
     private String registryFolder;
 
+    @Value("${api.context.path}")
+    private String apiContextPath;
+
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
-        registry.addResourceHandler(registryContextPath + "/**")
+        registry.addResourceHandler(
+                apiContextPath + registryContextPath + "/**")
                 .addResourceLocations("file:" + registryFolder);
     }
 

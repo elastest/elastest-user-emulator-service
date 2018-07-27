@@ -64,8 +64,8 @@ public class SeleniumE2ETest {
     @LocalServerPort
     int serverPort;
 
-    @Value("${server.servlet.context-path}")
-    String contextPath;
+    @Value("${api.context.path}")
+    String apiContextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
         return Stream.of(Arguments.of(chrome()), Arguments.of(firefox()));
@@ -75,7 +75,7 @@ public class SeleniumE2ETest {
     @DisplayName("Visit elastest.io using a browser provided by EUS")
     @MethodSource("capabilitiesProvider")
     void test(DesiredCapabilities capability) throws MalformedURLException {
-        String eusUrl = "http://localhost:" + serverPort + contextPath;
+        String eusUrl = "http://localhost:" + serverPort + apiContextPath;
         String sutUrl = "http://elastest.io/";
 
         log.debug("EUS URL: {}", eusUrl);

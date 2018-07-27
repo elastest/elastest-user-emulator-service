@@ -65,8 +65,8 @@ public class RecordingService {
     @Value("${registry.recording.extension}")
     private String registryRecordingExtension;
 
-    @Value("${server.servlet.context-path}")
-    private String contextPath;
+    @Value("${api.context.path}")
+    private String apiContextPath;
 
     @Value("${registry.contextPath}")
     private String registryContextPath;
@@ -86,8 +86,8 @@ public class RecordingService {
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
 
-    private DockerService dockerService;
-    private JsonService jsonService;
+    private EusDockerService dockerService;
+    private EusJsonService jsonService;
     private AlluxioService alluxioService;
 
     @PostConstruct
@@ -102,8 +102,8 @@ public class RecordingService {
     }
 
     @Autowired
-    public RecordingService(DockerService dockerService,
-            JsonService jsonService, AlluxioService alluxioService) {
+    public RecordingService(EusDockerService dockerService,
+            EusJsonService jsonService, AlluxioService alluxioService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
         this.alluxioService = alluxioService;
@@ -184,7 +184,7 @@ public class RecordingService {
         // By default the response is the local path for the recording (this
         // applies to the case of locally stored, and also to the case that the
         // recording has been previously downloaded from Alluxio)
-        String urlResponse = contextPath + registryContextPath + "/"
+        String urlResponse = apiContextPath + registryContextPath + "/"
                 + recordingFileName;
 
         if (!edmAlluxioUrl.isEmpty()) {

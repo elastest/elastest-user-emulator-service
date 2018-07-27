@@ -63,10 +63,10 @@ public class TimeoutService {
     private ScheduledExecutorService timeoutExecutor = newScheduledThreadPool(
             1);
 
-    private LogstashService logstashService;
+    private EusLogstashService logstashService;
 
     @Autowired
-    public TimeoutService(LogstashService logstashService) {
+    public TimeoutService(EusLogstashService logstashService) {
         this.logstashService = logstashService;
     }
 

@@ -94,8 +94,8 @@ public class WebDriverService {
     @Value("${et.host.env}")
     private String etHostEnv;
 
-    @Value("${server.servlet.context-path}")
-    private String contextPath;
+    @Value("${api.context.path}")
+    private String apiContextPath;
 
     @Value("${eus.container.prefix}")
     private String eusContainerPrefix;
@@ -156,12 +156,6 @@ public class WebDriverService {
     @Value("${et.config.web.rtc.stats}")
     private String etConfigWebRtcStats;
 
-    @Value("${et.mon.lshttps.api:#{null}}")
-    private String lsSSLHttpApi;
-
-    @Value("${et.mon.exec:#{null}}")
-    private String etMonExec;
-
     @Value("${et.mon.interval}")
     private String etMonInterval;
 
@@ -176,26 +170,29 @@ public class WebDriverService {
 
     String etInstrumentationKey = "elastest-instrumentation";
 
-    private DockerService dockerService;
+    private EusDockerService dockerService;
     private DockerHubService dockerHubService;
-    private JsonService jsonService;
+    private EusJsonService jsonService;
     private SessionService sessionService;
     private RecordingService recordingService;
     private TimeoutService timeoutService;
+    private DynamicDataService dynamicDataService;
 
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
 
     @Autowired
-    public WebDriverService(DockerService dockerService,
-            DockerHubService dockerHubService, JsonService jsonService,
+    public WebDriverService(EusDockerService dockerService,
+            DockerHubService dockerHubService, EusJsonService jsonService,
             SessionService sessionService, RecordingService recordingService,
-            TimeoutService timeoutService) {
+            TimeoutService timeoutService,
+            DynamicDataService dynamicDataService) {
         this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
         this.recordingService = recordingService;
         this.timeoutService = timeoutService;
+        this.dynamicDataService = dynamicDataService;
     }
 
     @PreDestroy
@@ -245,13 +242,15 @@ public class WebDriverService {
         String requestContext = getRequestContext(request);
 
         return this.session(httpEntity, requestContext, request.getMethod(),
-                etMonExec, webrtcStatsActivated, registryFolder);
+                dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
+                registryFolder);
     }
 
     public String getRequestContext(HttpServletRequest request) {
         StringBuffer requestUrl = request.getRequestURL();
-        return requestUrl.substring(
-                requestUrl.lastIndexOf(contextPath) + contextPath.length());
+        log.debug("{}", requestUrl);
+        return requestUrl.substring(requestUrl.lastIndexOf(apiContextPath)
+                + apiContextPath.length());
     }
 
     public ResponseEntity<String> sessionFromExecution(
@@ -352,7 +351,8 @@ public class WebDriverService {
                     sessionInfo, optionalHttpEntity, isCreateSession);
             exchangeAgain = responseBody == null;
             if (this.isPostUrlRequest(method, requestContext)) {
-                this.manageWebRtcMonitoring(sessionInfo, webRtcActivated);
+                this.manageWebRtcMonitoring(sessionInfo, webRtcActivated,
+                        monitoringIndex);
             }
             if (exchangeAgain) {
                 if (numRetries < createSessionRetries) {
@@ -416,14 +416,14 @@ public class WebDriverService {
     }
 
     public boolean manageWebRtcMonitoring(SessionInfo sessionInfo,
-            boolean activated) {
+            boolean activated, String monitoringIndex) {
         boolean manageSuccessful = false;
         if (activated) {
             log.debug("WebRtc monitoring activated");
             try {
                 String configLocalStorageStr = this
                         .getWebRtcMonitoringLocalStorageStr(
-                                sessionInfo.getSessionId());
+                                sessionInfo.getSessionId(), monitoringIndex);
                 String postResponse = this.postScript(sessionInfo,
                         configLocalStorageStr, new ArrayList<>());
                 manageSuccessful = postResponse != null;
@@ -439,9 +439,10 @@ public class WebDriverService {
         return manageSuccessful;
     }
 
-    public JSONObject getWebRtcMonitoringConfig(String sessionId)
-            throws Exception {
-        if (lsSSLHttpApi == null || etMonExec == null) {
+    public JSONObject getWebRtcMonitoringConfig(String sessionId,
+            String monitoringIndex) throws Exception {
+        String lsSSLHttpApi = dynamicDataService.getLogstashHttpsApi();
+        if (lsSSLHttpApi == null || monitoringIndex == null) {
             throw new Exception(
                     "Logstash Http Api Url or Monitoring Execution not found");
         }
@@ -455,7 +456,7 @@ public class WebDriverService {
         webRtcJson.put("interval", etMonInterval);
 
         elastestInstrumentationJson.put("webrtc", webRtcJson);
-        elastestInstrumentationJson.put("exec", etMonExec);
+        elastestInstrumentationJson.put("exec", monitoringIndex);
         elastestInstrumentationJson.put("component", component);
 
         configJson.put(etInstrumentationKey,
@@ -464,9 +465,10 @@ public class WebDriverService {
         return configJson;
     }
 
-    public String getWebRtcMonitoringLocalStorageStr(String sessionId)
-            throws Exception {
-        JSONObject config = this.getWebRtcMonitoringConfig(sessionId);
+    public String getWebRtcMonitoringLocalStorageStr(String sessionId,
+            String monitoringIndex) throws Exception {
+        JSONObject config = this.getWebRtcMonitoringConfig(sessionId,
+                monitoringIndex);
         String content = config.get(etInstrumentationKey).toString()
                 .replace("\"", "\\\"");
         return "localStorage.setItem(\"" + etInstrumentationKey + "\"," + "\""
@@ -683,7 +685,8 @@ public class WebDriverService {
 
     private ResponseEntity<String> notFound() {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(NOT_FOUND);
-        log.debug("<< Response: {} ", responseEntity.getStatusCode());
+        log.debug("<< Response: {} ({})", responseEntity.getStatusCode(),
+                "NOT FOUND");
         return responseEntity;
     }
 
@@ -839,6 +842,7 @@ public class WebDriverService {
     }
 
     private boolean isPostSessionRequest(HttpMethod method, String context) {
+
         if (context.startsWith("//")) {
             context = context.substring(1);
         }

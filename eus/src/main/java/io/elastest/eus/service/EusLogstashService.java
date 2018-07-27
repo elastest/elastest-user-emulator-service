@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -35,29 +36,28 @@ import org.springframework.stereotype.Service;
  * @since 0.5.0-alpha2
  */
 @Service
-public class LogstashService {
-
-    @Value("${et.mon.lshttps.api:#{null}}")
-    private String lsSSLHttpApi;
-
-    @Value("${et.mon.interval}")
-    private String etMonInterval;
+public class EusLogstashService {
+    final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
 
-    final Logger log = getLogger(lookup().lookupClass());
+    DynamicDataService dynamicDataService;
+
+    EusLogstashService(DynamicDataService dynamicDataService) {
+        this.dynamicDataService = dynamicDataService;
+    }
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             String sessionId, String monitoringIndex) {
-        log.trace("lsSSLHttpApi: {} etMonExec: {}", lsSSLHttpApi,
-                monitoringIndex);
-        if (lsSSLHttpApi == null || monitoringIndex == null) {
+        String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
+        log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
+        if (lsHttpApi == null || monitoringIndex == null) {
             return;
         }
 
         try {
-            URL url = new URL(lsSSLHttpApi);
+            URL url = new URL(lsHttpApi);
 
             URLConnection con = url.openConnection();
             HttpURLConnection http = (HttpURLConnection) con;
@@ -70,7 +70,7 @@ public class LogstashService {
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);
-            log.debug("Sending browser log to logstash ({}): {}", lsSSLHttpApi,
+            log.debug("Sending browser log to logstash ({}): {}", lsHttpApi,
                     body);
             int length = out.length;
 

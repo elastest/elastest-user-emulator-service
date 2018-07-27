@@ -60,12 +60,12 @@ public class TimeoutTest {
     @LocalServerPort
     int serverPort;
 
-    @Value("${server.servlet.context-path}")
-    String contextPath;
+    @Value("${api.context.path}")
+    String apiContextPath;
 
     @BeforeEach
     void setup() throws MalformedURLException {
-        String eusUrl = "http://localhost:" + serverPort + contextPath;
+        String eusUrl = "http://localhost:" + serverPort + apiContextPath;
         driver = new RemoteWebDriver(new URL(eusUrl), chrome());
         log.debug("EUS URL: {}", eusUrl);
     }

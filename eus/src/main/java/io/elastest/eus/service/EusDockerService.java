@@ -88,7 +88,7 @@ import io.elastest.eus.docker.DockerException;
  * @since 0.0.1
  */
 @Service
-public class DockerService {
+public class EusDockerService {
 
     final Logger log = getLogger(lookup().lookupClass());
 
@@ -110,14 +110,14 @@ public class DockerService {
     @Value("${et.internet.disabled}")
     boolean etInternetDisabled;
 
-    private ShellService shellService;
+    private EusShellService shellService;
 
     private DockerClient dockerClient;
     private String dockerServerIp;
     private boolean isRunningInContainer = false;
     private boolean containerCheked = false;
 
-    public DockerService(ShellService shellService) {
+    public EusDockerService(EusShellService shellService) {
         this.shellService = shellService;
     }
 

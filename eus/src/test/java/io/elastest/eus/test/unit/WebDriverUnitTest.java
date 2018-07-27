@@ -47,7 +47,7 @@ public class WebDriverUnitTest {
     void testGetWebRtcMonitoringLocalStorageStr() {
         assertThrows(Exception.class, () -> {
             webDriverService.getWebRtcMonitoringLocalStorageStr(
-                    "4562f70d-a350-4e88-96da-25d56c91f336");
+                    "4562f70d-a350-4e88-96da-25d56c91f336", "test_monitoring_index");
         });
 
     }

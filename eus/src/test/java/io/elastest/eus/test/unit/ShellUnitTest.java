@@ -36,7 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.slf4j.Logger;
 
-import io.elastest.eus.service.ShellService;
+import io.elastest.eus.service.EusShellService;
 import io.elastest.eus.test.util.MockitoExtension;
 
 /**
@@ -54,7 +54,7 @@ public class ShellUnitTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     @InjectMocks
-    ShellService shellService;
+    EusShellService shellService;
 
     @Test
     @DisplayName("List current folder")

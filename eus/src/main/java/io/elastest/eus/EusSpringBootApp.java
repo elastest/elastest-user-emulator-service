@@ -28,8 +28,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.elastest.eus.service.DockerService;
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusDockerService;
+import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -50,12 +50,12 @@ public class EusSpringBootApp implements WebSocketConfigurer {
     @Value("${ws.path}")
     private String wsPath;
 
-    private DockerService dockerService;
-    private JsonService jsonService;
+    private EusDockerService dockerService;
+    private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public EusSpringBootApp(DockerService dockerService,
-            JsonService jsonService, RecordingService recordingService) {
+    public EusSpringBootApp(EusDockerService dockerService,
+            EusJsonService jsonService, RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
         this.recordingService = recordingService;

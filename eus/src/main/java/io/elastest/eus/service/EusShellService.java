@@ -39,7 +39,7 @@ import com.google.common.io.CharStreams;
  * @since 0.0.1
  */
 @Service
-public class ShellService {
+public class EusShellService {
 
     final Logger log = getLogger(lookup().lookupClass());
 

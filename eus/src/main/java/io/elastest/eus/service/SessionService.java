@@ -61,11 +61,11 @@ public class SessionService extends TextWebSocketHandler {
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
-    private DockerService dockerService;
-    private JsonService jsonService;
+    private EusDockerService dockerService;
+    private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public SessionService(DockerService dockerService, JsonService jsonService,
+    public SessionService(EusDockerService dockerService, EusJsonService jsonService,
             RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;

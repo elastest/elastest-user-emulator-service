@@ -42,7 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
 import io.elastest.eus.test.util.WebSocketClient;
@@ -68,8 +68,8 @@ public class WebSocketIntegrationTest {
     @Value("${ws.path}")
     private String wsPath;
 
-    @Value("${server.servlet.context-path}")
-    private String contextPath;
+    @Value("${api.context.path}")
+    private String apiContextPath;
 
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
@@ -93,7 +93,7 @@ public class WebSocketIntegrationTest {
     private SessionService sessionService;
 
     @Autowired
-    private JsonService jsonService;
+    private EusJsonService jsonService;
 
     @BeforeEach
     void setup() {
@@ -111,7 +111,7 @@ public class WebSocketIntegrationTest {
         String jsonMessage = jsonService.objectToJson(sessionInfo);
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
 
         final String sentMessage = wsProtocolGetSessions;
         final String[] receivedMessage = { "" };
@@ -171,7 +171,7 @@ public class WebSocketIntegrationTest {
                 .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);
 
-        String wsUrl = "ws://localhost:" + serverPort + contextPath + wsPath;
+        String wsUrl = "ws://localhost:" + serverPort + apiContextPath + wsPath;
 
         final String sentMessage = wsProtocolGetRecordings;
         final String[] receivedMessage = { "" };

@@ -47,7 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
-import io.elastest.eus.service.LogstashService;
+import io.elastest.eus.service.EusLogstashService;
 
 /**
  * Tests for Logstash service.
@@ -65,7 +65,7 @@ public class LogstashIntegrationTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
-    LogstashService logstashService;
+    EusLogstashService logstashService;
 
     WireMockServer wireMockServer;
 
@@ -85,7 +85,7 @@ public class LogstashIntegrationTest {
         // Values injected with Spring properties
         String mockLogstashUrl = "http://localhost:" + port + "/";
         FieldSetter.setField(logstashService,
-                LogstashService.class.getDeclaredField("lsSSLHttpApi"),
+                EusLogstashService.class.getDeclaredField("lsSSLHttpApi"),
                 mockLogstashUrl);
 
         // Stubbing service

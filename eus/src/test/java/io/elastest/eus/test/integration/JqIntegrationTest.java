@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusJsonService;
 
 /**
  * Tests for JQ service (JSON processor).
@@ -46,7 +46,7 @@ import io.elastest.eus.service.JsonService;
 public class JqIntegrationTest {
 
     @Autowired
-    private JsonService jsonService;
+    private EusJsonService jsonService;
 
     @Test
     @DisplayName("JQ test version test")

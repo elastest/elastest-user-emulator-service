@@ -39,8 +39,8 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
 
-import io.elastest.eus.service.DockerService;
-import io.elastest.eus.service.ShellService;
+import io.elastest.eus.service.EusDockerService;
+import io.elastest.eus.service.EusShellService;
 import io.elastest.eus.test.util.MockitoExtension;
 
 /**
@@ -55,10 +55,10 @@ import io.elastest.eus.test.util.MockitoExtension;
 public class DockerUnitTest {
 
     @InjectMocks
-    DockerService dockerService;
+    EusDockerService dockerService;
 
     @Mock
-    ShellService shellService;
+    EusShellService shellService;
 
     @Test
     @DisplayName("Try to start a container with invalid input")

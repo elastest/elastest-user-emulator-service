@@ -44,8 +44,8 @@ import com.github.dockerjava.api.model.Ports.Binding;
 import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerHubService;
-import io.elastest.eus.service.DockerService;
-import io.elastest.eus.service.JsonService;
+import io.elastest.eus.service.EusDockerService;
+import io.elastest.eus.service.EusJsonService;
 
 /**
  * Tests for Docker service.
@@ -62,13 +62,13 @@ public class DockerIntegrationTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
-    private DockerService dockerService;
+    private EusDockerService dockerService;
 
     @Autowired
     private DockerHubService dockerHubService;
 
     @Autowired
-    private JsonService jsonService;
+    private EusJsonService jsonService;
 
     @Value("${hub.exposedport}")
     private int hubExposedPort;

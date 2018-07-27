@@ -38,7 +38,7 @@ import net.thisptr.jackson.jq.JsonQuery;
  * @since 0.1.1
  */
 @Service
-public class JsonService {
+public class EusJsonService {
 
     final Logger log = getLogger(lookup().lookupClass());
 

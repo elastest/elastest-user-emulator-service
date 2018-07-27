@@ -55,6 +55,7 @@ import io.swagger.annotations.ApiResponses;
  * @since 0.0.1
  */
 @Api(value = "session")
+@RequestMapping("${api.context.path}")
 public interface EusApi {
 
     /**
