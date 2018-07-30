@@ -40,7 +40,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.json.WebDriverSessionResponse;
@@ -56,7 +55,6 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
 @Tag("integration")
 @DisplayName("Integration tests with W3C WebDriver sessions")
 public class SessionIntegrationTest {

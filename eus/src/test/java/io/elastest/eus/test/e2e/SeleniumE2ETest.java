@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -54,7 +53,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("e2e")
 @DisplayName("End-to-end tests using Selenium WebDriver")
-@TestPropertySource(properties = { "novnc.image.id=elastest/eus-novnc" })
 public class SeleniumE2ETest {
 
     final Logger log = getLogger(lookup().lookupClass());

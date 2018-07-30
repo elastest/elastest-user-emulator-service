@@ -49,8 +49,7 @@ import io.elastest.eus.EusSpringBootApp;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
-@TestPropertySource(properties = { "hub.timeout=5",
-        "novnc.image.id=elastest/eus-novnc:latest" })
+@TestPropertySource(properties = { "hub.timeout=5" })
 public class TimeoutTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
