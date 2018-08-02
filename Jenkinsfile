@@ -5,10 +5,28 @@ node('TESTDOCKER') {
             def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
             mycontainer.pull()
             mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
-                git 'https://github.com/elastest/elastest-user-emulator-service.git'
+                def eusJavaDirectory = 'eus-java'
                 stage "Test and deploy epm-client"
+                    def epmClientDirectoryExists = fileExists epmClientJavaDirectory
+                    if (epmClientDirectoryExists) {
+                         echo 'EPM client directory exists'
+                    } else {
+                         echo 'There isn not EPM directory'
+                         sh 'mkdir ' + epmClientJavaDirectory
+                    }
+                      
+                    dir(epmClientJavaDirectory) {
+                         echo 'Existing files before cloning the git repository'
+                         git 'https://github.com/elastest/elastest-torm.git'
+                    }
+                    
                     echo ("Test and deploy epm-client")
-                    sh 'cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;'
+                    sh 'cd $epmClientJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;'
+
+
+
+
+                git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
                 stage "Tests"
                     echo ("Starting tests")
