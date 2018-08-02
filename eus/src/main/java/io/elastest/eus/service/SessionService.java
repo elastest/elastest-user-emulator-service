@@ -31,6 +31,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
@@ -61,12 +62,12 @@ public class SessionService extends TextWebSocketHandler {
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
-    private EusDockerService dockerService;
+    private DockerService dockerService;
     private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public SessionService(EusDockerService dockerService, EusJsonService jsonService,
-            RecordingService recordingService) {
+    public SessionService(DockerService dockerService,
+            EusJsonService jsonService, RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
         this.recordingService = recordingService;
@@ -199,15 +200,21 @@ public class SessionService extends TextWebSocketHandler {
         return sessionRegistry;
     }
 
-    public void stopAllContainerOfSession(SessionInfo sessionInfo) {
+    public void stopAllContainerOfSession(SessionInfo sessionInfo)
+            throws Exception {
         String hubContainerName = sessionInfo.getHubContainerName();
-        if (hubContainerName != null) {
-            dockerService.stopAndRemoveContainer(hubContainerName);
+        int killTimeoutInSeconds = 10;
+        if (hubContainerName != null
+                && dockerService.existsContainer(hubContainerName)) {
+            dockerService.stopAndRemoveContainerWithKillTimeout(
+                    hubContainerName, killTimeoutInSeconds);
         }
 
         String vncContainerName = sessionInfo.getVncContainerName();
-        if (vncContainerName != null) {
-            dockerService.stopAndRemoveContainer(vncContainerName);
+        if (vncContainerName != null
+                && dockerService.existsContainer(vncContainerName)) {
+            dockerService.stopAndRemoveContainerWithKillTimeout(
+                    vncContainerName, killTimeoutInSeconds);
         }
     }
 

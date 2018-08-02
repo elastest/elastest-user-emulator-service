@@ -28,7 +28,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.elastest.eus.service.EusDockerService;
+import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
@@ -50,11 +50,11 @@ public class EusSpringBootApp implements WebSocketConfigurer {
     @Value("${ws.path}")
     private String wsPath;
 
-    private EusDockerService dockerService;
+    private DockerService dockerService;
     private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public EusSpringBootApp(EusDockerService dockerService,
+    public EusSpringBootApp(DockerService dockerService,
             EusJsonService jsonService, RecordingService recordingService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;

@@ -16,9 +16,6 @@
  */
 package io.elastest.eus.service;
 
-import static com.github.dockerjava.api.model.ExposedPort.tcp;
-import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
-import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.System.getenv;
@@ -37,6 +34,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -63,15 +61,16 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports.Binding;
-import com.github.dockerjava.api.model.Volume;
+import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.messages.HostConfig.Bind;
+import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
+import com.spotify.docker.client.messages.PortBinding;
 
+import io.elastest.epm.client.DockerContainer.DockerBuilder;
+import io.elastest.epm.client.service.DockerService;
+import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.docker.DockerContainer.DockerBuilder;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.json.WebDriverError;
@@ -89,7 +88,7 @@ import io.elastest.eus.session.SessionInfo;
 @Service
 public class WebDriverService {
 
-    final Logger log = getLogger(lookup().lookupClass());
+    final Logger logger = getLogger(lookup().lookupClass());
 
     @Value("${et.host.env}")
     private String etHostEnv;
@@ -170,7 +169,7 @@ public class WebDriverService {
 
     String etInstrumentationKey = "elastest-instrumentation";
 
-    private EusDockerService dockerService;
+    private DockerService dockerService;
     private DockerHubService dockerHubService;
     private EusJsonService jsonService;
     private SessionService sessionService;
@@ -181,7 +180,7 @@ public class WebDriverService {
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
 
     @Autowired
-    public WebDriverService(EusDockerService dockerService,
+    public WebDriverService(DockerService dockerService,
             DockerHubService dockerHubService, EusJsonService jsonService,
             SessionService sessionService, RecordingService recordingService,
             TimeoutService timeoutService,
@@ -200,7 +199,14 @@ public class WebDriverService {
         // Before shutting down the EUS, all recording files must have been
         // processed
         sessionService.getSessionRegistry()
-                .forEach((sessionId, sessionInfo) -> stopBrowser(sessionInfo));
+                .forEach((sessionId, sessionInfo) -> {
+                    try {
+                        stopBrowser(sessionInfo);
+                    } catch (Exception e) {
+                        logger.debug("Error on stop browser with session Id {}",
+                                sessionId);
+                    }
+                });
     }
 
     public Map<String, ExecutionData> getExecutionsMap() {
@@ -209,14 +215,14 @@ public class WebDriverService {
 
     public ResponseEntity<String> registerExecution(
             ExecutionData executionData) {
-        log.debug("Registering Execution {}", executionData);
+        logger.debug("Registering Execution {}", executionData);
         executionsMap.put(executionData.getKey(), executionData);
         return new ResponseEntity<>(executionData.toString(), OK);
     }
 
     public ResponseEntity<String> unregisterExecution(String key) {
         try {
-            log.debug("Unregistering Execution with id {}", key);
+            logger.debug("Unregistering Execution with id {}", key);
             executionsMap.remove(key);
             return new ResponseEntity<>(key, OK);
         } catch (Exception e) {
@@ -228,14 +234,13 @@ public class WebDriverService {
     public ResponseEntity<String> getStatus() throws IOException {
         WebDriverStatus eusStatus = new WebDriverStatus(true, "EUS ready",
                 dockerHubService.getBrowsers());
-        log.debug("EUS status {}", eusStatus);
+        logger.debug("EUS status {}", eusStatus);
         String statusBody = jsonService.objectToJson(eusStatus);
         return new ResponseEntity<>(statusBody, OK);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            HttpServletRequest request)
-            throws IOException, InterruptedException {
+            HttpServletRequest request) throws DockerException, Exception {
         boolean webrtcStatsActivated = etConfigWebRtcStats != null
                 && "true".equals(etConfigWebRtcStats);
 
@@ -248,14 +253,14 @@ public class WebDriverService {
 
     public String getRequestContext(HttpServletRequest request) {
         StringBuffer requestUrl = request.getRequestURL();
-        log.debug("{}", requestUrl);
+        logger.debug("{}", requestUrl);
         return requestUrl.substring(requestUrl.lastIndexOf(apiContextPath)
                 + apiContextPath.length());
     }
 
     public ResponseEntity<String> sessionFromExecution(
             HttpEntity<String> httpEntity, HttpServletRequest request,
-            String executionKey) throws IOException, InterruptedException {
+            String executionKey) throws DockerException, Exception {
         if (!executionsMap.containsKey(executionKey)) {
             return new ResponseEntity<>(executionKey, HttpStatus.BAD_REQUEST);
         }
@@ -276,11 +281,11 @@ public class WebDriverService {
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
             boolean webRtcActivated, String folderPath)
-            throws IOException, InterruptedException {
+            throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
-        log.debug(">> Request: {} {} -- body: {}", method, requestContext,
+        logger.debug(">> Request: {} {} -- body: {}", method, requestContext,
                 requestBody);
 
         SessionInfo sessionInfo;
@@ -356,13 +361,13 @@ public class WebDriverService {
             }
             if (exchangeAgain) {
                 if (numRetries < createSessionRetries) {
-                    log.debug("Stopping browser and starting new one {}",
+                    logger.debug("Stopping browser and starting new one {}",
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
                             registryFolder);
                     numRetries++;
-                    log.debug(
+                    logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
                             numRetries, createSessionRetries);
                     continue;
@@ -395,7 +400,7 @@ public class WebDriverService {
             // Start Recording if not is manual recording
             if (!sessionInfo.isManualRecording()) {
                 // Start Recording
-                log.debug("Session with automatic recording");
+                logger.debug("Session with automatic recording");
                 recordingService.startRecording(sessionInfo);
             }
         }
@@ -419,7 +424,7 @@ public class WebDriverService {
             boolean activated, String monitoringIndex) {
         boolean manageSuccessful = false;
         if (activated) {
-            log.debug("WebRtc monitoring activated");
+            logger.debug("WebRtc monitoring activated");
             try {
                 String configLocalStorageStr = this
                         .getWebRtcMonitoringLocalStorageStr(
@@ -429,11 +434,11 @@ public class WebDriverService {
                 manageSuccessful = postResponse != null;
 
             } catch (JsonProcessingException e) {
-                log.error(
+                logger.error(
                         "Error on send WebRtc LocalStorage variable for monitoring. {}",
                         e);
             } catch (Exception e) {
-                log.error("Error obtaining monitoring configuration. {}", e);
+                logger.error("Error obtaining monitoring configuration. {}", e);
             }
         }
         return manageSuccessful;
@@ -500,12 +505,12 @@ public class WebDriverService {
             Exception exception) {
         WebDriverError webDriverError = new WebDriverError("EUS internal error",
                 message, exception);
-        log.error("{}", webDriverError);
+        logger.error("{}", webDriverError);
         String errorMessage = message;
         try {
             errorMessage = jsonService.objectToJson(webDriverError);
         } catch (JsonProcessingException e) {
-            log.warn("Exception parsing error message: {} {}", message,
+            logger.warn("Exception parsing error message: {} {}", message,
                     exception, e);
         }
         return new ResponseEntity<>(errorMessage, INTERNAL_SERVER_ERROR);
@@ -527,8 +532,9 @@ public class WebDriverService {
         if (!liveSession) {
             timeoutService.shutdownSessionTimer(sessionInfo);
             final SessionInfo finalSessionInfo = sessionInfo;
-            Runnable deleteSession = () -> deleteSession(finalSessionInfo,
-                    true);
+            Runnable deleteSession = () -> {
+                deleteSession(finalSessionInfo, true);
+            };
 
             if (!isDeleteSessionRequest(method, requestContext)) {
                 timeoutService.startSessionTimer(sessionInfo,
@@ -570,7 +576,7 @@ public class WebDriverService {
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
             SessionInfo sessionInfo, boolean isLive, String responseBody)
-            throws IOException, InterruptedException {
+            throws Exception {
         HttpStatus responseStatus = OK;
 
         // Intercept again create session
@@ -580,11 +586,12 @@ public class WebDriverService {
 
         // Intercept destroy session
         if (isDeleteSessionRequest(method, requestContext)) {
-            log.trace("Intercepted DELETE session ({})", method);
+            logger.trace("Intercepted DELETE session ({})", method);
             stopBrowser(sessionInfo);
         }
 
-        log.debug("<< Response: {} -- body: {}", responseStatus, responseBody);
+        logger.debug("<< Response: {} -- body: {}", responseStatus,
+                responseBody);
         return responseStatus;
     }
 
@@ -607,14 +614,14 @@ public class WebDriverService {
                 ? optionalHttpEntity.get()
                 : httpEntity;
         ResponseEntity<String> response = null;
-        log.debug("-> Request to browser: {} {} {}", method, finalUrl,
+        logger.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
         try {
             response = restTemplate.exchange(finalUrl, method, finalHttpEntity,
                     String.class);
         } catch (Exception e) {
             if (isCreateSession) {
-                log.debug("## Exception exchanging request", e);
+                logger.debug("## Exception exchanging request", e);
                 return null;
             } else {
                 throw e;
@@ -622,7 +629,7 @@ public class WebDriverService {
         }
         HttpStatus responseStatusCode = response.getStatusCode();
         String responseBody = response.getBody();
-        log.debug("<- Response from browser: {} {}", responseStatusCode,
+        logger.debug("<- Response from browser: {} {}", responseStatusCode,
                 responseBody);
 
         if (responseStatusCode == FOUND) {
@@ -638,10 +645,10 @@ public class WebDriverService {
 
     private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
             String responseBody) throws IOException, InterruptedException {
-        log.trace("Session response: JSON: {}", responseBody);
+        logger.trace("Session response: JSON: {}", responseBody);
         WebDriverSessionResponse sessionResponse = jsonService
                 .jsonToObject(responseBody, WebDriverSessionResponse.class);
-        log.debug("Session response: JSON: {} -- Java: {}", responseBody,
+        logger.debug("Session response: JSON: {} -- Java: {}", responseBody,
                 sessionResponse);
 
         String sessionId = sessionResponse.getSessionId();
@@ -649,7 +656,7 @@ public class WebDriverService {
             // Due to changes in JSON response in Selenium 3.5.3
             WebDriverSessionValue responseValue = jsonService
                     .jsonToObject(responseBody, WebDriverSessionValue.class);
-            log.debug("Response value {}", responseValue);
+            logger.debug("Response value {}", responseValue);
             sessionId = responseValue.getValue().getSessionId();
         }
         sessionInfo.setSessionId(sessionId);
@@ -677,7 +684,8 @@ public class WebDriverService {
             String jqRemoveVersionContent = "walk(if type == \"object\" and .version then .version=\"\" else . end)";
             String jsonFirefox = jsonService.processJsonWithJq(requestBody,
                     jqRemoveVersionContent);
-            log.debug("Using capabilities with empty version {}", jsonFirefox);
+            logger.debug("Using capabilities with empty version {}",
+                    jsonFirefox);
             return Optional.of(new HttpEntity<String>(jsonFirefox));
         }
         return Optional.empty();
@@ -685,14 +693,13 @@ public class WebDriverService {
 
     private ResponseEntity<String> notFound() {
         ResponseEntity<String> responseEntity = new ResponseEntity<>(NOT_FOUND);
-        log.debug("<< Response: {} ({})", responseEntity.getStatusCode(),
+        logger.debug("<< Response: {} ({})", responseEntity.getStatusCode(),
                 "NOT FOUND");
         return responseEntity;
     }
 
     public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folderPath)
-            throws IOException, InterruptedException {
+            String originalRequestBody, String folderPath) throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -705,34 +712,39 @@ public class WebDriverService {
         String imageId = dockerHubService.getBrowserImageFromCapabilities(
                 browserName, version, platform);
 
-        log.info("Using {} as Docker image for {}", imageId, browserName);
-        String hubContainerName = dockerService
-                .generateContainerName(eusContainerPrefix + hubContainerSufix);
+        logger.info("Using {} as Docker image for {}", imageId, browserName);
+        String hubContainerName = dockerService.generateEUSBrowserContainerName(
+                eusContainerPrefix + hubContainerSufix);
 
         // Recording Volume
-        Volume recordings = new Volume(containerRecordingFolder);
-        List<Volume> volumes = asList(recordings);
+        List<Bind> volumes = new ArrayList<>();
 
-        List<Bind> volumeBinds = asList(new Bind(folderPath, recordings));
+        Builder dockerSockVolumeBuilder = Bind.builder();
+        dockerSockVolumeBuilder.from(folderPath);
+        dockerSockVolumeBuilder.to(containerRecordingFolder);
+
+        volumes.add(dockerSockVolumeBuilder.build());
 
         // Port binding
+        Map<String, List<PortBinding>> portBindings = new HashMap<>();
+
         int hubPort = dockerService.findRandomOpenPort();
-        Binding bindHubPort = bindPort(hubPort);
-        ExposedPort exposedHubPort = tcp(hubExposedPort);
+        String exposedHubPort = Integer.toString(hubExposedPort);
+        portBindings.put(exposedHubPort,
+                Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
 
         int vncPort = dockerService.findRandomOpenPort();
-        Binding bindVncPort = bindPort(vncPort);
-        ExposedPort exposedVncPort = tcp(hubVncExposedPort);
+        String exposedVncPort = Integer.toString(hubVncExposedPort);
+        portBindings.put(exposedVncPort,
+                Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
 
         int noVncBindedPort = dockerService.findRandomOpenPort();
-        Binding bindNoVncPort = bindPort(noVncBindedPort);
-        ExposedPort exposedNoVncPort = tcp(noVncExposedPort);
+        String exposedNoVncPort = Integer.toString(noVncExposedPort);
+        portBindings.put(exposedNoVncPort,
+                Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
 
-        List<PortBinding> portBindings = asList(
-                new PortBinding(bindHubPort, exposedHubPort),
-                new PortBinding(bindVncPort, exposedVncPort),
-                new PortBinding(bindNoVncPort, exposedNoVncPort));
-        List<ExposedPort> exposedPorts = asList(exposedHubPort, exposedVncPort,
+        // Exposed ports
+        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
                 exposedNoVncPort);
 
         // Envs
@@ -740,23 +752,29 @@ public class WebDriverService {
                 "SCREEN_RESOLUTION=" + browserScreenResolution,
                 "TZ=" + browserTimezone);
 
-        DockerBuilder dockerBuilder = dockerBuilder(imageId, hubContainerName)
-                .exposedPorts(exposedPorts).portBindings(portBindings)
-                .volumes(volumes).binds(volumeBinds).shmSize(shmSize)
-                .envs(envs);
+        DockerBuilder dockerBuilder = new DockerBuilder(imageId);
+        dockerBuilder.containerName(hubContainerName);
+        dockerBuilder.exposedPorts(exposedPorts);
+        dockerBuilder.portBindings(portBindings);
+        dockerBuilder.volumeBindList(volumes);
+        dockerBuilder.shmSize(shmSize);
+        dockerBuilder.envs(envs);
+        dockerBuilder.capAdd(asList("SYS_ADMIN"));
+
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
 
         // Start
-        dockerService.startAndWaitContainer(dockerBuilder.build());
+        dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
+                EpmService.etMasterSlaveMode, true);
 
         // Wait Reachable
         String hubPath = "/wd/hub";
         String hubIp = dockerService.getDockerServerIp();
         String hubUrl = "http://" + hubIp + ":" + hubPort + hubPath;
-        dockerService.waitForHostIsReachable(hubUrl);
-        log.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
+
+        logger.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
 
         // Save info into SessionInfo
         SessionInfo sessionInfo = new SessionInfo();
@@ -804,10 +822,10 @@ public class WebDriverService {
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
         try {
             if (timeout) {
-                log.warn("Deleting session {} due to timeout of {} seconds",
+                logger.warn("Deleting session {} due to timeout of {} seconds",
                         sessionInfo.getSessionId(), sessionInfo.getTimeout());
             } else {
-                log.info("Deleting session {}", sessionInfo.getSessionId());
+                logger.info("Deleting session {}", sessionInfo.getSessionId());
             }
 
             if (sessionInfo.getVncContainerName() != null) {
@@ -822,11 +840,16 @@ public class WebDriverService {
             }
 
         } catch (Exception e) {
-            log.error("There was a problem deleting session {}",
+            logger.error("There was a problem deleting session {}",
                     sessionInfo.getSessionId(), e);
             throw new EusException(e);
         } finally {
-            sessionService.stopAllContainerOfSession(sessionInfo);
+            try {
+                sessionService.stopAllContainerOfSession(sessionInfo);
+            } catch (Exception e) {
+                logger.debug("Containers of session {} not removed",
+                        sessionInfo.getSessionId());
+            }
             sessionService.removeSession(sessionInfo.getSessionId());
 
             timeoutService.shutdownSessionTimer(sessionInfo);
@@ -866,11 +889,11 @@ public class WebDriverService {
                     .jsonToObject(jsonMessage, WebDriverCapabilities.class)
                     .getDesiredCapabilities().isLive();
         } catch (Exception e) {
-            log.warn(
+            logger.warn(
                     "Exception {} checking if session is live. JSON message: {}",
                     e.getMessage(), jsonMessage);
         }
-        log.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
+        logger.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
         return out;
     }
 
@@ -889,7 +912,8 @@ public class WebDriverService {
             }
         }
 
-        log.trace("getSessionIdFromPath -- path: {} sessionId {}", path, out);
+        logger.trace("getSessionIdFromPath -- path: {} sessionId {}", path,
+                out);
 
         return out;
     }

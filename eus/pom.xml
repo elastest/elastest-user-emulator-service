@@ -46,7 +46,7 @@
 
 		<!-- Dependencies version -->
 		<springfox.version>2.8.0</springfox.version>
-		<docker-java.version>3.0.14</docker-java.version>
+		<docker.spotify.version>8.11.6</docker.spotify.version>
 		<jersey.version>2.26</jersey.version>
 		<guava.version>24.0-jre</guava.version>
 		<retrofit.version>2.3.0</retrofit.version>
@@ -123,11 +123,6 @@
 			<version>${springfox.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.docker-java</groupId>
-			<artifactId>docker-java</artifactId>
-			<version>${docker-java.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
 			<version>${jersey.version}</version>
@@ -162,6 +157,41 @@
 			<artifactId>jackson-jq</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
+
+		<!-- Docker Client -->
+		<dependency>
+			<groupId>com.spotify</groupId>
+			<artifactId>docker-client</artifactId>
+			<version>${docker.spotify.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- EPM Client -->
+		<dependency>
+			<groupId>io.elastest.epm</groupId>
+			<artifactId>epm-client</artifactId>
+			<version>0.11-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 
 		<!-- Test dependencies -->
 		<dependency>

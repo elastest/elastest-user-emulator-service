@@ -16,16 +16,15 @@
  */
 package io.elastest.eus.test.integration;
 
-import static com.github.dockerjava.api.model.ExposedPort.tcp;
-import static com.github.dockerjava.api.model.Ports.Binding.bindPort;
-import static io.elastest.eus.docker.DockerContainer.dockerBuilder;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -37,14 +36,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports.Binding;
+import com.spotify.docker.client.messages.PortBinding;
 
-import io.elastest.eus.docker.DockerContainer.DockerBuilder;
+import io.elastest.epm.client.DockerContainer.DockerBuilder;
+import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerHubService;
-import io.elastest.eus.service.EusDockerService;
 import io.elastest.eus.service.EusJsonService;
 
 /**
@@ -62,7 +59,7 @@ public class DockerIntegrationTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     @Autowired
-    private EusDockerService dockerService;
+    private DockerService dockerService;
 
     @Autowired
     private DockerHubService dockerHubService;
@@ -109,25 +106,27 @@ public class DockerIntegrationTest {
         String containerName = dockerService
                 .generateContainerName("eus-hub-for-test-");
 
+        Map<String, List<PortBinding>> portBindings = new HashMap<>();
+
         int hubBindPort = dockerService.findRandomOpenPort();
-        Binding bindPort = bindPort(hubBindPort);
-        ExposedPort exposedPort = tcp(hubExposedPort);
+        String exposedHubPort = Integer.toString(hubExposedPort);
+        portBindings.put(exposedHubPort,
+                Arrays.asList(PortBinding.of("0.0.0.0", hubBindPort)));
 
         int hubVncBindPort = dockerService.findRandomOpenPort();
-        Binding bindHubVncPort = bindPort(hubVncBindPort);
-        ExposedPort exposedHubVncPort = tcp(hubVncExposedPort);
+        String exposedHubVncPort = Integer.toString(hubVncExposedPort);
+        portBindings.put(exposedHubVncPort,
+                Arrays.asList(PortBinding.of("0.0.0.0", hubVncBindPort)));
 
-        List<PortBinding> portBindings = asList(
-                new PortBinding(bindPort, exposedPort),
-                new PortBinding(bindHubVncPort, exposedHubVncPort));
-
-        DockerBuilder dockerBuilder = dockerBuilder(imageId, containerName)
-                .portBindings(portBindings);
+        DockerBuilder dockerBuilder = new DockerBuilder(imageId);
+        dockerBuilder.containerName(containerName);
+        dockerBuilder.portBindings(portBindings);
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
 
-        dockerService.startAndWaitContainer(dockerBuilder.build());
+        dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
+                false, true);
 
         // Assertions
         assertTrue(dockerService.existsContainer(containerName));

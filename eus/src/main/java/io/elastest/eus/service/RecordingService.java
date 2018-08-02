@@ -44,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.session.SessionInfo;
@@ -86,7 +87,7 @@ public class RecordingService {
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
 
-    private EusDockerService dockerService;
+    private DockerService dockerService;
     private EusJsonService jsonService;
     private AlluxioService alluxioService;
 
@@ -102,7 +103,7 @@ public class RecordingService {
     }
 
     @Autowired
-    public RecordingService(EusDockerService dockerService,
+    public RecordingService(DockerService dockerService,
             EusJsonService jsonService, AlluxioService alluxioService) {
         this.dockerService = dockerService;
         this.jsonService = jsonService;
@@ -110,7 +111,7 @@ public class RecordingService {
     }
 
     public void startRecording(String sessionId, String hubContainerName,
-            String recordingFileName) throws IOException, InterruptedException {
+            String recordingFileName) throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
                 sessionId, hubContainerName, recordingFileName);
 
@@ -118,8 +119,7 @@ public class RecordingService {
                 "-n", recordingFileName);
     }
 
-    public void startRecording(SessionInfo sessionInfo)
-            throws IOException, InterruptedException {
+    public void startRecording(SessionInfo sessionInfo) throws Exception {
         String sessionId = sessionInfo.getSessionId();
         String noVncContainerName = sessionInfo.getVncContainerName();
         String recordingFileName = sessionInfo.getIdForFiles();
@@ -127,14 +127,12 @@ public class RecordingService {
         this.startRecording(sessionId, noVncContainerName, recordingFileName);
     }
 
-    public void stopRecording(SessionInfo sessionInfo)
-            throws IOException, InterruptedException {
+    public void stopRecording(SessionInfo sessionInfo) throws Exception {
         String noNvcContainerName = sessionInfo.getVncContainerName();
         this.stopRecording(noNvcContainerName);
     }
 
-    public void stopRecording(String hubContainerName)
-            throws IOException, InterruptedException {
+    public void stopRecording(String hubContainerName) throws Exception {
         log.debug("Stopping recording of container {}", hubContainerName);
         dockerService.execCommand(hubContainerName, true, stopRecordingScript);
     }
