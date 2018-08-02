@@ -136,6 +136,7 @@ RUN touch $DOCKER_HOME/.sudo_as_admin_successful && \
 
 # Disable IPv6 to avoid ERR_NETWORK_CHANGED problems
 RUN echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
+RUN sysctl -p
 
 WORKDIR $DOCKER_HOME
 
