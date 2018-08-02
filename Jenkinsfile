@@ -21,9 +21,7 @@ node('TESTDOCKER') {
                     }
                     
                     echo ("Test and deploy epm-client")
-                    sh 'cd $epmClientJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;'
-
-
+                    sh "cd $epmClientJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;"
 
 
                 git 'https://github.com/elastest/elastest-user-emulator-service.git'
