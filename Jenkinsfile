@@ -6,6 +6,9 @@ node('TESTDOCKER') {
             mycontainer.pull()
             mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
                 git 'https://github.com/elastest/elastest-user-emulator-service.git'
+                stage "Test and deploy epm-client"
+                    echo ("Test and deploy epm-client")
+                    sh 'cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;'
 
                 stage "Tests"
                     echo ("Starting tests")
