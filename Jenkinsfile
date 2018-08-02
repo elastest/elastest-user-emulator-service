@@ -5,7 +5,7 @@ node('TESTDOCKER') {
             def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
             mycontainer.pull()
             mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
-                def eusJavaDirectory = 'eus-java'
+                def epmClientJavaDirectory = 'epm-client'
                 stage "Test and deploy epm-client"
                     def epmClientDirectoryExists = fileExists epmClientJavaDirectory
                     if (epmClientDirectoryExists) {
