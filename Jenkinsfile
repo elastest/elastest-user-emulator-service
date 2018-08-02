@@ -5,23 +5,42 @@ node('TESTDOCKER') {
             def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
             mycontainer.pull()
             mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
+
                 def epmClientJavaDirectory = 'epm-client-java'
-                stage "Test and deploy epm-client"
+                stage "Install et-epm-client-java"
                     def epmClientDirectoryExists = fileExists epmClientJavaDirectory
                     if (epmClientDirectoryExists) {
+                        echo 'EPM client directory exists'
+                    } else {
+                        echo 'There isn not EPM client directory'
+                        sh 'mkdir ' + epmClientJavaDirectory
+                    }
+                        
+                    dir(epmClientJavaDirectory) {
+                        echo 'Existing files before cloning the git repository'
+                        git 'https://github.com/franciscoRdiaz/epm-client-java.git'
+                    }
+                        
+                    echo 'Installing epm-client-java'
+                    sh "ls -lrt; cd $epmClientJavaDirectory; mvn clean install -Dmaven.test.skip=true"
+
+                def etmJavaDirectory = 'etm-java'
+                stage "Test and deploy epm-client"
+                    def etmDirectoryExists = fileExists etmJavaDirectory
+                    if (etmDirectoryExists) {
                          echo 'EPM client directory exists'
                     } else {
                          echo 'There isn not EPM directory'
-                         sh 'mkdir ' + epmClientJavaDirectory
+                         sh 'mkdir ' + etmJavaDirectory
                     }
                       
-                    dir(epmClientJavaDirectory) {
+                    dir(etmJavaDirectory) {
                          echo 'Existing files before cloning the git repository'
                          git 'https://github.com/elastest/elastest-torm.git'
                     }
                     
                     echo ("Test and deploy epm-client")
-                    sh "cd $epmClientJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;"
+                    sh "cd $etmJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;"
 
 
                 git 'https://github.com/elastest/elastest-user-emulator-service.git'
