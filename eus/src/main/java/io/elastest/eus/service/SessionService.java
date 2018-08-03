@@ -53,9 +53,6 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${ws.protocol.getRecordings}")
     private String wsProtocolGetRecordings;
 
-    @Value("${hub.timeout}")
-    private String hubTimeout;
-
     @Value("${registry.folder}")
     private String registryFolder;
 

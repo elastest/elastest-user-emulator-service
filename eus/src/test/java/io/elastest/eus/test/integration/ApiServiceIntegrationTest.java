@@ -123,12 +123,6 @@ public class ApiServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /")
-    void testGetHome() throws Exception {
-        mockMvc.perform(get("/")).andExpect(status().isFound());
-    }
-
-    @Test
     @DisplayName("POST /session/{sessionId}/usermedia")
     void testPostUsermedia() throws Exception {
         String usermedia = jsonService.objectToJson(new UserMedia());
