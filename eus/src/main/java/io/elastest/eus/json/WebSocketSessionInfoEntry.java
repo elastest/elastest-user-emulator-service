@@ -16,6 +16,7 @@
  */
 package io.elastest.eus.json;
 
+import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -24,7 +25,7 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-public class WebSocketSessionInfoEntry {
+public class WebSocketSessionInfoEntry extends DockerServiceStatus {
 
     String id;
     String url;
@@ -46,6 +47,8 @@ public class WebSocketSessionInfoEntry {
         this.creationTime = sessionInfo.getCreationTime();
         this.hubContainerName = sessionInfo.getHubContainerName();
         this.folderPath = sessionInfo.getFolderPath();
+        this.setStatus(sessionInfo.getStatus());
+        this.setStatusMsg(sessionInfo.getStatusMsg());
     }
 
     public String getId() {
@@ -78,11 +81,13 @@ public class WebSocketSessionInfoEntry {
 
     @Override
     public String toString() {
-        return "WebSocketSessionInfoEntry [getId()=" + getId() + ", getUrl()="
-                + getUrl() + ", getBrowser()=" + getBrowser()
-                + ", getVersion()=" + getVersion() + ", getCreationTime()="
-                + getCreationTime() + ", getHubContainerName()="
-                + getHubContainerName() + ", getFolderPath()=" + getFolderPath()
+        return "WebSocketSessionInfoEntry [id=" + id + ", url=" + url
+                + ", browser=" + browser + ", version=" + version
+                + ", creationTime=" + creationTime + ", hubContainerName="
+                + hubContainerName + ", folderPath=" + folderPath
+                + ", getStatusMsg()=" + getStatusMsg() + ", getStatus()="
+                + getStatus() + ", toString()=" + super.toString()
+                + ", getClass()=" + getClass() + ", hashCode()=" + hashCode()
                 + "]";
     }
 

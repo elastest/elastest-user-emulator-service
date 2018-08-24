@@ -25,13 +25,15 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
+import io.elastest.epm.client.model.DockerServiceStatus;
+
 /**
  * Session information.
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class SessionInfo {
+public class SessionInfo extends DockerServiceStatus {
     final Logger log = getLogger(lookup().lookupClass());
 
     private String sessionId;

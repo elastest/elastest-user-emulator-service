@@ -150,11 +150,18 @@ public class SessionService extends TextWebSocketHandler {
 
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
+        this.sendNewSessionToAllClients(sessionInfo, true);
+    }
+
+    public void sendNewSessionToAllClients(SessionInfo sessionInfo,
+            boolean printDebug) throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             WebSocketNewSession newSession = new WebSocketNewSession(
                     sessionInfo);
-            log.debug("Sending newSession message {} to session {}", newSession,
-                    session);
+            if (printDebug) {
+                log.debug("Sending newSession message {} to session {}",
+                        newSession, session);
+            }
             sendTextMessage(session, jsonService.objectToJson(newSession));
         }
     }

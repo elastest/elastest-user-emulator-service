@@ -61,12 +61,16 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.HostConfig.Bind;
 import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
 import com.spotify.docker.client.messages.PortBinding;
+import com.spotify.docker.client.messages.ProgressMessage;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
+import io.elastest.epm.client.model.DockerPullImageProgress;
+import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.EusException;
@@ -764,6 +768,41 @@ public class WebDriverService {
         if (useTorm) {
             dockerBuilder.network(dockerNetwork);
         }
+        // Save info into SessionInfo
+        SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setHubContainerName(hubContainerName);
+        sessionInfo.setBrowser(browserName);
+        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
+        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
+        sessionInfo.setCreationTime(dateFormat.format(new Date()));
+        sessionInfo.setHubBindPort(hubPort);
+        sessionInfo.setHubVncBindPort(hubPort);
+        sessionInfo.setFolderPath(folderPath);
+
+        String browserId = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().getBrowserId();
+        sessionInfo.setBrowserId(browserId);
+
+        boolean manualRecording = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().isManualRecording();
+        sessionInfo.setManualRecording(manualRecording);
+
+        boolean liveSession = isLive(requestBody);
+        sessionInfo.setLiveSession(liveSession);
+
+        sessionInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionInfo.setStatusMsg("Initializing...");
+        sessionService.sendNewSessionToAllClients(sessionInfo, false);
+
+        // Pull
+        dockerService.pullImageWithProgressHandler(imageId,
+                getBrowserProgressHandler(imageId, sessionInfo));
+
+        sessionInfo.setStatus(DockerServiceStatusEnum.STARTING);
+        sessionInfo.setStatusMsg("Starting...");
+        sessionService.sendNewSessionToAllClients(sessionInfo, false);
 
         // Start
         dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
@@ -774,19 +813,10 @@ public class WebDriverService {
         String hubIp = dockerService.getDockerServerIp();
         String hubUrl = "http://" + hubIp + ":" + hubPort + hubPath;
 
-        logger.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
-
-        // Save info into SessionInfo
-        SessionInfo sessionInfo = new SessionInfo();
+        // Save hub url into Session Info
         sessionInfo.setHubUrl(hubUrl);
-        sessionInfo.setHubContainerName(hubContainerName);
-        sessionInfo.setBrowser(browserName);
-        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
-        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
-        sessionInfo.setCreationTime(dateFormat.format(new Date()));
-        sessionInfo.setHubBindPort(hubPort);
-        sessionInfo.setHubVncBindPort(hubPort);
-        sessionInfo.setFolderPath(folderPath);
+
+        logger.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
 
         String vncUrlFormat = "http://%s:%d/" + vncHtml
                 + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
@@ -806,17 +836,42 @@ public class WebDriverService {
         sessionInfo.setVncUrl(vncUrl);
         sessionInfo.setNoVncBindPort(noVncBindedPort);
 
-        String browserId = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getBrowserId();
-        sessionInfo.setBrowserId(browserId);
-
-        boolean manualRecording = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().isManualRecording();
-        sessionInfo.setManualRecording(manualRecording);
+        sessionInfo.setStatus(DockerServiceStatusEnum.READY);
+        sessionInfo.setStatusMsg("Ready");
 
         return sessionInfo;
+    }
+
+    private ProgressHandler getBrowserProgressHandler(String image,
+            SessionInfo sessionInfo) {
+        DockerPullImageProgress dockerPullImageProgress = new DockerPullImageProgress();
+        dockerPullImageProgress.setImage(image);
+        dockerPullImageProgress.setCurrentPercentage(0);
+
+        sessionInfo.setStatus(DockerServiceStatusEnum.PULLING);
+        sessionInfo.setStatusMsg("Pulling " + image + " image");
+        return new ProgressHandler() {
+            @Override
+            public void progress(ProgressMessage message)
+                    throws DockerException {
+                dockerPullImageProgress.processNewMessage(message);
+                String msg = "Pulling image " + image + ": "
+                        + dockerPullImageProgress.getCurrentPercentage() + "%";
+
+                sessionInfo.setStatusMsg(msg);
+                if (!sessionInfo.isLiveSession()) {
+                    try {
+                        sessionService.sendNewSessionToAllClients(sessionInfo,
+                                false);
+                    } catch (IOException e) {
+                        logger.error("Error on send session {} info: ",
+                                sessionInfo.getSessionId(), e);
+                    }
+                }
+            }
+
+        };
+
     }
 
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
