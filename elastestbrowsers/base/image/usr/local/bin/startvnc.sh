@@ -6,6 +6,10 @@
 
 # Copyright Xiangmin Jiao 2017. All rights reserved.
 
+# Disable IPv6 to avoid ERR_NETWORK_CHANGED problems
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -p
+
 # Start up xdummy with the given size
 RESOLUT="${RESOLUT:-1440x900}"
 SIZE=`echo $RESOLUT | sed -e "s/x/ /"`
