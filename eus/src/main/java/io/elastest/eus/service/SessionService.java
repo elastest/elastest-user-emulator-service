@@ -155,14 +155,16 @@ public class SessionService extends TextWebSocketHandler {
 
     public void sendNewSessionToAllClients(SessionInfo sessionInfo,
             boolean printDebug) throws IOException {
-        for (WebSocketSession session : activeSessions.values()) {
-            WebSocketNewSession newSession = new WebSocketNewSession(
-                    sessionInfo);
-            if (printDebug) {
-                log.debug("Sending newSession message {} to session {}",
-                        newSession, session);
+        if (!sessionInfo.isLiveSession()) {
+            for (WebSocketSession session : activeSessions.values()) {
+                WebSocketNewSession newSession = new WebSocketNewSession(
+                        sessionInfo);
+                if (printDebug) {
+                    log.debug("Sending newSession message {} to session {}",
+                            newSession, session);
+                }
+                sendTextMessage(session, jsonService.objectToJson(newSession));
             }
-            sendTextMessage(session, jsonService.objectToJson(newSession));
         }
     }
 
