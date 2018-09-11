@@ -22,12 +22,19 @@ public class ExecutionData {
     @JsonProperty("folderPath")
     String folderPath;
 
+    @JsonProperty("useSutNetwork")
+    boolean useSutNetwork = false;
+
+    @JsonProperty("sutContainerPrefix")
+    String sutContainerPrefix;
+
     public ExecutionData() {
     }
 
     public ExecutionData(String type, Long tJobId, Long tJobExecId,
             String monitoringIndex, boolean webRtcStatsActivated,
-            String folderPath) {
+            String folderPath, boolean useSutNetwork,
+            String sutContainerPrefix) {
         super();
         this.type = type;
         this.tJobId = tJobId;
@@ -35,6 +42,8 @@ public class ExecutionData {
         this.monitoringIndex = monitoringIndex;
         this.webRtcStatsActivated = webRtcStatsActivated;
         this.folderPath = folderPath;
+        this.useSutNetwork = useSutNetwork;
+        this.sutContainerPrefix = sutContainerPrefix;
     }
 
     public String getType() {
@@ -85,12 +94,30 @@ public class ExecutionData {
         this.folderPath = folderPath;
     }
 
+    public boolean isUseSutNetwork() {
+        return useSutNetwork;
+    }
+
+    public void setUseSutNetwork(boolean useSutNetwork) {
+        this.useSutNetwork = useSutNetwork;
+    }
+
+    public String getSutContainerPrefix() {
+        return sutContainerPrefix;
+    }
+
+    public void setSutContainerPrefix(String sutContainerPrefix) {
+        this.sutContainerPrefix = sutContainerPrefix;
+    }
+
     @Override
     public String toString() {
-        return "EusExecutionData [type=" + type + ", tJobId=" + tJobId
+        return "ExecutionData [type=" + type + ", tJobId=" + tJobId
                 + ", tJobExecId=" + tJobExecId + ", monitoringIndex="
                 + monitoringIndex + ", webRtcStatsActivated="
-                + webRtcStatsActivated + ", folderPath=" + folderPath + "]";
+                + webRtcStatsActivated + ", folderPath=" + folderPath
+                + ", useSutNetwork=" + useSutNetwork + ", sutContainerPrefix="
+                + sutContainerPrefix + "]";
     }
 
     public String getKey() {

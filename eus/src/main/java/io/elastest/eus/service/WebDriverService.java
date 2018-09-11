@@ -63,6 +63,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.messages.Container;
 import com.spotify.docker.client.messages.HostConfig.Bind;
 import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
 import com.spotify.docker.client.messages.PortBinding;
@@ -252,7 +253,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                registryFolder);
+                registryFolder, dockerNetwork);
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -271,9 +272,27 @@ public class WebDriverService {
 
         ExecutionData data = executionsMap.get(executionKey);
         String requestContext = parseRequestContext(getRequestContext(request));
+
+        String network = dockerNetwork;
+        String sutPrefix = data.getSutContainerPrefix();
+        if (data.isUseSutNetwork() && sutPrefix != null
+                && !"".equals(sutPrefix)) {
+            List<Container> containers = dockerService
+                    .getContainersByNamePrefix(sutPrefix);
+            if (containers != null && containers.size() > 0) {
+                network = dockerService.getNetworkName(containers.get(0).id());
+                if (network == null || "".equals(network)) {
+                    network = dockerNetwork;
+                    logger.error(
+                            "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
+                            dockerNetwork);
+                }
+            }
+        }
+
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                data.getFolderPath());
+                data.getFolderPath(), network);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -284,7 +303,7 @@ public class WebDriverService {
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
-            boolean webRtcActivated, String folderPath)
+            boolean webRtcActivated, String folderPath, String network)
             throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
@@ -328,7 +347,8 @@ public class WebDriverService {
 
             // If live, no timeout
             liveSession = isLive(requestBody);
-            sessionInfo = startBrowser(newRequestBody, requestBody, folderPath);
+            sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
+                    network);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -369,7 +389,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            registryFolder);
+                            registryFolder, network);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -703,7 +723,8 @@ public class WebDriverService {
     }
 
     public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folderPath) throws Exception {
+            String originalRequestBody, String folderPath, String network)
+            throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -766,7 +787,7 @@ public class WebDriverService {
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
 
         if (useTorm) {
-            dockerBuilder.network(dockerNetwork);
+            dockerBuilder.network(network);
         }
         // Save info into SessionInfo
         SessionInfo sessionInfo = new SessionInfo();
