@@ -98,6 +98,9 @@ public class WebDriverService {
     @Value("${et.host.env}")
     private String etHostEnv;
 
+    @Value("${et.host.type.env}")
+    private String etHostEnvType;
+
     @Value("${api.context.path}")
     private String apiContextPath;
 
@@ -844,8 +847,10 @@ public class WebDriverService {
         String vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
 
         String etHost = getenv(etHostEnv);
-        if (etHost != null) {
-            if (!etHost.equalsIgnoreCase("localhost")) {
+        String etHostType = getenv(etHostEnvType);
+        if (etHostType != null && etHost != null) {
+            // If server-address
+            if (!"default".equalsIgnoreCase(etHostType)) {
                 hubIp = etHost;
                 vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
             }
