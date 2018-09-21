@@ -845,6 +845,7 @@ public class WebDriverService {
         String vncUrlFormat = "http://%s:%d/" + vncHtml
                 + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
         String vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
+        String internalVncUrl = vncUrl;
 
         String etHost = getenv(etHostEnv);
         String etHostType = getenv(etHostEnvType);
@@ -856,7 +857,7 @@ public class WebDriverService {
             }
         }
 
-        dockerService.waitForHostIsReachable(vncUrl);
+        dockerService.waitForHostIsReachable(internalVncUrl);
 
         sessionInfo.setVncContainerName(hubContainerName);
         sessionInfo.setVncUrl(vncUrl);
