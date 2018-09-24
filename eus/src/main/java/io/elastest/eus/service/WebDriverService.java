@@ -747,11 +747,11 @@ public class WebDriverService {
         // Recording Volume
         List<Bind> volumes = new ArrayList<>();
 
-        Builder dockerSockVolumeBuilder = Bind.builder();
-        dockerSockVolumeBuilder.from(folderPath);
-        dockerSockVolumeBuilder.to(containerRecordingFolder);
+        Builder dockerDataVolumeBuilder = Bind.builder();
+        dockerDataVolumeBuilder.from(folderPath);
+        dockerDataVolumeBuilder.to(containerRecordingFolder);
 
-        volumes.add(dockerSockVolumeBuilder.build());
+        volumes.add(dockerDataVolumeBuilder.build());
 
         // Port binding
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
