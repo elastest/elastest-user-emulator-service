@@ -174,6 +174,9 @@ public class WebDriverService {
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
+    
+    @Value("${et.data.in.host}")
+    private String etDataInHost;
 
     String etInstrumentationKey = "elastest-instrumentation";
 
@@ -295,7 +298,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                data.getFolderPath(), network);
+                etDataInHost + data.getFolderPath(), network);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -747,11 +750,11 @@ public class WebDriverService {
         // Recording Volume
         List<Bind> volumes = new ArrayList<>();
 
-        Builder dockerDataVolumeBuilder = Bind.builder();
-        dockerDataVolumeBuilder.from(folderPath);
-        dockerDataVolumeBuilder.to(containerRecordingFolder);
+        Builder dockerSockVolumeBuilder = Bind.builder();
+        dockerSockVolumeBuilder.from(folderPath);
+        dockerSockVolumeBuilder.to(containerRecordingFolder);
 
-        volumes.add(dockerDataVolumeBuilder.build());
+        volumes.add(dockerSockVolumeBuilder.build());
 
         // Port binding
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
