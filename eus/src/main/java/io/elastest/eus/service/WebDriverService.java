@@ -169,8 +169,8 @@ public class WebDriverService {
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
 
-    @Value("${registry.folder}")
-    private String registryFolder;
+    @Value("${et.files.path.in.host}")
+    private String filesPathInHost;
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
@@ -259,7 +259,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                registryFolder, dockerNetwork);
+                filesPathInHost, dockerNetwork);
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -395,7 +395,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            registryFolder, network);
+                            filesPathInHost, network);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",

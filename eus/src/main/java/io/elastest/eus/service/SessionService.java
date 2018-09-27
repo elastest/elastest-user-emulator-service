@@ -53,9 +53,6 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${ws.protocol.getRecordings}")
     private String wsProtocolGetRecordings;
 
-    @Value("${registry.folder}")
-    private String registryFolder;
-
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
