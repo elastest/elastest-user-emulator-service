@@ -749,7 +749,7 @@ public class WebDriverService {
 
         // Recording Volume
         List<Bind> volumes = new ArrayList<>();
-
+        logger.info("Folder path in host: {}", folderPath);
         Builder dockerSockVolumeBuilder = Bind.builder();
         dockerSockVolumeBuilder.from(folderPath);
         dockerSockVolumeBuilder.to(containerRecordingFolder);
