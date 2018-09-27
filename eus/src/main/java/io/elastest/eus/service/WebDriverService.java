@@ -169,14 +169,14 @@ public class WebDriverService {
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
 
-    @Value("${et.files.path.in.host}")
-    private String filesPathInHost;
+    @Value("${et.shared.folder}")
+    private String etSharedFolder;
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
     
-    @Value("${et.data.in.host}")
-    private String etDataInHost;
+    @Value("${et.files.path}")
+    private String etFilesPath;
 
     String etInstrumentationKey = "elastest-instrumentation";
 
@@ -259,7 +259,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                filesPathInHost, dockerNetwork);
+                etFilesPath, dockerNetwork);
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -298,7 +298,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                etDataInHost + data.getFolderPath(), network);
+                etSharedFolder + data.getFolderPath(), network);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -395,7 +395,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            filesPathInHost, network);
+                            etSharedFolder, network);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",

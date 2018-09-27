@@ -48,7 +48,7 @@ node('TESTDOCKER') {
                 stage "Tests"
                     echo ("Starting tests")
                     try {
-                        sh 'cd eus; mvn clean test -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/'
+                        sh 'cd eus; mvn clean test -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/ -Det.files.path=/tmp/eus'
                     }catch (err) {
                         currentBuild.result = "UNSTABLE"
                         throw err                    
