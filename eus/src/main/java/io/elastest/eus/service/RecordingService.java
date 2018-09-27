@@ -60,8 +60,8 @@ public class RecordingService {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    @Value("${et.files.path}")
-    private String etFilesPath;
+    @Value("${registry.folder}")
+    private String registryFolder;
 
     @Value("${registry.recording.extension}")
     private String registryRecordingExtension;
@@ -97,8 +97,8 @@ public class RecordingService {
         if (!edmAlluxioUrl.isEmpty() && !edmAlluxioUrl.endsWith("/")) {
             edmAlluxioUrl += "/";
         }
-        if (!etFilesPath.isEmpty() && !etFilesPath.endsWith("/")) {
-            etFilesPath += "/";
+        if (!registryFolder.isEmpty() && !registryFolder.endsWith("/")) {
+            registryFolder += "/";
         }
     }
 
@@ -146,7 +146,7 @@ public class RecordingService {
         String sessionInfoToJson = jsonService.objectToJson(recordedSession);
         String folderPath = sessionInfo.getFolderPath() != null
                 ? sessionInfo.getFolderPath()
-                : etFilesPath;
+                : registryFolder;
         log.debug("Storing metadata file in {}", folderPath);
 
         if (edmAlluxioUrl.isEmpty()) {
@@ -172,7 +172,7 @@ public class RecordingService {
 
     public ResponseEntity<String> getRecording(String sessionId)
             throws IOException {
-        return this.getRecording(sessionId, etFilesPath);
+        return this.getRecording(sessionId, registryFolder);
     }
 
     public ResponseEntity<String> getRecording(String sessionId,
@@ -200,7 +200,7 @@ public class RecordingService {
 
     public ResponseEntity<String> deleteRecording(String sessionId)
             throws IOException {
-        return this.deleteRecording(sessionId, etFilesPath);
+        return this.deleteRecording(sessionId, registryFolder);
     }
 
     public ResponseEntity<String> deleteRecording(String sessionId,
@@ -236,8 +236,8 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recordings and metadata are
             // stored locally
-            log.debug("Static content folder: {}", etFilesPath );
-            File[] metadataFiles = new File(etFilesPath)
+            log.debug("Static content folder: {} ", registryFolder );
+            File[] metadataFiles = new File(registryFolder)
                     .listFiles((dir, name) -> name.toLowerCase()
                             .endsWith(registryMetadataExtension));
             if (metadataFiles != null) {
