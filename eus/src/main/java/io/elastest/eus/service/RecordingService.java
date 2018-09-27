@@ -144,9 +144,7 @@ public class RecordingService {
                 sessionInfo);
         log.debug("Storing metadata {}", recordedSession);
         String sessionInfoToJson = jsonService.objectToJson(recordedSession);
-        String folderPath = sessionInfo.getFolderPath() != null
-                ? sessionInfo.getFolderPath()
-                : etFilesPath;
+        String folderPath = etFilesPath;
         log.debug("Storing metadata file in {}", folderPath);
 
         if (edmAlluxioUrl.isEmpty()) {
