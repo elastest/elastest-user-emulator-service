@@ -147,6 +147,7 @@ public class RecordingService {
         String folderPath = sessionInfo.getFolderPath() != null
                 ? sessionInfo.getFolderPath()
                 : registryFolder;
+        log.debug("Storing metadata file in {}", folderPath);
 
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, metadata is stored locally
@@ -159,7 +160,7 @@ public class RecordingService {
                 }
             }
 
-            FileUtils.writeStringToFile(new File(folderPath + metadataFileName),
+            FileUtils.writeStringToFile(new File(folderPath + File.separator + metadataFileName),
                     sessionInfoToJson, defaultCharset());
 
         } else {
@@ -235,6 +236,7 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recordings and metadata are
             // stored locally
+            log.debug("Static content folder: {} ", registryFolder );
             File[] metadataFiles = new File(registryFolder)
                     .listFiles((dir, name) -> name.toLowerCase()
                             .endsWith(registryMetadataExtension));
@@ -252,7 +254,7 @@ public class RecordingService {
                     .map(alluxioService::getFileAsString).collect(toList());
 
         }
-
+        
         return metadataContent;
     }
 

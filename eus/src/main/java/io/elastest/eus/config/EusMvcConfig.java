@@ -43,7 +43,7 @@ public class EusMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
         registry.addResourceHandler(
                 apiContextPath + registryContextPath + "/**")
-                .addResourceLocations("file:" + registryFolder);
+                .addResourceLocations("file:" + registryFolder + "/");
     }
 
 }
