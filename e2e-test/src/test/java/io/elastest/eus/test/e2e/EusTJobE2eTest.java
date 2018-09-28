@@ -87,7 +87,7 @@ public class EusTJobE2eTest extends EusBaseTest {
         log.info("Run TJob and wait for EUS GUI");
         driver.findElement(By.xpath("//button[@title='Run TJob']")).click();
         By eusCard = By
-                .xpath("//md-card-title[contains(string(), 'elastest-eus')]");
+                .xpath("//md-card-title[contains(string(), 'EUS')]");
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
         waitEus.until(visibilityOfElementLocated(eusCard));
 
