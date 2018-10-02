@@ -171,6 +171,9 @@ public class WebDriverService {
 
     @Value("${et.files.path.in.host}")
     private String filesPathInHost;
+    
+    @Value("${et.shared.folder}")
+    private String eusFilesPath;
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
@@ -298,7 +301,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                etDataInHost + data.getFolderPath(), network);
+                etDataInHost + data.getFolderPath(), etDataInHost + data.getFolderPath(), network);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -310,6 +313,16 @@ public class WebDriverService {
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
             boolean webRtcActivated, String folderPath, String network)
+            throws DockerException, Exception {
+        return this.session(httpEntity, requestContext, requestMethod,
+                dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
+                filesPathInHost, null, dockerNetwork);
+    }
+
+    public ResponseEntity<String> session(HttpEntity<String> httpEntity,
+            String requestContext, String requestMethod, String monitoringIndex,
+            boolean webRtcActivated, String folderPath,
+            String sessionFolderPath, String network)
             throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
@@ -354,7 +367,7 @@ public class WebDriverService {
             // If live, no timeout
             liveSession = isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
-                    network);
+                    sessionFolderPath, network);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -395,7 +408,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            filesPathInHost, network);
+                            filesPathInHost, sessionFolderPath, network);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -729,7 +742,7 @@ public class WebDriverService {
     }
 
     public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folderPath, String network)
+            String originalRequestBody, String folderPath, String sessionFolderPath, String network)
             throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
@@ -804,7 +817,7 @@ public class WebDriverService {
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubPort);
         sessionInfo.setHubVncBindPort(hubPort);
-        sessionInfo.setFolderPath(folderPath);
+        sessionInfo.setFolderPath(sessionFolderPath);
 
         String browserId = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
