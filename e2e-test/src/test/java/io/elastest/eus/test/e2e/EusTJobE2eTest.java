@@ -23,12 +23,15 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentI
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.MalformedURLException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -52,9 +55,19 @@ public class EusTJobE2eTest extends EusBaseTest {
 
     @Test
     @DisplayName("EUS in a TJob")
-    void testTJob(@DockerBrowser(type = CHROME) RemoteWebDriver driver)
-            throws InterruptedException {
-        this.driver = driver;
+    void testTJob(@DockerBrowser(type = CHROME) RemoteWebDriver rDriver)
+            throws InterruptedException, MalformedURLException {
+        WebDriver driver = null;
+        String testName = new Object() {
+        }.getClass().getEnclosingMethod().getName();
+        if (eusURL != null) {
+            this.setupTest(testName);
+            driver = this.driver;
+        } else {
+            driver = rDriver;
+        }
+        log.info("##### Start test: {}", testName);
+        this.driver = this.driver != null ? this.driver : driver;
 
         log.info("Navigate to TORM and start new project");
         driver.manage().window().setSize(new Dimension(1024, 1024));
@@ -64,12 +77,12 @@ public class EusTJobE2eTest extends EusBaseTest {
         } else {
             driver.get(tormUrl);
         }
-        createNewProject(driver, "my-test-project");
+        createNewProject(driver, "eus-test-project");
 
         log.info("Create new TJob using EUS");
         driver.findElement(By.xpath("//button[contains(string(), 'New TJob')]"))
                 .click();
-        driver.findElement(By.name("tJobName")).sendKeys("my-test-tjob");
+        driver.findElement(By.name("tJobName")).sendKeys("eus-test-tjob");
         driver.findElement(By.name("tJobImageName"))
                 .sendKeys("elastest/ci-docker-e2e");
         driver.findElement(By.name("resultsPath")).sendKeys(

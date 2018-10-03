@@ -26,6 +26,8 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElem
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 
 import org.junit.jupiter.api.AfterEach;
@@ -33,9 +35,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
@@ -56,8 +61,9 @@ public class EusBaseTest {
 
     protected String eUser = null;
     protected String ePassword = null;
-
+    protected static String eusURL = null;
     protected boolean secureElastest = false;
+    public static final String CHROME_BROWSER = "chrome";
 
     protected WebDriver driver;
 
@@ -76,6 +82,8 @@ public class EusBaseTest {
             tormUrl = etmApi;
         }
         String elastestUser = getProperty("eUser");
+        eusURL = System.getenv("ET_EUS_API");
+
         if (elastestUser != null) {
             eUser = elastestUser;
 
@@ -84,8 +92,8 @@ public class EusBaseTest {
                 ePassword = elastestPassword;
                 secureElastest = true;
             }
-
         }
+        
         if (secureElastest) {
             String split_url[] = tormUrl.split("//");
             secureTorm = split_url[0] + "//" + eUser + ":" + ePassword + "@"
@@ -157,6 +165,13 @@ public class EusBaseTest {
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
         driver.findElement(serviceDetailButton).click();
+    }
+    
+    public void setupTest(String testName) throws MalformedURLException {
+        DesiredCapabilities caps;
+        caps = DesiredCapabilities.chrome();
+        caps.setCapability("browserId", testName);
+        driver = new RemoteWebDriver(new URL(eusURL), caps);
     }
 
 }
