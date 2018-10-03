@@ -70,7 +70,6 @@ public class EusTJobE2eTest extends EusBaseTest {
         this.driver = this.driver != null ? this.driver : driver;
 
         log.info("Navigate to TORM and start new project");
-        driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
         if (secureElastest) {
             driver.get(secureTorm);
@@ -91,7 +90,7 @@ public class EusTJobE2eTest extends EusBaseTest {
         driver.findElement(By.xpath("//md-option[contains(string(), 'None')]"))
                 .click();
         driver.findElement(By.name("commands")).sendKeys(
-                "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;");
+                "git clone https://github.com/elastest/elastest-user-emulator-service;", "cd elastest-user-emulator-service/tjob-test;", "mvn test;");
         driver.findElement(By.xpath("//md-checkbox[@title='Select EUS']"))
                 .click();
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
