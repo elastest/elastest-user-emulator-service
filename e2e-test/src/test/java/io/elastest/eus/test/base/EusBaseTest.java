@@ -169,7 +169,7 @@ public class EusBaseTest {
     
     public void setupTest(String testName) throws MalformedURLException {
         DesiredCapabilities caps;
-        caps = DesiredCapabilities.firefox();
+        caps = DesiredCapabilities.chrome();
         caps.setCapability("browserId", testName);
         driver = new RemoteWebDriver(new URL(eusURL), caps);
     }
