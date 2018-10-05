@@ -31,7 +31,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.json.WebSocketNewLiveSession;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
@@ -112,18 +115,7 @@ public class SessionService extends TextWebSocketHandler {
         session.sendMessage(textMessage);
     }
 
-    public void sendAllSessionsInfoToAllClients() throws IOException {
-        for (WebSocketSession session : activeSessions.values()) {
-            for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                WebSocketNewSession newSession = new WebSocketNewSession(
-                        sessionInfo);
-                log.debug("Sending newSession message {} to session {} [all]",
-                        newSession, session);
-                sendTextMessage(session, jsonService.objectToJson(newSession));
-            }
-        }
-    }
-
+    /* *** Recordings *** */
     // All recordings from default path (not from executions)
     public void sendAllRecordingsToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
@@ -145,6 +137,7 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    /* *** Generic New Session (live and non live) *** */
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         this.sendNewSessionToAllClients(sessionInfo, true);
@@ -153,14 +146,66 @@ public class SessionService extends TextWebSocketHandler {
     public void sendNewSessionToAllClients(SessionInfo sessionInfo,
             boolean printDebug) throws IOException {
         if (!sessionInfo.isLiveSession()) {
+            sendNewNormalSessionToAllClients(sessionInfo, printDebug);
+        } else {
+            sendNewLiveSessionToAllClients(sessionInfo, printDebug);
+        }
+    }
+
+    /* *** Non-Live Session *** */
+
+    public void sendNewNormalSessionToAllClients(SessionInfo sessionInfo)
+            throws IOException {
+        this.sendNewNormalSessionToAllClients(sessionInfo, true);
+    }
+
+    public void sendNewNormalSessionToAllClients(SessionInfo sessionInfo,
+            boolean printDebug) throws IOException {
+        if (!sessionInfo.isLiveSession()) {
             for (WebSocketSession session : activeSessions.values()) {
-                WebSocketNewSession newSession = new WebSocketNewSession(
+                sendNewNormalSessionToGivenSessionClient(session, sessionInfo,
+                        printDebug);
+            }
+        }
+    }
+
+    public void sendNewNormalSessionToGivenSessionClient(
+            WebSocketSession session, SessionInfo sessionInfo,
+            boolean printDebug) throws JsonProcessingException, IOException {
+        WebSocketNewSession newSession = new WebSocketNewSession(sessionInfo);
+        if (printDebug) {
+            log.debug("Sending newSession message {} to session {}", newSession,
+                    session);
+        }
+        sendTextMessage(session, jsonService.objectToJson(newSession));
+    }
+
+    public void sendAllSessionsInfoToAllClients() throws IOException {
+        for (WebSocketSession session : activeSessions.values()) {
+            for (SessionInfo sessionInfo : sessionRegistry.values()) {
+                sendNewNormalSessionToGivenSessionClient(session, sessionInfo,
+                        true);
+            }
+        }
+    }
+    /* *** Live Session *** */
+    public void sendNewLiveSessionToAllClients(SessionInfo sessionInfo)
+            throws IOException {
+        this.sendNewLiveSessionToAllClients(sessionInfo, true);
+    }
+
+    public void sendNewLiveSessionToAllClients(SessionInfo sessionInfo,
+            boolean printDebug) throws IOException {
+        if (sessionInfo.isLiveSession()) {
+            for (WebSocketSession session : activeSessions.values()) {
+                WebSocketNewLiveSession newLiveSession = new WebSocketNewLiveSession(
                         sessionInfo);
                 if (printDebug) {
-                    log.debug("Sending newSession message {} to session {}",
-                            newSession, session);
+                    log.debug("Sending newLiveSession message {} to session {}",
+                            newLiveSession, session);
                 }
-                sendTextMessage(session, jsonService.objectToJson(newSession));
+                sendTextMessage(session,
+                        jsonService.objectToJson(newLiveSession));
             }
         }
     }

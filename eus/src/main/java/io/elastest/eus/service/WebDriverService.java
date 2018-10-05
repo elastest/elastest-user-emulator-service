@@ -171,13 +171,13 @@ public class WebDriverService {
 
     @Value("${et.files.path.in.host}")
     private String filesPathInHost;
-    
+
     @Value("${et.shared.folder}")
     private String eusFilesPath;
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
-    
+
     @Value("${et.data.in.host}")
     private String etDataInHost;
 
@@ -301,7 +301,8 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                etDataInHost + data.getFolderPath(), etDataInHost + data.getFolderPath(), network);
+                etDataInHost + data.getFolderPath(),
+                etDataInHost + data.getFolderPath(), network);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -707,7 +708,7 @@ public class WebDriverService {
 
         sessionService.putSession(sessionId, sessionInfo);
 
-        if (sessionService.activeWebSocketSessions() && !isLive) {
+        if (sessionService.activeWebSocketSessions()) {
             sessionService.sendNewSessionToAllClients(sessionInfo);
         }
     }
@@ -742,8 +743,8 @@ public class WebDriverService {
     }
 
     public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folderPath, String sessionFolderPath, String network)
-            throws Exception {
+            String originalRequestBody, String folderPath,
+            String sessionFolderPath, String network) throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -902,14 +903,12 @@ public class WebDriverService {
                         + dockerPullImageProgress.getCurrentPercentage() + "%";
 
                 sessionInfo.setStatusMsg(msg);
-                if (!sessionInfo.isLiveSession()) {
-                    try {
-                        sessionService.sendNewSessionToAllClients(sessionInfo,
-                                false);
-                    } catch (IOException e) {
-                        logger.error("Error on send session {} info: ",
-                                sessionInfo.getSessionId(), e);
-                    }
+                try {
+                    sessionService.sendNewSessionToAllClients(sessionInfo,
+                            false);
+                } catch (IOException e) {
+                    logger.error("Error on send session {} info: ",
+                            sessionInfo.getSessionId(), e);
                 }
             }
 
