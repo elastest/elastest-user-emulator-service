@@ -247,7 +247,7 @@ public class WebDriverService {
 
     public ResponseEntity<String> getStatus() throws IOException {
         WebDriverStatus eusStatus = new WebDriverStatus(true, "EUS ready",
-                dockerHubService.getBrowsers());
+                dockerHubService.getBrowsers(true));
         logger.debug("EUS status {}", eusStatus);
         String statusBody = jsonService.objectToJson(eusStatus);
         return new ResponseEntity<>(statusBody, OK);

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -78,7 +80,18 @@ public class DockerHubService {
     @Value("${et.internet.disabled}")
     boolean etInternetDisabled;
 
+    Map<String, List<String>> cachedAvailableBrowsers = new TreeMap<>();
+
     DockerHubApi dockerHubApi;
+
+    @PostConstruct
+    void init() {
+        try {
+            getBrowsers(false);
+        } catch (IOException e) {
+            log.error("Error on get browsers on startup");
+        }
+    }
 
     private void initDockerHubApi() {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
@@ -190,16 +203,17 @@ public class DockerHubService {
                 "Getting browser image from capabilities: browser={} version={} platform={}",
                 browser, version, platform);
 
-        Map<String, List<String>> browsers = this.getBrowsers();
+        Map<String, List<String>> browsers = this.getBrowsers(false);
 
         return format(browserImageFormat, browser,
                 getVersionFromList(browsers.get(browser), version));
     }
 
-    public Map<String, List<String>> getBrowsers() throws IOException {
-        Map<String, List<String>> result = new TreeMap<>();
+    public Map<String, List<String>> getBrowsers(boolean cached)
+            throws IOException {
+        if (!etInternetDisabled && !cached) {
+            this.cachedAvailableBrowsers = new TreeMap<>();
 
-        if (!etInternetDisabled) {
             List<DockerHubNameSpaceImage> imagesList = listImages();
 
             // [chrome, firefox, utils-get_browsers_version, utils-x11-base]
@@ -223,18 +237,19 @@ public class DockerHubService {
                             continue;
                         }
 
-                        if (result.containsKey(browser)) {
-                            List<String> list = result.get(browser);
+                        if (this.cachedAvailableBrowsers.containsKey(browser)) {
+                            List<String> list = this.cachedAvailableBrowsers
+                                    .get(browser);
                             list.add(version);
 
                             list = list.stream().sorted(this::compareVersions)
                                     .collect(toList());
-                            result.put(browser, list);
+                            this.cachedAvailableBrowsers.put(browser, list);
                         } else {
                             List<String> entry = new ArrayList<>();
                             entry.add(version);
 
-                            result.put(browser, entry);
+                            this.cachedAvailableBrowsers.put(browser, entry);
                         }
                     }
                 }
@@ -242,9 +257,12 @@ public class DockerHubService {
         } else {
             // If there is not internet connection
             log.info("Internet is disabled, getting default images list");
-            result = this.getDefaultBrowsers();
+            // If is empty, set manually
+            if (this.cachedAvailableBrowsers.isEmpty()) {
+                this.cachedAvailableBrowsers = this.getDefaultBrowsers();
+            } // Else use cached
         }
-        return result;
+        return this.cachedAvailableBrowsers;
     }
 
     public String getVersionFromImage(String image) {
@@ -256,6 +274,9 @@ public class DockerHubService {
         Map<String, List<String>> browsers = new TreeMap<>();
         List<String> chromeTags = new ArrayList<>();
         chromeTags.add("latest");
+        chromeTags.add("69");
+        chromeTags.add("68");
+        chromeTags.add("67");
         chromeTags.add("66.0");
         chromeTags.add("65.0");
         chromeTags.add("64.0");
@@ -270,6 +291,8 @@ public class DockerHubService {
 
         List<String> firefox = new ArrayList<>();
         firefox.add("latest");
+        firefox.add("62");
+        firefox.add("61");
         firefox.add("60.0");
         firefox.add("59.0");
         firefox.add("58.0");

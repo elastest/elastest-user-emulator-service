@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import io.elastest.epm.client.service.JsonService;
 import io.elastest.eus.api.model.AudioLevel;
 import io.elastest.eus.api.model.ColorValue;
 import io.elastest.eus.api.model.Event;
@@ -47,6 +49,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
+import io.elastest.eus.service.DockerHubService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.VncService;
 import io.elastest.eus.service.WebDriverService;
@@ -67,13 +70,18 @@ public class EusController implements EusApi {
     private WebDriverService webDriverService;
     private VncService vncService;
     private RecordingService recordingService;
+    private DockerHubService dockerHubService;
+    private JsonService jsonService;
 
     @Autowired
     public EusController(WebDriverService webDriverService,
-            VncService vncService, RecordingService recordingService) {
+            VncService vncService, RecordingService recordingService,
+            DockerHubService dockerHubService, JsonService jsonService) {
         this.webDriverService = webDriverService;
         this.vncService = vncService;
         this.recordingService = recordingService;
+        this.dockerHubService = dockerHubService;
+        this.jsonService = jsonService;
     }
 
     public ResponseEntity<Void> deleteSubscription(
@@ -267,6 +275,30 @@ public class EusController implements EusApi {
         return this.getStatus();
     }
 
+    /* ************************** */
+    /* ******** Browsers ******** */
+    /* ************************** */
+
+    public ResponseEntity<String> getBrowsers(boolean cached) {
+        try {
+            return new ResponseEntity<String>(jsonService
+                    .objectToJson(dockerHubService.getBrowsers(cached)), OK);
+        } catch (IOException e) {
+            return webDriverService
+                    .getErrorResponse("Exception getting browsers", e);
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> getBrowsers() {
+        return getBrowsers(false);
+    }
+
+    @Override
+    public ResponseEntity<String> getCachedBrowsers() {
+        return getBrowsers(true);
+    }
+
     /* ************************* */
     /* ********** Vnc ********** */
     /* ************************* */
@@ -400,4 +432,5 @@ public class EusController implements EusApi {
             HttpServletRequest request) {
         return this.stopRecording(sessionId, hubContainerName);
     }
+
 }

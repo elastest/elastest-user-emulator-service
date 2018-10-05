@@ -58,7 +58,7 @@ public class DockerHubIntegrationTest {
     @Test
     @DisplayName("Get Selenoid browser images from Docker Hub")
     void testBrowserMap() throws IOException {
-        Map<String, List<String>> browsers = dockerHubService.getBrowsers();
+        Map<String, List<String>> browsers = dockerHubService.getBrowsers(false);
         log.debug("Browser map {}", browsers);
 
         assertThat(browsers.get("chrome"), not(empty()));

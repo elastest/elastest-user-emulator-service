@@ -307,6 +307,38 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<String> getStatusExecution(
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
+    
+    /* ************************** */
+    /* ******** Browsers ******** */
+    /* ************************** */
+    
+    /**
+     * GET /browsers
+     *
+     * W3C WebDriver operations for status
+     */
+    @ApiOperation(value = "W3C WebDriver standard get status operation", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/browsers", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> getBrowsers();
+    
+    /**
+     * GET /browsers/cached
+     *
+     * W3C WebDriver operations for status
+     */
+    @ApiOperation(value = "W3C WebDriver standard get status operation", notes = "", response = String.class, tags = {
+            "W3C WebDriver" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/browsers/cached", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> getCachedBrowsers();
 
     /* ************************* */
     /* ********** Vnc ********** */
