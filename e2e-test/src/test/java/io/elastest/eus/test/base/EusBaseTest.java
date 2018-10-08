@@ -35,8 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -57,8 +55,6 @@ public class EusBaseTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     protected String tormUrl = "http://localhost:37000/"; // local by default
-    protected String secureTorm = "http://user:pass@localhost:37000/";
-
     protected String eUser = null;
     protected String ePassword = null;
     protected static String eusURL = null;
@@ -77,7 +73,7 @@ public class EusBaseTest {
 
     @BeforeEach
     void setup() {
-        String etmApi = getProperty("etEmpApi");
+        String etmApi = getProperty("eEtmApi");
         if (etmApi != null) {
             tormUrl = etmApi;
         }
@@ -96,7 +92,7 @@ public class EusBaseTest {
         
         if (secureElastest) {
             String split_url[] = tormUrl.split("//");
-            secureTorm = split_url[0] + "//" + eUser + ":" + ePassword + "@"
+            tormUrl = split_url[0] + "//" + eUser + ":" + ePassword + "@"
                     + split_url[1];
         }
 
@@ -169,7 +165,7 @@ public class EusBaseTest {
     
     public void setupTest(String testName) throws MalformedURLException {
         DesiredCapabilities caps;
-        caps = DesiredCapabilities.chrome();
+        caps = DesiredCapabilities.firefox();
         caps.setCapability("browserId", testName);
         driver = new RemoteWebDriver(new URL(eusURL), caps);
     }
