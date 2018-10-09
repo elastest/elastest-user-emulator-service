@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -64,14 +65,19 @@ public class EusTJobE2eTest extends EusBaseTest {
             this.setupTest(testName);
             driver = this.driver;
         } else {
-            driver = rDriver;
+            //driver = rDriver;
         }
         log.info("##### Start test: {}", testName);
         this.driver = this.driver != null ? this.driver : driver;
 
         log.info("Navigate to TORM and start new project");
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
+        log.info("ELASTEST URL: {}",tormUrl);
         driver.get(tormUrl);
+        if (secureElastest) {
+            driver.get(tormOriginalUrl);
+        }
+        
         createNewProject(driver, "eus-test-project");
 
         log.info("Create new TJob using EUS");

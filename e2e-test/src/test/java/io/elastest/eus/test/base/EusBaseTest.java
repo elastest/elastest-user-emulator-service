@@ -35,6 +35,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -55,6 +58,7 @@ public class EusBaseTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     protected String tormUrl = "http://localhost:37000/"; // local by default
+    protected String tormOriginalUrl = tormUrl;
     protected String eUser = null;
     protected String ePassword = null;
     protected static String eusURL = null;
@@ -91,6 +95,7 @@ public class EusBaseTest {
         }
         
         if (secureElastest) {
+            tormOriginalUrl = tormUrl;
             String split_url[] = tormUrl.split("//");
             tormUrl = split_url[0] + "//" + eUser + ":" + ePassword + "@"
                     + split_url[1];
