@@ -30,9 +30,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -77,9 +75,7 @@ public class EusTJobE2eTest extends EusBaseTest {
         if (secureElastest) {
             driver.get(tormOriginalUrl);
         }
-        
         createNewProject(driver, "eus-test-project");
-
         log.info("Create new TJob using EUS");
         driver.findElement(By.xpath("//button[contains(string(), 'New TJob')]"))
                 .click();
@@ -97,7 +93,6 @@ public class EusTJobE2eTest extends EusBaseTest {
                 .click();
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
-
         log.info("Run TJob and wait for EUS GUI");
         driver.findElement(By.xpath("//button[@title='Run TJob']")).click();
         By eusCard = By
