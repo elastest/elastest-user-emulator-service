@@ -37,7 +37,8 @@ CHROME_UNSTABLE_PKG=$(apt-cache madison google-chrome-unstable | head -n1 | awk 
 CHROME_UNSTABLE_VER=$(echo $CHROME_UNSTABLE_PKG | cut -d"." -f1)
 
 # Selenoid driver
-wget -O $OUTPUT/selenoid_linux_amd64 https://github.com/aerokube/selenoid/releases/download/1.3.9/selenoid_linux_amd64
+SELENOID_VERSION=$(curl --silent "https://api.github.com/repos/aerokube/selenoid/releases/latest" |grep '"tag_name":' |  sed -E 's/.*"([^"]+)".*/\1/')
+wget -O $OUTPUT/selenoid_linux_amd64 https://github.com/aerokube/selenoid/releases/download/${SELENOID_VERSION}/selenoid_linux_amd64
 chmod +x $OUTPUT/selenoid_linux_amd64
 
 # Gecko driver
