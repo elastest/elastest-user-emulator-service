@@ -63,7 +63,7 @@ public class EusTJobE2eTest extends EusBaseTest {
             this.setupTest(testName);
             driver = this.driver;
         } else {
-            //driver = rDriver;
+            driver = rDriver;
         }
         log.info("##### Start test: {}", testName);
         this.driver = this.driver != null ? this.driver : driver;
