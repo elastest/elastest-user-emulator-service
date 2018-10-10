@@ -46,6 +46,7 @@ RUN locale-gen $LANG && \
         xvfb \
         bzip2 \
         wget \
+        libgconf-2-4 \
         x11vnc && \
         \
     apt-get -y autoremove && \
