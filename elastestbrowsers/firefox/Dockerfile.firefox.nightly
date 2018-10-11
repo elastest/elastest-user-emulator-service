@@ -1,7 +1,27 @@
 # X11 - Selenoid
 # Firefox nightly
 
-FROM elastestbrowsers/utils-x11-base:1.1
+FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
+
+ARG EB_VERSION
+ARG GIT_URL
+ARG GIT_COMMIT
+ARG BUILD_DATE
+ARG GD_VERSION
+ARG SELENOID_VERSION
+
+LABEL maintainer fede diaz nordri@gmail.com \
+      org.label-schema.vendor="Elastest" \
+      org.label-schema.url="https://elastest.io" \
+      org.label-schema.name="Elastest browsers" \
+      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.version=$EB_VERSION \
+      org.label-schema.vcs-url=$GIT_URL \
+      org.label-schema.vcs-ref=$GIT_COMMIT \
+      org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.docker.schema-version="1.0" \
+      geckodriver_version=$GD_VERSION \
+      selenoid_version=$SELENOID_VERSION
 
 ########################################################
 # Firefox
@@ -20,12 +40,6 @@ ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
 ADD image/selenoid/geckodriver /usr/local/bin/geckodriver
 ADD image/selenoid/browsers.json.nightly /etc/browsers.json
 
-RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \
-      $DOCKER_HOME/.fluxbox/startup && \
-    echo 'exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1' >> \
-      $DOCKER_HOME/.fluxbox/startup && \
-    chown -R $DOCKER_USER:$DOCKER_GROUP $DOCKER_HOME
+USER ubuntu
 
-USER $DOCKER_USER
-WORKDIR $DOCKER_HOME
-ENTRYPOINT [ "/usr/local/bin/startvnc.sh" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]

@@ -1,5 +1,5 @@
 #!/bin/bash 
-set -e
+set -eu -o pipefail
 
 DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900"
 LOG_RESULTS=output.log
@@ -7,9 +7,11 @@ LOG_RESULTS=output.log
 > $LOG_RESULTS
 
 # Firefox
-for BROWSER_VERSION in latest nightly beta
+for BROWSER_VERSION in latest nightly-${EB_VERSION} beta-${EB_VERSION}
 do
+	echo "**********************************"
 	echo "* Testing firefox $BROWSER_VERSION"
+	echo "**********************************"
 	docker rm -f firefox || true
 	docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$BROWSER_VERSION
 	sleep 5
@@ -18,15 +20,14 @@ do
 	docker stop firefox
 	if [[ "$RES" == *200 ]] 
 	then
-		echo "Firefox $BROWSER_VERSION -- Ok!" | tee $LOG_RESULTS
+		echo "Firefox $BROWSER_VERSION -- Ok!" | tee -a $LOG_RESULTS
 	else
-		echo "Firefox $BROWSER_VERSION -- Fail" | tee $LOG_RESULTS
-		exit 1
+		echo "Firefox $BROWSER_VERSION -- Fail" | tee -a $LOG_RESULTS
 	fi
 done
 
 # Chrome
-for BROWSER_VERSION in latest unstable beta
+for BROWSER_VERSION in latest unstable-${EB_VERSION} beta-${EB_VERSION}
 do
 	echo "*********************************"
 	echo "* Testing chrome $BROWSER_VERSION"
@@ -39,11 +40,19 @@ do
 	docker stop chrome
 	if [[ "$RES" == *200 ]]
 	then
-		echo "Chrome $BROWSER_VERSION -- Ok!" | tee $LOG_RESULTS
+		echo "Chrome $BROWSER_VERSION -- Ok!" | tee -a $LOG_RESULTS
 	else
-		echo "Crome $BROWSER_VERSION -- Fail" | tee $LOG_RESULTS
-		exit 1
+		echo "Crome $BROWSER_VERSION -- Fail" | tee -a $LOG_RESULTS
 	fi
 done
 
 cat $LOG_RESULTS
+
+COMMAND="cat $LOG_RESULTS | grep \"Fail\""
+eval $COMMAND
+RES=$?
+if [ "$RES" == "1" ]; then
+  exit 0
+else
+  exit 1
+fi

@@ -1,5 +1,5 @@
 #!/bin/bash -x
-set -e
+set -eu -o pipefail
 
 # Load old releases versions
 . browsers_oldreleases
@@ -16,28 +16,67 @@ docker run -t --rm -v $WORKDIR:/workdir elastestbrowsers/utils-get_browsers_vers
 . $WORKDIR/versions.txt
 
 # Build base image
+GIT_COMMIT=$(git log -1 --pretty=%h)
+BUILD_DATE=$(date +'%Y%m%d')
+GIT_URL="https://github.com/elastest/elastest-user-emulator-service"
+
 pushd base
-docker build -t elastestbrowsers/utils-x11-base:1.1 .
+docker build --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --tag elastestbrowsers/utils-x11-base:${EB_VERSION} .
 popd
 
 # Copy drivers
 cp -p workdir/geckodriver firefox/image/selenoid/geckodriver
 cp -p workdir/selenoid_linux_amd64 firefox/image/selenoid/selenoid_linux_amd64
 
+###########
 # Firefox
+###########
 pushd firefox
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox > Dockerfile
 sed "s/VERSION/$FIREFOX_VER/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
-docker build --build-arg VERSION=$FIREFOX_PKG  -t elastestbrowsers/firefox:$FIREFOX_VER -t elastestbrowsers/firefox:latest -f Dockerfile.firefox .
+
+docker build --build-arg VERSION=$FIREFOX_PKG \
+  --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg GD_VERSION=${GECKO_VERSION} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/firefox:$FIREFOX_VER-${EB_VERSION} \
+  --tag elastestbrowsers/firefox:latest \
+  --file Dockerfile .
 rm image/selenoid/browsers.json
 
 # Firefox Beta
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.beta > Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.beta
-docker build -t elastestbrowsers/firefox:beta -f Dockerfile.firefox.beta .
+
+docker build --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg GD_VERSION=${GECKO_VERSION} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/firefox:beta-${EB_VERSION} \
+  --file Dockerfile .
 rm image/selenoid/browsers.json.beta
 
 # Firefox Nightly
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.nightly > Dockerfile
 sed "s/VERSION/nightly/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.nightly
-docker build -t elastestbrowsers/firefox:nightly -f Dockerfile.firefox.nightly .
+
+docker build --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg GD_VERSION=${GECKO_VERSION} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/firefox:nightly-${EB_VERSION} \
+  --file Dockerfile .
 rm image/selenoid/browsers.json.nightly
 
 # Firefox old versions
@@ -59,20 +98,51 @@ rm firefox/image/selenoid/selenoid_linux_amd64
 cp -p workdir/chromedriver chrome/image/selenoid/chromedriver
 cp -p workdir/selenoid_linux_amd64 chrome/image/selenoid/selenoid_linux_amd64
 
+###########
 # Chome
+###########
 pushd chrome
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome > Dockerfile 
 sed "s/VERSION/$CHROME_VER/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
-docker build --build-arg VERSION=$CHROME_PKG -t elastestbrowsers/chrome:$CHROME_VER -t elastestbrowsers/chrome:latest -f Dockerfile.chrome .
+
+docker build --build-arg VERSION=$CHROME_PKG \
+  --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/chrome:${CHROME_VER}-${EB_VERSION} \
+  --tag elastestbrowsers/chrome:latest \
+  --file Dockerfile .
 rm image/selenoid/browsers.json
 
 # Chrome Beta
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.beta > Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.beta
-docker build -t elastestbrowsers/chrome:beta -f Dockerfile.chrome.beta .
+
+docker build --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/chrome:beta-${EB_VERSION} \
+  --file Dockerfile .
 rm image/selenoid/browsers.json.beta
 
 # Chrome Unstable
+sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.unstable > Dockerfile
 sed "s/VERSION/unstable/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.unstable
-docker build -t elastestbrowsers/chrome:unstable -f Dockerfile.chrome.unstable .
+
+docker build --build-arg EB_VERSION=${EB_VERSION} \
+  --build-arg GIT_URL=${GIT_URL} \
+  --build-arg GIT_COMMIT=${GIT_COMMIT} \
+  --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
+  --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
+  --tag elastestbrowsers/chrome:unstable-${EB_VERSION} \
+  --file Dockerfile .
 rm image/selenoid/browsers.json.unstable
 
 # Chrome old versions
