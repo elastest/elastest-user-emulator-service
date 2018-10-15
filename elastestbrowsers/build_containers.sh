@@ -81,10 +81,11 @@ rm image/selenoid/browsers.json.nightly
 
 # Firefox old versions
 if [ "$MODE" == "FULL" ]; then
+  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.older_releases > Dockerfile
 	for V in $FIREFOX_OLD_VERSIONS
 	do
 		sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
-		docker build --build-arg VERSION=$V -t elastestbrowsers/firefox:$V -f Dockerfile.firefox.older_releases .
+		docker build --build-arg VERSION=$V -t elastestbrowsers/firefox:$V-${EB_VERSION} -f Dockerfile .
 		rm image/selenoid/browsers.json
 	done
 fi
@@ -147,6 +148,7 @@ rm image/selenoid/browsers.json.unstable
 
 # Chrome old versions
 if [ "$MODE" == "FULL" ]; then
+  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.older_releases > Dockerfile
 	for V in $CHROME_OLD_VERSIONS
 	do
 		rm -Rfv image/selenoid/chromedriver
@@ -169,7 +171,7 @@ if [ "$MODE" == "FULL" ]; then
 		wget -O $WORKDIR/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER/chromedriver_linux64.zip && \
 		unzip $WORKDIR/chromedriver.zip -d image/selenoid && \
 		rm -Rfv /chromedriver.zip
-		docker build --build-arg VERSION=$V -t elastestbrowsers/chrome:$TAG_VER -f Dockerfile.chrome.older_releases .
+		docker build --build-arg VERSION=$V -t elastestbrowsers/chrome:$TAG_VER-${EB_VERSION} -f Dockerfile .
 		rm image/selenoid/browsers.json
 	done
 fi 

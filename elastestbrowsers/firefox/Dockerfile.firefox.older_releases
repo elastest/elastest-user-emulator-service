@@ -1,5 +1,5 @@
 # Firefox
-FROM elastestbrowsers/utils-x11-base:1.1
+FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
 ARG VERSION
 
@@ -20,12 +20,6 @@ ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
 ADD image/selenoid/geckodriver /usr/local/bin/geckodriver
 ADD image/selenoid/browsers.json /etc/browsers.json
 
-RUN echo '/usr/local/bin/selenoid -conf /etc/browsers.json -disable-docker -timeout 1h -enable-file-upload -capture-driver-logs &' > \
-      $DOCKER_HOME/.fluxbox/startup && \
-    echo 'exec fluxbox -display $DISPLAY > $DOCKER_HOME/.fluxbox.log 2>&1' >> \
-      $DOCKER_HOME/.fluxbox/startup && \
-    chown -R $DOCKER_USER:$DOCKER_GROUP $DOCKER_HOME
+USER ubuntu
 
-USER $DOCKER_USER
-WORKDIR $DOCKER_HOME
-ENTRYPOINT [ "/usr/local/bin/startvnc.sh" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
