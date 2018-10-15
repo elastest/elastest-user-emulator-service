@@ -8,8 +8,8 @@ node('docker') {
 
         stage "Build Docker image"
           echo ("Building...")
-          sh 'cd elastestbrowsers && ./build_containers.sh'
-
+          sh  'cd elastestbrowsers && ./build_containers.sh'
+          
         stage "Testing image"
           echo ("testing...")
           sh 'cd elastestbrowsers && ./testing.sh'         
@@ -35,6 +35,6 @@ def notifyFailed() {
       body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
         <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
       replyTo: '${BUILD_USER_EMAIL}',
-      to: 'federico.diaz@urjc.es'
+      to: '${MAILS_ADDRESS}'
     )
 }
