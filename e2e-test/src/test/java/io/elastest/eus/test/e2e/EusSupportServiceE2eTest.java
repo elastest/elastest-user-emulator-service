@@ -75,6 +75,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         By chromeRadioButton = By.id("chrome_radio");
         waitElement.until(visibilityOfElementLocated(chromeRadioButton));
         driver.findElement(chromeRadioButton).click();
+        selectOptionFromSelect("69");
+
         driver.findElement(By.id("start_session")).click();
 
         log.info("Wait to load browser");

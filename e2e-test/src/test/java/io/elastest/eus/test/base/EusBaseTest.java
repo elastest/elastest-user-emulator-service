@@ -54,7 +54,7 @@ public class EusBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    protected String tormUrl = "http://localhost:37000/"; // local by default
+    protected String tormUrl = "http://172.17.0.1:37000/"; // local by default
     protected String tormOriginalUrl = tormUrl;
     protected String eUser = null;
     protected String ePassword = null;
@@ -110,6 +110,7 @@ public class EusBaseTest {
             logEntries.forEach((entry) -> log.info("[{}] {} {}",
                     new Date(entry.getTimestamp()), entry.getLevel(),
                     entry.getMessage()));
+            driver.close();
         }
     }
 
@@ -163,6 +164,33 @@ public class EusBaseTest {
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
         driver.findElement(serviceDetailButton).click();
+    }
+    
+    public void selectOptionFromSelect(String option) {
+        WebDriverWait waitElement = new WebDriverWait(driver, 3);
+        By select;
+        int numRetries = 1;
+        do {
+            driver.findElement(By.className("mat-select-trigger")).click();
+            select = By.xpath("//md-option[contains(string(), '"
+                    + option + "')]");
+            try {
+                waitElement.until(visibilityOfElementLocated(select));
+                log.info("Element {} already available", select);
+                break;
+
+            } catch (Exception e) {
+                numRetries++;
+                if (numRetries > 6) {
+                    log.warn("Max retries ({}) reached ... leaving",
+                            numRetries);
+                    break;
+                }
+                log.warn("Element {} not available ... retrying",
+                        select);
+            }
+        } while (true);
+        driver.findElement(select).click();
     }
     
     public void setupTest(String testName) throws MalformedURLException {
