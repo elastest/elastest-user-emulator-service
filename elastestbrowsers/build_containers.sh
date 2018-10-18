@@ -47,7 +47,7 @@ docker build --build-arg VERSION=$FIREFOX_PKG \
   --build-arg GD_VERSION=${GECKO_VERSION} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/firefox:$FIREFOX_VER-${EB_VERSION} \
-  --tag elastestbrowsers/firefox:latest \
+  --tag elastestbrowsers/firefox:latest-${EB_VERSION} \
   --file Dockerfile .
 rm image/selenoid/browsers.json
 
@@ -114,7 +114,7 @@ docker build --build-arg VERSION=$CHROME_PKG \
   --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/chrome:${CHROME_VER}-${EB_VERSION} \
-  --tag elastestbrowsers/chrome:latest \
+  --tag elastestbrowsers/chrome:latest-${EB_VERSION} \
   --file Dockerfile .
 rm image/selenoid/browsers.json
 
