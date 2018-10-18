@@ -75,10 +75,14 @@ public class EusTJobE2eTest extends EusBaseTest {
         if (secureElastest) {
             driver.get(tormOriginalUrl);
         }
+        WebDriverWait waitEus = new WebDriverWait(driver, 60);
         createNewProject(driver, "eus-test-project");
         log.info("Create new TJob using EUS");
+        waitEus.until(visibilityOfElementLocated(
+                By.xpath("//button[contains(string(), 'New TJob')]")));
         driver.findElement(By.xpath("//button[contains(string(), 'New TJob')]"))
                 .click();
+        waitEus.until(visibilityOfElementLocated(By.name("tJobName")));
         driver.findElement(By.name("tJobName")).sendKeys("eus-test-tjob");
         driver.findElement(By.name("tJobImageName"))
                 .sendKeys("elastest/ci-docker-e2e");
@@ -88,16 +92,16 @@ public class EusTJobE2eTest extends EusBaseTest {
         driver.findElement(By.xpath("//md-option[contains(string(), 'None')]"))
                 .click();
         driver.findElement(By.name("commands")).sendKeys(
-                "git clone https://github.com/elastest/elastest-user-emulator-service;", "cd elastest-user-emulator-service/tjob-test;", "mvn test;");
+                "git clone https://github.com/elastest/elastest-user-emulator-service;",
+                "cd elastest-user-emulator-service/tjob-test;", "mvn test;");
         driver.findElement(By.xpath("//md-checkbox[@title='Select EUS']"))
                 .click();
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
         log.info("Run TJob and wait for EUS GUI");
         driver.findElement(By.xpath("//button[@title='Run TJob']")).click();
-        By eusCard = By
-                .xpath("//md-card-title[contains(string(), 'EUS')]");
-        WebDriverWait waitEus = new WebDriverWait(driver, 60);
+        By eusCard = By.xpath("//md-card-title[contains(string(), 'EUS')]");
+
         waitEus.until(visibilityOfElementLocated(eusCard));
 
         log.info("Wait for build sucess traces");
