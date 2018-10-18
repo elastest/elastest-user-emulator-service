@@ -109,7 +109,15 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
                 By.cssSelector("md-dialog-container")));
 
         log.info("Delete recording");
-        By deleteRecording = By.id("delete_recording");
+        By sessionId = By.xpath(
+                "//md-card[contains(string(), 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td[1]");
+        driver.findElement(sessionId).getText();
+        log.info("Browser session id: {}",
+                driver.findElement(sessionId).getText());
+        By deleteRecording = By.id("delete_recording_"
+                + driver.findElement(sessionId).getText().trim());
+//        By deleteRecording = By.xpath(
+//                "//md-card[contains(string(), 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td/i[@id=\"delete_recording_" + driver.findElement(sessionId).getText() + "\"]");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
     }
