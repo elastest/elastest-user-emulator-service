@@ -9,7 +9,7 @@ LOG_RESULTS=output.log
 EXIT_RES=0
 
 # Firefox
-for BROWSER_VERSION in latest nightly-${EB_VERSION} beta-${EB_VERSION}
+for BROWSER_VERSION in latest-${EB_VERSION} nightly-${EB_VERSION} beta-${EB_VERSION}
 do
 	echo "**********************************"
 	echo "* Testing firefox $BROWSER_VERSION"
@@ -53,7 +53,7 @@ if [ "$MODE" == "FULL" ]; then
 fi
 
 # Chrome
-for BROWSER_VERSION in latest unstable-${EB_VERSION} beta-${EB_VERSION}
+for BROWSER_VERSION in latest-${EB_VERSION} unstable-${EB_VERSION} beta-${EB_VERSION}
 do
 	echo "*********************************"
 	echo "* Testing chrome $BROWSER_VERSION"
