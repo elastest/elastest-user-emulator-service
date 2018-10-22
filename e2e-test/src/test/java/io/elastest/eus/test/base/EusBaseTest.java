@@ -39,6 +39,7 @@ import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.UnreachableBrowserException;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
@@ -110,7 +111,13 @@ public class EusBaseTest {
             logEntries.forEach((entry) -> log.info("[{}] {} {}",
                     new Date(entry.getTimestamp()), entry.getLevel(),
                     entry.getMessage()));
-            driver.close();
+            if (eusURL != null) {
+                try {
+                    driver.close();
+                } catch (UnreachableBrowserException ube) {
+                    log.error("Error trying to close the browser session.");
+                }
+            }
         }
     }
 
