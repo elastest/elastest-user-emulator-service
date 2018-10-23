@@ -3,7 +3,7 @@ set -e
 
 ### Variables ###
 [ -d "$HOME/recordings" ] || mkdir $HOME/recordings
-RESOLUTION="${RESOLUTION:-1440x900}"
+RESOLUTION="${RESOLUTION:-1440x1080}"
 DISPLAY=:99
 VIDEO_FORMAT="${VIDEO_FORMAT:-mp4}"
 
