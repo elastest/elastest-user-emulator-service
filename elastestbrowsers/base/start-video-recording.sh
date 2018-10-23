@@ -34,7 +34,7 @@ fi
 touch /tmp/stop
 
 # Force to be able to write the file on disk
-chmod 777 $HOME/recordings
+sudo chmod 777 $HOME/recordings
 
 ### Start recording with ffmpeg ###
 </tmp/stop ffmpeg -y -f alsa -i pulse -f x11grab -framerate 25 -video_size $RESOLUTION -i $DISPLAY -c:a libfdk_aac -c:v libx264 -preset ultrafast -crf 28 -refs 4 -qmin 4 -pix_fmt yuv420p -filter:v fps=25 $HOME/recordings/${VIDEO_NAME}.${VIDEO_FORMAT}

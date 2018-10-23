@@ -37,6 +37,7 @@ RUN apt-get update && \
       wget \
       bzip2 \
       libgtk-3-0 \
+      sudo \
       software-properties-common \
       pulseaudio && \
     apt-get -y autoremove && \
@@ -73,14 +74,17 @@ RUN add-apt-repository -y ppa:mc3man/xerus-media && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ########################################################
-# Customization
+# Some files
 ########################################################
+# Creating user and setting the environment
 RUN adduser --uid 1000 --disabled-password --gecos "" --home /home/ubuntu ubuntu
+RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu
 RUN mkdir -p /home/ubuntu/.fluxbox
 ADD lastwallpaper /home/ubuntu/.fluxbox/lastwallpaper
 ADD overlay /home/ubuntu/.fluxbox/overlay
 ADD elastest-wallpaper.png /home/ubuntu/.fluxbox/elastest-wallpaper.png
 RUN chown -R ubuntu.ubuntu /home/ubuntu/.fluxbox
+# Recording script
 ADD start-video-recording.sh /usr/local/bin/start-video-recording.sh
 ADD stop-video-recording.sh /usr/local/bin/stop-video-recording.sh 
 
