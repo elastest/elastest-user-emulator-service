@@ -12,8 +12,14 @@ x11vnc -display ":$DISPLAY" -passwd selenoid -shared -forever -loop500 -rfbport 
 # Starting novnc
 /usr/local/noVNC/utils/launch.sh --web /usr/local/noVNC --listen 6080 > /home/ubuntu/novnc.log &
 
+# Wait for XVFB
+while [ ! -e /tmp/.X11-unix/X99 ]; do 
+  sleep 0.1;
+  echo "Waiting xvfb...";
+done
+
+
 # Starting fluxbox
-sleep 1
 fluxbox -display :$DISPLAY &
 
 # Starting pulseaudio 
