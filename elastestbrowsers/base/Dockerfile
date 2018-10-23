@@ -81,6 +81,8 @@ ADD lastwallpaper /home/ubuntu/.fluxbox/lastwallpaper
 ADD overlay /home/ubuntu/.fluxbox/overlay
 ADD elastest-wallpaper.png /home/ubuntu/.fluxbox/elastest-wallpaper.png
 RUN chown -R ubuntu.ubuntu /home/ubuntu/.fluxbox
+ADD start-video-recording.sh /usr/local/bin/start-video-recording.sh
+ADD stop-video-recording.sh /usr/local/bin/stop-video-recording.sh 
 
 ########################################################
 # Entrypoint
