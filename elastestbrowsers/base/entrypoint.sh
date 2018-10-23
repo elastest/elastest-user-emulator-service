@@ -18,7 +18,6 @@ while [ ! -e /tmp/.X11-unix/X99 ]; do
   echo "Waiting xvfb...";
 done
 
-
 # Starting fluxbox
 fluxbox -display :$DISPLAY &
 
