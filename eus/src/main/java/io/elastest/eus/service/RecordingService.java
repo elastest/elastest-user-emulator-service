@@ -160,7 +160,8 @@ public class RecordingService {
                 }
             }
 
-            FileUtils.writeStringToFile(new File(folderPath + File.separator + metadataFileName),
+            FileUtils.writeStringToFile(
+                    new File(folderPath + File.separator + metadataFileName),
                     sessionInfoToJson, defaultCharset());
 
         } else {
@@ -209,10 +210,17 @@ public class RecordingService {
         String recordingFileName = sessionId + registryRecordingExtension;
         String metadataFileName = sessionId + registryMetadataExtension;
 
+        boolean existsRecording = true;
+        boolean existsMetadata = true;
         boolean deleteRecording;
         boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
+            existsRecording = Files
+                    .exists(Paths.get(folderPath + recordingFileName));
+            existsMetadata = Files
+                    .exists(Paths.get(folderPath + metadataFileName));
+
             deleteRecording = Files
                     .deleteIfExists(Paths.get(folderPath + recordingFileName));
             deleteMetadata = Files
@@ -224,10 +232,35 @@ public class RecordingService {
             deleteMetadata = alluxioService.deleteFile(metadataFileName);
 
         }
-        HttpStatus status = deleteRecording && deleteMetadata ? OK
-                : INTERNAL_SERVER_ERROR;
+
+        HttpStatus status;
+
+        if (deleteRecording && deleteMetadata) {
+            status = OK;
+        } else if (!existsRecording && !existsMetadata) {
+            status = OK;
+        } else if (existsRecording && existsMetadata) {
+            status = INTERNAL_SERVER_ERROR;
+        } else {
+            if (existsRecording && !existsMetadata) {
+                if (deleteRecording) {
+                    status = OK;
+                } else {
+                    status = INTERNAL_SERVER_ERROR;
+                }
+            } else {
+                // if (!existsRecording && existsMetadata)
+                if (deleteMetadata) {
+                    status = OK;
+                } else {
+                    status = INTERNAL_SERVER_ERROR;
+                }
+            }
+        }
+
         log.debug("... response {}", status);
         return new ResponseEntity<>(status);
+
     }
 
     public List<String> getStoredMetadataContent() throws IOException {
@@ -236,7 +269,7 @@ public class RecordingService {
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, recordings and metadata are
             // stored locally
-            log.debug("Static content folder: {}", etFilesPath );
+            log.debug("Static content folder: {}", etFilesPath);
             File[] metadataFiles = new File(etFilesPath)
                     .listFiles((dir, name) -> name.toLowerCase()
                             .endsWith(registryMetadataExtension));
@@ -254,7 +287,7 @@ public class RecordingService {
                     .map(alluxioService::getFileAsString).collect(toList());
 
         }
-        
+
         return metadataContent;
     }
 

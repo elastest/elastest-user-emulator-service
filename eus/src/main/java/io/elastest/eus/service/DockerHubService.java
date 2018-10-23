@@ -77,6 +77,12 @@ public class DockerHubService {
     @Value("${browser.image.latest.version}")
     String browserImageLatestVersion;
 
+    @Value("${browser.version}")
+    String browserVersion;
+
+    @Value("${browser.version.separator}")
+    String browserVersionSeparator;
+
     @Value("${et.internet.disabled}")
     boolean etInternetDisabled;
 
@@ -206,7 +212,8 @@ public class DockerHubService {
         Map<String, List<String>> browsers = this.getBrowsers(false);
 
         return format(browserImageFormat, browser,
-                getVersionFromList(browsers.get(browser), version));
+                getVersionFromList(browsers.get(browser), version),
+                browserVersion);
     }
 
     public Map<String, List<String>> getBrowsers(boolean cached)
@@ -230,26 +237,32 @@ public class DockerHubService {
 
                     for (DockerHubTag dockerHubTag : tagList) {
                         String tagName = dockerHubTag.getName();
-                        String version = tagName;
+                        if (tagName.endsWith(browserVersion)) {
+                            String version = tagName.replace(
+                                    browserVersionSeparator + browserVersion,
+                                    "");
+                            if (browser.equalsIgnoreCase("opera")
+                                    && version.equalsIgnoreCase("12.16")) {
+                                continue;
+                            }
 
-                        if (browser.equalsIgnoreCase("opera")
-                                && version.equalsIgnoreCase("12.16")) {
-                            continue;
-                        }
+                            if (this.cachedAvailableBrowsers
+                                    .containsKey(browser)) {
+                                List<String> list = this.cachedAvailableBrowsers
+                                        .get(browser);
+                                list.add(version);
 
-                        if (this.cachedAvailableBrowsers.containsKey(browser)) {
-                            List<String> list = this.cachedAvailableBrowsers
-                                    .get(browser);
-                            list.add(version);
+                                list = list.stream()
+                                        .sorted(this::compareVersions)
+                                        .collect(toList());
+                                this.cachedAvailableBrowsers.put(browser, list);
+                            } else {
+                                List<String> entry = new ArrayList<>();
+                                entry.add(version);
 
-                            list = list.stream().sorted(this::compareVersions)
-                                    .collect(toList());
-                            this.cachedAvailableBrowsers.put(browser, list);
-                        } else {
-                            List<String> entry = new ArrayList<>();
-                            entry.add(version);
-
-                            this.cachedAvailableBrowsers.put(browser, entry);
+                                this.cachedAvailableBrowsers.put(browser,
+                                        entry);
+                            }
                         }
                     }
                 }
@@ -266,7 +279,8 @@ public class DockerHubService {
     }
 
     public String getVersionFromImage(String image) {
-        String version = image.split(":")[1];
+        String version = (image.split(":")[1])
+                .split(browserVersionSeparator + browserVersion)[0];
         return version != null ? version : image;
     }
 
@@ -274,6 +288,7 @@ public class DockerHubService {
         Map<String, List<String>> browsers = new TreeMap<>();
         List<String> chromeTags = new ArrayList<>();
         chromeTags.add("latest");
+        chromeTags.add("70");
         chromeTags.add("69");
         chromeTags.add("68");
         chromeTags.add("67");
