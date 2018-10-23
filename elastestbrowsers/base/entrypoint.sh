@@ -13,6 +13,7 @@ x11vnc -display ":$DISPLAY" -passwd selenoid -shared -forever -loop500 -rfbport 
 /usr/local/noVNC/utils/launch.sh --web /usr/local/noVNC --listen 6080 > /home/ubuntu/novnc.log &
 
 # Starting fluxbox
+sleep 1
 fluxbox -display :$DISPLAY &
 
 # Starting pulseaudio 
