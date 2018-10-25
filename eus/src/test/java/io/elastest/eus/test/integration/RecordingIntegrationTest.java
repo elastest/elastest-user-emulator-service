@@ -102,7 +102,7 @@ public class RecordingIntegrationTest {
     @DisplayName("DELETE /session/{sessionId}/recording")
     void testDeleteRecording() throws Exception {
         mockMvc.perform(delete(apiContextPath + "/session/sessionId/recording"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk());
     }
 
 }
