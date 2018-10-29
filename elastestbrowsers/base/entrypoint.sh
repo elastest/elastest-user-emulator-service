@@ -1,6 +1,5 @@
 #!/bin/bash -x
 SCREEN_RESOLUTION=${SCREEN_RESOLUTION:-"1440x1080x24"}
-ENABLE_WINDOW_MANAGER=${ENABLE_WINDOW_MANAGER:-""}
 DISPLAY=99
 
 # Starting selenoid
@@ -14,7 +13,7 @@ x11vnc -display ":$DISPLAY" -passwd selenoid -shared -forever -loop500 -rfbport 
 
 # Wait for XVFB
 while [ ! -e /tmp/.X11-unix/X99 ]; do 
-  sleep 0.1;
+  sleep 1;
   echo "Waiting xvfb...";
 done
 
