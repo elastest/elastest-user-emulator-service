@@ -268,8 +268,13 @@ public class DockerHubService {
                 }
             }
         } else {
-            // If there is not internet connection
-            log.info("Internet is disabled, getting default images list");
+            if (etInternetDisabled) {
+                // If there is not internet connection
+                log.info("Internet is disabled, getting default images list");
+            } else {
+                log.info("Getting default images list");
+            }
+            
             // If is empty, set manually
             if (this.cachedAvailableBrowsers.isEmpty()) {
                 this.cachedAvailableBrowsers = this.getDefaultBrowsers();

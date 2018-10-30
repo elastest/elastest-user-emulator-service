@@ -191,9 +191,13 @@ public class SessionInfo extends DockerServiceStatus {
     }
 
     public String getIdForFiles() {
-        return browserId != null && !browserId.isEmpty()
-                ? browserId + "_" + sessionId
-                : sessionId;
+        String id = sessionId;
+        if (browserId != null && !browserId.isEmpty()) {
+            id = browserId;
+            id = id.replaceAll(" ", "-");
+            id = id + "_" + sessionId;
+        }
+        return id;
     }
 
 }
