@@ -39,6 +39,7 @@ RUN apt-get update && \
       libgtk-3-0 \
       sudo \
       software-properties-common \
+      xorg \
       pulseaudio && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
