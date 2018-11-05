@@ -34,6 +34,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
     String creationTime;
     String hubContainerName;
     String folderPath;
+    boolean live;
 
     public WebSocketSessionInfoEntry() {
         // Empty default construct (needed by Jackson)
@@ -49,6 +50,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         this.folderPath = sessionInfo.getFolderPath();
         this.setStatus(sessionInfo.getStatus());
         this.setStatusMsg(sessionInfo.getStatusMsg());
+        this.live = sessionInfo.isLiveSession();
     }
 
     public String getId() {
@@ -79,16 +81,17 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         return folderPath;
     }
 
+    public boolean isLive() {
+        return live;
+    }
+
     @Override
     public String toString() {
         return "WebSocketSessionInfoEntry [id=" + id + ", url=" + url
                 + ", browser=" + browser + ", version=" + version
                 + ", creationTime=" + creationTime + ", hubContainerName="
-                + hubContainerName + ", folderPath=" + folderPath
-                + ", getStatusMsg()=" + getStatusMsg() + ", getStatus()="
-                + getStatus() + ", toString()=" + super.toString()
-                + ", getClass()=" + getClass() + ", hashCode()=" + hashCode()
-                + "]";
+                + hubContainerName + ", folderPath=" + folderPath + ", live="
+                + live + ", toString()=" + super.toString() + "]";
     }
 
 }
