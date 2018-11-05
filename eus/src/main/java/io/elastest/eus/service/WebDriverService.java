@@ -932,9 +932,7 @@ public class WebDriverService {
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 
-            if (!sessionInfo.isLiveSession()) {
-                sessionService.sendRemoveSessionToAllClients(sessionInfo);
-            }
+            sessionService.sendRemoveSessionToAllClients(sessionInfo);
 
         } catch (Exception e) {
             logger.error("There was a problem deleting session {}",
