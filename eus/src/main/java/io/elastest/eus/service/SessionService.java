@@ -53,6 +53,9 @@ public class SessionService extends TextWebSocketHandler {
     @Value("${ws.protocol.getSessions}")
     private String wsProtocolGetSessions;
 
+    @Value("${ws.protocol.getLiveSessions}")
+    private String wsProtocolGetLiveSessions;
+
     @Value("${ws.protocol.getRecordings}")
     private String wsProtocolGetRecordings;
 
@@ -80,6 +83,9 @@ public class SessionService extends TextWebSocketHandler {
         if (payload.equalsIgnoreCase(wsProtocolGetSessions)) {
             log.trace("{} received", payload);
             sendAllSessionsInfoToAllClients();
+        } else if (payload.equalsIgnoreCase(wsProtocolGetLiveSessions)) {
+            log.trace("{} received", payload);
+            sendAllLiveSessionsInfoToAllClients();
         } else if (payload.equalsIgnoreCase(wsProtocolGetRecordings)) {
             log.trace("{} received", payload);
             sendAllRecordingsToAllClients();
@@ -115,7 +121,10 @@ public class SessionService extends TextWebSocketHandler {
         session.sendMessage(textMessage);
     }
 
+    /* ****************** */
     /* *** Recordings *** */
+    /* ****************** */
+
     // All recordings from default path (not from executions)
     public void sendAllRecordingsToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
@@ -137,7 +146,10 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    /* *********************************************** */
     /* *** Generic New Session (live and non live) *** */
+    /* *********************************************** */
+
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         this.sendNewSessionToAllClients(sessionInfo, true);
@@ -152,7 +164,9 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    /* ************************ */
     /* *** Non-Live Session *** */
+    /* ************************ */
 
     public void sendNewNormalSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
@@ -183,12 +197,18 @@ public class SessionService extends TextWebSocketHandler {
     public void sendAllSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                sendNewNormalSessionToGivenSessionClient(session, sessionInfo,
-                        true);
+                if (!sessionInfo.isLiveSession()) {
+                    sendNewNormalSessionToGivenSessionClient(session,
+                            sessionInfo, true);
+                }
             }
         }
     }
+
+    /* ******************** */
     /* *** Live Session *** */
+    /* ******************** */
+
     public void sendNewLiveSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
         this.sendNewLiveSessionToAllClients(sessionInfo, true);
@@ -198,21 +218,38 @@ public class SessionService extends TextWebSocketHandler {
             boolean printDebug) throws IOException {
         if (sessionInfo.isLiveSession()) {
             for (WebSocketSession session : activeSessions.values()) {
-                WebSocketNewLiveSession newLiveSession = new WebSocketNewLiveSession(
-                        sessionInfo);
-                if (printDebug) {
-                    log.debug("Sending newLiveSession message {} to session {}",
-                            newLiveSession, session);
-                }
-                sendTextMessage(session,
-                        jsonService.objectToJson(newLiveSession));
+                this.sendNewLiveSessionToGivenSessionClient(session,
+                        sessionInfo, printDebug);
             }
         }
     }
 
-    public boolean activeWebSocketSessions() {
-        return !activeSessions.isEmpty();
+    public void sendNewLiveSessionToGivenSessionClient(WebSocketSession session,
+            SessionInfo sessionInfo, boolean printDebug)
+            throws JsonProcessingException, IOException {
+        WebSocketNewLiveSession newLiveSession = new WebSocketNewLiveSession(
+                sessionInfo);
+        if (printDebug) {
+            log.debug("Sending newLiveSession message {} to session {}",
+                    newLiveSession, session);
+        }
+        sendTextMessage(session, jsonService.objectToJson(newLiveSession));
     }
+
+    public void sendAllLiveSessionsInfoToAllClients() throws IOException {
+        for (WebSocketSession session : activeSessions.values()) {
+            for (SessionInfo sessionInfo : sessionRegistry.values()) {
+                if (sessionInfo.isLiveSession()) {
+                    sendNewLiveSessionToGivenSessionClient(session, sessionInfo,
+                            true);
+                }
+            }
+        }
+    }
+
+    /* ********************** */
+    /* *** Remove Session *** */
+    /* ********************** */
 
     public void sendRemoveSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
@@ -225,11 +262,19 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    /* ************** */
+    /* *** Others *** */
+    /* ************** */
+
     public void removeSession(String sessionId) {
         if (sessionId != null) {
             log.debug("Remove session {}", sessionId);
             sessionRegistry.remove(sessionId);
         }
+    }
+
+    public boolean activeWebSocketSessions() {
+        return !activeSessions.isEmpty();
     }
 
     public void putSession(String sessionId, SessionInfo sessionEntry) {
