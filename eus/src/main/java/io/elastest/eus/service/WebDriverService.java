@@ -973,8 +973,9 @@ public class WebDriverService {
     }
 
     private boolean isDeleteSessionRequest(HttpMethod method, String context) {
+        int chars = countCharsInString(context, '/');
         return method == DELETE && context.startsWith(webdriverSessionMessage)
-                && countCharsInString(context, '/') == 2;
+                && (chars == 2 || (chars == 3 && context.endsWith("window")));
     }
 
     private boolean isLive(String jsonMessage) {
