@@ -820,10 +820,10 @@ public class WebDriverService {
         sessionInfo.setHubVncBindPort(hubPort);
         sessionInfo.setFolderPath(sessionFolderPath);
 
-        String browserId = jsonService
+        String testName = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getBrowserId();
-        sessionInfo.setBrowserId(browserId);
+                .getDesiredCapabilities().getTestName();
+        sessionInfo.testName(testName);
 
         boolean manualRecording = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)

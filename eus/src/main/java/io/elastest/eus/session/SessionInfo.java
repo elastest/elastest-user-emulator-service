@@ -50,7 +50,7 @@ public class SessionInfo extends DockerServiceStatus {
     private int hubVncBindPort;
     private int noVncBindPort;
     private int timeout;
-    private String browserId;
+    private String testName;
     private boolean manualRecording;
     private String folderPath;
 
@@ -166,12 +166,12 @@ public class SessionInfo extends DockerServiceStatus {
         this.timeout = timeout;
     }
 
-    public String getBrowserId() {
-        return browserId;
+    public String getTestName() {
+        return testName;
     }
 
-    public void setBrowserId(String browserId) {
-        this.browserId = browserId;
+    public void testName(String testName) {
+        this.testName = testName;
     }
 
     public boolean isManualRecording() {
@@ -192,8 +192,8 @@ public class SessionInfo extends DockerServiceStatus {
 
     public String getIdForFiles() {
         String id = sessionId;
-        if (browserId != null && !browserId.isEmpty()) {
-            id = browserId;
+        if (testName != null && !testName.isEmpty()) {
+            id = testName;
             id = id.replaceAll(" ", "-");
             id = id + "_" + sessionId;
         }

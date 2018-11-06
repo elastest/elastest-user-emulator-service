@@ -89,7 +89,7 @@ public class WebDriverCapabilities {
         boolean acceptInsecureCerts;
         boolean live;
 
-        String browserId;
+        String testName;
         boolean manualRecording;
 
         public DesiredCapabilities() {
@@ -139,8 +139,8 @@ public class WebDriverCapabilities {
             return firefoxProfile;
         }
 
-        public String getBrowserId() {
-            return browserId;
+        public String getTestName() {
+            return testName;
         }
 
         public boolean isManualRecording() {
@@ -161,7 +161,7 @@ public class WebDriverCapabilities {
                     + ", getOperaOptions()=" + getOperaOptions()
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
                     + ", getFirefoxProfile()=" + getFirefoxProfile()
-                    + ", getBrowserId()=" + getBrowserId()
+                    + ", getTestName()=" + getTestName()
                     + ", isManualRecording()=" + isManualRecording() + "]";
         }
 
