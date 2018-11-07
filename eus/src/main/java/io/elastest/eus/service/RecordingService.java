@@ -118,7 +118,7 @@ public class RecordingService {
         dockerService.execCommand(hubContainerName, false, startRecordingScript,
                 "-n", recordingFileName);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1200);
         } catch (Exception e) {
         }
     }
@@ -141,6 +141,10 @@ public class RecordingService {
         log.debug("Stopping recording session {} of container {}", sessionId,
                 hubContainerName);
         dockerService.execCommand(hubContainerName, true, stopRecordingScript);
+        try {
+            Thread.sleep(1200);
+        } catch (Exception e) {
+        }
     }
 
     public void storeMetadata(SessionInfo sessionInfo) throws IOException {

@@ -152,15 +152,19 @@ public class SessionService extends TextWebSocketHandler {
 
     public void sendNewSessionToAllClients(SessionInfo sessionInfo)
             throws IOException {
-        this.sendNewSessionToAllClients(sessionInfo, true);
+        if (activeWebSocketSessions()) {
+            this.sendNewSessionToAllClients(sessionInfo, true);
+        }
     }
 
     public void sendNewSessionToAllClients(SessionInfo sessionInfo,
             boolean printDebug) throws IOException {
-        if (!sessionInfo.isLiveSession()) {
-            sendNewNormalSessionToAllClients(sessionInfo, printDebug);
-        } else {
-            sendNewLiveSessionToAllClients(sessionInfo, printDebug);
+        if (activeWebSocketSessions()) {
+            if (!sessionInfo.isLiveSession()) {
+                sendNewNormalSessionToAllClients(sessionInfo, printDebug);
+            } else {
+                sendNewLiveSessionToAllClients(sessionInfo, printDebug);
+            }
         }
     }
 

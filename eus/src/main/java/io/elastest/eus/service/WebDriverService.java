@@ -511,6 +511,7 @@ public class WebDriverService {
                             logger.debug(
                                     "Intercepted 'Start Test' Script. Restarting recording...");
 
+                            // Stop
                             recordingService.stopRecording(sessionInfo);
                             recordingService.storeMetadata(sessionInfo);
 
@@ -520,13 +521,26 @@ public class WebDriverService {
                                     Thread.sleep(1500);
                                 } catch (Exception e) {
                                 }
-                                recordingService.deleteRecording(
-                                        sessionInfo.getSessionId());
-                            }
+                                if (sessionInfo.getFolderPath() == null) {
 
+                                    recordingService.deleteRecording(
+                                            sessionInfo.getSessionId());
+                                } else {
+                                    recordingService.deleteRecording(
+                                            sessionInfo.getSessionId(),
+                                            sessionInfo.getFolderPath());
+                                }
+                            }
+                            sessionService
+                                    .sendRemoveSessionToAllClients(sessionInfo);
+
+                            // Set test name
                             sessionInfo.setTestName((String) etScript.getArgs()
                                     .get("testName"));
 
+                            // Start recording
+                            sessionService
+                                    .sendNewSessionToAllClients(sessionInfo);
                             recordingService.startRecording(sessionInfo);
                         } catch (Exception e) {
                             throw new Exception("Error on restart recording",
@@ -790,10 +804,7 @@ public class WebDriverService {
         sessionInfo.setLiveSession(isLive);
 
         sessionService.putSession(sessionId, sessionInfo);
-
-        if (sessionService.activeWebSocketSessions()) {
-            sessionService.sendNewSessionToAllClients(sessionInfo);
-        }
+        sessionService.sendNewSessionToAllClients(sessionInfo);
     }
 
     private Optional<HttpEntity<String>> optionalHttpEntity(String requestBody,
