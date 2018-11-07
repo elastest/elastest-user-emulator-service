@@ -117,6 +117,10 @@ public class RecordingService {
 
         dockerService.execCommand(hubContainerName, false, startRecordingScript,
                 "-n", recordingFileName);
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
     }
 
     public void startRecording(SessionInfo sessionInfo) throws Exception {
@@ -129,11 +133,13 @@ public class RecordingService {
 
     public void stopRecording(SessionInfo sessionInfo) throws Exception {
         String noNvcContainerName = sessionInfo.getVncContainerName();
-        this.stopRecording(noNvcContainerName);
+        this.stopRecording(sessionInfo.getSessionId(), noNvcContainerName);
     }
 
-    public void stopRecording(String hubContainerName) throws Exception {
-        log.debug("Stopping recording of container {}", hubContainerName);
+    public void stopRecording(String sessionId, String hubContainerName)
+            throws Exception {
+        log.debug("Stopping recording session {} of container {}", sessionId,
+                hubContainerName);
         dockerService.execCommand(hubContainerName, true, stopRecordingScript);
     }
 

@@ -170,7 +170,7 @@ public class SessionInfo extends DockerServiceStatus {
         return testName;
     }
 
-    public void testName(String testName) {
+    public void setTestName(String testName) {
         this.testName = testName;
     }
 
@@ -198,6 +198,22 @@ public class SessionInfo extends DockerServiceStatus {
             id = id + "_" + sessionId;
         }
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "SessionInfo [log=" + log + ", sessionId=" + sessionId
+                + ", hubUrl=" + hubUrl + ", hubContainerName="
+                + hubContainerName + ", vncUrl=" + vncUrl
+                + ", vncContainerName=" + vncContainerName + ", creationTime="
+                + creationTime + ", browser=" + browser + ", version=" + version
+                + ", liveSession=" + liveSession + ", timeoutFutures="
+                + timeoutFutures + ", hubBindPort=" + hubBindPort
+                + ", hubVncBindPort=" + hubVncBindPort + ", noVncBindPort="
+                + noVncBindPort + ", timeout=" + timeout + ", testName="
+                + testName + ", manualRecording=" + manualRecording
+                + ", folderPath=" + folderPath + ", toString()="
+                + super.toString() + "]";
     }
 
 }

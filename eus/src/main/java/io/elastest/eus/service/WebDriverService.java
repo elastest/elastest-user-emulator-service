@@ -76,9 +76,11 @@ import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.ElasTestWebdriverScript;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.json.WebDriverError;
+import io.elastest.eus.json.WebDriverScriptBody;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
@@ -147,6 +149,18 @@ public class WebDriverService {
 
     @Value("${webdriver.navigation.get.message}")
     private String webdriverNavigationGetMessage;
+
+    @Value("${webdriver.execute.script.message}")
+    private String webdriverExecuteScriptMessage;
+
+    @Value("${webdriver.execute.async.script.message}")
+    private String webdriverExecuteAsyncScriptMessage;
+
+    @Value("${et.intercept.script.prefix}")
+    private String etInterceptScriptPrefix;
+
+    @Value("${et.intercept.script.suffix}")
+    private String etInterceptScriptSuffix;
 
     @Value("${use.torm}")
     private boolean useTorm;
@@ -391,6 +405,16 @@ public class WebDriverService {
             }
         }
 
+        if (isExecuteScript(method, requestContext)) {
+
+            // Execute Script to intercept by EUS and finish
+            boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
+                    sessionInfo);
+            if (isIntercepted) {
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+        }
+
         // Proxy request to browser
         String responseBody = null;
         boolean exchangeAgain = false;
@@ -464,6 +488,65 @@ public class WebDriverService {
         return new ResponseEntity<>(responseBody, responseStatus);
     }
 
+    public boolean interceptScriptIfIsNecessary(String requestBody,
+            SessionInfo sessionInfo) {
+        try {
+            WebDriverScriptBody scriptBody = new WebDriverScriptBody(
+                    requestBody);
+
+            if (scriptBody.getScript().startsWith(etInterceptScriptPrefix)) {
+                String scriptData = scriptBody.getScript()
+                        .split(etInterceptScriptPrefix)[1]
+                                .split(etInterceptScriptSuffix)[0];
+
+                ObjectMapper mapper = new ObjectMapper();
+                ElasTestWebdriverScript etScript = mapper.readValue(scriptData,
+                        ElasTestWebdriverScript.class);
+
+                if (etScript.isStartTestCommand()) {
+                    if (!etScript.getArgs().isEmpty()
+                            && etScript.getArgs().containsKey("testName")) {
+
+                        try {
+                            logger.debug(
+                                    "Intercepted 'Start Test' Script. Restarting recording...");
+
+                            recordingService.stopRecording(sessionInfo);
+                            recordingService.storeMetadata(sessionInfo);
+
+                            // If no testName, delete recording
+                            if (sessionInfo.getTestName() == null) {
+                                try {
+                                    Thread.sleep(1500);
+                                } catch (Exception e) {
+                                }
+                                recordingService.deleteRecording(
+                                        sessionInfo.getSessionId());
+                            }
+
+                            sessionInfo.setTestName((String) etScript.getArgs()
+                                    .get("testName"));
+
+                            recordingService.startRecording(sessionInfo);
+                        } catch (Exception e) {
+                            throw new Exception("Error on restart recording",
+                                    e);
+                        }
+
+                    }
+                }
+
+                // TODO
+
+                return true;
+            }
+
+        } catch (Exception e) {
+            logger.error("Error on intercept script", e);
+        }
+        return false;
+    }
+
     public boolean manageWebRtcMonitoring(SessionInfo sessionInfo,
             boolean activated, String monitoringIndex) {
         boolean manageSuccessful = false;
@@ -527,7 +610,7 @@ public class WebDriverService {
     public String postScript(SessionInfo sessionInfo, String script,
             List<Object> args) throws JsonProcessingException, JSONException {
         String requestContext = webdriverSessionMessage + "/"
-                + sessionInfo.getSessionId() + "/execute";
+                + sessionInfo.getSessionId() + webdriverExecuteScriptMessage;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -823,7 +906,7 @@ public class WebDriverService {
         String testName = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getTestName();
-        sessionInfo.testName(testName);
+        sessionInfo.setTestName(testName);
 
         boolean manualRecording = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
@@ -976,6 +1059,14 @@ public class WebDriverService {
         int chars = countCharsInString(context, '/');
         return method == DELETE && context.startsWith(webdriverSessionMessage)
                 && (chars == 2 || (chars == 3 && context.endsWith("window")));
+    }
+
+    private boolean isExecuteScript(HttpMethod method, String context) {
+        int chars = countCharsInString(context, '/');
+        return method == POST && context.startsWith(webdriverSessionMessage)
+                && chars == 3
+                && (context.endsWith(webdriverExecuteScriptMessage) || context
+                        .endsWith(webdriverExecuteAsyncScriptMessage));
     }
 
     private boolean isLive(String jsonMessage) {

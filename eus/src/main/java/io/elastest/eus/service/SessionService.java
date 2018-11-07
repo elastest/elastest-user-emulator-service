@@ -289,6 +289,10 @@ public class SessionService extends TextWebSocketHandler {
         }
     }
 
+    public void updateSessionInfo(String sessionId, SessionInfo sessionInfo) {
+        sessionRegistry.put(sessionId, sessionInfo);
+    }
+
     public Map<String, SessionInfo> getSessionRegistry() {
         return sessionRegistry;
     }
