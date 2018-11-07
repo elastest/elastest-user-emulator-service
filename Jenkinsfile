@@ -7,6 +7,7 @@ node('TESTDOCKER') {
             mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
 
                 def epmClientJavaDirectory = 'epm-client-java'
+                git 'https://github.com/elastest/elastest-user-emulator-service.git'
                 stage "Install et-epm-client-java"
                     def epmClientDirectoryExists = fileExists epmClientJavaDirectory
                     if (epmClientDirectoryExists) {
@@ -43,7 +44,6 @@ node('TESTDOCKER') {
                     sh "cd $etmJavaDirectory; cd ./epm-client; mvn install -DskipTests -Dgpg.skip -Djenkins=true;"
 
 
-                git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
                 stage "Tests"
                     echo ("Starting tests")
