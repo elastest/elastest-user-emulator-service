@@ -494,7 +494,13 @@ public class WebDriverService {
             WebDriverScriptBody scriptBody = new WebDriverScriptBody(
                     requestBody);
 
-            if (scriptBody.getScript().startsWith(etInterceptScriptPrefix)) {
+            // Starts with prefix or 'prefix
+            boolean startsWithEtScriptPrefix = scriptBody.getScript()
+                    .startsWith(etInterceptScriptPrefix)
+                    || scriptBody.getScript()
+                            .startsWith("'" + etInterceptScriptPrefix);
+
+            if (startsWithEtScriptPrefix) {
                 String scriptData = scriptBody.getScript()
                         .split(etInterceptScriptPrefix)[1]
                                 .split(etInterceptScriptSuffix)[0];
@@ -1073,7 +1079,13 @@ public class WebDriverService {
     }
 
     private boolean isExecuteScript(HttpMethod method, String context) {
+
+        if (context.startsWith("/" + webdriverSessionMessage)) {
+            context = context.substring(1);
+        }
+
         int chars = countCharsInString(context, '/');
+
         return method == POST && context.startsWith(webdriverSessionMessage)
                 && chars == 3
                 && (context.endsWith(webdriverExecuteScriptMessage) || context
