@@ -70,7 +70,7 @@ public class EusTJobE2eTest extends EusBaseTest {
 
         log.info("Navigate to TORM and start new project");
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
-        log.info("ELASTEST URL: {}",tormUrl);
+        log.info("ELASTEST URL: {}", tormUrl);
         driver.get(tormUrl);
         if (secureElastest) {
             driver.get(tormOriginalUrl);
@@ -78,10 +78,8 @@ public class EusTJobE2eTest extends EusBaseTest {
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
         createNewProject(driver, "eus-test-project");
         log.info("Create new TJob using EUS");
-        waitEus.until(visibilityOfElementLocated(
-                By.xpath("//button[contains(string(), 'New TJob')]")));
-        driver.findElement(By.xpath("//button[contains(string(), 'New TJob')]"))
-                .click();
+        waitEus.until(visibilityOfElementLocated(By.id("newTJobBtn")));
+        driver.findElement(By.id("newTJobBtn")).click();
         waitEus.until(visibilityOfElementLocated(By.name("tJobName")));
         driver.findElement(By.name("tJobName")).sendKeys("eus-test-tjob");
         driver.findElement(By.name("tJobImageName"))

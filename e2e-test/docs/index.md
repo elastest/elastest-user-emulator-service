@@ -142,7 +142,7 @@ Then we create a new TJob filling the form with test values:
 
 ```java
         log.info("Create new TJob using EUS");
-        driver.findElement(By.xpath("//button[contains(string(), 'New TJob')]"))
+        driver.findElement(By.id("newTJobBtn"))
                 .click();
         driver.findElement(By.name("tJobName")).sendKeys("my-test-tjob");
         driver.findElement(By.name("tJobImageName"))

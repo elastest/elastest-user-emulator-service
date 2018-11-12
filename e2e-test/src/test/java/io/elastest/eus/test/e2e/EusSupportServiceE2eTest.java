@@ -112,7 +112,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
 
         log.info("Delete recording");
         By sessionId = By.xpath(
-                "//md-card[contains(string(), 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td[1]");
+                "//*[@id=\"recordingsTable\"]/div/table/tbody/tr/td[1]");
         driver.findElement(sessionId).getText();
         log.info("Browser session id: {}",
                 driver.findElement(sessionId).getText());
