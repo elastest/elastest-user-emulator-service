@@ -93,9 +93,9 @@ public class EusTJobE2eTest extends EusBaseTest {
                 "git clone https://github.com/elastest/elastest-user-emulator-service;",
                 "cd elastest-user-emulator-service/tjob-test;", "mvn test;");
 
-        By eusCheckbox = By.name("serviceEUS");
+        By eusCheckbox = By.xpath("//md-checkbox[@title='Select EUS']");
         waitEus.until(visibilityOfElementLocated(eusCheckbox));
-        driver.findElements(eusCheckbox).get(0).click();
+        driver.findElement(eusCheckbox).click();
 
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
