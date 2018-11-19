@@ -49,9 +49,10 @@ node('TESTDOCKER') {
                     echo ("Starting tests")
                     try {
                         sh 'cd eus; mvn clean test -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/'
-                    }catch (err) {
-                        currentBuild.result = "UNSTABLE"
-                        throw err                    
+                    } catch (err) {
+                        def errString = err.toString()
+                        currentBuild.result = getJobStatus(errString)
+                        throw err
                     } finally {
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                     }
@@ -80,6 +81,11 @@ node('TESTDOCKER') {
                     }
             }
         } catch (err) {
+            if (currentBuild.result != "UNSTABLE") {
+                def errString = err.toString()
+                echo 'Error: ' + errString
+               	currentBuild.result = getJobStatus(errString)
+            }
             echo 'Error!!! Send email to the people responsible for the builds.'
             emailext body: 'Please go to  ${BUILD_URL}  and verify the build',
             replyTo: '${BUILD_USER_EMAIL}', 
@@ -87,5 +93,15 @@ node('TESTDOCKER') {
             to: '${MAIL_LIST}'
 
         throw err
-    }	       
+    }
+}
+
+def getJobStatus(exceptionString) {
+    def status = 'SUCCESS'
+    if (exceptionString.contains('FlowInterruptedException') || exceptionString.contains('AbortException')) {
+        status = 'ABORTED'
+    } else {
+        status = 'FAILURE'
+    }
+    return status;
 }
