@@ -159,9 +159,6 @@ public class WebDriverService {
     @Value("${et.intercept.script.prefix}")
     private String etInterceptScriptPrefix;
 
-    @Value("${et.intercept.script.suffix}")
-    private String etInterceptScriptSuffix;
-
     @Value("${use.torm}")
     private boolean useTorm;
 
@@ -491,24 +488,26 @@ public class WebDriverService {
     public boolean interceptScriptIfIsNecessary(String requestBody,
             SessionInfo sessionInfo) {
         try {
-            WebDriverScriptBody scriptBody = new WebDriverScriptBody(
+            WebDriverScriptBody scriptObj = new WebDriverScriptBody(
                     requestBody);
 
             // Starts with prefix or 'prefix
-            boolean startsWithEtScriptPrefix = scriptBody.getScript()
+            String scriptContent = scriptObj.getScript();
+            boolean startsWithEtScriptPrefix = scriptContent
                     .startsWith(etInterceptScriptPrefix)
-                    || scriptBody.getScript()
-                            .startsWith("'" + etInterceptScriptPrefix);
+                    || scriptContent.startsWith("'" + etInterceptScriptPrefix);
 
             if (startsWithEtScriptPrefix) {
-                String scriptData = scriptBody.getScript()
-                        .split(etInterceptScriptPrefix)[1]
-                                .split(etInterceptScriptSuffix)[0];
+                String scriptData = scriptContent;
+                // Remove start/end ' char
+                if (scriptData.startsWith("'") && scriptData.endsWith("'")) {
+                    scriptData = scriptData.substring(1,
+                            scriptContent.length() - 1);
+                }
 
                 ObjectMapper mapper = new ObjectMapper();
                 ElasTestWebdriverScript etScript = mapper.readValue(scriptData,
                         ElasTestWebdriverScript.class);
-
                 if (etScript.isStartTestCommand()) {
                     if (!etScript.getArgs().isEmpty()
                             && etScript.getArgs().containsKey("testName")) {

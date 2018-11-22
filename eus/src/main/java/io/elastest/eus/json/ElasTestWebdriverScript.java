@@ -4,23 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ElasTestWebdriverScript {
-    String command;
+    String elastestCommand;
     Map<String, Object> args = new HashMap<>();
 
     public ElasTestWebdriverScript() {
     }
 
-    public ElasTestWebdriverScript(String command, Map<String, Object> args) {
-        this.command = command;
+    public ElasTestWebdriverScript(String elastestCommand,
+            Map<String, Object> args) {
+        this.elastestCommand = elastestCommand;
         this.args = args;
     }
 
-    public String getCommand() {
-        return command;
+    public String getElastestCommand() {
+        return elastestCommand;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setElastestCommand(String elastestCommand) {
+        this.elastestCommand = elastestCommand;
     }
 
     public Map<String, Object> getArgs() {
@@ -33,8 +34,8 @@ public class ElasTestWebdriverScript {
 
     @Override
     public String toString() {
-        return "ElasTestWebdriverScript [command=" + command + ", args=" + args
-                + "]";
+        return "ElasTestWebdriverScript [elastestCommand=" + elastestCommand
+                + ", args=" + args + "]";
     }
 
     /* ************** */
@@ -42,7 +43,7 @@ public class ElasTestWebdriverScript {
     /* ************** */
 
     public boolean isStartTestCommand() {
-        return "startTest".equals(command);
+        return "startTest".equals(elastestCommand);
     }
 
 }
