@@ -192,6 +192,47 @@ public class WebDriverService {
     @Value("${et.data.in.host}")
     private String etDataInHost;
 
+    /* *** ET container labels *** */
+    @Value("${et.type.label}")
+    public String etTypeLabel;
+
+    @Value("${et.tjob.id.label}")
+    public String etTJobIdLabel;
+
+    @Value("${et.tjob.exec.id.label}")
+    public String etTJobExecIdLabel;
+
+    @Value("${et.tjob.sut.service.name.label}")
+    public String etTJobSutServiceNameLabel;
+
+    @Value("${et.tjob.tss.id.label}")
+    public String etTJobTSSIdLabel;
+
+    @Value("${et.tjob.tss.type.label}")
+    public String etTJobTssTypeLabel;
+
+    @Value("${et.type.test.label.value}")
+    public String etTypeTestLabelValue;
+
+    @Value("${et.type.sut.label.value}")
+    public String etTypeSutLabelValue;
+
+    @Value("${et.type.tss.label.value}")
+    public String etTypeTSSLabelValue;
+
+    @Value("${et.type.core.label.value}")
+    public String etTypeCoreLabelValue;
+
+    @Value("${et.type.te.label.value}")
+    public String etTypeTELabelValue;
+
+    @Value("${et.type.monitoring.label.value}")
+    public String etTypeMonitoringLabelValue;
+
+    @Value("${et.type.tool.label.value}")
+    public String etTypeToolLabelValue;
+    /* *** END of ET container labels *** */
+
     String etInstrumentationKey = "elastest-instrumentation";
 
     private DockerService dockerService;
@@ -313,7 +354,7 @@ public class WebDriverService {
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
                 etDataInHost + data.getFolderPath(),
-                etDataInHost + data.getFolderPath(), network);
+                etDataInHost + data.getFolderPath(), network, data);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -328,13 +369,13 @@ public class WebDriverService {
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
                 dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                filesPathInHost, null, dockerNetwork);
+                filesPathInHost, null, dockerNetwork, null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
             boolean webRtcActivated, String folderPath,
-            String sessionFolderPath, String network)
+            String sessionFolderPath, String network, ExecutionData execData)
             throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
@@ -379,7 +420,7 @@ public class WebDriverService {
             // If live, no timeout
             liveSession = isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
-                    sessionFolderPath, network);
+                    sessionFolderPath, network, execData);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -430,7 +471,8 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            filesPathInHost, sessionFolderPath, network);
+                            filesPathInHost, sessionFolderPath, network,
+                            execData);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -843,7 +885,8 @@ public class WebDriverService {
 
     public SessionInfo startBrowser(String requestBody,
             String originalRequestBody, String folderPath,
-            String sessionFolderPath, String network) throws Exception {
+            String sessionFolderPath, String network, ExecutionData execData)
+            throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -896,6 +939,16 @@ public class WebDriverService {
                 "SCREEN_RESOLUTION=" + browserScreenResolution,
                 "TZ=" + browserTimezone);
 
+        // ElasTest labels
+        Map<String, String> labels = new HashMap<>();
+        labels.put(etTypeLabel, etTypeTSSLabelValue);
+        labels.put(etTJobTssTypeLabel, "aux");
+
+        if (execData != null) {
+            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
+            labels.put(etTJobIdLabel, execData.gettJobId().toString());
+        }
+
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
         dockerBuilder.containerName(hubContainerName);
         dockerBuilder.exposedPorts(exposedPorts);
@@ -904,6 +957,7 @@ public class WebDriverService {
         dockerBuilder.shmSize(shmSize);
         dockerBuilder.envs(envs);
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
+        dockerBuilder.labels(labels);
 
         if (useTorm) {
             dockerBuilder.network(network);
