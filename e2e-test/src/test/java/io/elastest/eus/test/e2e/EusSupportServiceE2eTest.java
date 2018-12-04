@@ -42,7 +42,8 @@ import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
- * E2E EUS test.
+ * Check that EUS works fine as an independent TSS.
+ * Requirements tested: EUS1, EUS6, EUS8
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1

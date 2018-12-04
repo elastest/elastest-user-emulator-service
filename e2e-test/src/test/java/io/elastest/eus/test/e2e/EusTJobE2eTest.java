@@ -40,7 +40,8 @@ import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
- * E2E EUS test.
+ * Check that the EUS works properly together with a TJob.
+ * Requirements tested: EUS1, EUS6, EUS9
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
