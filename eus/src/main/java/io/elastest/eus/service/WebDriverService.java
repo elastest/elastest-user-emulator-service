@@ -1121,6 +1121,12 @@ public class WebDriverService {
     }
 
     private boolean isPostUrlRequest(HttpMethod method, String context) {
+        // TODO remove
+        logger.debug("Checking if request {} is post url request:", context);
+        logger.debug("method == POST: {} | context.endsWith({})",
+                method == POST, webdriverNavigationGetMessage,
+                context.endsWith(webdriverNavigationGetMessage));
+        
         return method == POST
                 && context.endsWith(webdriverNavigationGetMessage);
     }
@@ -1131,8 +1137,8 @@ public class WebDriverService {
                 && (chars == 2 || (chars == 3 && context.endsWith("window")));
     }
 
-    private boolean isExecuteScript(HttpMethod method, String context) {
-
+    private boolean isExecuteScript(HttpMethod method, String requestContext) {
+        String context = requestContext;
         if (context.startsWith("/" + webdriverSessionMessage)) {
             context = context.substring(1);
         }
