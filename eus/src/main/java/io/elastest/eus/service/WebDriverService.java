@@ -444,7 +444,6 @@ public class WebDriverService {
         }
 
         if (isExecuteScript(method, requestContext)) {
-
             // Execute Script to intercept by EUS and finish
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
                     sessionInfo);
@@ -597,8 +596,6 @@ public class WebDriverService {
                     }
                 }
 
-                // TODO
-
                 return true;
             }
 
@@ -620,6 +617,8 @@ public class WebDriverService {
                 String postResponse = this.postScript(sessionInfo,
                         configLocalStorageStr, new ArrayList<>());
                 manageSuccessful = postResponse != null;
+
+                logger.debug("WebRtc Monitoring Response: {}", postResponse);
 
             } catch (JsonProcessingException e) {
                 logger.error(
@@ -1112,8 +1111,9 @@ public class WebDriverService {
         deleteSession(sessionInfo, false);
     }
 
-    private boolean isPostSessionRequest(HttpMethod method, String context) {
-
+    private boolean isPostSessionRequest(HttpMethod method,
+            String requestContext) {
+        String context = new String(requestContext);
         if (context.startsWith("//")) {
             context = context.substring(1);
         }
@@ -1123,10 +1123,10 @@ public class WebDriverService {
     private boolean isPostUrlRequest(HttpMethod method, String context) {
         // TODO remove
         logger.debug("Checking if request {} is post url request:", context);
-        logger.debug("method == POST: {} | context.endsWith({})",
+        logger.debug("method == POST: {} | context.endsWith({}): {}",
                 method == POST, webdriverNavigationGetMessage,
                 context.endsWith(webdriverNavigationGetMessage));
-        
+
         return method == POST
                 && context.endsWith(webdriverNavigationGetMessage);
     }
@@ -1138,7 +1138,7 @@ public class WebDriverService {
     }
 
     private boolean isExecuteScript(HttpMethod method, String requestContext) {
-        String context = requestContext;
+        String context = new String(requestContext);
         if (context.startsWith("/" + webdriverSessionMessage)) {
             context = context.substring(1);
         }
