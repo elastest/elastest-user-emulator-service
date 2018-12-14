@@ -461,6 +461,8 @@ public class WebDriverService {
                     sessionInfo, optionalHttpEntity, isCreateSession);
             exchangeAgain = responseBody == null;
             if (this.isPostUrlRequest(method, requestContext)) {
+                logger.debug("post Url is activated. webRtcActivated={}",
+                        webRtcActivated);
                 this.manageWebRtcMonitoring(sessionInfo, webRtcActivated,
                         monitoringIndex);
             }
