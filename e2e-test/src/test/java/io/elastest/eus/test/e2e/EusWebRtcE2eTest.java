@@ -47,7 +47,7 @@ import io.github.bonigarcia.SeleniumExtension;
 @DisplayName("ETM E2E test of OpenVidu WebRTC project")
 @ExtendWith(SeleniumExtension.class)
 public class EusWebRtcE2eTest extends EusBaseTest {
-    final String projectName = "EUS E2E WebRTC";
+    final String projectName = "E2E_EUS_OpenVidu_WebRTC";
     final String sutName = "OpenVidu Test App";
     final int timeout = 350;
 
