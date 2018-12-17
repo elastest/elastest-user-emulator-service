@@ -138,7 +138,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
         // Check WebRtc metrics
         openTJobExecMonitoringConfigModal(driver);
 
-        String webRtcMetricsXpath = "//*[@id=\"metricsTree\"]//div/div/tree-node-collection/div/tree-node[1]/div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span/text()[contains(string(), 'webRtc')]";
+        String webRtcMetricsXpath = "//*[@id=\"metricsTree\"]//div/div/tree-node-collection/div//div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span/text()[contains(string(), 'webRtc')]";
         assertNotNull(getElementByXpath(driver, webRtcMetricsXpath));
     }
 }
