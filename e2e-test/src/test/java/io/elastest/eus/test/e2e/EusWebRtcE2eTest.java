@@ -107,7 +107,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
 
             createNewSutDeployedByElastestWithCommands(driver, sutCommands,
                     SutCommandsOptionEnum.IN_NEW_CONTAINER, sutName, sutDesc,
-                    sutImage, sutPort, null, false);
+                    sutImage, sutPort, null, true);
         }
 
     }
