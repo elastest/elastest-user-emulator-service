@@ -1,5 +1,5 @@
 def elastest_url = ''
-node('docker') {
+node('et_in_et') {
     elastest(tss: ['EUS'], surefireReportsPattern: '**/target/surefire-reports/TEST-*.xml', project: 'ETinET_ExtSut', sut: 6) {
         stage ('docker container')
            echo '...STARTING...'
