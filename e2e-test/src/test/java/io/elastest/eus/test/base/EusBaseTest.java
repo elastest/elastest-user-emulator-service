@@ -476,7 +476,7 @@ public class EusBaseTest {
     protected void createNewSutDeployedByElastestWithCommands(WebDriver driver,
             String commands, SutCommandsOptionEnum option, String sutName,
             String desc, String image, String port, Map<String, String> params,
-            boolean https) {
+            boolean https) throws InterruptedException {
         this.createSutAndInsertCommonFields(driver, sutName, desc, params);
         insertDeployedByElastestCommonFields(SutDeployedByElastestType.COMMANDS,
                 image, port, https);
@@ -497,6 +497,8 @@ public class EusBaseTest {
                     .click();
         }
 
+        // Save
+        this.clickSaveSut(driver);
     }
 
     protected void createNewSutDeployedByElastestWithImage(WebDriver driver,
