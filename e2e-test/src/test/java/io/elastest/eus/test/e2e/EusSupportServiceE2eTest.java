@@ -25,9 +25,12 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfEl
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.MalformedURLException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -38,12 +41,13 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
 import io.elastest.eus.test.base.EusBaseTest;
+import io.github.bonigarcia.BrowserType;
 import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
- * Check that EUS works fine as an independent TSS.
- * Requirements tested: EUS1, EUS6, EUS8
+ * Check that EUS works fine as an independent TSS. Requirements tested: EUS1,
+ * EUS6, EUS8
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
@@ -58,17 +62,15 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(
-            @DockerBrowser(type = CHROME) RemoteWebDriver driver)
-            throws InterruptedException {
-        this.driver = driver;
+            @DockerBrowser(type = CHROME) RemoteWebDriver driver,
+            TestInfo testInfo)
+            throws InterruptedException, MalformedURLException {
+        setupTestBrowser(testInfo, BrowserType.CHROME, driver);
 
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
         driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
-        driver.get(tormUrl);
-        if (secureElastest) {
-            driver.get(tormOriginalUrl);
-        }
+        navigateToTorm(driver);
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");
@@ -76,7 +78,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         By chromeRadioButton = By.id("chrome_radio");
         waitElement.until(visibilityOfElementLocated(chromeRadioButton));
         driver.findElement(chromeRadioButton).click();
-        selectOptionFromSelect("69");
+        selectOptionFromSelect("latest");
 
         driver.findElement(By.id("start_session")).click();
 
@@ -112,15 +114,17 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
                 By.cssSelector("md-dialog-container")));
 
         log.info("Delete recording");
-        By sessionId = By.xpath(
-                "//*[@id=\"recordingsTable\"]/div/table/tbody/tr/td[1]");
+        By sessionId = By
+                .xpath("//*[@id=\"recordingsTable\"]/div/table/tbody/tr/td[1]");
         driver.findElement(sessionId).getText();
         log.info("Browser session id: {}",
                 driver.findElement(sessionId).getText());
         By deleteRecording = By.id("delete_recording_"
                 + driver.findElement(sessionId).getText().trim());
-//        By deleteRecording = By.xpath(
-//                "//md-card[contains(string(), 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td/i[@id=\"delete_recording_" + driver.findElement(sessionId).getText() + "\"]");
+        // By deleteRecording = By.xpath(
+        // "//md-card[contains(string(),
+        // 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td/i[@id=\"delete_recording_"
+        // + driver.findElement(sessionId).getText() + "\"]");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
     }

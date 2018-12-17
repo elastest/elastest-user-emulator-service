@@ -32,7 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import io.elastest.eus.test.base.EtmBaseTest;
+import io.elastest.eus.test.base.EusBaseTest;
 import io.github.bonigarcia.BrowserType;
 import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
@@ -46,7 +46,7 @@ import io.github.bonigarcia.SeleniumExtension;
 @Tag("e2e")
 @DisplayName("ETM E2E test of OpenVidu WebRTC project")
 @ExtendWith(SeleniumExtension.class)
-public class EusWebRtcE2eTest extends EtmBaseTest {
+public class EusWebRtcE2eTest extends EusBaseTest {
     final String projectName = "EUS E2E WebRTC";
     final String sutName = "OpenVidu Test App";
     final int timeout = 350;
@@ -65,10 +65,49 @@ public class EusWebRtcE2eTest extends EtmBaseTest {
         if (!etSutExistsIntoProject(driver, projectName, sutName)) {
             // Create SuT
             String sutDesc = "OpenVidu Description";
-            String sutImage = "openvidu/testapp:elastest";
-            String sutPort = "4443";
-            createNewSutDeployedByElastestWithImage(driver, sutName, sutDesc,
-                    sutImage, sutPort, null);
+            String sutImage = "elastest/test-etm-alpinedockernode";
+            String sutPort = "5000";
+            String sutCommands = "echo \"### Create Dockerfile ###\"\n"
+                    + "mkdir dockerimage;\n" + "cd dockerimage;\n"
+                    + "echo \"FROM openvidu/openvidu-server-kms:2.6.0\" >> Dockerfile\n"
+                    + "echo \"RUN apt-get update\" >> Dockerfile\n"
+                    + "echo \"RUN apt-get install -y git\" >> Dockerfile\n"
+                    + "echo \"RUN apt-get install -y nodejs npm\" >> Dockerfile\n"
+                    + "echo \"RUN apt-get install -y curl\" >> Dockerfile\n"
+                    + "echo \"RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \\\\\" >> Dockerfile\n"
+                    + "echo \"    && apt-get install -y nodejs\" >> Dockerfile\n"
+                    + "echo \"RUN npm install -g @angular/cli@7.1.3\" >> Dockerfile\n"
+                    + "echo \"RUN npm install -g http-server\" >> Dockerfile\n"
+                    + "echo \"EXPOSE 4443\" >> Dockerfile\n"
+                    + "echo \"EXPOSE 5000\" >> Dockerfile\n"
+                    + "echo -n \"CMD \" >> Dockerfile\n"
+                    + "echo -n \"echo 'run supervisord';\" >> Dockerfile\n"
+                    + "echo -n \"/usr/bin/supervisord & \" >> Dockerfile\n"
+                    + "echo -n \"echo '##### BUILD OPENVIDU #####';\" >> Dockerfile\n"
+                    + "echo -n \"git clone https://github.com/OpenVidu/openvidu.git; \" >> Dockerfile\n"
+                    + "echo -n \"cd openvidu/openvidu-browser;\" >> Dockerfile\n"
+                    + "echo -n \"npm install; \" >> Dockerfile\n"
+                    + "echo -n \"npm run build; \" >> Dockerfile\n"
+                    + "echo -n \"npm link; \" >> Dockerfile\n"
+                    + "echo -n \"cd ..; \" >> Dockerfile\n"
+                    + "echo -n \"cd openvidu-testapp; \" >> Dockerfile\n"
+                    + "echo -n \"echo 'run npm install';\" >> Dockerfile\n"
+                    + "echo -n \"npm install; \" >> Dockerfile\n"
+                    + "echo -n \"npm link openvidu-browser; \" >> Dockerfile\n"
+                    + "echo -n \"ng build --output-path ./dist;\" >> Dockerfile;\n"
+                    + "echo -n \"cd dist;\" >> Dockerfile;\n"
+                    + "echo -n \"openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj '/CN=www.mydom.com/O=My Company LTD./C=US' -keyout key.pem -out cert.pem;\" >> Dockerfile;\n"
+                    + "echo -n \" echo '##### RUN OPENVIDU #####';\" >> Dockerfile\n"
+                    + "echo -n \"http-server -S -p 5000;\" >> Dockerfile;\n"
+                    + "cat Dockerfile;\n" + "echo \"\";\n"
+                    + "echo “### BUILD AND RUN ###”\n"
+                    + "docker build -t openvidu/elastest .\n" + "echo \"\"\n"
+                    + "echo \"Running image\"\n"
+                    + "docker run --name $ET_SUT_CONTAINER_NAME --network $ET_NETWORK -e \"OPENVIDU_PUBLICURL=docker\" openvidu/elastest\n";
+
+            createNewSutDeployedByElastestWithCommands(driver, sutCommands,
+                    SutCommandsOptionEnum.IN_NEW_CONTAINER, sutName, sutDesc,
+                    sutImage, sutPort, null, false);
         }
 
     }

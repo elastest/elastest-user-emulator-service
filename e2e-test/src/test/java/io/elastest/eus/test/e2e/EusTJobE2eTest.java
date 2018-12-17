@@ -18,16 +18,18 @@ package io.elastest.eus.test.e2e;
 
 import static io.github.bonigarcia.BrowserType.CHROME;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentInElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -36,12 +38,13 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 
 import io.elastest.eus.test.base.EusBaseTest;
+import io.github.bonigarcia.BrowserType;
 import io.github.bonigarcia.DockerBrowser;
 import io.github.bonigarcia.SeleniumExtension;
 
 /**
- * Check that the EUS works properly together with a TJob.
- * Requirements tested: EUS1, EUS6, EUS9
+ * Check that the EUS works properly together with a TJob. Requirements tested:
+ * EUS1, EUS6, EUS9
  *
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
@@ -50,66 +53,49 @@ import io.github.bonigarcia.SeleniumExtension;
 @DisplayName("E2E tests of EUS through TORM")
 @ExtendWith(SeleniumExtension.class)
 public class EusTJobE2eTest extends EusBaseTest {
-
     final Logger log = getLogger(lookup().lookupClass());
+    String projectName = "e2e-eus-test-project";
+
+    private static final Map<String, List<String>> tssMap;
+    static {
+        tssMap = new HashMap<String, List<String>>();
+        tssMap.put("EUS", Arrays.asList("webRtcStats"));
+    }
+
+    void createProject(WebDriver driver) throws Exception {
+        navigateToTorm(driver);
+        if (!etProjectExists(driver, projectName)) {
+            createNewETProject(driver, projectName);
+        }
+    }
 
     @Test
     @DisplayName("EUS in a TJob")
-    void testTJob(@DockerBrowser(type = CHROME) RemoteWebDriver rDriver)
-            throws InterruptedException, MalformedURLException {
-        WebDriver driver = null;
-        String testName = new Object() {
-        }.getClass().getEnclosingMethod().getName();
-        if (eusURL != null) {
-            this.setupTest(testName);
-            driver = this.driver;
-        } else {
-            driver = rDriver;
-        }
-        log.info("##### Start test: {}", testName);
-        this.driver = this.driver != null ? this.driver : driver;
+    void testTJob(@DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
+            TestInfo testInfo) throws Exception {
+        setupTestBrowser(testInfo, BrowserType.CHROME, localDriver);
 
-        log.info("Navigate to TORM and start new project");
-        driver.manage().timeouts().implicitlyWait(5, SECONDS);
-        log.info("ELASTEST URL: {}", tormUrl);
-        driver.get(tormUrl);
-        if (secureElastest) {
-            driver.get(tormOriginalUrl);
+        // Setting up the TJob used in the test
+        this.createProject(driver);
+        navigateToETProject(driver, projectName);
+        String tJobName = "eus-test-tjob";
+        if (!etTJobExistsIntoProject(driver, projectName, tJobName)) {
+            String tJobTestResultPath = "/home/jenkins/elastest-user-emulator-service/tjob-test/target/surefire-reports/TEST-io.elastest.eus.test.e2e.TJobEusTest.xml";
+            String sutName = null;
+            String tJobImage = "elastest/ci-docker-e2e";
+            String commands = "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;";
+            createNewTJob(driver, tJobName, tJobTestResultPath, sutName,
+                    tJobImage, false, commands, null, tssMap, null);
         }
+        // Run the TJob
+        runTJobFromProjectPage(driver, tJobName);
+
+        // Wait for eus card
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
-        createNewProject(driver, "eus-test-project");
-        log.info("Create new TJob using EUS");
-        waitEus.until(visibilityOfElementLocated(By.id("newTJobBtn")));
-        driver.findElement(By.id("newTJobBtn")).click();
-        waitEus.until(visibilityOfElementLocated(By.name("tJobName")));
-        driver.findElement(By.name("tJobName")).sendKeys("eus-test-tjob");
-        driver.findElement(By.name("tJobImageName"))
-                .sendKeys("elastest/ci-docker-e2e");
-        driver.findElement(By.name("resultsPath")).sendKeys(
-                "/home/jenkins/elastest-user-emulator-service/tjob-test/target/surefire-reports/TEST-io.elastest.eus.test.e2e.TJobEusTest.xml");
-        driver.findElement(By.className("mat-select-trigger")).click();
-        driver.findElement(By.xpath("//md-option[contains(string(), 'None')]"))
-                .click();
-        driver.findElement(By.name("commands")).sendKeys(
-                "git clone https://github.com/elastest/elastest-user-emulator-service;",
-                "cd elastest-user-emulator-service/tjob-test;", "mvn test;");
-
-        By eusCheckbox = By.xpath("//md-checkbox[@title='Select EUS']");
-        waitEus.until(visibilityOfElementLocated(eusCheckbox));
-        driver.findElement(eusCheckbox).click();
-
-        driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
-                .click();
-        log.info("Run TJob and wait for EUS GUI");
-        driver.findElement(By.xpath("//button[@title='Run TJob']")).click();
         By eusCard = By.xpath("//md-card-title[contains(string(), 'EUS')]");
-
         waitEus.until(visibilityOfElementLocated(eusCard));
 
-        log.info("Wait for build sucess traces");
-        WebDriverWait waitLogs = new WebDriverWait(driver, 180);
-        waitLogs.until(textToBePresentInElementLocated(By.tagName("logs-view"),
-                "BUILD SUCCESS"));
+        // and check its result
+        this.checkFinishTJobExec(driver, 220, "SUCCESS", false);
     }
-
 }
