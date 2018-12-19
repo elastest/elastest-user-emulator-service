@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -114,7 +113,6 @@ public class EusWebRtcE2eTest extends EusBaseTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("Create OpenVidu WebRTC project Chrome Test")
     void testCreateOpenViduWebRTC(
             @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
