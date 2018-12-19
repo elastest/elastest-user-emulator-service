@@ -64,7 +64,7 @@ import io.github.bonigarcia.DriverCapabilities;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 
-// Copy-pasted from ETM e2e at 11/12/2018
+// Copy-pasted from ETM e2e at 17/12/2018
 public class EusBaseTest {
     protected final Logger log = getLogger(lookup().lookupClass());
 
@@ -292,12 +292,19 @@ public class EusBaseTest {
 
     protected WebElement getElementByXpath(WebDriver driver, String xpath,
             int secondsTimeout, boolean withScroll) {
-        WebElement element = getElementsByXpath(driver, xpath, secondsTimeout)
-                .get(0);
+        WebDriverWait waitService = new WebDriverWait(driver, secondsTimeout);
+        By elementAvailable = By.xpath(xpath);
 
+        WebElement element;
         if (withScroll) {
+            element = driver.findElements(elementAvailable).get(0);
             JavascriptExecutor jse2 = (JavascriptExecutor) driver;
             jse2.executeScript("arguments[0].scrollIntoView()", element);
+
+            getElementByXpath(driver, xpath, secondsTimeout, false);
+        } else {
+            waitService.until(presenceOfElementLocated(elementAvailable));
+            element = driver.findElements(elementAvailable).get(0);
         }
 
         return element;
@@ -381,6 +388,7 @@ public class EusBaseTest {
         driver.findElement(By.name("project.name")).sendKeys(projectName);
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
+        sleep(1000);
     }
 
     protected void removeETProject(WebDriver driver, String projectName) {
@@ -553,12 +561,12 @@ public class EusBaseTest {
         this.clickSaveSut(driver);
     }
 
-    protected void clickSaveSut(WebDriver driver) throws InterruptedException {
-        Thread.sleep(2000);
+    protected void clickSaveSut(WebDriver driver) {
+        sleep(2000);
         log.debug("Saving Sut");
         this.getElementByXpath(driver, "//button[contains(string(), 'SAVE')]")
                 .click();
-        Thread.sleep(1000);
+        sleep(1000);
     }
 
     protected String getSutsTableXpathFromProjectPage() {
@@ -580,11 +588,8 @@ public class EusBaseTest {
                 projectName);
         this.navigateToETProject(driver, projectName);
 
-        try {
-            // Sleep for wait to load tables
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-        }
+        // Sleep for wait to load tables
+        sleep(1500);
 
         String sutsTableXpath = getSutsTableXpathFromProjectPage();
 
@@ -606,11 +611,8 @@ public class EusBaseTest {
             String projectName, String sutName) {
         log.info("Checking if Sut {} exists into Project TL {}", sutName,
                 projectName);
-        try {
-            // Sleep for wait to load tables
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-        }
+        // Sleep for wait to load tables
+        sleep(1500);
 
         String sutsTableXpath = getSutsTableXpathFromProjectPage();
 
@@ -724,11 +726,8 @@ public class EusBaseTest {
                 projectName);
         this.navigateToETProject(driver, projectName);
 
-        try {
-            // Sleep for wait to load tables
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-        }
+        // Sleep for wait to load tables
+        sleep(1500);
 
         String tJobsTableXpath = getTJobsTableXpathFromProjectPage();
 
@@ -880,10 +879,9 @@ public class EusBaseTest {
 
         // Navigate to tjob
         driver.findElement(By.xpath(xpath)).click();
-        try {
-            Thread.sleep(1200);
-        } catch (InterruptedException e) {
-        }
+
+        sleep(1200);
+
         this.getElementByXpath(driver, "//button[@title='Run TJob']").click();
     }
 
@@ -1073,5 +1071,12 @@ public class EusBaseTest {
             }
         } while (true);
         driver.findElement(select).click();
+    }
+
+    public void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+        }
     }
 }
