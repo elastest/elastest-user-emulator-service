@@ -749,7 +749,8 @@ public class EusBaseTest {
             String testResultPath, String sutName, String dockerImage,
             boolean imageCommands, String commands,
             Map<String, String> parameters, Map<String, List<String>> tssMap,
-            Map<String, List<String>> multiConfigurations) {
+            Map<String, List<String>> multiConfigurations,
+            boolean disableAllInOne) {
         log.info("Wait for the \"New TJob\" button");
         getElementById(driver, "newTJobBtn").click();
 
@@ -863,9 +864,25 @@ public class EusBaseTest {
             }
         }
 
+        if (disableAllInOne) {
+            getElementsByXpath(driver,
+                    "//input[@name=\"showAllInOneCheckbox\"]").get(0)
+                            .sendKeys(Keys.SPACE);
+        }
+
         // Save
         driver.findElement(By.xpath("//button[contains(string(), 'SAVE')]"))
                 .click();
+    }
+
+    protected void createNewTJob(WebDriver driver, String tJobName,
+            String testResultPath, String sutName, String dockerImage,
+            boolean imageCommands, String commands,
+            Map<String, String> parameters, Map<String, List<String>> tssMap,
+            Map<String, List<String>> multiConfigurations) {
+        createNewTJob(driver, tJobName, testResultPath, sutName, dockerImage,
+                imageCommands, commands, parameters, tssMap,
+                multiConfigurations, false);
     }
 
     protected void runTJobFromProjectPage(WebDriver driver, String tJobName) {

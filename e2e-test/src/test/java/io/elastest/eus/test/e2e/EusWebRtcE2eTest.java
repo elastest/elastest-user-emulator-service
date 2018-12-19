@@ -128,7 +128,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
             String commands = "echo \"Cloning project\"; git clone https://github.com/elastest/demo-projects; cd demo-projects/openvidu-test; echo \"Compiling project\"; mvn -DskipTests=true -B package; echo \"Executing test\"; mvn -B test;";
 
             createNewTJob(driver, tJobName, tJobTestResultPath, sutName,
-                    tJobImage, false, commands, null, tssMap, null);
+                    tJobImage, false, commands, null, tssMap, null, true);
         }
         // Run TJob
         runTJobFromProjectPage(driver, tJobName);
