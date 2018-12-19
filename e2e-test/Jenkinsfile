@@ -30,11 +30,12 @@ elastest_lib.pipeline({
 	                try {
 	                   sh "cd e2e-test; mvn -B clean test -DeEtmApi="+elastestURL+" -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports -Dsel.jup.docker.network=elastest_elastest"
 	                } catch(e) {
+	                   // Using etm because is experimental-lite
 	                    sh '''\
 	                       docker ps --all
-	                       docker ps --filter name=eus -q
-	                       docker ps --filter name=eus -q | xargs -L 1 docker logs || true
-	                       docker ps --filter name=eus -q | xargs -L 1 docker inspect || true
+	                       docker ps --filter name=etm -q
+	                       docker ps --filter name=etm -q | xargs -L 1 docker logs || true
+	                       docker ps --filter name=etm -q | xargs -L 1 docker inspect || true
 	                    '''
 						throw e
 	                } finally {
