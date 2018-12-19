@@ -49,7 +49,7 @@ import io.github.bonigarcia.SeleniumExtension;
 public class EusWebRtcE2eTest extends EusBaseTest {
     final String projectName = "E2E_EUS_OpenVidu_WebRTC";
     final String sutName = "OpenVidu Test App";
-    final int timeout = 500;
+    final int timeout = 1000;
 
     private static final Map<String, List<String>> tssMap;
     static {
