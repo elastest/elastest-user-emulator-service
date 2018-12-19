@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ import io.github.bonigarcia.SeleniumExtension;
 public class EusWebRtcE2eTest extends EusBaseTest {
     final String projectName = "E2E_EUS_OpenVidu_WebRTC";
     final String sutName = "OpenVidu Test App";
-    final int timeout = 1000;
+    final int timeout = 600;
 
     private static final Map<String, List<String>> tssMap;
     static {
@@ -113,6 +114,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
     }
 
     @Test
+    @Disabled
     @DisplayName("Create OpenVidu WebRTC project Chrome Test")
     void testCreateOpenViduWebRTC(
             @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
