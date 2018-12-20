@@ -17,12 +17,13 @@
 package io.elastest.eus.test.e2e;
 
 import static io.github.bonigarcia.BrowserType.CHROME;
-import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.Keys.RETURN;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
+import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.MalformedURLException;
@@ -76,7 +77,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         log.info("Select Chrome as browser and start session");
         WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
         By chromeRadioButton = By.id("chrome_radio");
-        waitElement.until(visibilityOfElementLocated(chromeRadioButton));
+        waitElement.until(presenceOfElementLocated(chromeRadioButton));
         driver.findElement(chromeRadioButton).click();
         selectOptionFromSelect("latest");
 
