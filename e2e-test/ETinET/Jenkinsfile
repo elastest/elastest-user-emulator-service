@@ -13,7 +13,7 @@ node('et_in_et') {
 					elastest_url = env.ET_SUT_PROTOCOL + '://' + env.ET_SUT_HOST + ':' + env.ET_SUT_PORT
      		    stage ("E2E tests")				 
     	            try {
-    	                sh "cd e2e-test; mvn -B clean test -DeusUrl=${env.ET_EUS_API} -DetEtmApi="+elastest_url+" -DeUser=elastest -DePass=3xp3r1m3nt47 -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports"
+    	                sh "cd e2e-test; mvn -B clean test -DeusUrl=${env.ET_EUS_API} -DetEtmApi="+elastest_url+" -DeUser="+'${SUT_USER}'+" -DePass="+'${SUT_PASS}'+" -Dsel.jup.recording=true -Dsel.jup.screenshot.at.the.end.of.tests=true -Dsel.jup.screenshot.format=png -Dsel.jup.output.folder=surefire-reports"
     	            } 
     			    catch(e) {
         				sh '''\
