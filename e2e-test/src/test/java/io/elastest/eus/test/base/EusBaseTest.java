@@ -164,19 +164,19 @@ public class EusBaseTest {
 
     protected void navigateTo(WebDriver driver, String url) {
         log.info("Navigating to: {}", url);
-        driver.manage().window().setSize(new Dimension(1024, 1024));
+        if (eusURL == null) {
+            driver.manage().window().setSize(new Dimension(1024, 1024));
+        }
         driver.manage().timeouts().implicitlyWait(5, SECONDS);
         driver.get(url);
     }
 
     protected void navigateToTorm(WebDriver driver) {
         log.info("Navigating to TORM");
-        driver.manage().window().setSize(new Dimension(1024, 1024));
-        driver.manage().timeouts().implicitlyWait(5, SECONDS);
         if (secureElastest) {
-            driver.get(secureTorm);
+            navigateTo(driver, secureTorm);
         } else {
-            driver.get(tormUrl);
+            navigateTo(driver, tormUrl);
         }
     }
 
