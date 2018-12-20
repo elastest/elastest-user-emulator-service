@@ -49,7 +49,7 @@ import io.github.bonigarcia.SeleniumExtension;
 public class EusWebRtcE2eTest extends EusBaseTest {
     final String projectName = "E2E_EUS_OpenVidu_WebRTC";
     final String sutName = "OpenVidu Test App";
-    final int timeout = 600;
+    final int timeout = 900;
 
     private static final Map<String, List<String>> tssMap;
     static {
@@ -138,7 +138,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
         // Check WebRtc metrics
         openTJobExecMonitoringConfigModal(driver);
 
-        Thread.sleep(10000);
+        Thread.sleep(20000);
 
         String webRtcMetricsXpath = ".//*[@id='metricsTree']//div/div/tree-node-collection/div//div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span[contains(string(), 'webRtc')]";
         assertNotNull(getElementByXpath(driver, webRtcMetricsXpath, true));
