@@ -33,9 +33,9 @@ elastest_lib.pipeline({
 	                   // Using etm because is experimental-lite
 	                    sh '''\
 	                       docker ps --all
-	                       docker ps --filter name=etm -q
-	                       docker ps --filter name=etm -q | xargs -L 1 docker logs || true
-	                       docker ps --filter name=etm -q | xargs -L 1 docker inspect || true
+	                       docker ps --filter name=etm_1 -q
+	                       docker ps --filter name=etm_1 -q | xargs -L 1 docker logs || true
+	                       docker ps --filter name=etm_1 -q | xargs -L 1 docker inspect || true
 	                    '''
 						throw e
 	                } finally {
