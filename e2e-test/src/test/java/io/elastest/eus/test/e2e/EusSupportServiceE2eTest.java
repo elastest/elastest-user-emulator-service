@@ -24,8 +24,6 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfEl
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.MalformedURLException;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -61,12 +59,11 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
     @Test
     @DisplayName("EUS as support service")
     void testSupportService(
-            @DockerBrowser(type = CHROME) RemoteWebDriver driver,
-            TestInfo testInfo)
-            throws InterruptedException, MalformedURLException {
+            @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
+            TestInfo testInfo) throws Exception {
+        setupTestBrowser(testInfo, BrowserType.CHROME, localDriver);
+        
         WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
-
-        setupTestBrowser(testInfo, BrowserType.CHROME, driver);
 
         log.info("Navigate to TORM and start support service");
         driver.manage().window().setSize(new Dimension(1024, 1024));
