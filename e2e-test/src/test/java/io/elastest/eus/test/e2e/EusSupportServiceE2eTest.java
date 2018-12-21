@@ -21,9 +21,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openqa.selenium.Keys.RETURN;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfElementLocated;
-import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.MalformedURLException;
@@ -66,6 +64,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
             @DockerBrowser(type = CHROME) RemoteWebDriver driver,
             TestInfo testInfo)
             throws InterruptedException, MalformedURLException {
+        WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
+
         setupTestBrowser(testInfo, BrowserType.CHROME, driver);
 
         log.info("Navigate to TORM and start support service");
@@ -75,12 +75,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");
-        WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
-        By chromeRadioButton = By.id("chrome_radio");
-        waitElement.until(presenceOfElementLocated(chromeRadioButton));
-        driver.findElement(chromeRadioButton).click();
+        getElementsById(driver, "chrome_radio", 50).get(0).click();
         selectOptionFromSelect("latest");
-
         driver.findElement(By.id("start_session")).click();
 
         log.info("Wait to load browser");
@@ -90,9 +86,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         driver.findElement(eusBrowser).click();
 
         log.info("Click browser navigation bar and navigate");
-        By vncCanvas = By.id("vnc_canvas");
-        WebElement canvas = driver.findElement(vncCanvas);
-        waitElement.until(visibilityOfElementLocated(vncCanvas));
+
+        WebElement canvas = getElementById(driver, "vnc_canvas", 50);
         sleep(SECONDS.toMillis(2));
         new Actions(driver).moveToElement(canvas, 80, 16).click()
                 .sendKeys("elastest.io" + RETURN).build().perform();

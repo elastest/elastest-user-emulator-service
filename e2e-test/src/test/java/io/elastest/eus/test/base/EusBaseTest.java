@@ -911,7 +911,7 @@ public class EusBaseTest {
         }
         tssNavButton.click();
 
-        WebDriverWait waitElement = new WebDriverWait(driver, 3);
+        WebDriverWait waitElement = new WebDriverWait(driver, 4);
         By supportService;
         int numRetries = 1;
         do {
@@ -938,7 +938,7 @@ public class EusBaseTest {
 
         log.info("Create and wait instance");
         driver.findElement(By.id("create_instance")).click();
-        WebDriverWait waitService = new WebDriverWait(driver, 120); // seconds
+        WebDriverWait waitService = new WebDriverWait(driver, 240); // seconds
         By serviceDetailButton = By
                 .xpath("//button[@title='View Service Detail']");
         waitService.until(visibilityOfElementLocated(serviceDetailButton));
