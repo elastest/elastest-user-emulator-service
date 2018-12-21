@@ -910,33 +910,11 @@ public class EusBaseTest {
         }
         tssNavButton.click();
 
-        WebDriverWait waitElement = new WebDriverWait(driver, 4);
-        By supportService;
-        int numRetries = 1;
-        do {
-            driver.findElement(By.className("mat-select-trigger")).click();
-            supportService = By.xpath("//md-option[contains(string(), '"
-                    + supportServiceLabel + "')]");
-            try {
-                waitElement.until(visibilityOfElementLocated(supportService));
-                log.info("Element {} already available", supportService);
-                break;
-
-            } catch (Exception e) {
-                numRetries++;
-                if (numRetries > 6) {
-                    log.warn("Max retries ({}) reached ... leaving",
-                            numRetries);
-                    break;
-                }
-                log.warn("Element {} not available ... retrying",
-                        supportService);
-            }
-        } while (true);
-        driver.findElement(supportService).click();
+        log.info("Select {}", supportServiceLabel);
+        selectItem(driver, supportServiceLabel, "Select a Service");
 
         log.info("Create and wait instance");
-        driver.findElement(By.id("create_instance")).click();
+        getElementById(driver, "create_instance").click();
         WebDriverWait waitService = new WebDriverWait(driver, 240); // seconds
         By serviceDetailButton = By
                 .xpath("//button[@title='View Service Detail']");
