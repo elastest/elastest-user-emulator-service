@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -66,8 +65,6 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
 
         log.info("Navigate to TORM and start support service");
-        driver.manage().window().setSize(new Dimension(1024, 1024));
-        driver.manage().timeouts().implicitlyWait(5, SECONDS); // implicit wait
         navigateToTorm(driver);
         startTestSupportService(driver, "EUS");
 
