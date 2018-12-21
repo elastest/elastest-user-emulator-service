@@ -64,8 +64,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         
         WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
 
-        log.info("Navigate to TORM and start support service");
         navigateToTorm(driver);
+        log.info("Start support service");
         startTestSupportService(driver, "EUS");
 
         log.info("Select Chrome as browser and start session");

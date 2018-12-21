@@ -146,7 +146,6 @@ public class EusBaseTest {
         log.info("##### Finish test: {}", testName);
         if (driver != null) {
             if (eusURL != null) {
-                log.info("Clearing Messages...");
                 driver.quit();
             } else {
                 log.info("Browser console at the end of the test");
@@ -904,8 +903,8 @@ public class EusBaseTest {
 
     protected void startTestSupportService(WebDriver driver,
             String supportServiceLabel) {
-        WebElement tssNavButton = driver
-                .findElement(By.id("nav_support_services"));
+        WebElement tssNavButton = getElementById(driver,
+                "nav_support_services");
         if (!tssNavButton.isDisplayed()) {
             driver.findElement(By.id("main_menu")).click();
         }
@@ -1051,17 +1050,6 @@ public class EusBaseTest {
         } else {
             this.driver = driver;
         }
-    }
-
-    public void setupTestBrowser(TestInfo testInfo, BrowserType browser)
-            throws MalformedURLException {
-        String testName = testInfo.getTestMethod().get().getName();
-
-        DesiredCapabilities caps;
-        caps = browser.equals(BrowserType.CHROME) ? DesiredCapabilities.chrome()
-                : DesiredCapabilities.firefox();
-        caps.setCapability("testName", testName);
-        driver = new RemoteWebDriver(new URL(eusURL), caps);
     }
 
     public void selectOptionFromSelect(String option) {
