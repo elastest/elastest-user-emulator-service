@@ -140,7 +140,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
 
         Thread.sleep(20000);
 
-        String webRtcMetricsXpath = ".//*[@id='metricsTree']//div/div/tree-node-collection/div//div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span[contains(string(), 'webRtc')]";
+        String webRtcMetricsXpath = ".//*[@id='metricsTree']//div/div/tree-node-collection/div//div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span[contains(string(), 'webRtc') or contains(string(), 'webrtc')]";
         assertNotNull(getElementByXpath(driver, webRtcMetricsXpath, true));
     }
 }
