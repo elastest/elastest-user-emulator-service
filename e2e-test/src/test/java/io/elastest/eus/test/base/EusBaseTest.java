@@ -417,6 +417,7 @@ public class EusBaseTest {
     }
 
     protected boolean etProjectExists(WebDriver driver, String projectName) {
+        navigateToProjects(driver);
         log.info("Checking if Project {} exists", projectName);
         String projectsTableXpath = getProjectsTableXpathFromProjectPage();
 
@@ -919,7 +920,6 @@ public class EusBaseTest {
         log.info("Navigate for instance view");
         getElementByXpath(driver, "//button[@title='View Service Detail']", 240)
                 .click();
-        
     }
 
     protected void checkFinishTJobExec(WebDriver driver, int timeout,
