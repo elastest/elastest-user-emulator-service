@@ -913,13 +913,13 @@ public class EusBaseTest {
         log.info("Select {}", supportServiceLabel);
         selectItem(driver, supportServiceLabel, "Select a Service");
 
-        log.info("Create and wait instance");
+        log.info("Create and wait for instance");
         getElementById(driver, "create_instance").click();
-        WebDriverWait waitService = new WebDriverWait(driver, 240); // seconds
-        By serviceDetailButton = By
-                .xpath("//button[@title='View Service Detail']");
-        waitService.until(visibilityOfElementLocated(serviceDetailButton));
-        driver.findElement(serviceDetailButton).click();
+        
+        log.info("Navigate for instance view");
+        getElementByXpath(driver, "//button[@title='View Service Detail']", 240)
+                .click();
+        
     }
 
     protected void checkFinishTJobExec(WebDriver driver, int timeout,
