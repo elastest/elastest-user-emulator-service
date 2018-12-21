@@ -62,6 +62,7 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
             @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
             TestInfo testInfo) throws Exception {
         setupTestBrowser(testInfo, BrowserType.CHROME, localDriver);
+        navigateToTorm(driver);
         
         WebDriverWait waitElement = new WebDriverWait(driver, 40); // seconds
 
