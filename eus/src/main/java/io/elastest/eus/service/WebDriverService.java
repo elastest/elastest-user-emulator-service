@@ -391,6 +391,10 @@ public class WebDriverService {
         boolean isCreateSession = isPostSessionRequest(method, requestContext);
         String newRequestBody = requestBody;
         if (isCreateSession) {
+            String createSessionLogMsg = "Is create session" + execData != null
+                    ? " from execution " + execData.gettJobExecId()
+                    : "";
+            logger.debug(createSessionLogMsg);
 
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
@@ -448,7 +452,9 @@ public class WebDriverService {
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
                     sessionInfo);
             if (isIntercepted) {
-                return new ResponseEntity<>(HttpStatus.OK);
+                return new ResponseEntity<>(
+                        "ElasTest script intercepted successfully",
+                        HttpStatus.OK);
             }
         }
 
