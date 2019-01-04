@@ -328,6 +328,9 @@ public class WebDriverService {
             HttpEntity<String> httpEntity, HttpServletRequest request,
             String executionKey) throws DockerException, Exception {
         if (!executionsMap.containsKey(executionKey)) {
+            logger.error(
+                    "Session from Execution received but execution key {} not registered",
+                    executionKey);
             return new ResponseEntity<>(executionKey, HttpStatus.BAD_REQUEST);
         }
 
@@ -391,10 +394,9 @@ public class WebDriverService {
         boolean isCreateSession = isPostSessionRequest(method, requestContext);
         String newRequestBody = requestBody;
         if (isCreateSession) {
-            String createSessionLogMsg = "Is create session" + execData != null
+            logger.debug("Is create session" + (execData != null
                     ? " from execution " + execData.gettJobExecId()
-                    : "";
-            logger.debug(createSessionLogMsg);
+                    : ""));
 
             String browserName = jsonService
                     .jsonToObject(requestBody, WebDriverCapabilities.class)
