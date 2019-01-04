@@ -335,6 +335,9 @@ public class WebDriverService {
         }
 
         ExecutionData data = executionsMap.get(executionKey);
+        logger.debug("Session from Execution {} received",
+                data.gettJobExecId());
+
         String requestContext = parseRequestContext(getRequestContext(request));
 
         String network = dockerNetwork;
