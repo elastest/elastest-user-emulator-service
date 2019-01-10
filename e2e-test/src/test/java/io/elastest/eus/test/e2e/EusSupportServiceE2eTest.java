@@ -111,12 +111,12 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
                 driver.findElement(sessionId).getText());
         By deleteRecording = By.id("delete_recording_"
                 + driver.findElement(sessionId).getText().trim());
-        // By deleteRecording = By.xpath(
-        // "//md-card[contains(string(),
-        // 'Recordings')]/md-card-content/td-data-table/div/table/tbody/tr[1]/td/i[@id=\"delete_recording_"
-        // + driver.findElement(sessionId).getText() + "\"]");
         driver.findElement(deleteRecording).click();
         waitElement.until(invisibilityOfElementLocated(deleteRecording));
+        
+        // Delete TSS
+        getElementById(driver, "nav_support_services").click();
+        deleteTSSInstance(driver);
     }
 
 }

@@ -1062,4 +1062,16 @@ public class EusBaseTest {
         } catch (InterruptedException e) {
         }
     }
+    
+    protected void deleteTSSInstance(WebDriver driver) {
+        // Delete TSS
+        WebElement tssId = getElementByXpath(driver,
+                "//*[@id=\"tss-instances\"]/div/table/tbody/tr[1]/td[1]/span");
+        log.info("TSS session id: {}", tssId.getText());
+        By deleteServices = By.id("deleteService-" + tssId.getText().trim());
+        driver.findElement(deleteServices).click();
+        log.debug("Wait for Test Support Service to be stopped");
+        WebDriverWait waitEnd = new WebDriverWait(driver, 120);
+        waitEnd.until(invisibilityOfElementLocated(deleteServices));
+    }
 }
