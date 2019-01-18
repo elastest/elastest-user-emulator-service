@@ -329,26 +329,41 @@ public class WebDriverService {
             String executionKey) throws DockerException, Exception {
         if (!executionsMap.containsKey(executionKey)) {
             logger.error(
-                    "Session from Execution received but execution key {} not registered",
+                    "Request from Execution received but execution key {} not registered",
                     executionKey);
             return new ResponseEntity<>(executionKey, HttpStatus.BAD_REQUEST);
         }
 
         ExecutionData data = executionsMap.get(executionKey);
-        logger.debug("Session from Execution {} received",
+        logger.debug("Request from Execution {} received",
                 data.gettJobExecId());
 
         String requestContext = parseRequestContext(getRequestContext(request));
 
+        List<String> networks = new ArrayList<>();
         String network = dockerNetwork;
         String sutPrefix = data.getSutContainerPrefix();
+
         if (data.isUseSutNetwork() && sutPrefix != null
                 && !"".equals(sutPrefix)) {
             List<Container> containers = dockerService
                     .getContainersByNamePrefix(sutPrefix);
             if (containers != null && containers.size() > 0) {
-                network = dockerService.getNetworkName(containers.get(0).id());
-                if (network == null || "".equals(network)) {
+
+                List<Object> sutNetworks = dockerService
+                        .getContainerNetworks(containers.get(0).id());
+                if (sutNetworks != null) {
+                    network = (String) sutNetworks.get(0);
+                    boolean first = true;
+                    for (Object currentNetwork : sutNetworks) {
+                        if (!first) {
+                            networks.add((String) currentNetwork);
+                        }
+                        first = false;
+                    }
+                }
+                if (sutNetworks == null || sutNetworks.size() == 0
+                        || network == null || "".equals(network)) {
                     network = dockerNetwork;
                     logger.error(
                             "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
@@ -360,7 +375,7 @@ public class WebDriverService {
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
                 etDataInHost + data.getFolderPath(),
-                etDataInHost + data.getFolderPath(), network, data);
+                etDataInHost + data.getFolderPath(), network, data, networks);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -375,14 +390,14 @@ public class WebDriverService {
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
                 dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                filesPathInHost, null, dockerNetwork, null);
+                filesPathInHost, null, dockerNetwork, null, null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
             boolean webRtcActivated, String folderPath,
-            String sessionFolderPath, String network, ExecutionData execData)
-            throws DockerException, Exception {
+            String sessionFolderPath, String network, ExecutionData execData,
+            List<String> additionalNetworks) throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
@@ -429,7 +444,7 @@ public class WebDriverService {
             // If live, no timeout
             liveSession = isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
-                    sessionFolderPath, network, execData);
+                    sessionFolderPath, network, execData, additionalNetworks);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -484,7 +499,7 @@ public class WebDriverService {
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
                             filesPathInHost, sessionFolderPath, network,
-                            execData);
+                            execData, additionalNetworks);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -897,8 +912,8 @@ public class WebDriverService {
 
     public SessionInfo startBrowser(String requestBody,
             String originalRequestBody, String folderPath,
-            String sessionFolderPath, String network, ExecutionData execData)
-            throws Exception {
+            String sessionFolderPath, String network, ExecutionData execData,
+            List<String> additionalNetworks) throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -1011,8 +1026,19 @@ public class WebDriverService {
         sessionService.sendNewSessionToAllClients(sessionInfo, false);
 
         // Start
-        dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
-                EpmService.etMasterSlaveMode, true);
+        String containerId = dockerService.createAndStartContainerWithPull(
+                dockerBuilder.build(), EpmService.etMasterSlaveMode, true);
+
+        // Additional Networks
+        if (additionalNetworks != null && additionalNetworks.size() > 0) {
+            for (String additionalNetwork : additionalNetworks) {
+                if (additionalNetwork != null
+                        && !"".equals(additionalNetwork)) {
+                    dockerService.insertIntoNetwork(additionalNetwork,
+                            containerId);
+                }
+            }
+        }
 
         // Wait Reachable
         String hubPath = "/wd/hub";
