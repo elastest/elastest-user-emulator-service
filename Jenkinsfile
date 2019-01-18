@@ -19,7 +19,7 @@ node('TESTDOCKER') {
                         
                     dir(epmClientJavaDirectory) {
                         echo 'Existing files before cloning the git repository'
-                        git 'https://github.com/franciscoRdiaz/epm-client-java.git'
+                        git 'https://github.com/mpauls/epm-client-java.git'
                     }
                         
                     echo 'Installing epm-client-java'
