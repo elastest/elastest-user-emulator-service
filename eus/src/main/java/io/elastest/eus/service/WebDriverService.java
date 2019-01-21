@@ -346,12 +346,16 @@ public class WebDriverService {
 
         if (data.isUseSutNetwork() && sutPrefix != null
                 && !"".equals(sutPrefix)) {
+            logger.debug("Sut prefix: {}", sutPrefix);
+
             List<Container> containers = dockerService
                     .getContainersByNamePrefix(sutPrefix);
             if (containers != null && containers.size() > 0) {
 
                 List<Object> sutNetworks = dockerService
                         .getContainerNetworks(containers.get(0).id());
+                logger.debug("Sut networks: {}", sutNetworks);
+
                 if (sutNetworks != null) {
                     network = (String) sutNetworks.get(0);
                     boolean first = true;
