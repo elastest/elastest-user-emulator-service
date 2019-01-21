@@ -369,6 +369,8 @@ public class WebDriverService {
                             "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
                             dockerNetwork);
                 }
+                logger.debug("First Sut network: {}", network);
+                logger.debug("Sut additional networks: {}", networks);
             }
         }
 
@@ -1031,9 +1033,13 @@ public class WebDriverService {
 
         // Additional Networks
         if (additionalNetworks != null && additionalNetworks.size() > 0) {
+            logger.debug(
+                    "Inserting browser container into additional networks");
             for (String additionalNetwork : additionalNetworks) {
                 if (additionalNetwork != null
                         && !"".equals(additionalNetwork)) {
+                    logger.debug("Inserting browser container into {} network",
+                            additionalNetwork);
                     dockerService.insertIntoNetwork(additionalNetwork,
                             containerId);
                 }
