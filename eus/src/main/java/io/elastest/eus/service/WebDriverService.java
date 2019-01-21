@@ -352,16 +352,16 @@ public class WebDriverService {
                     .getContainersByNamePrefix(sutPrefix);
             if (containers != null && containers.size() > 0) {
 
-                List<Object> sutNetworks = dockerService
+                List<String> sutNetworks = dockerService
                         .getContainerNetworks(containers.get(0).id());
                 logger.debug("Sut networks: {}", sutNetworks);
 
                 if (sutNetworks != null) {
-                    network = (String) sutNetworks.get(0);
+                    network = sutNetworks.get(0);
                     boolean first = true;
-                    for (Object currentNetwork : sutNetworks) {
-                        if (!first) {
-                            networks.add((String) currentNetwork);
+                    for (String currentNetwork : sutNetworks) {
+                        if (!first && currentNetwork != null) {
+                            networks.add(currentNetwork);
                         }
                         first = false;
                     }
