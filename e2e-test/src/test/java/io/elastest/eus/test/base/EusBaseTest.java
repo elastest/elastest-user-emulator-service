@@ -938,7 +938,7 @@ public class EusBaseTest {
         log.info("Wait for Execution ends");
         waitEnd.until(invisibilityOfElementLocated(By.id("runningSpinner")));
 
-        WebDriverWait waitResult = new WebDriverWait(driver, 25);
+        WebDriverWait waitResult = new WebDriverWait(driver, timeout);
 
         log.info("Check finish Execution status. Expected result {}",
                 expectedResult);
