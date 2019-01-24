@@ -92,7 +92,7 @@ public class EusTJobE2eTest extends EusBaseTest {
 
         // Wait for eus card
         WebDriverWait waitEus = new WebDriverWait(driver, 60);
-        By eusCard = By.xpath("//md-card-title[contains(string(), 'EUS')]");
+        By eusCard = By.xpath("//mat-card-title[contains(string(), 'EUS')]");
         waitEus.until(visibilityOfElementLocated(eusCard));
 
         // and check its result

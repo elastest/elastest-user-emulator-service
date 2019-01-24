@@ -94,14 +94,14 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
         driver.switchTo().defaultContent();
         driver.findElement(By.id("close_dialog")).click();
         waitElement.until(invisibilityOfElementLocated(
-                By.cssSelector("md-dialog-container")));
+                By.cssSelector("mat-dialog-container")));
 
         log.info("View recording");
         driver.findElement(By.id("view_recording")).click();
         sleep(SECONDS.toMillis(navigationTimeSec));
         driver.findElement(By.id("close_dialog")).click();
         waitElement.until(invisibilityOfElementLocated(
-                By.cssSelector("md-dialog-container")));
+                By.cssSelector("mat-dialog-container")));
 
         log.info("Delete recording");
         By sessionId = By

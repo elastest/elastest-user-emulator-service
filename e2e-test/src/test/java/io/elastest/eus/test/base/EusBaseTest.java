@@ -182,7 +182,7 @@ public class EusBaseTest {
     protected void navigateToRoot(WebDriver driver) {
         log.info("Navigating to Root Path (/)");
         driver.findElement(By.xpath(
-                "//*[@id='main_nav']/div/md-toolbar/div/md-toolbar-row/span"))
+                "//*[@id=\"main_nav\"]/div/mat-toolbar/span"))
                 .click();
     }
 
@@ -638,7 +638,8 @@ public class EusBaseTest {
 
         if (item != null) {
             this.getElementByXpath(driver,
-                    "//md-option[contains(string(), '" + item + "')]").click();
+                    "//mat-option/span[contains(string(), '" + item + "')]")
+                    .click();
         }
     }
 
@@ -765,16 +766,16 @@ public class EusBaseTest {
         }
 
         // Select SuT
-        String sutSelectXpath = "//md-select/div/span[contains(string(), 'Select a SuT')]";
+        String sutSelectXpath = "//mat-select/div/div/span[contains(string(), 'Select a SuT')]";
         this.getElementByXpath(driver, sutSelectXpath).click();
 
         if (sutName != null) {
             this.getElementByXpath(driver,
-                    "//md-option[contains(string(), '" + sutName + "')]")
+                    "//mat-option/span[contains(string(), '" + sutName + "')]")
                     .click();
         } else {
             this.getElementByXpath(driver,
-                    "//md-option[contains(string(), 'None')]").click();
+                    "//mat-option/span[contains(string(), 'None')]").click();
         }
 
         // Image and commands
@@ -1037,7 +1038,7 @@ public class EusBaseTest {
         do {
             driver.findElement(By.className("mat-select-trigger")).click();
             select = By
-                    .xpath("//md-option[contains(string(), '" + option + "')]");
+                    .xpath("//mat-option/span[contains(string(), '" + option + "')]");
             try {
                 waitElement.until(visibilityOfElementLocated(select));
                 log.info("Element {} already available", select);
