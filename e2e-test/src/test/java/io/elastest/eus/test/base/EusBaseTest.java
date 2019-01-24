@@ -403,7 +403,7 @@ public class EusBaseTest {
 
     protected String getProjectXpathFromProjectPage(String projectName) {
         String xpath = getProjectsTableXpathFromProjectPage();
-        xpath += "//*/td/div[text()='" + projectName + "']";
+        xpath += "//*/td/div/div[text()='" + projectName + "']";
 
         return xpath;
     }
@@ -632,7 +632,7 @@ public class EusBaseTest {
 
     protected void selectItem(WebDriver driver, String item,
             String selectDesc) {
-        String sutSelectXpath = "//md-select/div/span[contains(string(), '"
+        String sutSelectXpath = "//mat-select/div/div/span[contains(string(), '"
                 + selectDesc + "')]";
         this.getElementByXpath(driver, sutSelectXpath).click();
 
