@@ -24,6 +24,7 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOfEl
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,8 @@ public class EusSupportServiceE2eTest extends EusBaseTest {
     final Logger log = getLogger(lookup().lookupClass());
 
     @Test
+    @Disabled
+    // Disabled since 28/01/2019 because TSS section is hidden
     @DisplayName("EUS as support service")
     void testSupportService(
             @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
