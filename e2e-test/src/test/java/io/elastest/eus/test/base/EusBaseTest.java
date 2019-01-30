@@ -848,7 +848,7 @@ public class EusBaseTest {
             // (only EUS at moment has a subconfig: webRtcStats)
 
             for (Entry<String, List<String>> tss : tssMap.entrySet()) {
-                this.getElementById(driver, "input-service" + tss.getKey(),
+                this.getElementById(driver, "service" + tss.getKey() + "-input",
                         true).sendKeys(Keys.SPACE);
 
                 if (tss.getValue() != null && tss.getValue().size() > 0) {
@@ -858,7 +858,7 @@ public class EusBaseTest {
 
                     for (String subConfig : tss.getValue()) {
                         this.getElementById(driver,
-                                "input-config" + subConfig + "Checkbox", true)
+                                "config" + subConfig + "Checkbox-input", true)
                                 .sendKeys(Keys.SPACE);
                     }
                 }
