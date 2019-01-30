@@ -713,7 +713,7 @@ public class EusBaseTest {
 
     protected String getTJobXpathFromProjectPage(String tJobName) {
         String xpath = getTJobsTableXpathFromProjectPage();
-        xpath += "//*/td/span[text()='" + tJobName + "']";
+        xpath += "//*/td/div/span[text()='" + tJobName + "']";
 
         return xpath;
     }
