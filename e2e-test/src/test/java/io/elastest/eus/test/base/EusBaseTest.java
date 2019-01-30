@@ -181,9 +181,8 @@ public class EusBaseTest {
 
     protected void navigateToRoot(WebDriver driver) {
         log.info("Navigating to Root Path (/)");
-        driver.findElement(By.xpath(
-                "//*[@id=\"main_nav\"]/div/mat-toolbar/span"))
-                .click();
+        driver.findElement(
+                By.xpath("//*[@id=\"main_nav\"]/div/mat-toolbar/span")).click();
     }
 
     protected void navigateToProjects(WebDriver driver) {
@@ -632,14 +631,12 @@ public class EusBaseTest {
 
     protected void selectItem(WebDriver driver, String item,
             String selectDesc) {
-        String sutSelectXpath = "//mat-select/div/div/span[contains(string(), '"
-                + selectDesc + "')]";
+        String sutSelectXpath = "//*[@placeholder='" + selectDesc + "']";
         this.getElementByXpath(driver, sutSelectXpath).click();
 
         if (item != null) {
             this.getElementByXpath(driver,
-                    "//mat-option/span[contains(string(), '" + item + "')]")
-                    .click();
+                    "//*/span[contains(string(), '" + item + "')]").click();
         }
     }
 
@@ -917,7 +914,7 @@ public class EusBaseTest {
 
         log.info("Create and wait for instance");
         getElementById(driver, "create_instance").click();
-        
+
         log.info("Navigate for instance view");
         getElementByXpath(driver, "//button[@title='View Service Detail']", 240)
                 .click();
@@ -1037,8 +1034,8 @@ public class EusBaseTest {
         int numRetries = 1;
         do {
             driver.findElement(By.className("mat-select-trigger")).click();
-            select = By
-                    .xpath("//mat-option/span[contains(string(), '" + option + "')]");
+            select = By.xpath(
+                    "//mat-option/span[contains(string(), '" + option + "')]");
             try {
                 waitElement.until(visibilityOfElementLocated(select));
                 log.info("Element {} already available", select);
@@ -1063,7 +1060,7 @@ public class EusBaseTest {
         } catch (InterruptedException e) {
         }
     }
-    
+
     protected void deleteTSSInstance(WebDriver driver) {
         // Delete TSS
         WebElement tssId = getElementByXpath(driver,
