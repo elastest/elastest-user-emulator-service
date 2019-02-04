@@ -532,10 +532,19 @@ public class WebDriverService {
                                 + maximizeChrome,
                         method, sessionInfo, optionalHttpEntity, false);
             } catch (Exception e) {
-                exchange(httpEntity,
-                        requestContext + "/" + sessionInfo.getSessionId()
-                                + maximizeOther,
-                        method, sessionInfo, optionalHttpEntity, false);
+                logger.error("Exception on window maximize with '{}'",
+                        maximizeChrome, e);
+                logger.debug("Trying with '{}'", maximizeOther);
+
+                try {
+                    exchange(httpEntity,
+                            requestContext + "/" + sessionInfo.getSessionId()
+                                    + maximizeOther,
+                            method, sessionInfo, optionalHttpEntity, false);
+                } catch (Exception e1) {
+                    logger.error("Exception on window maximize with '{}' too",
+                            maximizeOther, e1);
+                }
             }
             // Start Recording if not is manual recording
             if (!sessionInfo.isManualRecording()) {
