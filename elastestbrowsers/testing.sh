@@ -1,6 +1,7 @@
 #!/bin/bash 
 set -eu -o pipefail
 
+MODE=${MODE:-NIGHTLY}
 DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900"
 LOG_RESULTS=output.log
 > $LOG_RESULTS
