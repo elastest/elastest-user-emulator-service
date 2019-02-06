@@ -152,8 +152,13 @@ if [ "$MODE" == "FULL" ]; then
 	for V in $CHROME_OLD_VERSIONS
 	do
 		rm -Rfv image/selenoid/chromedriver
-		sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
 		TAG_VER=$(echo $V | cut -d"." -f1,2)
+    TAG_VER_MAJOR=$(echo $V | cut -d"." -f1)
+    if [ "${TAG_VER_MAJOR}" -lt "72" ]; then
+      sed "s/VERSION/$V/g" image/selenoid/browsers.json-oldversions.templ > image/selenoid/browsers.json
+    else
+      sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
+    fi
 		case $TAG_VER in
 			"60.0")
 				CHROMEDRIVER=2.33
