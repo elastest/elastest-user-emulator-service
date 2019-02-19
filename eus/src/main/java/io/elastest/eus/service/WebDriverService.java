@@ -759,7 +759,9 @@ public class WebDriverService {
         }
 
         // Only using timer for non-live sessions
-        if (!liveSession) {
+        // Disabled
+        boolean disableTimeout = true;
+        if (!disableTimeout && !liveSession) {
             timeoutService.shutdownSessionTimer(sessionInfo);
             final SessionInfo finalSessionInfo = sessionInfo;
             Runnable deleteSession = () -> {
