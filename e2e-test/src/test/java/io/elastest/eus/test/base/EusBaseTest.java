@@ -488,7 +488,7 @@ public class EusBaseTest {
         insertDeployedByElastestCommonFields(SutDeployedByElastestType.COMMANDS,
                 image, port, https);
 
-        getElementByXpath(driver, "//*[@id=\"editorInnerContainer2\"]/div/div[1]/textarea");
+        getElementByXpath(driver, "//*[@class=\"inputarea\"]");
         getElementById(driver, "commands").sendKeys(commands);
 
         switch (option) {
