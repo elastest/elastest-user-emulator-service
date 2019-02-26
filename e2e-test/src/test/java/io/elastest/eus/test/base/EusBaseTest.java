@@ -488,8 +488,9 @@ public class EusBaseTest {
         insertDeployedByElastestCommonFields(SutDeployedByElastestType.COMMANDS,
                 image, port, https);
 
-        getElementByXpath(driver, "//*[@class=\"inputarea\"]");
-        getElementById(driver, "commands").sendKeys(commands);
+        //getElementByXpath(driver, "//*[@class=\"inputarea\"]");
+        driver.findElement(By.id("commands")).sendKeys(commands);
+        //getElementById(driver, "commands").sendKeys(commands);
 
         switch (option) {
         case IN_DOCKER_COMPOSE:
