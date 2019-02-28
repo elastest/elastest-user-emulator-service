@@ -29,6 +29,7 @@ public class WebDriverError {
     String error;
     String message;
     String stacktrace;
+    String stacktraceMessage;
 
     public WebDriverError() {
         // Empty default construct (needed by Jackson)
@@ -38,6 +39,7 @@ public class WebDriverError {
         this.error = error;
         this.message = message;
         this.stacktrace = getStackTrace(exception);
+        this.stacktraceMessage = exception.getMessage();
     }
 
     public String getError() {
@@ -52,10 +54,15 @@ public class WebDriverError {
         return stacktrace;
     }
 
+    public String getStacktraceMessage() {
+        return stacktraceMessage;
+    }
+
     @Override
     public String toString() {
         return "error=" + getError() + ", message=" + getMessage()
-                + ", stacktrace=" + getStacktrace();
+                + ", stacktrace=" + getStacktrace() + ", stacktraceMessage="
+                + getStacktraceMessage();
     }
 
 }
