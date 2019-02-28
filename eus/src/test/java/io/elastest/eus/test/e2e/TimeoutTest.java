@@ -26,6 +26,7 @@ import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
@@ -50,6 +51,8 @@ import io.elastest.eus.EusSpringBootApp;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "hub.timeout=5" })
+@Disabled
+// Disabled temporally
 public class TimeoutTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
