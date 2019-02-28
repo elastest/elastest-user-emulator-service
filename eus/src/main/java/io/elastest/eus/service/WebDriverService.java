@@ -1003,6 +1003,10 @@ public class WebDriverService {
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
         dockerBuilder.labels(labels);
 
+        if (capabilities.getExtraHosts() != null) {
+            dockerBuilder.extraHosts(capabilities.getExtraHosts());
+        }
+
         if (useTorm) {
             dockerBuilder.network(network);
         }

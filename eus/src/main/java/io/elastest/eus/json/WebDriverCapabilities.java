@@ -16,6 +16,9 @@
  */
 package io.elastest.eus.json;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -92,6 +95,8 @@ public class WebDriverCapabilities {
         String testName;
         boolean manualRecording;
 
+        List<String> extraHosts = new ArrayList<>();
+
         public DesiredCapabilities() {
             // Empty default construct
         }
@@ -151,6 +156,14 @@ public class WebDriverCapabilities {
             this.manualRecording = manualRecording;
         }
 
+        public List<String> getExtraHosts() {
+            return extraHosts;
+        }
+
+        public void setExtraHosts(List<String> extraHosts) {
+            this.extraHosts = extraHosts;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -162,7 +175,8 @@ public class WebDriverCapabilities {
                     + ", isAcceptInsecureCerts()=" + isAcceptInsecureCerts()
                     + ", getFirefoxProfile()=" + getFirefoxProfile()
                     + ", getTestName()=" + getTestName()
-                    + ", isManualRecording()=" + isManualRecording() + "]";
+                    + ", isManualRecording()=" + isManualRecording()
+                    + ", getExtraHosts()=" + getExtraHosts() + "]";
         }
 
     }
