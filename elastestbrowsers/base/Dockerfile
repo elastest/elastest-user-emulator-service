@@ -40,6 +40,7 @@ RUN apt-get update && \
       sudo \
       software-properties-common \
       xorg \
+      iproute2 \
       pulseaudio && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
