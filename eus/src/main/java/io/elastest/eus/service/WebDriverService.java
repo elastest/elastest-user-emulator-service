@@ -473,6 +473,8 @@ public class WebDriverService {
             }
         }
 
+        sessionInfo.setElastestExecutionData(execData);
+
         if (isExecuteScript(method, requestContext)) {
             // Execute Script to intercept by EUS and finish
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
@@ -759,7 +761,8 @@ public class WebDriverService {
         }
 
         // Only using timer for non-live sessions
-        // Disabled
+        // Disabled temporally
+        // TODO
         boolean disableTimeout = true;
         if (!disableTimeout && !liveSession) {
             timeoutService.shutdownSessionTimer(sessionInfo);
@@ -1012,6 +1015,7 @@ public class WebDriverService {
         }
         // Save info into SessionInfo
         SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setElastestExecutionData(execData);
         sessionInfo.setHubContainerName(hubContainerName);
         sessionInfo.setBrowser(browserName);
         sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));

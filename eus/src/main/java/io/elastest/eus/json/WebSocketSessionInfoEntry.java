@@ -17,6 +17,7 @@
 package io.elastest.eus.json;
 
 import io.elastest.epm.client.model.DockerServiceStatus;
+import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -35,6 +36,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
     String hubContainerName;
     String folderPath;
     boolean live;
+    ExecutionData elastestExecutionData;
 
     public WebSocketSessionInfoEntry() {
         // Empty default construct (needed by Jackson)
@@ -51,6 +53,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         this.setStatus(sessionInfo.getStatus());
         this.setStatusMsg(sessionInfo.getStatusMsg());
         this.live = sessionInfo.isLiveSession();
+        this.elastestExecutionData = sessionInfo.getElastestExecutionData();
     }
 
     public String getId() {
@@ -85,13 +88,18 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         return live;
     }
 
+    public ExecutionData getElastestExecutionData() {
+        return elastestExecutionData;
+    }
+
     @Override
     public String toString() {
         return "WebSocketSessionInfoEntry [id=" + id + ", url=" + url
                 + ", browser=" + browser + ", version=" + version
                 + ", creationTime=" + creationTime + ", hubContainerName="
                 + hubContainerName + ", folderPath=" + folderPath + ", live="
-                + live + ", toString()=" + super.toString() + "]";
+                + live + ", elastestExecutionData=" + elastestExecutionData
+                + ", toString()=" + super.toString() + "]";
     }
 
 }

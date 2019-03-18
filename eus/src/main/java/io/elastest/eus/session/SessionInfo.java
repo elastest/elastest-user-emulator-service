@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 
 import io.elastest.epm.client.model.DockerServiceStatus;
+import io.elastest.eus.api.model.ExecutionData;
 
 /**
  * Session information.
@@ -53,6 +54,7 @@ public class SessionInfo extends DockerServiceStatus {
     private String testName;
     private boolean manualRecording;
     private String folderPath;
+    ExecutionData elastestExecutionData;
 
     public String getHubUrl() {
         return hubUrl;
@@ -190,6 +192,14 @@ public class SessionInfo extends DockerServiceStatus {
         this.folderPath = folderPath;
     }
 
+    public ExecutionData getElastestExecutionData() {
+        return elastestExecutionData;
+    }
+
+    public void setElastestExecutionData(ExecutionData elastestExecutionData) {
+        this.elastestExecutionData = elastestExecutionData;
+    }
+
     public String getIdForFiles() {
         String id = sessionId;
         if (testName != null && !testName.isEmpty()) {
@@ -212,8 +222,8 @@ public class SessionInfo extends DockerServiceStatus {
                 + ", hubVncBindPort=" + hubVncBindPort + ", noVncBindPort="
                 + noVncBindPort + ", timeout=" + timeout + ", testName="
                 + testName + ", manualRecording=" + manualRecording
-                + ", folderPath=" + folderPath + ", toString()="
-                + super.toString() + "]";
+                + ", folderPath=" + folderPath + ", elastestExecutionData="
+                + elastestExecutionData + ", toString()=" + super.toString()
+                + "]";
     }
-
 }
