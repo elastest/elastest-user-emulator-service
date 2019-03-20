@@ -447,7 +447,6 @@ public class WebDriverService {
                     browserName);
             httpEntity = new HttpEntity<>(newRequestBody);
 
-            // If live, no timeout
             liveSession = isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
                     sessionFolderPath, network, execData, additionalNetworks);
@@ -557,7 +556,7 @@ public class WebDriverService {
         }
 
         // Handle timeout
-        handleTimeout(requestContext, method, sessionInfo, liveSession,
+        handleTimeout(requestContext, method, sessionInfo,
                 isCreateSession, monitoringIndex);
 
         // Send Hub Container name too
@@ -749,8 +748,8 @@ public class WebDriverService {
     }
 
     private void handleTimeout(String requestContext, HttpMethod method,
-            SessionInfo sessionInfo, boolean liveSession,
-            boolean isCreateSession, String monitoringIndex) {
+            SessionInfo sessionInfo, boolean isCreateSession,
+            String monitoringIndex) {
         // Browser log thread
         if (isCreateSession) {
             String sessionId = sessionInfo.getSessionId();
