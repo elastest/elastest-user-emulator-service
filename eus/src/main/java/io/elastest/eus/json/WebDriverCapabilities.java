@@ -97,6 +97,12 @@ public class WebDriverCapabilities {
 
         List<String> extraHosts = new ArrayList<>();
 
+        Integer elastestTimeout;
+
+        /* ************************** */
+        /* ****** Constructors ****** */
+        /* ************************** */
+
         public DesiredCapabilities() {
             // Empty default construct
         }
@@ -164,6 +170,14 @@ public class WebDriverCapabilities {
             this.extraHosts = extraHosts;
         }
 
+        public Integer getElastestTimeout() {
+            return elastestTimeout;
+        }
+
+        public void setElastestTimeout(Integer elastestTimeout) {
+            this.elastestTimeout = elastestTimeout;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -176,7 +190,8 @@ public class WebDriverCapabilities {
                     + ", getFirefoxProfile()=" + getFirefoxProfile()
                     + ", getTestName()=" + getTestName()
                     + ", isManualRecording()=" + isManualRecording()
-                    + ", getExtraHosts()=" + getExtraHosts() + "]";
+                    + ", getExtraHosts()=" + getExtraHosts()
+                    + ", getElastestTimeout()=" + getElastestTimeout() + "]";
         }
 
     }

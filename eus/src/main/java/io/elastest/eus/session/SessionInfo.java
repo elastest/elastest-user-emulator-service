@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 
 /**
  * Session information.
@@ -55,6 +56,7 @@ public class SessionInfo extends DockerServiceStatus {
     private boolean manualRecording;
     private String folderPath;
     ExecutionData elastestExecutionData;
+    DesiredCapabilities capabilities;
 
     public String getHubUrl() {
         return hubUrl;
@@ -200,6 +202,14 @@ public class SessionInfo extends DockerServiceStatus {
         this.elastestExecutionData = elastestExecutionData;
     }
 
+    public DesiredCapabilities getCapabilities() {
+        return capabilities;
+    }
+
+    public void setCapabilities(DesiredCapabilities capabilities) {
+        this.capabilities = capabilities;
+    }
+
     public String getIdForFiles() {
         String id = sessionId;
         if (testName != null && !testName.isEmpty()) {
@@ -223,7 +233,7 @@ public class SessionInfo extends DockerServiceStatus {
                 + noVncBindPort + ", timeout=" + timeout + ", testName="
                 + testName + ", manualRecording=" + manualRecording
                 + ", folderPath=" + folderPath + ", elastestExecutionData="
-                + elastestExecutionData + ", toString()=" + super.toString()
-                + "]";
+                + elastestExecutionData + ", capabilities=" + capabilities
+                + ", toString()=" + super.toString() + "]";
     }
 }

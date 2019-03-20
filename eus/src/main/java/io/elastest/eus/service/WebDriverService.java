@@ -760,11 +760,20 @@ public class WebDriverService {
                     monitoringIndex);
         }
 
-        // Only using timer for non-live sessions
-        // Disabled temporally
-        // TODO
-        boolean disableTimeout = true;
-        if (!disableTimeout && !liveSession) {
+        boolean disableTimeout = false;
+        Integer timeout = Integer.parseInt(hubTimeout);
+        if (sessionInfo.getCapabilities() != null
+                && sessionInfo.getCapabilities().getElastestTimeout() != null) {
+            timeout = sessionInfo.getCapabilities().getElastestTimeout();
+            if (timeout == 0) {
+                disableTimeout = true;
+                logger.debug("Timer disabled for session {}",
+                        sessionInfo.getSessionId());
+            }
+        }
+        if (!disableTimeout) {
+            logger.debug("Timer enabled for session {} with {} seconds",
+                    sessionInfo.getSessionId(), timeout);
             timeoutService.shutdownSessionTimer(sessionInfo);
             final SessionInfo finalSessionInfo = sessionInfo;
             Runnable deleteSession = () -> {
@@ -772,8 +781,8 @@ public class WebDriverService {
             };
 
             if (!isDeleteSessionRequest(method, requestContext)) {
-                timeoutService.startSessionTimer(sessionInfo,
-                        parseInt(hubTimeout), deleteSession);
+                timeoutService.startSessionTimer(sessionInfo, timeout,
+                        deleteSession);
             }
         }
     }
@@ -1016,6 +1025,7 @@ public class WebDriverService {
         // Save info into SessionInfo
         SessionInfo sessionInfo = new SessionInfo();
         sessionInfo.setElastestExecutionData(execData);
+        sessionInfo.setCapabilities(capabilities);
         sessionInfo.setHubContainerName(hubContainerName);
         sessionInfo.setBrowser(browserName);
         sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
