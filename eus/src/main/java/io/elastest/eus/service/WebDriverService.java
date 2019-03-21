@@ -947,12 +947,6 @@ public class WebDriverService {
         sessionInfo.setBrowser(browserName);
         sessionInfo.setLiveSession(liveSession);
         sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
-        sessionInfo.setCreationTime(dateFormat.format(new Date()));
-        sessionInfo.setHubBindPort(hubPort);
-        sessionInfo.setHubVncBindPort(hubPort);
-
         sessionInfo.setFolderPath(sessionFolderPath);
 
         platformService.buildAndRunBrowserInContainer(sessionInfo,
