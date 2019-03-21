@@ -44,9 +44,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.json.WebSocketRecordedSession;
+import io.elastest.eus.platform.service.PlatformService;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -87,9 +87,9 @@ public class RecordingService {
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
 
-    private DockerService dockerService;
     private EusJsonService jsonService;
     private AlluxioService alluxioService;
+    private PlatformService platformService;
 
     @PostConstruct
     private void postConstruct() {
@@ -103,19 +103,18 @@ public class RecordingService {
     }
 
     @Autowired
-    public RecordingService(DockerService dockerService,
-            EusJsonService jsonService, AlluxioService alluxioService) {
-        this.dockerService = dockerService;
+    public RecordingService(EusJsonService jsonService,
+            AlluxioService alluxioService, PlatformService platformService) {
         this.jsonService = jsonService;
         this.alluxioService = alluxioService;
+        this.platformService = platformService;
     }
 
     public void startRecording(String sessionId, String hubContainerName,
             String recordingFileName) throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
                 sessionId, hubContainerName, recordingFileName);
-
-        dockerService.execCommand(hubContainerName, false, startRecordingScript,
+        platformService.execCommand(hubContainerName, false, startRecordingScript,
                 "-n", recordingFileName);
         try {
             Thread.sleep(1200);
@@ -140,7 +139,7 @@ public class RecordingService {
             throws Exception {
         log.debug("Stopping recording session {} of container {}", sessionId,
                 hubContainerName);
-        dockerService.execCommand(hubContainerName, true, stopRecordingScript);
+        platformService.execCommand(hubContainerName, true, stopRecordingScript);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {

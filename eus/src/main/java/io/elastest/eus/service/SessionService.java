@@ -34,6 +34,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebSocketNewLiveSession;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
@@ -317,6 +318,21 @@ public class SessionService extends TextWebSocketHandler {
             dockerService.stopAndRemoveContainerWithKillTimeout(
                     vncContainerName, killTimeoutInSeconds);
         }
+    }
+    
+    boolean isLive(String jsonMessage) {
+        boolean out = false;
+        try {
+            out = jsonService
+                    .jsonToObject(jsonMessage, WebDriverCapabilities.class)
+                    .getDesiredCapabilities().isLive();
+        } catch (Exception e) {
+            log.warn(
+                    "Exception {} checking if session is live. JSON message: {}",
+                    e.getMessage(), jsonMessage);
+        }
+        log.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
+        return out;
     }
 
 }

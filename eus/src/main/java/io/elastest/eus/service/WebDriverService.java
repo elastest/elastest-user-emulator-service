@@ -71,7 +71,6 @@ import com.spotify.docker.client.messages.ProgressMessage;
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
-import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
@@ -83,6 +82,7 @@ import io.elastest.eus.json.WebDriverScriptBody;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
+import io.elastest.eus.platform.service.PlatformService;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -95,12 +95,6 @@ import io.elastest.eus.session.SessionInfo;
 public class WebDriverService {
 
     final Logger logger = getLogger(lookup().lookupClass());
-
-    @Value("${et.host.env}")
-    private String etHostEnv;
-
-    @Value("${et.host.type.env}")
-    private String etHostEnvType;
 
     @Value("${api.context.path}")
     private String apiContextPath;
@@ -120,28 +114,16 @@ public class WebDriverService {
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
 
-    @Value("${novnc.html}")
-    private String vncHtml;
-
-    @Value("${hub.vnc.password}")
-    private String hubVncPassword;
-
     // Defined as String instead of integer for testing purposes (inject with
     // @TestPropertySource)
     @Value("${hub.timeout}")
     private String hubTimeout;
-
-    @Value("${browser.shm.size}")
-    private long shmSize;
 
     @Value("${browser.screen.resolution}")
     private String browserScreenResolution;
 
     @Value("${browser.timezone}")
     private String browserTimezone;
-
-    @Value("${ws.dateformat}")
-    private String wsDateFormat;
 
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
@@ -157,9 +139,6 @@ public class WebDriverService {
 
     @Value("${et.intercept.script.prefix}")
     private String etInterceptScriptPrefix;
-
-    @Value("${use.torm}")
-    private boolean useTorm;
 
     @Value("${docker.network}")
     private String dockerNetwork;
@@ -234,7 +213,7 @@ public class WebDriverService {
 
     String etInstrumentationKey = "elastest-instrumentation";
 
-    private DockerService dockerService;
+    private PlatformService platformService;
     private DockerHubService dockerHubService;
     private EusJsonService jsonService;
     private SessionService sessionService;
@@ -245,12 +224,12 @@ public class WebDriverService {
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
 
     @Autowired
-    public WebDriverService(DockerService dockerService,
+    public WebDriverService(PlatformService platformService,
             DockerHubService dockerHubService, EusJsonService jsonService,
             SessionService sessionService, RecordingService recordingService,
             TimeoutService timeoutService,
             DynamicDataService dynamicDataService) {
-        this.dockerService = dockerService;
+        this.platformService = platformService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
@@ -347,12 +326,9 @@ public class WebDriverService {
                 && !"".equals(sutPrefix)) {
             logger.debug("Sut prefix: {}", sutPrefix);
 
-            List<Container> containers = dockerService
-                    .getContainersByNamePrefix(sutPrefix);
-            if (containers != null && containers.size() > 0) {
-
-                List<String> sutNetworks = dockerService
-                        .getContainerNetworks(containers.get(0).id());
+            List<String> sutNetworks = platformService
+                    .getContainerNetworksByContainerPrefix(sutPrefix);
+            if (sutNetworks.size() > 0) {
                 logger.debug("Sut networks: {}", sutNetworks);
 
                 if (sutNetworks != null) {
@@ -446,7 +422,8 @@ public class WebDriverService {
                     browserName);
             httpEntity = new HttpEntity<>(newRequestBody);
 
-            liveSession = isLive(requestBody);
+            // If live, no timeout
+            liveSession = sessionService.isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
                     sessionFolderPath, network, execData, additionalNetworks);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
@@ -950,46 +927,13 @@ public class WebDriverService {
                 browserName, version, platform);
 
         logger.info("Using {} as Docker image for {}", imageId, browserName);
-        String hubContainerName = dockerService.generateEUSBrowserContainerName(
-                eusContainerPrefix + hubContainerSufix);
-
-        // Recording Volume
-        List<Bind> volumes = new ArrayList<>();
-        logger.info("Folder path in host: {}", folderPath);
-        Builder dockerSockVolumeBuilder = Bind.builder();
-        dockerSockVolumeBuilder.from(folderPath);
-        dockerSockVolumeBuilder.to(containerRecordingFolder);
-
-        volumes.add(dockerSockVolumeBuilder.build());
-
-        // Port binding
-        Map<String, List<PortBinding>> portBindings = new HashMap<>();
-
-        int hubPort = dockerService.findRandomOpenPort();
-        String exposedHubPort = Integer.toString(hubExposedPort);
-        portBindings.put(exposedHubPort,
-                Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
-
-        int vncPort = dockerService.findRandomOpenPort();
-        String exposedVncPort = Integer.toString(hubVncExposedPort);
-        portBindings.put(exposedVncPort,
-                Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
-
-        int noVncBindedPort = dockerService.findRandomOpenPort();
-        String exposedNoVncPort = Integer.toString(noVncExposedPort);
-        portBindings.put(exposedNoVncPort,
-                Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
-
-        // Exposed ports
-        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
-                exposedNoVncPort);
+        SessionInfo sessionInfo = new SessionInfo();
 
         // Envs
         List<String> envs = asList(
                 "SCREEN_RESOLUTION=" + browserScreenResolution,
                 "TZ=" + browserTimezone);
 
-        // ElasTest labels
         Map<String, String> labels = new HashMap<>();
         labels.put(etTypeLabel, etTypeTSSLabelValue);
         labels.put(etTJobTssTypeLabel, "aux");
@@ -999,145 +943,25 @@ public class WebDriverService {
             labels.put(etTJobIdLabel, execData.gettJobId().toString());
         }
 
-        DockerBuilder dockerBuilder = new DockerBuilder(imageId);
-        dockerBuilder.containerName(hubContainerName);
-        dockerBuilder.exposedPorts(exposedPorts);
-        dockerBuilder.portBindings(portBindings);
-        dockerBuilder.volumeBindList(volumes);
-        dockerBuilder.shmSize(shmSize);
-        dockerBuilder.envs(envs);
-        dockerBuilder.capAdd(asList("SYS_ADMIN"));
-        dockerBuilder.labels(labels);
-
-        if (capabilities.getExtraHosts() != null) {
-            dockerBuilder.extraHosts(capabilities.getExtraHosts());
-        }
-
-        if (useTorm) {
-            dockerBuilder.network(network);
-        }
-        // Save info into SessionInfo
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setElastestExecutionData(execData);
-        sessionInfo.setCapabilities(capabilities);
-        sessionInfo.setHubContainerName(hubContainerName);
+        boolean liveSession = sessionService.isLive(requestBody);
         sessionInfo.setBrowser(browserName);
+        sessionInfo.setLiveSession(liveSession);
         sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
+
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
         sessionInfo.setCreationTime(dateFormat.format(new Date()));
         sessionInfo.setHubBindPort(hubPort);
         sessionInfo.setHubVncBindPort(hubPort);
+
         sessionInfo.setFolderPath(sessionFolderPath);
 
-        String testName = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getTestName();
-        sessionInfo.setTestName(testName);
-
-        boolean manualRecording = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().isManualRecording();
-        sessionInfo.setManualRecording(manualRecording);
-
-        boolean liveSession = isLive(requestBody);
-        sessionInfo.setLiveSession(liveSession);
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        sessionInfo.setStatusMsg("Initializing...");
-        sessionService.sendNewSessionToAllClients(sessionInfo, false);
-
-        // Pull
-        dockerService.pullImageWithProgressHandler(imageId,
-                getBrowserProgressHandler(imageId, sessionInfo));
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.STARTING);
-        sessionInfo.setStatusMsg("Starting...");
-        sessionService.sendNewSessionToAllClients(sessionInfo, false);
-
-        // Start
-        String containerId = dockerService.createAndStartContainerWithPull(
-                dockerBuilder.build(), EpmService.etMasterSlaveMode, true);
-
-        // Additional Networks
-        if (additionalNetworks != null && additionalNetworks.size() > 0) {
-            logger.debug(
-                    "Inserting browser container into additional networks");
-            for (String additionalNetwork : additionalNetworks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug("Inserting browser container into {} network",
-                            additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
-                }
-            }
-        }
-
-        // Wait Reachable
-        String hubPath = "/wd/hub";
-        String hubIp = dockerService.getDockerServerIp();
-        String hubUrl = "http://" + hubIp + ":" + hubPort + hubPath;
-
-        // Save hub url into Session Info
-        sessionInfo.setHubUrl(hubUrl);
-
-        logger.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
-
-        String vncUrlFormat = "http://%s:%d/" + vncHtml
-                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
-        String internalVncUrl = vncUrl;
-
-        String etHost = getenv(etHostEnv);
-        String etHostType = getenv(etHostEnvType);
-        if (etHostType != null && etHost != null) {
-            // If server-address
-            if (!"default".equalsIgnoreCase(etHostType)) {
-                hubIp = etHost;
-                vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
-            }
-        }
-
-        dockerService.waitForHostIsReachable(internalVncUrl);
-
-        sessionInfo.setVncContainerName(hubContainerName);
-        sessionInfo.setVncUrl(vncUrl);
-        sessionInfo.setNoVncBindPort(noVncBindedPort);
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.READY);
+        platformService.buildAndRunBrowserInContainer(sessionInfo,
+                eusContainerPrefix + hubContainerSufix, originalRequestBody,
+                folderPath, network, additionalNetworks, envs, labels,
+                capabilities, imageId);
         sessionInfo.setStatusMsg("Ready");
 
         return sessionInfo;
-    }
-
-    private ProgressHandler getBrowserProgressHandler(String image,
-            SessionInfo sessionInfo) {
-        DockerPullImageProgress dockerPullImageProgress = new DockerPullImageProgress();
-        dockerPullImageProgress.setImage(image);
-        dockerPullImageProgress.setCurrentPercentage(0);
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.PULLING);
-        sessionInfo.setStatusMsg("Pulling " + image + " image");
-        return new ProgressHandler() {
-            @Override
-            public void progress(ProgressMessage message)
-                    throws DockerException {
-                dockerPullImageProgress.processNewMessage(message);
-                String msg = "Pulling image " + image + ": "
-                        + dockerPullImageProgress.getCurrentPercentage() + "%";
-
-                sessionInfo.setStatusMsg(msg);
-                try {
-                    sessionService.sendNewSessionToAllClients(sessionInfo,
-                            false);
-                } catch (IOException e) {
-                    logger.error("Error on send session {} info: ",
-                            sessionInfo.getSessionId(), e);
-                }
-            }
-
-        };
-
     }
 
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
@@ -1221,21 +1045,6 @@ public class WebDriverService {
                 && chars == 3
                 && (context.endsWith(webdriverExecuteScriptMessage) || context
                         .endsWith(webdriverExecuteAsyncScriptMessage));
-    }
-
-    private boolean isLive(String jsonMessage) {
-        boolean out = false;
-        try {
-            out = jsonService
-                    .jsonToObject(jsonMessage, WebDriverCapabilities.class)
-                    .getDesiredCapabilities().isLive();
-        } catch (Exception e) {
-            logger.warn(
-                    "Exception {} checking if session is live. JSON message: {}",
-                    e.getMessage(), jsonMessage);
-        }
-        logger.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
-        return out;
     }
 
     public Optional<String> getSessionIdFromPath(String path) {
