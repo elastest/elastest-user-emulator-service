@@ -57,6 +57,10 @@ public class SessionInfo extends DockerServiceStatus {
     private String folderPath;
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
+    
+    public SessionInfo() {
+        super();
+    }
 
     public String getHubUrl() {
         return hubUrl;

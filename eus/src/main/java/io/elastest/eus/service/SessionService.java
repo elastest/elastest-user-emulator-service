@@ -21,11 +21,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -47,7 +50,8 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class SessionService extends TextWebSocketHandler {
+@Service
+public class SessionService extends TextWebSocketHandler implements Observer {
 
     final Logger log = getLogger(lookup().lookupClass());
 
@@ -319,7 +323,7 @@ public class SessionService extends TextWebSocketHandler {
                     vncContainerName, killTimeoutInSeconds);
         }
     }
-    
+
     boolean isLive(String jsonMessage) {
         boolean out = false;
         try {
@@ -333,6 +337,16 @@ public class SessionService extends TextWebSocketHandler {
         }
         log.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
         return out;
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        try {
+            sendNewSessionToAllClients((SessionInfo) arg, false);
+        } catch (IOException io) {
+            log.error("Error sending browser status to all clients: {}",
+                    io.getMessage());
+        }
     }
 
 }

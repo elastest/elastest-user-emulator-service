@@ -31,10 +31,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,18 +57,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.messages.Container;
-import com.spotify.docker.client.messages.HostConfig.Bind;
-import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
-import com.spotify.docker.client.messages.PortBinding;
-import com.spotify.docker.client.messages.ProgressMessage;
 
-import io.elastest.epm.client.DockerContainer.DockerBuilder;
-import io.elastest.epm.client.model.DockerPullImageProgress;
-import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
-import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.ElasTestWebdriverScript;
@@ -139,9 +126,6 @@ public class WebDriverService {
 
     @Value("${et.intercept.script.prefix}")
     private String etInterceptScriptPrefix;
-
-    @Value("${docker.network}")
-    private String dockerNetwork;
 
     @Value("${create.session.timeout.sec}")
     private int createSessionTimeoutSec;
@@ -292,7 +276,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                filesPathInHost, dockerNetwork);
+                filesPathInHost);
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -318,45 +302,10 @@ public class WebDriverService {
 
         String requestContext = parseRequestContext(getRequestContext(request));
 
-        List<String> networks = new ArrayList<>();
-        String network = dockerNetwork;
-        String sutPrefix = data.getSutContainerPrefix();
-
-        if (data.isUseSutNetwork() && sutPrefix != null
-                && !"".equals(sutPrefix)) {
-            logger.debug("Sut prefix: {}", sutPrefix);
-
-            List<String> sutNetworks = platformService
-                    .getContainerNetworksByContainerPrefix(sutPrefix);
-            if (sutNetworks.size() > 0) {
-                logger.debug("Sut networks: {}", sutNetworks);
-
-                if (sutNetworks != null) {
-                    network = sutNetworks.get(0);
-                    boolean first = true;
-                    for (String currentNetwork : sutNetworks) {
-                        if (!first && currentNetwork != null) {
-                            networks.add(currentNetwork);
-                        }
-                        first = false;
-                    }
-                }
-                if (sutNetworks == null || sutNetworks.size() == 0
-                        || network == null || "".equals(network)) {
-                    network = dockerNetwork;
-                    logger.error(
-                            "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
-                            dockerNetwork);
-                }
-                logger.debug("First Sut network: {}", network);
-                logger.debug("Sut additional networks: {}", networks);
-            }
-        }
-
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
                 etDataInHost + data.getFolderPath(),
-                etDataInHost + data.getFolderPath(), network, data, networks);
+                etDataInHost + data.getFolderPath(), data);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -367,18 +316,18 @@ public class WebDriverService {
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
-            boolean webRtcActivated, String folderPath, String network)
+            boolean webRtcActivated, String folderPath)
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
                 dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                filesPathInHost, null, dockerNetwork, null, null);
+                filesPathInHost, null, null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestMethod, String monitoringIndex,
             boolean webRtcActivated, String folderPath,
-            String sessionFolderPath, String network, ExecutionData execData,
-            List<String> additionalNetworks) throws DockerException, Exception {
+            String sessionFolderPath, ExecutionData execData)
+            throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
         String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
@@ -425,7 +374,7 @@ public class WebDriverService {
             // If live, no timeout
             liveSession = sessionService.isLive(requestBody);
             sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
-                    sessionFolderPath, network, execData, additionalNetworks);
+                    sessionFolderPath, execData);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -481,8 +430,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            filesPathInHost, sessionFolderPath, network,
-                            execData, additionalNetworks);
+                            filesPathInHost, sessionFolderPath, execData);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -912,8 +860,7 @@ public class WebDriverService {
 
     public SessionInfo startBrowser(String requestBody,
             String originalRequestBody, String folderPath,
-            String sessionFolderPath, String network, ExecutionData execData,
-            List<String> additionalNetworks) throws Exception {
+            String sessionFolderPath, ExecutionData execData) throws Exception {
         DesiredCapabilities capabilities = jsonService
                 .jsonToObject(requestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities();
@@ -928,6 +875,7 @@ public class WebDriverService {
 
         logger.info("Using {} as Docker image for {}", imageId, browserName);
         SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.addObserver(sessionService);
 
         // Envs
         List<String> envs = asList(
@@ -951,8 +899,7 @@ public class WebDriverService {
 
         platformService.buildAndRunBrowserInContainer(sessionInfo,
                 eusContainerPrefix + hubContainerSufix, originalRequestBody,
-                folderPath, network, additionalNetworks, envs, labels,
-                capabilities, imageId);
+                folderPath, execData, envs, labels, capabilities, imageId);
         sessionInfo.setStatusMsg("Ready");
 
         return sessionInfo;

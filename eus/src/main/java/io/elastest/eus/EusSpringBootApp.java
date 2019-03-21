@@ -20,18 +20,15 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.elastest.epm.client.service.DockerService;
-import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
@@ -51,29 +48,16 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Value("${ws.path}")
     private String wsPath;
-
-    private DockerService dockerService;
-    private EusJsonService jsonService;
-    private RecordingService recordingService;
-
-    public EusSpringBootApp(DockerService dockerService,
-            EusJsonService jsonService, RecordingService recordingService) {
-        this.dockerService = dockerService;
-        this.jsonService = jsonService;
-        this.recordingService = recordingService;
-    }
+    
+    @Autowired
+    private SessionService sessionService;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(sessionService(), wsPath).setAllowedOrigins("*");
+        registry.addHandler(sessionService, wsPath).setAllowedOrigins("*");
         log.debug("Registering WebSocker handler at {}", wsPath);
     }
-
-    @Bean
-    public SessionService sessionService() {
-        return new SessionService(dockerService, jsonService, recordingService);
-    }
-
+    
     public static void main(String[] args) {
         new SpringApplication(EusSpringBootApp.class).run(args);
     }

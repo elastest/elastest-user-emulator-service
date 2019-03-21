@@ -7,7 +7,6 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,10 +32,10 @@ import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
+import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
 
 @Service
@@ -67,15 +66,15 @@ public class DockerServiceImpl implements PlatformService {
     private boolean useTorm;
     @Value("${ws.dateformat}")
     private String wsDateFormat;
+    @Value("${docker.network}")
+    private String dockerNetwork;
 
     private DockerService dockerService;
-    private SessionService sessionService;
     private EusJsonService jsonService;
 
     public DockerServiceImpl(DockerService dockerService,
-            SessionService sessionService, EusJsonService jsonService) {
+            EusJsonService jsonService) {
         this.dockerService = dockerService;
-        this.sessionService = sessionService;
         this.jsonService = jsonService;
     }
 
@@ -100,9 +99,9 @@ public class DockerServiceImpl implements PlatformService {
     @Override
     public void buildAndRunBrowserInContainer(SessionInfo sessionInfo,
             String containerPrefix, String originalRequestBody,
-            String folderPath, String network, List<String> additionalNetworks,
-            List<String> envs, Map<String, String> labels,
-            DesiredCapabilities capabilities, String imageId) throws Exception {
+            String folderPath, ExecutionData execData, List<String> envs,
+            Map<String, String> labels, DesiredCapabilities capabilities,
+            String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
                 containerPrefix);
         // Recording Volume
@@ -150,6 +149,46 @@ public class DockerServiceImpl implements PlatformService {
             dockerBuilder.extraHosts(capabilities.getExtraHosts());
         }
 
+        // Obtain networks for the browser
+        List<String> networks = new ArrayList<>();
+        String network = dockerNetwork;
+        if (execData != null) {
+            String sutPrefix = execData.getSutContainerPrefix();
+
+            List<String> additionalNetworks = new ArrayList<>();
+            if (execData.isUseSutNetwork() && sutPrefix != null
+                    && !"".equals(sutPrefix)) {
+                logger.debug("Sut prefix: {}", sutPrefix);
+
+                additionalNetworks = getContainerNetworksByContainerPrefix(
+                        sutPrefix);
+                if (additionalNetworks.size() > 0) {
+                    logger.debug("Sut networks: {}", additionalNetworks);
+
+                    if (additionalNetworks != null) {
+                        network = additionalNetworks.get(0);
+                        boolean first = true;
+                        for (String currentNetwork : additionalNetworks) {
+                            if (!first && currentNetwork != null) {
+                                networks.add(currentNetwork);
+                            }
+                            first = false;
+                        }
+                    }
+                    if (additionalNetworks == null
+                            || additionalNetworks.size() == 0 || network == null
+                            || "".equals(network)) {
+                        network = dockerNetwork;
+                        logger.error(
+                                "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
+                                dockerNetwork);
+                    }
+                    logger.debug("First Sut network: {}", network);
+                    logger.debug("Sut additional networks: {}", networks);
+                }
+            }
+        }
+
         if (useTorm) {
             dockerBuilder.network(network);
         }
@@ -171,7 +210,6 @@ public class DockerServiceImpl implements PlatformService {
         sessionInfo.setManualRecording(manualRecording);
         sessionInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
         sessionInfo.setStatusMsg("Initializing...");
-        sessionService.sendNewSessionToAllClients(sessionInfo, false);
 
         // Pull
         dockerService.pullImageWithProgressHandler(imageId,
@@ -179,17 +217,16 @@ public class DockerServiceImpl implements PlatformService {
 
         sessionInfo.setStatus(DockerServiceStatusEnum.STARTING);
         sessionInfo.setStatusMsg("Starting...");
-        sessionService.sendNewSessionToAllClients(sessionInfo, false);
 
         // Start
         String containerId = dockerService.createAndStartContainerWithPull(
                 dockerBuilder.build(), EpmService.etMasterSlaveMode, true);
 
         // Additional Networks
-        if (additionalNetworks != null && additionalNetworks.size() > 0) {
+        if (networks != null && networks.size() > 0) {
             logger.debug(
                     "Inserting browser container into additional networks");
-            for (String additionalNetwork : additionalNetworks) {
+            for (String additionalNetwork : networks) {
                 if (additionalNetwork != null
                         && !"".equals(additionalNetwork)) {
                     logger.debug("Inserting browser container into {} network",
@@ -252,19 +289,12 @@ public class DockerServiceImpl implements PlatformService {
                         + dockerPullImageProgress.getCurrentPercentage() + "%";
 
                 sessionInfo.setStatusMsg(msg);
-                try {
-                    sessionService.sendNewSessionToAllClients(sessionInfo,
-                            false);
-                } catch (IOException e) {
-                    logger.error("Error on send session {} info: ",
-                            sessionInfo.getSessionId(), e);
-                }
             }
 
         };
 
     }
-    
+
     public void execCommand(String hubContainerName, boolean awaitCompletion,
             String... command) throws Exception {
         dockerService.execCommand(hubContainerName, awaitCompletion, command);

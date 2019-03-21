@@ -3,6 +3,7 @@ package io.elastest.eus.platform.service;
 import java.util.List;
 import java.util.Map;
 
+import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.session.SessionInfo;
 
@@ -15,7 +16,7 @@ public interface PlatformService {
 
     public void buildAndRunBrowserInContainer(SessionInfo sessionInfo,
             String containerPrefix, String originalRequestBody,
-            String folderPath, String network, List<String> additionalNetworks,
+            String folderPath, ExecutionData execData,
             List<String> envs, Map<String, String> labels,
             DesiredCapabilities capabilities, String imageId) throws Exception;
 
