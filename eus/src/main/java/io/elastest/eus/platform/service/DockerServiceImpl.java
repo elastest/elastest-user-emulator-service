@@ -299,4 +299,16 @@ public class DockerServiceImpl implements PlatformService {
             String... command) throws Exception {
         dockerService.execCommand(hubContainerName, awaitCompletion, command);
     }
+
+    @Override
+    public boolean existServiceWithName(String name) throws Exception {
+        return dockerService.existsContainer(name);
+    }
+
+    @Override
+    public void removeServiceWithTimeout(String containerId,
+            int killAfterSeconds) throws Exception {
+        dockerService.stopAndRemoveContainerWithKillTimeout(
+                containerId, killAfterSeconds);
+    }
 }

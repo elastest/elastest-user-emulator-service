@@ -16,11 +16,16 @@ public interface PlatformService {
 
     public void buildAndRunBrowserInContainer(SessionInfo sessionInfo,
             String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData,
-            List<String> envs, Map<String, String> labels,
-            DesiredCapabilities capabilities, String imageId) throws Exception;
+            String folderPath, ExecutionData execData, List<String> envs,
+            Map<String, String> labels, DesiredCapabilities capabilities,
+            String imageId) throws Exception;
 
     public void execCommand(String hubContainerName, boolean awaitCompletion,
             String... command) throws Exception;
+
+    public boolean existServiceWithName(String name) throws Exception;
+
+    public void removeServiceWithTimeout(String containerId,
+            int killAfterSeconds) throws Exception;
 
 }
