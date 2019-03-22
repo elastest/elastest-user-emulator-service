@@ -14,7 +14,7 @@ public interface PlatformService {
 
     public String generateRandomContainerNameWithPrefix(String prefix);
 
-    public void buildAndRunBrowserInContainer(SessionInfo sessionInfo,
+    public void buildAndRunBrowserInContainer(DockerBrowserInfo dockerBrowserInfo,
             String containerPrefix, String originalRequestBody,
             String folderPath, ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
@@ -27,5 +27,8 @@ public interface PlatformService {
 
     public void removeServiceWithTimeout(String containerId,
             int killAfterSeconds) throws Exception;
+    
+    public void waitForBrowserReady(String internalVncUrl,
+            DockerBrowserInfo dockerBrowserInfo) throws Exception;
 
 }

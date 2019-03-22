@@ -1,16 +1,12 @@
 package io.elastest.eus.platform.service;
 
-import static java.lang.String.format;
-import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,14 +25,13 @@ import com.spotify.docker.client.messages.ProgressMessage;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerPullImageProgress;
+import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.session.SessionInfo;
 
 @Service
 public class DockerServiceImpl implements PlatformService {
@@ -54,18 +49,9 @@ public class DockerServiceImpl implements PlatformService {
     private String browserScreenResolution;
     @Value("${browser.shm.size}")
     private long shmSize;
-    @Value("${novnc.html}")
-    private String vncHtml;
-    @Value("${hub.vnc.password}")
-    private String hubVncPassword;
-    @Value("${et.host.env}")
-    private String etHostEnv;
-    @Value("${et.host.type.env}")
-    private String etHostEnvType;
+
     @Value("${use.torm}")
     private boolean useTorm;
-    @Value("${ws.dateformat}")
-    private String wsDateFormat;
     @Value("${docker.network}")
     private String dockerNetwork;
 
@@ -97,9 +83,10 @@ public class DockerServiceImpl implements PlatformService {
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(SessionInfo sessionInfo,
-            String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData, List<String> envs,
+    public void buildAndRunBrowserInContainer(
+            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
+            String originalRequestBody, String folderPath,
+            ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
@@ -193,35 +180,18 @@ public class DockerServiceImpl implements PlatformService {
             dockerBuilder.network(network);
         }
         // Save info into SessionInfo
-        sessionInfo.setHubContainerName(hubContainerName);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
-        sessionInfo.setCreationTime(dateFormat.format(new Date()));
-        sessionInfo.setHubBindPort(hubPort);
-        sessionInfo.setHubVncBindPort(hubPort);
-
-        String testName = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getTestName();
-        sessionInfo.setTestName(testName);
-
-        boolean manualRecording = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().isManualRecording();
-        sessionInfo.setManualRecording(manualRecording);
-        sessionInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        sessionInfo.setStatusMsg("Initializing...");
-
+        dockerBrowserInfo.setHubContainerName(hubContainerName);
+        dockerBrowserInfo.setVncContainerName(hubContainerName);
+        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        dockerBrowserInfo.setStatusMsg("Initializing...");
         // Pull
         dockerService.pullImageWithProgressHandler(imageId,
-                getBrowserProgressHandler(imageId, sessionInfo));
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.STARTING);
-        sessionInfo.setStatusMsg("Starting...");
-
+                getBrowserProgressHandler(imageId, dockerBrowserInfo));
+        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.STARTING);
+        dockerBrowserInfo.setStatusMsg("Starting...");
         // Start
         String containerId = dockerService.createAndStartContainerWithPull(
                 dockerBuilder.build(), EpmService.etMasterSlaveMode, true);
-
         // Additional Networks
         if (networks != null && networks.size() > 0) {
             logger.debug(
@@ -237,49 +207,26 @@ public class DockerServiceImpl implements PlatformService {
             }
         }
 
-        // Wait Reachable
-        String hubPath = "/wd/hub";
-        String hubIp = dockerService.getDockerServerIp();
-        String hubUrl = "http://" + hubIp + ":" + hubPort + hubPath;
+        dockerBrowserInfo.setHubIp(dockerService.getDockerServerIp());
+        dockerBrowserInfo.setHubPort(hubPort);
+        dockerBrowserInfo.setNoVncBindedPort(noVncBindedPort);
+    }
 
-        // Save hub url into Session Info
-        sessionInfo.setHubUrl(hubUrl);
-
-        logger.debug("Container: {} -- Hub URL: {}", hubContainerName, hubUrl);
-
-        String vncUrlFormat = "http://%s:%d/" + vncHtml
-                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
-        String internalVncUrl = vncUrl;
-
-        String etHost = getenv(etHostEnv);
-        String etHostType = getenv(etHostEnvType);
-        if (etHostType != null && etHost != null) {
-            // If server-address
-            if (!"default".equalsIgnoreCase(etHostType)) {
-                hubIp = etHost;
-                vncUrl = format(vncUrlFormat, hubIp, noVncBindedPort);
-            }
-        }
-
+    public void waitForBrowserReady(String internalVncUrl,
+            DockerBrowserInfo dockerBrowserInfo) throws Exception {
         dockerService.waitForHostIsReachable(internalVncUrl);
-
-        sessionInfo.setVncContainerName(hubContainerName);
-        sessionInfo.setVncUrl(vncUrl);
-        sessionInfo.setNoVncBindPort(noVncBindedPort);
-
-        sessionInfo.setStatus(DockerServiceStatusEnum.READY);
-
+        dockerBrowserInfo.setStatusMsg("Ready");
+        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.READY);
     }
 
     private ProgressHandler getBrowserProgressHandler(String image,
-            SessionInfo sessionInfo) {
+            DockerServiceStatus dockerServiceStatus) {
         DockerPullImageProgress dockerPullImageProgress = new DockerPullImageProgress();
         dockerPullImageProgress.setImage(image);
         dockerPullImageProgress.setCurrentPercentage(0);
 
-        sessionInfo.setStatus(DockerServiceStatusEnum.PULLING);
-        sessionInfo.setStatusMsg("Pulling " + image + " image");
+        dockerServiceStatus.setStatus(DockerServiceStatusEnum.PULLING);
+        dockerServiceStatus.setStatusMsg("Pulling " + image + " image");
         return new ProgressHandler() {
             @Override
             public void progress(ProgressMessage message)
@@ -288,7 +235,7 @@ public class DockerServiceImpl implements PlatformService {
                 String msg = "Pulling image " + image + ": "
                         + dockerPullImageProgress.getCurrentPercentage() + "%";
 
-                sessionInfo.setStatusMsg(msg);
+                dockerServiceStatus.setStatusMsg(msg);
             }
 
         };
@@ -308,7 +255,7 @@ public class DockerServiceImpl implements PlatformService {
     @Override
     public void removeServiceWithTimeout(String containerId,
             int killAfterSeconds) throws Exception {
-        dockerService.stopAndRemoveContainerWithKillTimeout(
-                containerId, killAfterSeconds);
+        dockerService.stopAndRemoveContainerWithKillTimeout(containerId,
+                killAfterSeconds);
     }
 }

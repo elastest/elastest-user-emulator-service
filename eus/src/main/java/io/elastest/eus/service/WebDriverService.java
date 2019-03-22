@@ -31,7 +31,9 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,112 +87,89 @@ public class WebDriverService {
 
     @Value("${api.context.path}")
     private String apiContextPath;
-
     @Value("${eus.container.prefix}")
     private String eusContainerPrefix;
-
     @Value("${hub.exposedport}")
     private int hubExposedPort;
-
     @Value("${hub.vnc.exposedport}")
     private int hubVncExposedPort;
-
     @Value("${hub.novnc.exposedport}")
     private int noVncExposedPort;
-
     @Value("${hub.container.sufix}")
     private String hubContainerSufix;
+    @Value("${ws.dateformat}")
+    private String wsDateFormat;
+    @Value("${novnc.html}")
+    private String vncHtml;
+    @Value("${hub.vnc.password}")
+    private String hubVncPassword;
+    @Value("${et.host.env}")
+    private String etHostEnv;
+    @Value("${et.host.type.env}")
+    private String etHostEnvType;
 
     // Defined as String instead of integer for testing purposes (inject with
     // @TestPropertySource)
     @Value("${hub.timeout}")
     private String hubTimeout;
-
     @Value("${browser.screen.resolution}")
     private String browserScreenResolution;
-
     @Value("${browser.timezone}")
     private String browserTimezone;
-
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
-
     @Value("${webdriver.navigation.get.message}")
     private String webdriverNavigationGetMessage;
-
     @Value("${webdriver.execute.script.message}")
     private String webdriverExecuteScriptMessage;
-
     @Value("${webdriver.execute.async.script.message}")
     private String webdriverExecuteAsyncScriptMessage;
-
     @Value("${et.intercept.script.prefix}")
     private String etInterceptScriptPrefix;
-
     @Value("${create.session.timeout.sec}")
     private int createSessionTimeoutSec;
-
     @Value("${create.session.retries}")
     private int createSessionRetries;
-
     @Value("${et.config.web.rtc.stats}")
     private String etConfigWebRtcStats;
-
     @Value("${et.mon.interval}")
     private String etMonInterval;
-
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
-
     @Value("${et.files.path.in.host}")
     private String filesPathInHost;
-
     @Value("${et.shared.folder}")
     private String eusFilesPath;
-
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
-
     @Value("${et.data.in.host}")
     private String etDataInHost;
 
     /* *** ET container labels *** */
     @Value("${et.type.label}")
     public String etTypeLabel;
-
     @Value("${et.tjob.id.label}")
     public String etTJobIdLabel;
-
     @Value("${et.tjob.exec.id.label}")
     public String etTJobExecIdLabel;
-
     @Value("${et.tjob.sut.service.name.label}")
     public String etTJobSutServiceNameLabel;
-
     @Value("${et.tjob.tss.id.label}")
     public String etTJobTSSIdLabel;
-
     @Value("${et.tjob.tss.type.label}")
     public String etTJobTssTypeLabel;
-
     @Value("${et.type.test.label.value}")
     public String etTypeTestLabelValue;
-
     @Value("${et.type.sut.label.value}")
     public String etTypeSutLabelValue;
-
     @Value("${et.type.tss.label.value}")
     public String etTypeTSSLabelValue;
-
     @Value("${et.type.core.label.value}")
     public String etTypeCoreLabelValue;
-
     @Value("${et.type.te.label.value}")
     public String etTypeTELabelValue;
-
     @Value("${et.type.monitoring.label.value}")
     public String etTypeMonitoringLabelValue;
-
     @Value("${et.type.tool.label.value}")
     public String etTypeToolLabelValue;
     /* *** END of ET container labels *** */
@@ -896,11 +875,40 @@ public class WebDriverService {
         sessionInfo.setLiveSession(liveSession);
         sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
         sessionInfo.setFolderPath(sessionFolderPath);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
+        sessionInfo.setCreationTime(dateFormat.format(new Date()));
+        boolean manualRecording = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().isManualRecording();
+        sessionInfo.setManualRecording(manualRecording);
+        String testName = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().getTestName();
+        sessionInfo.setTestName(testName);
 
         platformService.buildAndRunBrowserInContainer(sessionInfo,
                 eusContainerPrefix + hubContainerSufix, originalRequestBody,
                 folderPath, execData, envs, labels, capabilities, imageId);
-        sessionInfo.setStatusMsg("Ready");
+
+        sessionInfo.buildHubUrl();
+        String vncUrlFormat = "http://%s:%d/" + vncHtml
+                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
+        String vncUrl = format(vncUrlFormat, sessionInfo.getHubIp(),
+                sessionInfo.getNoVncBindedPort());
+        String internalVncUrl = vncUrl;
+
+        String etHost = getenv(etHostEnv);
+        String etHostType = getenv(etHostEnvType);
+        if (etHostType != null && etHost != null) {
+            // If server-address
+            if (!"default".equalsIgnoreCase(etHostType)) {
+                String hubIp = etHost;
+                vncUrl = format(vncUrlFormat, hubIp,
+                        sessionInfo.getNoVncBindedPort());
+            }
+        }
+        sessionInfo.setVncUrl(vncUrl);
+        platformService.waitForBrowserReady(internalVncUrl, sessionInfo);
 
         return sessionInfo;
     }
