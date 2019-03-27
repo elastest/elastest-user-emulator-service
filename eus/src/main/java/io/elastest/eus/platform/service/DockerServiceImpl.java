@@ -31,7 +31,6 @@ import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
-import io.elastest.eus.service.EusJsonService;
 
 @Service
 public class DockerServiceImpl implements PlatformService {
@@ -49,19 +48,15 @@ public class DockerServiceImpl implements PlatformService {
     private String browserScreenResolution;
     @Value("${browser.shm.size}")
     private long shmSize;
-
     @Value("${use.torm}")
     private boolean useTorm;
     @Value("${docker.network}")
     private String dockerNetwork;
 
     private DockerService dockerService;
-    private EusJsonService jsonService;
 
-    public DockerServiceImpl(DockerService dockerService,
-            EusJsonService jsonService) {
+    public DockerServiceImpl(DockerService dockerService) {
         this.dockerService = dockerService;
-        this.jsonService = jsonService;
     }
 
     @Override
@@ -191,7 +186,7 @@ public class DockerServiceImpl implements PlatformService {
         dockerBrowserInfo.setStatusMsg("Starting...");
         // Start
         String containerId = dockerService.createAndStartContainerWithPull(
-                dockerBuilder.build(), EpmService.etMasterSlaveMode, true);
+                dockerBuilder.build(), true);
         // Additional Networks
         if (networks != null && networks.size() > 0) {
             logger.debug(
