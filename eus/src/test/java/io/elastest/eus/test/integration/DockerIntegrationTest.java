@@ -120,8 +120,7 @@ public class DockerIntegrationTest extends IntegrationBaseTest {
             dockerBuilder.network(dockerNetwork);
         }
 
-        dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
-                false, true);
+        dockerService.createAndStartContainerWithPull(dockerBuilder.build(), true);
 
         // Assertions
         assertTrue(dockerService.existsContainer(containerName));
