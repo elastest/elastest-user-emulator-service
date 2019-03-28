@@ -16,7 +16,6 @@
  */
 package io.elastest.eus.service;
 
-import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
@@ -556,8 +555,8 @@ public class WebDriverService {
         }
 
         // Handle timeout
-        handleTimeout(requestContext, method, sessionInfo,
-                isCreateSession, monitoringIndex);
+        handleTimeout(requestContext, method, sessionInfo, isCreateSession,
+                monitoringIndex);
 
         // Send Hub Container name too
 
@@ -752,11 +751,7 @@ public class WebDriverService {
             String monitoringIndex) {
         // Browser log thread
         if (isCreateSession) {
-            String sessionId = sessionInfo.getSessionId();
-            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
-                    + "/log";
-            timeoutService.launchLogMonitor(postUrl, sessionId,
-                    monitoringIndex);
+            timeoutService.launchLogMonitor(sessionInfo, monitoringIndex);
         }
 
         boolean disableTimeout = false;

@@ -433,4 +433,25 @@ public class EusController implements EusApi {
         return this.stopRecording(sessionId, hubContainerName);
     }
 
+    /* *************************** */
+    /* ********** Files ********** */
+    /* *************************** */
+
+    @Override
+    public ResponseEntity<String> getFile(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request) {
+        String requestURL = request.getRequestURL().toString();
+        String filePath = requestURL.split("/browserfile/")[1];
+
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> executionGetFile(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpServletRequest request) {
+        return null;
+    }
 }

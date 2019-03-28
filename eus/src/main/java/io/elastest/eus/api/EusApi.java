@@ -307,11 +307,11 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<String> getStatusExecution(
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
-    
+
     /* ************************** */
     /* ******** Browsers ******** */
     /* ************************** */
-    
+
     /**
      * GET /browsers
      *
@@ -325,7 +325,7 @@ public interface EusApi {
     @RequestMapping(value = "/browsers", produces = {
             "application/json" }, method = { GET })
     ResponseEntity<String> getBrowsers();
-    
+
     /**
      * GET /browsers/cached
      *
@@ -495,6 +495,45 @@ public interface EusApi {
     ResponseEntity<String> stopExecutionRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpServletRequest request);
+
+    /* *************************** */
+    /* ********** Files ********** */
+    /* *************************** */
+
+    /**
+     * GET /session/{sessionId}/vnc
+     *
+     * Get VNC session
+     */
+    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/browserfile/**", produces = {
+            "text/plain" }, method = { GET })
+    ResponseEntity<String> getFile(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            HttpServletRequest request);
+
+    /**
+     * GET /execution/{key}/session/{sessionId}/vnc
+     *
+     * Get Browser file
+     */
+    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile/**", produces = {
+            "text/plain" }, method = { GET })
+    ResponseEntity<String> executionGetFile(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpServletRequest request);
 

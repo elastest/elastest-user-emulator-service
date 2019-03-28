@@ -81,8 +81,12 @@ public class TimeoutService {
         logExecutor.shutdown();
     }
 
-    public void launchLogMonitor(String postUrl, String sessionId, String monitoringIndex) {
+    public void launchLogMonitor(SessionInfo sessionInfo, String monitoringIndex) {
+        String sessionId = sessionInfo.getSessionId();        
         if (!logFutureMap.containsKey(sessionId)) {
+            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
+                    + "/log";
+            
             log.info("Launching log monitor using URL {}", postUrl);
             logFutureMap.put(sessionId, logExecutor.submit(() -> {
                 RestTemplate restTemplate = new RestTemplate();
@@ -96,7 +100,7 @@ public class TimeoutService {
                                     .getJsonMessageFromValueList(
                                             response.getValue());
                             logstashService.sendBrowserConsoleToLogstash(
-                                    jsonMessages, sessionId, monitoringIndex);
+                                    jsonMessages, sessionInfo, monitoringIndex);
                         }
                         sleep(logPollMs);
 

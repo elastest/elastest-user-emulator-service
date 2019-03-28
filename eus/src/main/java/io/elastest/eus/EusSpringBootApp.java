@@ -25,6 +25,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -42,6 +43,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * @since 0.0.1
  */
 @SpringBootApplication
+@EnableScheduling
 @EnableSwagger2
 @EnableWebSocket
 @ComponentScan(basePackages = {"io.elastest.eus", "io.elastest.epm.client"})

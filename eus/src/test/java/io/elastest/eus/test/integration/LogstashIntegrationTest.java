@@ -47,6 +47,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import io.elastest.eus.service.EusLogstashService;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * Tests for Logstash service.
@@ -92,7 +93,9 @@ public class LogstashIntegrationTest {
     @Test
     @DisplayName("Send dummy console logs to mock logstash")
     void test() {
-        logstashService.sendBrowserConsoleToLogstash("{}", "sessionId",
+        SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setSessionId("sessionId");
+        logstashService.sendBrowserConsoleToLogstash("{}", sessionInfo,
                 "normal");
         verify(postRequestedFor(urlEqualTo("/")).withHeader("Content-Type",
                 equalTo("application/json; charset=UTF-8")));

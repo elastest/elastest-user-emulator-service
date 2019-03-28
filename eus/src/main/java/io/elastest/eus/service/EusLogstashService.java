@@ -24,11 +24,19 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.session.SessionInfo;
 
 /**
  * Logstash service.
@@ -44,12 +52,38 @@ public class EusLogstashService {
 
     public DynamicDataService dynamicDataService;
 
+    private Map<String, Integer> executionCounterMap = new HashMap<>();
+    private Map<String, Integer> executionSessionMap = new HashMap<>();
+    private Map<String, Date> mapKeyDateCreationMap = new HashMap<>();
+
     EusLogstashService(DynamicDataService dynamicDataService) {
         this.dynamicDataService = dynamicDataService;
     }
 
+    // Everey 10 min
+    @Scheduled(fixedRate = 600000)
+    public void cleanMaps() {
+        // Clear map key if was stored since more than
+        // 1,5 hours
+        int maxDifference = 5400000;
+        for (Entry<String, Date> entry : mapKeyDateCreationMap.entrySet()) {
+            long difference = entry.getValue().getTime() - new Date().getTime();
+            if (difference > maxDifference) {
+                try {
+                    log.debug(
+                            "EusLogstashService: Cleaning Execution Map Key {}",
+                            entry.getKey());
+                    mapKeyDateCreationMap.remove(entry.getKey());
+                    executionCounterMap.remove(entry.getKey());
+                    executionSessionMap.remove(entry.getKey());
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
     public void sendBrowserConsoleToLogstash(String jsonMessages,
-            String sessionId, String monitoringIndex) {
+            SessionInfo sessionInfo, String monitoringIndex) {
         String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
         log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
         if (lsHttpApi == null || monitoringIndex == null) {
@@ -64,7 +98,8 @@ public class EusLogstashService {
             http.setRequestMethod("POST");
             http.setDoOutput(true);
 
-            String component = etBrowserComponentPrefix + sessionId;
+            String component = getComponent(sessionInfo);
+
             String body = "{" + "\"component\":\"" + component + "\""
                     + ",\"exec\":\"" + monitoringIndex + "\""
                     + ",\"stream\":\"console\"" + ",\"messages\":"
@@ -85,6 +120,54 @@ public class EusLogstashService {
             log.error("Exception in send browser console log trace", e);
         }
 
+    }
+
+    public String getComponent(SessionInfo sessionInfo) {
+        String sessionId = sessionInfo.getSessionId();
+        String component = etBrowserComponentPrefix;
+
+        // By ElasTest Execution
+        ExecutionData etExecData = sessionInfo.getElastestExecutionData();
+        if (etExecData != null && etExecData.gettJobId() != null) {
+            // Style: tss_eus_browser_tJob_XX_COUNTER(_TESTNAME)
+
+            String key = etExecData.getKey() + "_" + sessionId;
+
+            boolean increase = true;
+            if (!executionCounterMap.containsKey(etExecData.getKey())) {
+                executionCounterMap.put(etExecData.getKey(), 0);
+                mapKeyDateCreationMap.put(etExecData.getKey(), new Date());
+                increase = false;
+            }
+
+            if (!executionSessionMap.containsKey(key)) {
+                int value = executionCounterMap.get(etExecData.getKey());
+
+                if (increase) {
+                    value += 1;
+                    executionCounterMap.put(etExecData.getKey(), value);
+                    mapKeyDateCreationMap.put(etExecData.getKey(), new Date());
+                }
+
+                executionSessionMap.put(key, value);
+                mapKeyDateCreationMap.put(key, new Date());
+            }
+
+            String tJobPrefix = etExecData.getType() + "_"
+                    + etExecData.gettJobId();
+
+            component += tJobPrefix + "_" + executionSessionMap.get(key);
+
+            // TestName if is present
+            if (sessionInfo.getTestName() != null) {
+                component += "_" + sessionInfo.getTestName();
+            }
+
+        } else { // Generic
+            component += sessionId;
+        }
+
+        return component;
     }
 
     public String getJsonMessageFromValueList(
