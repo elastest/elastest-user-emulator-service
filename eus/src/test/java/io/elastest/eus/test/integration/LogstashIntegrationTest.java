@@ -27,7 +27,6 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.ServerSocket;
 
@@ -37,17 +36,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import io.elastest.eus.service.EusLogstashService;
 import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Tests for Logstash service.
@@ -55,12 +52,10 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.5.1
  */
-@ExtendWith(SpringExtension.class)
 @TestInstance(PER_CLASS)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration test for Logstash Service")
-public class LogstashIntegrationTest {
+public class LogstashIntegrationTest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

@@ -21,7 +21,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,13 +29,11 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.service.DockerHubService;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Tests for Docker Hub service.
@@ -44,11 +41,10 @@ import io.elastest.eus.service.DockerHubService;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.5.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+
 @Tag("integration")
 @DisplayName("Integration test for Docker Hub Service")
-public class DockerHubIntegrationTest {
+public class DockerHubIntegrationTest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
@@ -58,7 +54,8 @@ public class DockerHubIntegrationTest {
     @Test
     @DisplayName("Get Selenoid browser images from Docker Hub")
     void testBrowserMap() throws IOException {
-        Map<String, List<String>> browsers = dockerHubService.getBrowsers(false);
+        Map<String, List<String>> browsers = dockerHubService
+                .getBrowsers(false);
         log.debug("Browser map {}", browsers);
 
         assertThat(browsers.get("chrome"), not(empty()));

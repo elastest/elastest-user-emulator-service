@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,7 +29,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -39,9 +37,9 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Selenium test.
@@ -49,11 +47,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("e2e")
 @DisplayName("End-to-end tests using Selenium WebDriver")
-public class SeleniumE2ETest {
+public class SeleniumE2ETest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

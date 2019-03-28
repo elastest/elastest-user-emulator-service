@@ -22,7 +22,6 @@ import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -32,19 +31,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.test.IntegrationBaseTest;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
@@ -54,11 +51,9 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration tests for WebSockets")
-public class WebSocketIntegrationTest {
+public class WebSocketIntegrationTest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

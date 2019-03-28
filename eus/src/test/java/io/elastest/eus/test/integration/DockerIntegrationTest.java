@@ -19,7 +19,6 @@ package io.elastest.eus.test.integration;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,12 +28,9 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.spotify.docker.client.messages.PortBinding;
 
@@ -43,6 +39,7 @@ import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerHubService;
 import io.elastest.eus.service.EusJsonService;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Tests for Docker service.
@@ -50,11 +47,9 @@ import io.elastest.eus.service.EusJsonService;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration test for Docker Service")
-public class DockerIntegrationTest {
+public class DockerIntegrationTest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

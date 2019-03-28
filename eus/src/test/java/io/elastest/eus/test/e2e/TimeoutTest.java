@@ -19,7 +19,6 @@ package io.elastest.eus.test.e2e;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,19 +27,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.elastest.eus.EusSpringBootApp;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Timeout test.
@@ -48,12 +44,10 @@ import io.elastest.eus.EusSpringBootApp;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = EusSpringBootApp.class, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = { "hub.timeout=5" })
 @Disabled
 // Disabled temporally
-public class TimeoutTest {
+public class TimeoutTest extends IntegrationBaseTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
 

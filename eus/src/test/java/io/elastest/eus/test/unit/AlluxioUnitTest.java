@@ -63,7 +63,7 @@ import io.elastest.eus.test.util.MockitoExtension;
 @TestInstance(PER_CLASS)
 @Tag("unit")
 @DisplayName("Unit tests for Alluxio Service")
-public class AlluxioUnitTest {
+public class AlluxioUnitTest{
 
     final Logger log = getLogger(lookup().lookupClass());
 

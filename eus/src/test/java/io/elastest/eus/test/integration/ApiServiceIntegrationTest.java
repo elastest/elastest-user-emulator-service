@@ -18,7 +18,6 @@ package io.elastest.eus.test.integration;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,12 +28,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -44,6 +40,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.UserMedia;
 import io.elastest.eus.service.EusJsonService;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Integration tests for non-implemented service operations.
@@ -51,11 +48,9 @@ import io.elastest.eus.service.EusJsonService;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration tests for service operations")
-public class ApiServiceIntegrationTest {
+public class ApiServiceIntegrationTest extends IntegrationBaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

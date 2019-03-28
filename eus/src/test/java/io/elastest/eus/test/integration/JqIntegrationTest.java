@@ -19,19 +19,16 @@ package io.elastest.eus.test.integration;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.io.IOException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.elastest.eus.service.EusJsonService;
+import io.elastest.eus.test.IntegrationBaseTest;
 
 /**
  * Tests for JQ service (JSON processor).
@@ -39,11 +36,9 @@ import io.elastest.eus.service.EusJsonService;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.5.1
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Tag("integration")
 @DisplayName("Integration tests using JQ (JSON processor)")
-public class JqIntegrationTest {
+public class JqIntegrationTest extends IntegrationBaseTest {
 
     @Autowired
     private EusJsonService jsonService;
