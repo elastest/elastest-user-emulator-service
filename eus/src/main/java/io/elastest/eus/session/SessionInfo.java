@@ -25,9 +25,9 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
-import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.platform.service.DockerBrowserInfo;
 
 /**
  * Session information.
@@ -35,28 +35,28 @@ import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class SessionInfo extends DockerServiceStatus {
+public class SessionInfo extends DockerBrowserInfo {
     final Logger log = getLogger(lookup().lookupClass());
-
+    private static String HUB_PATH = "/wd/hub";
+    
     private String sessionId;
     private String hubUrl;
     private String hubContainerName;
-    private String vncUrl;
-    private String vncContainerName;
     private String creationTime;
     private String browser;
     private String version;
     private boolean liveSession;
     private List<Future<?>> timeoutFutures = new CopyOnWriteArrayList<>();
-    private int hubBindPort;
-    private int hubVncBindPort;
-    private int noVncBindPort;
     private int timeout;
     private String testName;
     private boolean manualRecording;
     private String folderPath;
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
+    
+    public SessionInfo() {
+        super();
+    }
 
     public String getHubUrl() {
         return hubUrl;
@@ -72,22 +72,6 @@ public class SessionInfo extends DockerServiceStatus {
 
     public void setHubContainerName(String hubContainerName) {
         this.hubContainerName = hubContainerName;
-    }
-
-    public String getVncUrl() {
-        return vncUrl;
-    }
-
-    public void setVncUrl(String vncUrl) {
-        this.vncUrl = vncUrl;
-    }
-
-    public String getVncContainerName() {
-        return vncContainerName;
-    }
-
-    public void setVncContainerName(String vncContainerName) {
-        this.vncContainerName = vncContainerName;
     }
 
     public String getCreationTime() {
@@ -136,30 +120,6 @@ public class SessionInfo extends DockerServiceStatus {
 
     public void addTimeoutFuture(Future<?> timeoutFuture) {
         this.timeoutFutures.add(timeoutFuture);
-    }
-
-    public int getHubBindPort() {
-        return hubBindPort;
-    }
-
-    public void setHubBindPort(int hubBindPort) {
-        this.hubBindPort = hubBindPort;
-    }
-
-    public int getHubVncBindPort() {
-        return hubVncBindPort;
-    }
-
-    public void setHubVncBindPort(int hubVncBindPort) {
-        this.hubVncBindPort = hubVncBindPort;
-    }
-
-    public int getNoVncBindPort() {
-        return noVncBindPort;
-    }
-
-    public void setNoVncBindPort(int noVncBindPort) {
-        this.noVncBindPort = noVncBindPort;
     }
 
     public int getTimeout() {
@@ -219,18 +179,19 @@ public class SessionInfo extends DockerServiceStatus {
         }
         return id;
     }
+    
+    public void buildHubUrl() {
+      hubUrl = "http://" + hubIp + ":" + hubPort + HUB_PATH;
+    }
 
     @Override
     public String toString() {
         return "SessionInfo [log=" + log + ", sessionId=" + sessionId
                 + ", hubUrl=" + hubUrl + ", hubContainerName="
-                + hubContainerName + ", vncUrl=" + vncUrl
-                + ", vncContainerName=" + vncContainerName + ", creationTime="
+                + hubContainerName + ", creationTime="
                 + creationTime + ", browser=" + browser + ", version=" + version
                 + ", liveSession=" + liveSession + ", timeoutFutures="
-                + timeoutFutures + ", hubBindPort=" + hubBindPort
-                + ", hubVncBindPort=" + hubVncBindPort + ", noVncBindPort="
-                + noVncBindPort + ", timeout=" + timeout + ", testName="
+                + timeoutFutures + ", timeout=" + timeout + ", testName="
                 + testName + ", manualRecording=" + manualRecording
                 + ", folderPath=" + folderPath + ", elastestExecutionData="
                 + elastestExecutionData + ", capabilities=" + capabilities

@@ -21,11 +21,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -33,11 +36,12 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebSocketNewLiveSession;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
+import io.elastest.eus.platform.service.PlatformService;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -46,7 +50,8 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class SessionService extends TextWebSocketHandler {
+@Service
+public class SessionService extends TextWebSocketHandler implements Observer {
 
     final Logger log = getLogger(lookup().lookupClass());
 
@@ -62,13 +67,13 @@ public class SessionService extends TextWebSocketHandler {
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
     private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
 
-    private DockerService dockerService;
+    private PlatformService platformService;
     private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public SessionService(DockerService dockerService,
+    public SessionService(PlatformService platformService,
             EusJsonService jsonService, RecordingService recordingService) {
-        this.dockerService = dockerService;
+        this.platformService = platformService;
         this.jsonService = jsonService;
         this.recordingService = recordingService;
     }
@@ -306,16 +311,41 @@ public class SessionService extends TextWebSocketHandler {
         String hubContainerName = sessionInfo.getHubContainerName();
         int killTimeoutInSeconds = 10;
         if (hubContainerName != null
-                && dockerService.existsContainer(hubContainerName)) {
-            dockerService.stopAndRemoveContainerWithKillTimeout(
-                    hubContainerName, killTimeoutInSeconds);
+                && platformService.existServiceWithName(hubContainerName)) {
+            platformService.removeServiceWithTimeout(hubContainerName,
+                    killTimeoutInSeconds);
         }
 
         String vncContainerName = sessionInfo.getVncContainerName();
         if (vncContainerName != null
-                && dockerService.existsContainer(vncContainerName)) {
-            dockerService.stopAndRemoveContainerWithKillTimeout(
-                    vncContainerName, killTimeoutInSeconds);
+                && platformService.existServiceWithName(vncContainerName)) {
+            platformService.removeServiceWithTimeout(vncContainerName,
+                    killTimeoutInSeconds);
+        }
+    }
+
+    boolean isLive(String jsonMessage) {
+        boolean out = false;
+        try {
+            out = jsonService
+                    .jsonToObject(jsonMessage, WebDriverCapabilities.class)
+                    .getDesiredCapabilities().isLive();
+        } catch (Exception e) {
+            log.warn(
+                    "Exception {} checking if session is live. JSON message: {}",
+                    e.getMessage(), jsonMessage);
+        }
+        log.trace("Live session = {} -- JSON message: {}", out, jsonMessage);
+        return out;
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        try {
+            sendNewSessionToAllClients((SessionInfo) arg, false);
+        } catch (IOException io) {
+            log.error("Error sending browser status to all clients: {}",
+                    io.getMessage());
         }
     }
 
