@@ -60,27 +60,27 @@ public class EusLogstashService {
         this.dynamicDataService = dynamicDataService;
     }
 
-    // Everey 10 min
-    @Scheduled(fixedRate = 600000)
-    public void cleanMaps() {
-        // Clear map key if was stored since more than
-        // 1,5 hours
-        int maxDifference = 5400000;
-        for (Entry<String, Date> entry : mapKeyDateCreationMap.entrySet()) {
-            long difference = entry.getValue().getTime() - new Date().getTime();
-            if (difference > maxDifference) {
-                try {
-                    log.debug(
-                            "EusLogstashService: Cleaning Execution Map Key {}",
-                            entry.getKey());
-                    mapKeyDateCreationMap.remove(entry.getKey());
-                    executionCounterMap.remove(entry.getKey());
-                    executionSessionMap.remove(entry.getKey());
-                } catch (Exception e) {
-                }
-            }
-        }
-    }
+    // Every 10 min
+//    @Scheduled(fixedRate = 600000)
+//    public void cleanMaps() {
+//        // Clear map key if was stored since more than
+//        // 1,5 hours
+//        int maxDifference = 5400000;
+//        for (Entry<String, Date> entry : mapKeyDateCreationMap.entrySet()) {
+//            long difference = entry.getValue().getTime() - new Date().getTime();
+//            if (difference > maxDifference) {
+//                try {
+//                    log.debug(
+//                            "EusLogstashService: Cleaning Execution Map Key {}",
+//                            entry.getKey());
+//                    mapKeyDateCreationMap.remove(entry.getKey());
+//                    executionCounterMap.remove(entry.getKey());
+//                    executionSessionMap.remove(entry.getKey());
+//                } catch (Exception e) {
+//                }
+//            }
+//        }
+//    }
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             SessionInfo sessionInfo, String monitoringIndex) {
