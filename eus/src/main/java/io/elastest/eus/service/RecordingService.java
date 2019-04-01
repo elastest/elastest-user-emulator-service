@@ -29,6 +29,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -114,8 +115,8 @@ public class RecordingService {
             String recordingFileName) throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
                 sessionId, hubContainerName, recordingFileName);
-        platformService.execCommand(hubContainerName, false, startRecordingScript,
-                "-n", recordingFileName);
+        platformService.execCommand(hubContainerName, false,
+                startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
@@ -139,7 +140,8 @@ public class RecordingService {
             throws Exception {
         log.debug("Stopping recording session {} of container {}", sessionId,
                 hubContainerName);
-        platformService.execCommand(hubContainerName, true, stopRecordingScript);
+        platformService.execCommand(hubContainerName, true,
+                stopRecordingScript);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
@@ -180,6 +182,14 @@ public class RecordingService {
         }
     }
 
+    public String getRecordingFileNameBySessionId(String sessionId) {
+        return sessionId + registryRecordingExtension;
+    }
+
+    public String getMetadataFileNameBySessionId(String sessionId) {
+        return sessionId + registryMetadataExtension;
+    }
+
     public ResponseEntity<String> getRecording(String sessionId)
             throws IOException {
         return this.getRecording(sessionId, etFilesPath);
@@ -188,22 +198,27 @@ public class RecordingService {
     public ResponseEntity<String> getRecording(String sessionId,
             String folderPath) throws IOException {
         HttpStatus status = OK;
-        String recordingFileName = sessionId + registryRecordingExtension;
-
-        // By default the response is the local path for the recording (this
-        // applies to the case of locally stored, and also to the case that the
-        // recording has been previously downloaded from Alluxio)
-        String urlResponse = apiContextPath + registryContextPath + "/"
-                + recordingFileName;
+        String recordingFileName;
+        String urlResponse;
 
         if (!edmAlluxioUrl.isEmpty()) {
+            recordingFileName = getRecordingFileNameBySessionId(sessionId);
             // If EDM Alluxio is available, recording is store in Alluxio
             File targetFile = new File(folderPath + recordingFileName);
             if (!targetFile.exists()) {
                 byte[] file = alluxioService.getFile(recordingFileName);
                 writeByteArrayToFile(targetFile, file);
             }
+        } else { // Normal
+            recordingFileName = getRecordingFileNameBySessionId(
+                    URLEncoder.encode(sessionId, "UTF-8"));
         }
+
+        // By default the response is the local path for the recording (this
+        // applies to the case of locally stored, and also to the case that
+        // the recording has been previously downloaded from Alluxio)
+        urlResponse = apiContextPath + registryContextPath + "/"
+                + recordingFileName;
 
         return new ResponseEntity<>(urlResponse, status);
     }
@@ -216,8 +231,8 @@ public class RecordingService {
     public ResponseEntity<String> deleteRecording(String sessionId,
             String folderPath) throws IOException {
         log.debug("Deleting recording of session {}", sessionId);
-        String recordingFileName = sessionId + registryRecordingExtension;
-        String metadataFileName = sessionId + registryMetadataExtension;
+        String recordingFileName = getRecordingFileNameBySessionId(sessionId);
+        String metadataFileName = getMetadataFileNameBySessionId(sessionId);
 
         boolean existsRecording = true;
         boolean existsMetadata = true;
