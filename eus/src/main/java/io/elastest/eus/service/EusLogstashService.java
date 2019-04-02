@@ -28,11 +28,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.model.ExecutionData;
@@ -61,26 +59,26 @@ public class EusLogstashService {
     }
 
     // Every 10 min
-//    @Scheduled(fixedRate = 600000)
-//    public void cleanMaps() {
-//        // Clear map key if was stored since more than
-//        // 1,5 hours
-//        int maxDifference = 5400000;
-//        for (Entry<String, Date> entry : mapKeyDateCreationMap.entrySet()) {
-//            long difference = entry.getValue().getTime() - new Date().getTime();
-//            if (difference > maxDifference) {
-//                try {
-//                    log.debug(
-//                            "EusLogstashService: Cleaning Execution Map Key {}",
-//                            entry.getKey());
-//                    mapKeyDateCreationMap.remove(entry.getKey());
-//                    executionCounterMap.remove(entry.getKey());
-//                    executionSessionMap.remove(entry.getKey());
-//                } catch (Exception e) {
-//                }
-//            }
-//        }
-//    }
+    // @Scheduled(fixedRate = 600000)
+    // public void cleanMaps() {
+    // // Clear map key if was stored since more than
+    // // 1,5 hours
+    // int maxDifference = 5400000;
+    // for (Entry<String, Date> entry : mapKeyDateCreationMap.entrySet()) {
+    // long difference = entry.getValue().getTime() - new Date().getTime();
+    // if (difference > maxDifference) {
+    // try {
+    // log.debug(
+    // "EusLogstashService: Cleaning Execution Map Key {}",
+    // entry.getKey());
+    // mapKeyDateCreationMap.remove(entry.getKey());
+    // executionCounterMap.remove(entry.getKey());
+    // executionSessionMap.remove(entry.getKey());
+    // } catch (Exception e) {
+    // }
+    // }
+    // }
+    // }
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
             SessionInfo sessionInfo, String monitoringIndex) {
@@ -105,8 +103,8 @@ public class EusLogstashService {
                     + ",\"stream\":\"console\"" + ",\"messages\":"
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);
-            log.debug("Sending browser log to logstash ({}): {}", lsHttpApi,
-                    body);
+            log.debug("{} => Sending browser log to logstash ({}): {}",
+                    sessionInfo.getSessionId(), lsHttpApi, body);
             int length = out.length;
 
             http.setFixedLengthStreamingMode(length);
@@ -188,6 +186,9 @@ public class EusLogstashService {
     }
 
     public static String formatJsonMessage(String msg) {
+        // Split new lines and join with new line character
+        String[] splittedMsg = msg.split(String.format("%n"));
+        msg = String.join("\\n", splittedMsg);
         return "\"" + parseMsg(msg) + "\"";
     }
 
