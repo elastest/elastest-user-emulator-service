@@ -111,19 +111,29 @@ public class DockerHubService {
     }
 
     private List<DockerHubNameSpaceImage> listImages() throws IOException {
+        List<DockerHubNameSpaceImage> results = new ArrayList<>();
         if (dockerHubApi == null) {
             initDockerHubApi();
         }
 
         log.debug("Getting browser image list from Docker Hub: {}",
                 dockerHubUrl);
-        Response<DockerHubNameSpaceImages> listImagesResponse = dockerHubApi
-                .listImages(browserImageNamespace).execute();
+        try {
+            Response<DockerHubNameSpaceImages> listImagesResponse = dockerHubApi
+                    .listImages(browserImageNamespace).execute();
+            if (!listImagesResponse.isSuccessful()) {
+                throw new EusException(listImagesResponse.errorBody().string());
+            }
+            results = listImagesResponse.body().getResults();
 
-        if (!listImagesResponse.isSuccessful()) {
-            throw new EusException(listImagesResponse.errorBody().string());
+        } catch (Exception e) {
+            log.debug(
+                    "Error on getting browser image list from Docker Hub. Getting from cached",
+                    dockerHubUrl);
+            getBrowsers(true);
         }
-        return listImagesResponse.body().getResults();
+
+        return results;
     }
 
     private List<DockerHubTag> listTags(String browserImage)
@@ -274,7 +284,7 @@ public class DockerHubService {
             } else {
                 log.info("Getting default images list");
             }
-            
+
             // If is empty, set manually
             if (this.cachedAvailableBrowsers.isEmpty()) {
                 this.cachedAvailableBrowsers = this.getDefaultBrowsers();
@@ -293,6 +303,9 @@ public class DockerHubService {
         Map<String, List<String>> browsers = new TreeMap<>();
         List<String> chromeTags = new ArrayList<>();
         chromeTags.add("latest");
+        chromeTags.add("73");
+        chromeTags.add("72");
+        chromeTags.add("71");
         chromeTags.add("70");
         chromeTags.add("69");
         chromeTags.add("68");
@@ -311,6 +324,10 @@ public class DockerHubService {
 
         List<String> firefox = new ArrayList<>();
         firefox.add("latest");
+        firefox.add("66");
+        firefox.add("65");
+        firefox.add("64");
+        firefox.add("63");
         firefox.add("62");
         firefox.add("61");
         firefox.add("60.0");
