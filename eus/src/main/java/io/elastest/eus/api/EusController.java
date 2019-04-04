@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.epm.client.service.JsonService;
 import io.elastest.eus.api.model.AudioLevel;
@@ -443,7 +444,7 @@ public class EusController implements EusApi {
             HttpServletRequest request) {
         String requestURL = request.getRequestURL().toString();
         String filePath = requestURL.split("/browserfile/")[1];
-
+        // TODO
         return null;
     }
 
@@ -452,6 +453,39 @@ public class EusController implements EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpServletRequest request) {
+        // TODO
         return null;
+    }
+
+    @Override
+    public ResponseEntity<String> uploadFileToSession(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "file") MultipartFile file) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.uploadFileToSession(sessionId, file);
+        } catch (Exception e) {
+            log.error("Exception on upload file to session {}", sessionId, e);
+            response = webDriverService
+                    .getErrorResponse("Exception on upload file to session", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> uploadFileToSessionExecution(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "file") MultipartFile file) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.uploadFileToSessionExecution(key,
+                    sessionId, file);
+        } catch (Exception e) {
+            log.error("Exception on upload file to session {}", sessionId, e);
+            response = webDriverService
+                    .getErrorResponse("Exception on upload file to session", e);
+        }
+        return response;
     }
 }

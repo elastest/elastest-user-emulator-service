@@ -56,6 +56,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -136,14 +137,9 @@ public class WebDriverService {
     private String etMonInterval;
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
-    @Value("${et.files.path.in.host}")
-    private String filesPathInHost;
-    @Value("${et.shared.folder}")
-    private String eusFilesPath;
+
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
-    @Value("${et.data.in.host}")
-    private String etDataInHost;
 
     /* *** ET container labels *** */
     @Value("${et.type.label}")
@@ -183,6 +179,7 @@ public class WebDriverService {
     private RecordingService recordingService;
     private TimeoutService timeoutService;
     private DynamicDataService dynamicDataService;
+    private EusFilesService eusFilesService;
 
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
 
@@ -191,7 +188,8 @@ public class WebDriverService {
             DockerHubService dockerHubService, EusJsonService jsonService,
             SessionService sessionService, RecordingService recordingService,
             TimeoutService timeoutService,
-            DynamicDataService dynamicDataService) {
+            DynamicDataService dynamicDataService,
+            EusFilesService eusFilesService) {
         this.platformService = platformService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
@@ -199,6 +197,7 @@ public class WebDriverService {
         this.recordingService = recordingService;
         this.timeoutService = timeoutService;
         this.dynamicDataService = dynamicDataService;
+        this.eusFilesService = eusFilesService;
     }
 
     @PreDestroy
@@ -255,7 +254,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                filesPathInHost);
+                eusFilesService.getSessionFolder());
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -283,8 +282,8 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                etDataInHost + data.getFolderPath(),
-                etDataInHost + data.getFolderPath(), data);
+                eusFilesService.getSessionFolderFromExecution(data),
+                eusFilesService.getSessionFolderFromExecution(data), data);
     }
 
     public String parseRequestContext(String requestContext) {
@@ -299,7 +298,7 @@ public class WebDriverService {
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
                 dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                filesPathInHost, null, null);
+                eusFilesService.getSessionFolder(), null, null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -409,7 +408,8 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            filesPathInHost, sessionFolderPath, execData);
+                            eusFilesService.getSessionFolder(),
+                            sessionFolderPath, execData);
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
@@ -1026,5 +1026,34 @@ public class WebDriverService {
             }
         }
         return count;
+    }
+
+    public ResponseEntity<String> uploadFileToSession(String sessionId,
+            MultipartFile file) throws IllegalStateException, IOException {
+        Boolean saved = eusFilesService.uploadFileToSession(sessionId, file);
+
+        if (saved) {
+            return new ResponseEntity<>(file.getOriginalFilename(), OK);
+        } else {
+
+            return new ResponseEntity<>("Error on upload file: Already exists",
+                    HttpStatus.CONFLICT);
+        }
+    }
+
+    public ResponseEntity<String> uploadFileToSessionExecution(
+            String executionKey, String sessionId, MultipartFile file)
+            throws IllegalStateException, IOException {
+        ExecutionData data = executionsMap.get(executionKey);
+        Boolean saved = eusFilesService.uploadFileToSessionExecution(data,
+                sessionId, file);
+
+        if (saved) {
+            return new ResponseEntity<>(file.getOriginalFilename(), OK);
+        } else {
+
+            return new ResponseEntity<>("Error on upload file: Already exists",
+                    HttpStatus.CONFLICT);
+        }
     }
 }

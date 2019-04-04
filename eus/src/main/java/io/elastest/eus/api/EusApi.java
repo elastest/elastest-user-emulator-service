@@ -30,7 +30,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.eus.api.model.AudioLevel;
 import io.elastest.eus.api.model.ColorValue;
@@ -503,12 +505,12 @@ public interface EusApi {
     /* *************************** */
 
     /**
-     * GET /session/{sessionId}/vnc
+     * GET /session/{sessionId}/browserfile
      *
-     * Get VNC session
+     * Get file from session
      */
-    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
-            "Remote control" })
+    @ApiOperation(value = "Get file from session", notes = "", response = String.class, tags = {
+            "Session Files" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
@@ -520,12 +522,12 @@ public interface EusApi {
             HttpServletRequest request);
 
     /**
-     * GET /execution/{key}/session/{sessionId}/vnc
+     * GET /execution/{key}/session/{sessionId}/browserfile
      *
-     * Get Browser file
+     * Get session file
      */
-    @ApiOperation(value = "Get VNC session", notes = "", response = String.class, tags = {
-            "Remote control" })
+    @ApiOperation(value = "Get file from Execution Session", notes = "", response = String.class, tags = {
+            "Session Files" })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
@@ -537,4 +539,34 @@ public interface EusApi {
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpServletRequest request);
 
+    @ApiOperation(value = "Upload a file to session", notes = "Upload a file to session.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/session/{sessionId}/browserfile", consumes = {
+            "multipart/form-data" }, produces = {
+                    "application/json" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadFileToSession(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "file") MultipartFile file);
+
+    @ApiOperation(value = "Upload a file to Execution session", notes = "Upload a file to Execution session.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile", consumes = {
+            "multipart/form-data" }, produces = {
+                    "application/json" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadFileToSessionExecution(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "file") MultipartFile file);
 }

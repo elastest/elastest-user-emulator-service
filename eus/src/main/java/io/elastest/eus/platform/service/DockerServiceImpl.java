@@ -28,9 +28,9 @@ import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
-import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.service.EusFilesService;
 
 @Service
 public class DockerServiceImpl implements PlatformService {
@@ -38,6 +38,11 @@ public class DockerServiceImpl implements PlatformService {
 
     @Value("${container.recording.folder}")
     private String containerRecordingFolder;
+    @Value("${container.shared.files.folder}")
+    private String containerSharedFilesFolder;
+    @Value("${host.shared.files.relative.folder}")
+    private String hostSharedFilesRelativeFolder;
+
     @Value("${hub.exposedport}")
     private int hubExposedPort;
     @Value("${hub.vnc.exposedport}")
@@ -54,9 +59,12 @@ public class DockerServiceImpl implements PlatformService {
     private String dockerNetwork;
 
     private DockerService dockerService;
+    private EusFilesService eusFilesService;
 
-    public DockerServiceImpl(DockerService dockerService) {
+    public DockerServiceImpl(DockerService dockerService,
+            EusFilesService eusFilesService) {
         this.dockerService = dockerService;
+        this.eusFilesService = eusFilesService;
     }
 
     @Override
@@ -86,16 +94,31 @@ public class DockerServiceImpl implements PlatformService {
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
                 containerPrefix);
-        // Recording Volume
-        List<Bind> volumes = new ArrayList<>();
+
+        /* **** Volumes **** */
         logger.info("Folder path in host: {}", folderPath);
-        Builder dockerSockVolumeBuilder = Bind.builder();
-        dockerSockVolumeBuilder.from(folderPath);
-        dockerSockVolumeBuilder.to(containerRecordingFolder);
+        List<Bind> volumes = new ArrayList<>();
 
-        volumes.add(dockerSockVolumeBuilder.build());
+        // Recording
+        Builder recordingsVolumeBuilder = Bind.builder();
+        recordingsVolumeBuilder.from(folderPath);
+        recordingsVolumeBuilder.to(containerRecordingFolder);
+        volumes.add(recordingsVolumeBuilder.build());
 
-        // Port binding
+        // Shared files
+        Builder sharedfilesVolumeBuilder = Bind.builder();
+        String hostSharedFilesFolderPath = folderPath
+                + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
+                        : EusFilesService.FILE_SEPARATOR)
+                + hostSharedFilesRelativeFolder;
+
+        eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
+
+        sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
+        sharedfilesVolumeBuilder.to(containerSharedFilesFolder);
+        volumes.add(sharedfilesVolumeBuilder.build());
+
+        /* **** Port binding **** */
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
 
         int hubPort = dockerService.findRandomOpenPort();
@@ -113,10 +136,11 @@ public class DockerServiceImpl implements PlatformService {
         portBindings.put(exposedNoVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
 
-        // Exposed ports
+        /* **** Exposed ports **** */
         List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
                 exposedNoVncPort);
 
+        /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
         dockerBuilder.containerName(hubContainerName);
         dockerBuilder.exposedPorts(exposedPorts);
@@ -131,7 +155,7 @@ public class DockerServiceImpl implements PlatformService {
             dockerBuilder.extraHosts(capabilities.getExtraHosts());
         }
 
-        // Obtain networks for the browser
+        /* **** Obtain networks for the browser **** */
         List<String> networks = new ArrayList<>();
         String network = dockerNetwork;
         if (execData != null) {
@@ -174,20 +198,23 @@ public class DockerServiceImpl implements PlatformService {
         if (useTorm) {
             dockerBuilder.network(network);
         }
-        // Save info into SessionInfo
+        /* **** Save info into SessionInfo **** */
         dockerBrowserInfo.setHubContainerName(hubContainerName);
         dockerBrowserInfo.setVncContainerName(hubContainerName);
         dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
         dockerBrowserInfo.setStatusMsg("Initializing...");
-        // Pull
+
+        /* **** Pull **** */
         dockerService.pullImageWithProgressHandler(imageId,
                 getBrowserProgressHandler(imageId, dockerBrowserInfo));
         dockerBrowserInfo.setStatus(DockerServiceStatusEnum.STARTING);
         dockerBrowserInfo.setStatusMsg("Starting...");
-        // Start
-        String containerId = dockerService.createAndStartContainerWithPull(
-                dockerBuilder.build(), true);
-        // Additional Networks
+
+        /* **** Start **** */
+        String containerId = dockerService
+                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+
+        /* **** Additional Networks **** */
         if (networks != null && networks.size() > 0) {
             logger.debug(
                     "Inserting browser container into additional networks");
@@ -202,6 +229,7 @@ public class DockerServiceImpl implements PlatformService {
             }
         }
 
+        /* **** Set IPs and ports **** */
         dockerBrowserInfo.setHubIp(dockerService.getDockerServerIp());
         dockerBrowserInfo.setHubPort(hubPort);
         dockerBrowserInfo.setNoVncBindedPort(noVncBindedPort);
