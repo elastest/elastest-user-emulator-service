@@ -549,7 +549,7 @@ public interface EusApi {
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/session/{sessionId}/browserfile", consumes = {
             "multipart/form-data" }, produces = {
-                    "application/json" }, method = RequestMethod.POST)
+                    "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSession(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "file") MultipartFile file);
@@ -564,7 +564,7 @@ public interface EusApi {
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile", consumes = {
             "multipart/form-data" }, produces = {
-                    "application/json" }, method = RequestMethod.POST)
+                    "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionExecution(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
