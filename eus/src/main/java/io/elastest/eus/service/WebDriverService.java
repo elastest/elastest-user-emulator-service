@@ -31,6 +31,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,6 +48,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -1055,5 +1057,22 @@ public class WebDriverService {
             return new ResponseEntity<>("Error on upload file: Already exists",
                     HttpStatus.CONFLICT);
         }
+    }
+
+    public InputStreamResource getFileFromBrowser(String sessionId,
+            String filePath, Boolean isDirectory) throws Exception {
+        SessionInfo sessionInfo;
+        Optional<SessionInfo> optionalSession = sessionService
+                .getSession(sessionId);
+        if (optionalSession.isPresent()) {
+            sessionInfo = optionalSession.get();
+        } else {
+            throw new Exception("Session " + sessionId + " not found");
+        }
+
+        InputStream fileStream = platformService.getFileFromBrowser(sessionInfo,
+                filePath, isDirectory);
+
+        return new InputStreamResource(fileStream);
     }
 }

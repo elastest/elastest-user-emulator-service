@@ -22,6 +22,8 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,8 +31,12 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -439,22 +445,54 @@ public class EusController implements EusApi {
     /* *************************** */
 
     @Override
-    public ResponseEntity<String> getFile(
+    public ResponseEntity<InputStreamResource> getFile(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "isDirectory", required = false) Boolean isDirectory,
             HttpServletRequest request) {
         String requestURL = request.getRequestURL().toString();
-        String filePath = requestURL.split("/browserfile/")[1];
-        // TODO
-        return null;
+        String filePath = requestURL.split(sessionId)[1];
+
+        if (isDirectory == null) {
+            isDirectory = false;
+        }
+
+        try {
+            InputStreamResource resource = webDriverService
+                    .getFileFromBrowser(sessionId, filePath, isDirectory);
+
+            // Try to determine file's content type
+            String contentType = request.getServletContext()
+                    .getMimeType(filePath);
+
+            String fileName;
+
+            if (isDirectory || contentType == null || contentType.isEmpty()) {
+                // Is folder => Tar file with file(s) into
+                contentType = "application/x-tar";
+                fileName = "download_from_session_" + sessionId + ".tar";
+            } else {
+                Path p = Paths.get(filePath);
+                fileName = p.getFileName().toString();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("Exception on get file from session {}", sessionId, e);
+            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
     }
 
     @Override
-    public ResponseEntity<String> executionGetFile(
+    public ResponseEntity<InputStreamResource> executionGetFile(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "isDirectory", required = false) Boolean isDirectory,
             HttpServletRequest request) {
-        // TODO
-        return null;
+        return getFile(sessionId, isDirectory, request);
     }
 
     @Override

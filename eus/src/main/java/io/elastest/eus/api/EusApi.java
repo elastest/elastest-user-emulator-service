@@ -25,6 +25,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -505,38 +506,40 @@ public interface EusApi {
     /* *************************** */
 
     /**
-     * GET /session/{sessionId}/browserfile
+     * GET /session/{sessionId}/browserfile/**
      *
      * Get file from session
      */
-    @ApiOperation(value = "Get file from session", notes = "", response = String.class, tags = {
+    @ApiOperation(value = "Get file from session", notes = "", response = InputStreamResource.class, tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
-            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/{sessionId}/browserfile/**", produces = {
-            "text/plain" }, method = { GET })
-    ResponseEntity<String> getFile(
+            @ApiResponse(code = 200, message = "Successful operation", response = InputStreamResource.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = InputStreamResource.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = InputStreamResource.class) })
+    @RequestMapping(value = "/browserfile/session/{sessionId}/**", produces = {
+            "multipart/form-data" }, method = { GET })
+    ResponseEntity<InputStreamResource> getFile(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "isDirectory", required = false) Boolean isDirectory,
             HttpServletRequest request);
 
     /**
-     * GET /execution/{key}/session/{sessionId}/browserfile
+     * GET /execution/{key}/session/{sessionId}/browserfile/**
      *
      * Get session file
      */
-    @ApiOperation(value = "Get file from Execution Session", notes = "", response = String.class, tags = {
+    @ApiOperation(value = "Get file from Execution Session", notes = "", response = InputStreamResource.class, tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
-            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = InputStreamResource.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = InputStreamResource.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = InputStreamResource.class) })
     @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile/**", produces = {
-            "text/plain" }, method = { GET })
-    ResponseEntity<String> executionGetFile(
+            "multipart/form-data" }, method = { GET })
+    ResponseEntity<InputStreamResource> executionGetFile(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "isDirectory", required = false) Boolean isDirectory,
             HttpServletRequest request);
 
     @ApiOperation(value = "Upload a file to session", notes = "Upload a file to session.", response = String.class, tags = {

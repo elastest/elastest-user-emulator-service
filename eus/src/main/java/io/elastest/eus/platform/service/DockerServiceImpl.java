@@ -5,6 +5,7 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -78,6 +79,21 @@ public class DockerServiceImpl implements PlatformService {
                     .getContainerNetworks(containers.get(0).id());
         }
         return networks;
+    }
+
+    @Override
+    public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
+            String path, Boolean isDirectory) throws Exception {
+        // Note!!!: if file does not exists, spotify docker
+        // returns ContainernotFoundException (bug)
+
+        if (isDirectory) {
+            return dockerService.getFilesFromContainer(
+                    dockerBrowserInfo.getVncContainerName(), path);
+        } else {
+            return dockerService.getSingleFileFromContainer(
+                    dockerBrowserInfo.getVncContainerName(), path);
+        }
     }
 
     @Override
@@ -198,7 +214,7 @@ public class DockerServiceImpl implements PlatformService {
         if (useTorm) {
             dockerBuilder.network(network);
         }
-        /* **** Save info into SessionInfo **** */
+        /* **** Save info **** */
         dockerBrowserInfo.setHubContainerName(hubContainerName);
         dockerBrowserInfo.setVncContainerName(hubContainerName);
         dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
@@ -281,4 +297,5 @@ public class DockerServiceImpl implements PlatformService {
         dockerService.stopAndRemoveContainerWithKillTimeout(containerId,
                 killAfterSeconds);
     }
+
 }
