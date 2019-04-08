@@ -534,7 +534,7 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = InputStreamResource.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = InputStreamResource.class),
             @ApiResponse(code = 500, message = "Internal server error", response = InputStreamResource.class) })
-    @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile/**", produces = {
+    @RequestMapping(value = "/execution/{key}/browserfile/session/{sessionId}/**", produces = {
             "multipart/form-data" }, method = { GET })
     ResponseEntity<InputStreamResource> executionGetFile(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
@@ -565,7 +565,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid File supplied"),
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
-    @RequestMapping(value = "/browserfile/execution/{key}/session/{sessionId}", consumes = {
+    @RequestMapping(value = "/execution/{key}/browserfile/session/{sessionId}", consumes = {
             "multipart/form-data" }, produces = {
                     "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionExecution(
