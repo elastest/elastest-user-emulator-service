@@ -18,11 +18,17 @@ public class EusFilesService {
     final Logger logger = getLogger(lookup().lookupClass());
 
     @Value("${et.shared.folder}")
+    private String etSharedFolder;
+
+    // Internal (/data/eus)
+    @Value("${et.files.path}")
     private String eusFilesPath;
 
+    // Host
     @Value("${et.files.path.in.host}")
     private String filesPathInHost;
 
+    // Host (without /eus)
     @Value("${et.data.in.host}")
     private String etDataInHost;
 
@@ -34,6 +40,14 @@ public class EusFilesService {
     public EusFilesService() {
     }
 
+    public String getEusFilesPath() {
+        return eusFilesPath;
+    }
+
+    public String getInternalSessionFolderFromExecution(ExecutionData data) {
+        return getEusFilesPath() + data.getFolderPath();
+    }
+    
     public String getFilesPathInHostPath() {
         return filesPathInHost;
     }
@@ -42,8 +56,8 @@ public class EusFilesService {
         return etDataInHost;
     }
 
-    public String getSessionFolderFromExecution(ExecutionData data) {
-        return etDataInHost + data.getFolderPath();
+    public String getHostSessionFolderFromExecution(ExecutionData data) {
+        return getEtDataInHostPath() + data.getFolderPath();
     }
 
     public void createFolderIfNotExists(String path) {
@@ -80,7 +94,7 @@ public class EusFilesService {
     public Boolean uploadFileToSession(String sessionId, String fileName,
             MultipartFile multipartFile)
             throws IllegalStateException, IOException {
-        String path = getEtDataInHostPath();
+        String path = getEusFilesPath();
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
                 + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
         return uploadFileToPath(path, fileName, multipartFile);
@@ -94,7 +108,7 @@ public class EusFilesService {
     public Boolean uploadFileToSessionExecution(ExecutionData data,
             String sessionId, String fileName, MultipartFile multipartFile)
             throws IllegalStateException, IOException {
-        String path = getSessionFolderFromExecution(data);
+        String path = getInternalSessionFolderFromExecution(data);
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
                 + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
         return uploadFileToPath(path, fileName, multipartFile);

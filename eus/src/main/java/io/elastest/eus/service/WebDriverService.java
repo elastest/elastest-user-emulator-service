@@ -284,8 +284,8 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
-                eusFilesService.getSessionFolderFromExecution(data),
-                eusFilesService.getSessionFolderFromExecution(data), data);
+                eusFilesService.getHostSessionFolderFromExecution(data),
+                eusFilesService.getHostSessionFolderFromExecution(data), data);
     }
 
     public String parseRequestContext(String requestContext) {
