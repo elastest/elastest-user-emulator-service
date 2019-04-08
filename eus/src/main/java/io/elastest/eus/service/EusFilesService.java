@@ -34,8 +34,12 @@ public class EusFilesService {
     public EusFilesService() {
     }
 
-    public String getSessionFolder() {
+    public String getFilesPathInHostPath() {
         return filesPathInHost;
+    }
+
+    public String getEtDataInHostPath() {
+        return etDataInHost;
     }
 
     public String getSessionFolderFromExecution(ExecutionData data) {
@@ -76,7 +80,7 @@ public class EusFilesService {
     public Boolean uploadFileToSession(String sessionId, String fileName,
             MultipartFile multipartFile)
             throws IllegalStateException, IOException {
-        String path = getSessionFolder();
+        String path = getEtDataInHostPath();
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
                 + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
         return uploadFileToPath(path, fileName, multipartFile);

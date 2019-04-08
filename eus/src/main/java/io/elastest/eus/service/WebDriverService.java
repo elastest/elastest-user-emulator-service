@@ -256,7 +256,7 @@ public class WebDriverService {
 
         return this.session(httpEntity, requestContext, request.getMethod(),
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
-                eusFilesService.getSessionFolder());
+                eusFilesService.getFilesPathInHostPath());
     }
 
     public String getRequestContext(HttpServletRequest request) {
@@ -300,7 +300,7 @@ public class WebDriverService {
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
                 dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                eusFilesService.getSessionFolder(), null, null);
+                eusFilesService.getFilesPathInHostPath(), null, null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
@@ -410,7 +410,7 @@ public class WebDriverService {
                             sessionInfo);
                     stopBrowser(sessionInfo);
                     sessionInfo = startBrowser(newRequestBody, requestBody,
-                            eusFilesService.getSessionFolder(),
+                            eusFilesService.getFilesPathInHostPath(),
                             sessionFolderPath, execData);
                     numRetries++;
                     logger.debug(
