@@ -40,14 +40,18 @@ public class EusFilesService {
     public EusFilesService() {
     }
 
+    public String getEtSharedFolder() {
+        return etSharedFolder;
+    }
+
     public String getEusFilesPath() {
         return eusFilesPath;
     }
 
     public String getInternalSessionFolderFromExecution(ExecutionData data) {
-        return getEusFilesPath() + data.getFolderPath();
+        return getEtSharedFolder() + data.getFolderPath();
     }
-    
+
     public String getFilesPathInHostPath() {
         return filesPathInHost;
     }
