@@ -550,7 +550,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid File supplied"),
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
-    @RequestMapping(value = "/session/{sessionId}/browserfile", consumes = {
+    @RequestMapping(value = "/browserfile/session/{sessionId}", consumes = {
             "multipart/form-data" }, produces = {
                     "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSession(
@@ -565,7 +565,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid File supplied"),
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
-    @RequestMapping(value = "/execution/{key}/session/{sessionId}/browserfile", consumes = {
+    @RequestMapping(value = "/browserfile/execution/{key}/session/{sessionId}", consumes = {
             "multipart/form-data" }, produces = {
                     "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionExecution(
