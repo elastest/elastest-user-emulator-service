@@ -25,7 +25,6 @@ import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
@@ -45,8 +44,6 @@ import io.elastest.eus.test.IntegrationBaseTest;
  * @since 0.0.1
  */
 @TestPropertySource(properties = { "hub.timeout=5" })
-@Disabled
-// Disabled temporally
 public class TimeoutTest extends IntegrationBaseTest {
 
     final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
