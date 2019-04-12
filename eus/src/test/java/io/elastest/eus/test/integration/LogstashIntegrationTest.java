@@ -24,9 +24,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.ServerSocket;
 
@@ -36,7 +34,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -44,7 +41,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 
 import io.elastest.eus.service.EusLogstashService;
 import io.elastest.eus.session.SessionInfo;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for Logstash service.
@@ -55,10 +52,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
 @TestInstance(PER_CLASS)
 @Tag("integration")
 @DisplayName("Integration test for Logstash Service")
-public class LogstashIntegrationTest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
+public class LogstashIntegrationTest extends BaseTest {
     @Autowired
     EusLogstashService logstashService;
 

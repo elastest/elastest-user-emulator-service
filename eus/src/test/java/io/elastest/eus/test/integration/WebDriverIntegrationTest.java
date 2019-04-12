@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.WebDriverService;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for EUS status.
@@ -44,7 +44,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
  */
 @Tag("integration")
 @DisplayName("Integration tests for the status operation")
-public class WebDriverIntegrationTest extends IntegrationBaseTest {
+public class WebDriverIntegrationTest extends BaseTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 

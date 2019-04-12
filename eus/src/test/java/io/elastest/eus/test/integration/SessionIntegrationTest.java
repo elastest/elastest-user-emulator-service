@@ -22,16 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
@@ -43,7 +47,7 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
  */
 @Tag("integration")
 @DisplayName("Integration tests with W3C WebDriver sessions")
-public class SessionIntegrationTest extends IntegrationBaseTest {
+public class SessionIntegrationTest extends BaseTest {
 
     @BeforeEach
     void setup() {
@@ -104,7 +108,28 @@ public class SessionIntegrationTest extends IntegrationBaseTest {
         log.debug("DELETE /session/{}/recording", sessionId);
         this.deleteSessionRecordings(sessionId);
 
-        // Exercise #5 Destroy session and close WebSocket
+        // #5 Upload a file
+        log.debug("POST /browserfile/session/{}", sessionId);
+
+        String fileName = sessionId + "_upload_file.txt";
+        MultipartFile file = getMultipartFileFromString(fileName,
+                "Hello World!");
+        response = uploadFileToSession(file, sessionId);
+        assertEquals(OK, response.getStatusCode());
+        assertThat(response.getHeaders().getContentType().toString(),
+                containsString(TEXT_PLAIN_VALUE));
+
+        // #6 Get file from session
+        log.debug("GET /browserfile/session/{}/{}", sessionId,
+                "PATH/" + fileName);
+
+        ResponseEntity<InputStreamResource> responseFile = this
+                .getUploadedFileFromSession(fileName, sessionId);
+        assertEquals(OK, responseFile.getStatusCode());
+        assertThat(responseFile.getHeaders().getContentType().toString(),
+                containsString(TEXT_PLAIN_VALUE));
+
+        // #7 Destroy session and close WebSocket
         log.debug("DELETE /session/{}", sessionId);
         this.deleteSession(sessionId);
         webSocketClient.closeSession();

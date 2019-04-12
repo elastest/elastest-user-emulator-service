@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for JQ service (JSON processor).
@@ -38,7 +38,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
  */
 @Tag("integration")
 @DisplayName("Integration tests using JQ (JSON processor)")
-public class JqIntegrationTest extends IntegrationBaseTest {
+public class JqIntegrationTest extends BaseTest {
 
     @Autowired
     private EusJsonService jsonService;

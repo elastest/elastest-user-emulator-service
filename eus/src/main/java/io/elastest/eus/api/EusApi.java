@@ -386,7 +386,7 @@ public interface EusApi {
     /**
      * GET/DELETE /session/{sessionId}/recording
      *
-     * Get MP4 recording
+     * Get/Delete MP4 recording
      */
     @ApiOperation(value = "Handle recordings", notes = "", response = String.class, tags = {
             "Remote control" })
@@ -403,7 +403,7 @@ public interface EusApi {
     /**
      * GET/DELETE /execution/{key}/session/{sessionId}/recording
      *
-     * Get MP4 recording
+     * Get/Delete MP4 recording
      */
     @ApiOperation(value = "Handle recordings", notes = "", response = String.class, tags = {
             "Remote control" })

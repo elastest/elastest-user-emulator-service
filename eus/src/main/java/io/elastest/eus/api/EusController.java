@@ -450,7 +450,23 @@ public class EusController implements EusApi {
             @RequestParam(value = "isDirectory", required = false) Boolean isDirectory,
             HttpServletRequest request) {
         String requestURL = request.getRequestURL().toString();
-        String filePath = requestURL.split(sessionId)[1];
+        String[] splittedRequestURL = requestURL.split(sessionId);
+        String filePath = "";
+        if (splittedRequestURL.length == 2) {
+            filePath = splittedRequestURL[1];
+        } else if (splittedRequestURL.length > 2) {
+            // This case its only if file contains sessionId in its name
+            boolean isFirst = true;
+            for (String part : splittedRequestURL) {
+                if (!isFirst) {
+                    if (filePath != "") {
+                        filePath += sessionId;
+                    }
+                    filePath += part;
+                }
+                isFirst = false;
+            }
+        }
 
         if (isDirectory == null) {
             isDirectory = false;
@@ -482,7 +498,7 @@ public class EusController implements EusApi {
                     .body(resource);
         } catch (Exception e) {
             log.error("Exception on get file from session {}", sessionId, e);
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

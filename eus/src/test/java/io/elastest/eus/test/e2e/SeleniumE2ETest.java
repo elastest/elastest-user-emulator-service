@@ -16,11 +16,9 @@
  */
 package io.elastest.eus.test.e2e;
 
-import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openqa.selenium.remote.DesiredCapabilities.chrome;
 import static org.openqa.selenium.remote.DesiredCapabilities.firefox;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,11 +33,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.LocalServerPort;
 
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Selenium test.
@@ -49,17 +45,11 @@ import io.elastest.eus.test.IntegrationBaseTest;
  */
 @Tag("e2e")
 @DisplayName("End-to-end tests using Selenium WebDriver")
-public class SeleniumE2ETest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
+public class SeleniumE2ETest extends BaseTest {
     WebDriver driver;
 
     @LocalServerPort
     int serverPort;
-
-    @Value("${api.context.path}")
-    String apiContextPath;
 
     static Stream<Arguments> capabilitiesProvider() {
         return Stream.of(Arguments.of(chrome()), Arguments.of(firefox()));
@@ -69,7 +59,6 @@ public class SeleniumE2ETest extends IntegrationBaseTest {
     @DisplayName("Visit elastest.io using a browser provided by EUS")
     @MethodSource("capabilitiesProvider")
     void test(DesiredCapabilities capability) throws MalformedURLException {
-        String eusUrl = "http://localhost:" + serverPort + apiContextPath;
         String sutUrl = "http://elastest.io/";
 
         log.debug("EUS URL: {}", eusUrl);

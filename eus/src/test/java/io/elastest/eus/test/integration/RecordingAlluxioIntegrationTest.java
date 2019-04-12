@@ -16,8 +16,6 @@
  */
 package io.elastest.eus.test.integration;
 
-import static java.lang.invoke.MethodHandles.lookup;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,16 +24,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for recording service.
@@ -46,16 +41,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
 @TestPropertySource(properties = { "edm.alluxio.url=http://localhost" })
 @Tag("integration")
 @DisplayName("Integration tests for recording capabilities using the service API")
-public class RecordingAlluxioIntegrationTest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
-    @LocalServerPort
-    int serverPort;
-
-    @Value("${api.context.path}")
-    String apiContextPath;
-
+public class RecordingAlluxioIntegrationTest extends BaseTest {
     @Autowired
     WebApplicationContext webContext;
 

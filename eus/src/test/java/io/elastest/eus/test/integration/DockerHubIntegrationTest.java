@@ -16,11 +16,9 @@
  */
 package io.elastest.eus.test.integration;
 
-import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,11 +27,10 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.elastest.eus.service.DockerHubService;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for Docker Hub service.
@@ -44,10 +41,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
 
 @Tag("integration")
 @DisplayName("Integration test for Docker Hub Service")
-public class DockerHubIntegrationTest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
+public class DockerHubIntegrationTest extends BaseTest {
     @Autowired
     private DockerHubService dockerHubService;
 

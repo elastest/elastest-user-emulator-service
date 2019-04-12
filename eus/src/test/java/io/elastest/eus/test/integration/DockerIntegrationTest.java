@@ -16,9 +16,7 @@
  */
 package io.elastest.eus.test.integration;
 
-import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,7 +26,6 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -39,7 +36,7 @@ import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.service.DockerHubService;
 import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Tests for Docker service.
@@ -49,10 +46,7 @@ import io.elastest.eus.test.IntegrationBaseTest;
  */
 @Tag("integration")
 @DisplayName("Integration test for Docker Service")
-public class DockerIntegrationTest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
+public class DockerIntegrationTest extends BaseTest {
     @Autowired
     private DockerService dockerService;
 

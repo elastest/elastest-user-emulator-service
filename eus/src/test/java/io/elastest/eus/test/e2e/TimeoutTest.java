@@ -29,13 +29,9 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 
 /**
  * Timeout test.
@@ -44,21 +40,11 @@ import io.elastest.eus.test.IntegrationBaseTest;
  * @since 0.0.1
  */
 @TestPropertySource(properties = { "hub.timeout=5" })
-public class TimeoutTest extends IntegrationBaseTest {
-
-    final Logger log = LoggerFactory.getLogger(TimeoutTest.class);
-
+public class TimeoutTest extends BaseTest {
     WebDriver driver;
-
-    @LocalServerPort
-    int serverPort;
-
-    @Value("${api.context.path}")
-    String apiContextPath;
 
     @BeforeEach
     void setup() throws MalformedURLException {
-        String eusUrl = "http://localhost:" + serverPort + apiContextPath;
         driver = new RemoteWebDriver(new URL(eusUrl), chrome());
         log.debug("EUS URL: {}", eusUrl);
     }

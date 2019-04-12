@@ -16,12 +16,10 @@
  */
 package io.elastest.eus.test.integration;
 
-import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -31,17 +29,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.server.LocalServerPort;
 
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.session.SessionInfo;
-import io.elastest.eus.test.IntegrationBaseTest;
+import io.elastest.eus.test.BaseTest;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
 
@@ -53,33 +48,7 @@ import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
  */
 @Tag("integration")
 @DisplayName("Integration tests for WebSockets")
-public class WebSocketIntegrationTest extends IntegrationBaseTest {
-
-    final Logger log = getLogger(lookup().lookupClass());
-
-    @LocalServerPort
-    int serverPort;
-
-    @Value("${ws.path}")
-    private String wsPath;
-
-    @Value("${ws.protocol.getSessions}")
-    private String wsProtocolGetSessions;
-
-    @Value("${ws.protocol.getRecordings}")
-    private String wsProtocolGetRecordings;
-
-    @Value("${ws.protocol.newSession}")
-    private String wsProtocolNewSession;
-
-    @Value("${ws.protocol.recordedSession}")
-    private String wsProtocolRecordedSesssion;
-
-    @Value("${registry.metadata.extension}")
-    private String registryMetadataExtension;
-
-    @Value("${registry.folder}")
-    private String registryFolder;
+public class WebSocketIntegrationTest extends BaseTest {
 
     @Autowired
     private SessionService sessionService;
@@ -102,8 +71,6 @@ public class WebSocketIntegrationTest extends IntegrationBaseTest {
 
         String jsonMessage = jsonService.objectToJson(sessionInfo);
         assertNotNull(jsonMessage);
-
-        String wsUrl = "ws://localhost:" + serverPort + wsPath;
 
         final String sentMessage = wsProtocolGetSessions;
         final String[] receivedMessage = { "" };
@@ -162,8 +129,6 @@ public class WebSocketIntegrationTest extends IntegrationBaseTest {
         String jsonMessage = jsonService
                 .objectToJson(new WebSocketNewSession(sessionInfo));
         assertNotNull(jsonMessage);
-
-        String wsUrl = "ws://localhost:" + serverPort + wsPath;
 
         final String sentMessage = wsProtocolGetRecordings;
         final String[] receivedMessage = { "" };
