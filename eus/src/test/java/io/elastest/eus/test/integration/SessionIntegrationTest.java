@@ -123,7 +123,7 @@ public class SessionIntegrationTest extends BaseTest {
                 "PATH/" + fileName);
 
         ResponseEntity<InputStreamResource> responseFile = this
-                .getUploadedFileFromSession(fileName, sessionId);
+                .getUploadedFileFromSession("aaa", sessionId);
         assertEquals(OK, responseFile.getStatusCode());
         assertThat(responseFile.getHeaders().getContentType().toString(),
                 containsString(TEXT_PLAIN_VALUE));

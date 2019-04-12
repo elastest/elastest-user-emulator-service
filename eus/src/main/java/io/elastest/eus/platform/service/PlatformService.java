@@ -15,6 +15,9 @@ public interface PlatformService {
     public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
             String path, Boolean isDirectory) throws Exception;
 
+    public String getSessionContextInfo(
+            DockerBrowserInfo dockerBrowserInfo) throws Exception;
+
     public String generateRandomContainerNameWithPrefix(String prefix);
 
     public void buildAndRunBrowserInContainer(

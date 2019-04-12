@@ -1072,4 +1072,18 @@ public class WebDriverService {
 
         return new InputStreamResource(fileStream);
     }
+
+    public String getSessionContextInfo(String sessionId) throws Exception {
+        SessionInfo sessionInfo;
+        Optional<SessionInfo> optionalSession = sessionService
+                .getSession(sessionId);
+        if (optionalSession.isPresent()) {
+            sessionInfo = optionalSession.get();
+        } else {
+            throw new Exception("Session " + sessionId + " not found");
+        }
+
+        return platformService.getSessionContextInfo(sessionInfo);
+
+    }
 }

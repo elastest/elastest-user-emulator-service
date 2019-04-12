@@ -97,6 +97,16 @@ public class DockerServiceImpl implements PlatformService {
     }
 
     @Override
+    public String getSessionContextInfo(DockerBrowserInfo dockerBrowserInfo)
+            throws Exception {
+        String vncContainerName = dockerBrowserInfo.getVncContainerName();
+        if (vncContainerName != null) {
+            return dockerService.getContainerInfoStringByName(vncContainerName);
+        }
+        return "";
+    }
+
+    @Override
     public String generateRandomContainerNameWithPrefix(String prefix) {
         return prefix + randomUUID().toString();
     }

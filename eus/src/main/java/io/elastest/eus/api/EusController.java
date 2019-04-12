@@ -497,7 +497,15 @@ public class EusController implements EusApi {
                             "attachment; filename=\"" + fileName + "\"")
                     .body(resource);
         } catch (Exception e) {
-            log.error("Exception on get file from session {}", sessionId, e);
+            log.error("Exception on get file {} from session {}", filePath,
+                    sessionId, e);
+            try {
+                log.debug("Session Info: {}",
+                        webDriverService.getSessionContextInfo(sessionId));
+            } catch (Exception e1) {
+                log.error("Error on get Session {} Info", sessionId,
+                        e1.getMessage());
+            }
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
