@@ -22,10 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -115,6 +113,7 @@ public class SessionIntegrationTest extends BaseTest {
         MultipartFile file = getMultipartFileFromString(fileName,
                 "Hello World!");
         response = uploadFileToSession(file, sessionId);
+        log.debug("Response body: {}", response.getBody());
         assertEquals(OK, response.getStatusCode());
         assertThat(response.getHeaders().getContentType().toString(),
                 containsString(TEXT_PLAIN_VALUE));

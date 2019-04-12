@@ -58,7 +58,6 @@ import io.elastest.eus.session.SessionInfo;
  */
 @Service
 public class RecordingService {
-
     final Logger log = getLogger(lookup().lookupClass());
 
     @Value("${et.files.path}")
@@ -84,9 +83,6 @@ public class RecordingService {
 
     @Value("${stop.recording.script.filename}")
     private String stopRecordingScript;
-
-    @Value("${container.recording.folder}")
-    private String containerRecordingFolder;
 
     private EusJsonService jsonService;
     private AlluxioService alluxioService;
