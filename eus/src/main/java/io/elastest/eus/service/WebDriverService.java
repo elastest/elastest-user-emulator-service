@@ -140,9 +140,6 @@ public class WebDriverService {
     @Value("${et.browser.component.prefix}")
     private String etBrowserComponentPrefix;
 
-    @Value("${container.recording.folder}")
-    private String containerRecordingFolder;
-
     /* *** ET container labels *** */
     @Value("${et.type.label}")
     public String etTypeLabel;

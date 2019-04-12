@@ -48,7 +48,7 @@ node('TESTDOCKER') {
                 stage "Tests"
                     echo ("Starting tests")
                     try {
-                        sh 'cd eus; mvn clean -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/' test
+                        sh 'cd eus; mvn clean -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/ test' 
                     } catch (err) {
                         def errString = err.toString()
                         currentBuild.result = getJobStatus(errString)
