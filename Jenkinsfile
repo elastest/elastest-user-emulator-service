@@ -50,6 +50,7 @@ node('TESTDOCKER') {
                     try {
                         sh 'cd eus; mvn clean -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/ test' 
                     } catch (err) {
+			sh 'ls /tmp/eus/shared_files'
                         def errString = err.toString()
                         currentBuild.result = getJobStatus(errString)
                         throw err
