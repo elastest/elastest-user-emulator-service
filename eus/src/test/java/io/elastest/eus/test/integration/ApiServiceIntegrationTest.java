@@ -156,4 +156,13 @@ public class ApiServiceIntegrationTest extends IntegrationBaseTest {
                 .andExpect(status().isOk());
     }
 
+    // Browsers
+
+    @Test
+    @DisplayName("POST /browsers")
+    void testGetBrowsers() throws Exception {
+        mockMvc.perform(get(apiContextPath + "/browsers"))
+                .andExpect(status().isOk()).andExpect(content()
+                        .contentType("application/json;charset=UTF-8"));
+    }
 }
