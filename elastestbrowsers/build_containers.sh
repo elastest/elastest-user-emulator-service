@@ -63,6 +63,7 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GD_VERSION=${GECKO_VERSION} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/firefox:beta-${EB_VERSION} \
+  --tag elastestbrowsers/firefox:beta \
   --file Dockerfile .
 rm image/selenoid/browsers.json.beta
 
@@ -77,6 +78,7 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GD_VERSION=${GECKO_VERSION} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/firefox:nightly-${EB_VERSION} \
+  --tag elastestbrowsers/firefox:nightly \
   --file Dockerfile .
 rm image/selenoid/browsers.json.nightly
 
@@ -131,6 +133,7 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/chrome:beta-${EB_VERSION} \
+  --tag elastestbrowsers/chrome:beta \
   --file Dockerfile .
 rm image/selenoid/browsers.json.beta
 
@@ -145,6 +148,7 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg CD_VERSION=${CHROME_DRIVER_VER} \
   --build-arg SELENOID_VERSION=${SELENOID_VERSION} \
   --tag elastestbrowsers/chrome:unstable-${EB_VERSION} \
+  --tag elastestbrowsers/chrome:unstable \
   --file Dockerfile .
 rm image/selenoid/browsers.json.unstable
 
