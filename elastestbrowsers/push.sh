@@ -8,14 +8,22 @@ WORKDIR=$PWD/workdir
 docker push elastestbrowsers/utils-x11-base:${EB_VERSION}
   
 docker push elastestbrowsers/chrome:latest-${EB_VERSION}
-docker push elastestbrowsers/chrome:$CHROME_VER-${EB_VERSION}
+docker push elastestbrowsers/chrome:latest
+docker push elastestbrowsers/chrome:${CHROME_VER}-${EB_VERSION}
+docker push elastestbrowsers/chrome:${CHROME_VER}
 docker push elastestbrowsers/chrome:beta-${EB_VERSION}
+docker push elastestbrowsers/chrome:beta
 docker push elastestbrowsers/chrome:unstable-${EB_VERSION}
+docker push elastestbrowsers/chrome:unstable
 
 docker push elastestbrowsers/firefox:latest-${EB_VERSION}
-docker push elastestbrowsers/firefox:$FIREFOX_VER-${EB_VERSION}
+docker push elastestbrowsers/firefox:latest
+docker push elastestbrowsers/firefox:${FIREFOX_VER}-${EB_VERSION}
+docker push elastestbrowsers/firefox:${FIREFOX_VER}
 docker push elastestbrowsers/firefox:beta-${EB_VERSION}
+docker push elastestbrowsers/firefox:beta
 docker push elastestbrowsers/firefox:nightly-${EB_VERSION}
+docker push elastestbrowsers/firefox:nightly
 
 if [ "$MODE" == "FULL" ]; then
 	for V in $FIREFOX_OLD_VERSIONS
