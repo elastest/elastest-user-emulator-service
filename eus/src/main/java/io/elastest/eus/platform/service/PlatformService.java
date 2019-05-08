@@ -5,7 +5,6 @@ import java.util.Map;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
-import io.elastest.eus.session.SessionInfo;
 
 public interface PlatformService {
 

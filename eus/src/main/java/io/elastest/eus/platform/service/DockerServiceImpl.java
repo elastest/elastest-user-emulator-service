@@ -28,7 +28,6 @@ import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
-import io.elastest.epm.client.service.EpmService;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 
