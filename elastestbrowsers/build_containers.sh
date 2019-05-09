@@ -22,7 +22,7 @@ get_geckodriver () {
   set -o pipefail
   if [ -z "${GECKO_VERSION}"]; then
     GECKO_RELEASE_URL=https://api.github.com/repos/mozilla/geckodriver/releases/latest
-    GECKO_VERSION=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "firefox..=" | head -n1 | cut -d"=" -f2)
+    GECKO_VERSION=$(curl --silent ${WEBDRIVER_VERSIONS} | grep -Eo "firefox[0-9]{2,3}=" | head -n1 | cut -d"=" -f2)
   fi
   wget -O $WORKDIR/geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz
   tar xvzf $WORKDIR/geckodriver.tar.gz -C $WORKDIR
@@ -36,11 +36,11 @@ get_chromedriver () {
   set +o pipefail
   CHROME_DRIVER_VER=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "chrome${1}" | cut -d"=" -f2)
   if [ -z "${CHROME_DRIVER_VER}" ]; then
-    CHROME_DRIVER_VER=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "chrome..=" | head -n1 | cut -d"=" -f2)
+    CHROME_DRIVER_VER=$(curl --silent ${WEBDRIVER_VERSIONS} | grep -Eo "chrome[0-9]{2,3}=" | head -n1 | cut -d"=" -f2)
   fi
   set -o pipefail
   wget -O $WORKDIR/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VER/chromedriver_linux64.zip
-  unzip $WORKDIR/chromedriver.zip -d $WORKDIR
+  yes | unzip $WORKDIR/chromedriver.zip -d $WORKDIR
   rm -Rfv $WORKDIR/chromedriver.zip
   cp -p $WORKDIR/chromedriver image/selenoid/chromedriver
 }
