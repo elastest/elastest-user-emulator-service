@@ -21,6 +21,7 @@ script:
     - cd ..
     - cd ..
     - cd eus
-    - mvn test sonar:sonar -Ddocker.server.url=unix:///var/run/docker.sock -Dspring.profiles.active=required,notdependency
+    - mkdir tmp
+    - mvn test sonar:sonar -Ddocker.server.url=unix:///var/run/docker.sock -Dspring.profiles.active=required,notdependency -Det.files.path.in.host=./tmp/eus/ -Det.data.in.host=./tmp/ -Det.shared.folder=./tmp/'
     - bash <(curl -s https://codecov.io/bash)
 
