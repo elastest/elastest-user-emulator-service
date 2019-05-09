@@ -39,7 +39,7 @@ get_chromedriver () {
   fi
   set -o pipefail
   wget -O $WORKDIR/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VER/chromedriver_linux64.zip
-  yes | unzip $WORKDIR/chromedriver.zip -d $WORKDIR
+  unzip -o $WORKDIR/chromedriver.zip -d $WORKDIR
   rm -Rfv $WORKDIR/chromedriver.zip
   cp -p $WORKDIR/chromedriver image/selenoid/chromedriver
 }
