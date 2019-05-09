@@ -1,5 +1,5 @@
 # Browsers versions
-FROM phusion/baseimage:0.10.0
+FROM ubuntu:16.04
 
 RUN \
     apt-get update && \
@@ -8,7 +8,7 @@ RUN \
       software-properties-common \
       curl \
       jq \
-      unzip
+      unzip 
 
 VOLUME /workdir
 

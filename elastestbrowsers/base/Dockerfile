@@ -2,7 +2,7 @@
 # Base image for Elastest Browsers
 #
 
-FROM phusion/baseimage:0.10.0
+FROM ubuntu:16.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG EB_VERSION

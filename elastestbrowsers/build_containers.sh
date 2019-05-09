@@ -4,6 +4,9 @@ set -eu -o pipefail
 # Load old releases versions
 . browsers_oldreleases
 
+# File with webdrivers versions
+WEBDRIVER_VERSIONS="https://raw.githubusercontent.com/bonigarcia/webdrivermanager/master/src/main/resources/versions.properties"
+
 # Use MODE=FULL to generate all containers versions
 MODE=${MODE:-NIGHTLY}
 
@@ -11,8 +14,39 @@ WORKDIR=$PWD/workdir
 [ -d $WORKDIR ] || mkdir -p $WORKDIR
 rm $WORKDIR/* || true
 
+# Get Geckodriver
+get_geckodriver () {
+
+  set +o pipefail
+  GECKO_VERSION=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "firefox${1}" | cut -d"=" -f2)
+  set -o pipefail
+  if [ -z "${GECKO_VERSION}"]; then
+    GECKO_RELEASE_URL=https://api.github.com/repos/mozilla/geckodriver/releases/latest
+    GECKO_VERSION=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "firefox..=" | head -n1 | cut -d"=" -f2)
+  fi
+  wget -O $WORKDIR/geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz
+  tar xvzf $WORKDIR/geckodriver.tar.gz -C $WORKDIR
+  rm -Rfv $WORKDIR/geckodriver.tar.gz
+  cp -p $WORKDIR/geckodriver image/selenoid/geckodriver
+}
+
+# Get Chromedriver
+get_chromedriver () {
+
+  set +o pipefail
+  CHROME_DRIVER_VER=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "chrome${1}" | cut -d"=" -f2)
+  if [ -z "${CHROME_DRIVER_VER}" ]; then
+    CHROME_DRIVER_VER=$(curl --silent ${WEBDRIVER_VERSIONS} | grep "chrome..=" | head -n1 | cut -d"=" -f2)
+  fi
+  set -o pipefail
+  wget -O $WORKDIR/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VER/chromedriver_linux64.zip
+  unzip $WORKDIR/chromedriver.zip -d $WORKDIR
+  rm -Rfv $WORKDIR/chromedriver.zip
+  cp -p $WORKDIR/chromedriver image/selenoid/chromedriver
+}
+
 # Get browsers versions
-docker run -t --rm -v $WORKDIR:/workdir elastestbrowsers/utils-get_browsers_version:2
+docker run -t --rm -v $WORKDIR:/workdir elastestbrowsers/utils-get_browsers_version:3
 . $WORKDIR/versions.txt
 
 # Build base image
@@ -28,8 +62,7 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --tag elastestbrowsers/utils-x11-base:${EB_VERSION} .
 popd
 
-# Copy drivers
-cp -p workdir/geckodriver firefox/image/selenoid/geckodriver
+# Copy Selenoid driver
 cp -p workdir/selenoid_linux_amd64 firefox/image/selenoid/selenoid_linux_amd64
 
 ###########
@@ -38,6 +71,8 @@ cp -p workdir/selenoid_linux_amd64 firefox/image/selenoid/selenoid_linux_amd64
 pushd firefox
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox > Dockerfile
 sed "s/VERSION/$FIREFOX_VER/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
+
+get_geckodriver ${FIREFOX_VER}
 
 docker build --build-arg VERSION=$FIREFOX_PKG \
   --build-arg EB_VERSION=${EB_VERSION} \
@@ -51,11 +86,16 @@ docker build --build-arg VERSION=$FIREFOX_PKG \
   --tag elastestbrowsers/firefox:latest \
   --tag elastestbrowsers/firefox:$FIREFOX_VER \
   --file Dockerfile .
+
+# Cleaning
 rm image/selenoid/browsers.json
+rm image/selenoid/geckodriver
 
 # Firefox Beta
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.beta > Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.beta
+
+get_geckodriver ${FIREFOX_BETA_VER}
 
 docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GIT_URL=${GIT_URL} \
@@ -66,11 +106,19 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --tag elastestbrowsers/firefox:beta-${EB_VERSION} \
   --tag elastestbrowsers/firefox:beta \
   --file Dockerfile .
+
 rm image/selenoid/browsers.json.beta
+rm image/selenoid/geckodriver
 
 # Firefox Nightly
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.nightly > Dockerfile
 sed "s/VERSION/nightly/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.nightly
+
+if [ -z "${FIREFOX_NIGHTLY_VER}" ]; then
+  get_geckodriver ${FIREFOX_BETA_VER}
+else
+  get_geckodriver ${FIREFOX_NIGHTLY_VER}
+fi
 
 docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GIT_URL=${GIT_URL} \
@@ -81,7 +129,9 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --tag elastestbrowsers/firefox:nightly-${EB_VERSION} \
   --tag elastestbrowsers/firefox:nightly \
   --file Dockerfile .
+
 rm image/selenoid/browsers.json.nightly
+rm image/selenoid/geckodriver
 
 # Firefox old versions
 if [ "$MODE" == "FULL" ]; then
@@ -96,11 +146,9 @@ fi
 popd
 
 # cleaning
-rm firefox/image/selenoid/geckodriver
 rm firefox/image/selenoid/selenoid_linux_amd64
 
-# Copy drivers
-cp -p workdir/chromedriver chrome/image/selenoid/chromedriver
+# Copy Selenoid driver
 cp -p workdir/selenoid_linux_amd64 chrome/image/selenoid/selenoid_linux_amd64
 
 ###########
@@ -109,6 +157,8 @@ cp -p workdir/selenoid_linux_amd64 chrome/image/selenoid/selenoid_linux_amd64
 pushd chrome
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome > Dockerfile 
 sed "s/VERSION/$CHROME_VER/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json
+
+get_chromedriver ${CHROME_VER}
 
 docker build --build-arg VERSION=$CHROME_PKG \
   --build-arg EB_VERSION=${EB_VERSION} \
@@ -122,11 +172,16 @@ docker build --build-arg VERSION=$CHROME_PKG \
   --tag elastestbrowsers/chrome:latest \
   --tag elastestbrowsers/chrome:${CHROME_VER} \
   --file Dockerfile .
+
 rm image/selenoid/browsers.json
+rm image/selenoid/chromedriver
+rm $WORKDIR/chromedriver
 
 # Chrome Beta
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.beta > Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.beta
+
+get_chromedriver ${CHROME_BETA_VER}
 
 docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GIT_URL=${GIT_URL} \
@@ -137,11 +192,16 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --tag elastestbrowsers/chrome:beta-${EB_VERSION} \
   --tag elastestbrowsers/chrome:beta \
   --file Dockerfile .
+
 rm image/selenoid/browsers.json.beta
+rm image/selenoid/chromedriver
+rm $WORKDIR/chromedriver
 
 # Chrome Unstable
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.unstable > Dockerfile
 sed "s/VERSION/unstable/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.unstable
+
+get_chromedriver ${CHROME_NIGHTLY_VER}
 
 docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GIT_URL=${GIT_URL} \
@@ -152,7 +212,10 @@ docker build --build-arg EB_VERSION=${EB_VERSION} \
   --tag elastestbrowsers/chrome:unstable-${EB_VERSION} \
   --tag elastestbrowsers/chrome:unstable \
   --file Dockerfile .
+
 rm image/selenoid/browsers.json.unstable
+rm image/selenoid/chromedriver
+rm $WORKDIR/chromedriver
 
 # Chrome old versions
 if [ "$MODE" == "FULL" ]; then
@@ -192,7 +255,6 @@ fi
 popd
 
 # cleaning
-rm chrome/image/selenoid/chromedriver
 rm chrome/image/selenoid/selenoid_linux_amd64
 
 docker images
