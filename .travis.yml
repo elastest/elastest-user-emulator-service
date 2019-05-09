@@ -2,6 +2,7 @@ language: java
 
 services:
   - docker
+  - git
 
 addons:
     sonarcloud:
@@ -10,6 +11,15 @@ addons:
             secure: "lnd8lb2J0HLzlrZvgziyfxUTcJBF4/H4O1fArWMbpOEPmwwihEfF9FJpQGyJ4VPBQvJNI9QqGj5fc/WL0KjxubO8+1uMHShaA9rcTk5GJF6fjaoZjdUJKXITzY20pxsRLxChgJJt6qijJ+2gjwxHKB9T2Bw5/mhwFzZRFV+DdCKLJp+gdfTH84yKwfhvrToLb2EbYhDAkg4paOdQ/Y+m/mPqReine1Za5jV4sD2rML/b+Mc1mwDwQ8+jbq3lhAMgkXYd9GRO8UuOCrlNQB0wSxsLquMhZATswxj9EEfPceNkhZIU8Vmn22/q3zznyEakDY/J7Oa/OniVz88Qz/AH0ZCgUooGNz3wzYIIoanGVHiJLkkyBOpSfdOH1pFTWlfqeIEn+vrAOEp/0zmRCdNCLx4e8eYPCej53zRDCgaP2SPFqolj4w7s7g3WSn1NdITUt5eQlyBnctF2q3OEaDSIt1Ye23Vlpdg234uWERNAQVjTDPIbAE2rFjV3oNTx/uUB23Gqxdy2TlrEboCPueEcgQakWBseYFzV4Bjmyb9+RCD+jlm+D1Pef0jHSvWwa0pf5OrHhF6CMixD+yc3F+jMdyn6ODV+kJT8/NDHHy2h4MRSLACgEEx8WrYyzbLeJgo5AuLmH9rFYx39cUnwl614q5VmZC4+/GYQoe2LTkmx+5Q="
 
 script:
+    - git clone https://github.com/mpauls/epm-client-java.git
+    - cd epm-client-java.git
+    - mvn clean install -Dmaven.test.skip=true"
+    - cd ..
+    - git clone https://github.com/elastest/elastest-torm
+    - cd elastest-torm/epm-client
+    - mvn install -DskipTests -Dgpg.skip -Djenkins=true
+    - cd ..
+    - cd ..
     - cd eus
     - mvn test sonar:sonar -Ddocker.server.url=unix:///var/run/docker.sock
     - bash <(curl -s https://codecov.io/bash)
