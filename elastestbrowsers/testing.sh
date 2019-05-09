@@ -98,6 +98,8 @@ if [ "$MODE" == "FULL" ]; then
 	done
 fi
 
+echo ""
+echo "## TEST RESULTS ##"
 cat $LOG_RESULTS
 
 exit $EXIT_RES
