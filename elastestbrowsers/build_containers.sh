@@ -42,6 +42,7 @@ get_chromedriver () {
   unzip -o $WORKDIR/chromedriver.zip -d $WORKDIR
   rm -Rfv $WORKDIR/chromedriver.zip
   cp -p $WORKDIR/chromedriver image/selenoid/chromedriver
+  chmod 755 image/selenoid/chromedriver
 }
 
 # Get browsers versions
