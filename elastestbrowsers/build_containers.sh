@@ -200,7 +200,13 @@ rm $WORKDIR/chromedriver
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.unstable > Dockerfile
 sed "s/VERSION/unstable/g" image/selenoid/browsers.json.templ > image/selenoid/browsers.json.unstable
 
+set +u
+if [ -z "${CHROME_NIGHTLY_VER}" ]; then
+  CHROME_NIGHTLY_VER=$(expr $CHROME_BETA_VER + 1)
+fi
+
 get_chromedriver ${CHROME_NIGHTLY_VER}
+set -u
 
 docker build --build-arg EB_VERSION=${EB_VERSION} \
   --build-arg GIT_URL=${GIT_URL} \
