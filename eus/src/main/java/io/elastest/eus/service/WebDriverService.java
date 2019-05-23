@@ -381,9 +381,10 @@ public class WebDriverService {
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
                     sessionInfo);
             if (isIntercepted) {
-                String interceptedMsg = "ElasTest script intercepted successfully";
+                String interceptedMsg = "{\"msg\": \"ElasTest script intercepted successfully\"}";
                 logger.debug(interceptedMsg);
-                return new ResponseEntity<>(interceptedMsg, HttpStatus.OK);
+                return new ResponseEntity<String>(interceptedMsg,
+                        HttpStatus.OK);
             }
         }
 
