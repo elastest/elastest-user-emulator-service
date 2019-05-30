@@ -24,11 +24,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.platform.service.DockerServiceImpl;
+import io.elastest.eus.platform.service.EpmK8sClient;
+import io.elastest.eus.platform.service.PlatformService;
+import io.elastest.eus.service.AlluxioService;
+import io.elastest.eus.service.EusFilesService;
+import io.elastest.eus.service.EusJsonService;
+import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
@@ -48,13 +58,46 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Value("${ws.path}")
     private String wsPath;
-    
+    @Value("${et.enable.cloud.mode}")
+    public boolean enableCloudMode;
+
     @Autowired
-    private SessionService sessionService;
+    private DockerService dockerService;
+    @Autowired
+    private EusFilesService eusFilesService;
+    @Autowired
+    private EusJsonService eusJsonService;
+    @Autowired AlluxioService alluxioService;
+    
+    @Bean
+    @Primary
+    public PlatformService getPlatformService() {
+        log.debug("Initializing the EUS's PlatformService");
+        PlatformService platformService = null;
+        if (enableCloudMode) {
+            log.debug("EUS over K8s");
+            platformService = new EpmK8sClient();
+        } else {
+            platformService = new DockerServiceImpl(dockerService, eusFilesService);
+        }
+        return platformService;
+    }
+    
+    @Bean
+    public RecordingService getRecordingService() {
+        return new RecordingService(eusJsonService, alluxioService, getPlatformService());
+    }
+    
+    @Bean
+    @Primary
+    public SessionService getSessionService() {
+        return new SessionService(getPlatformService(), eusJsonService, getRecordingService());
+        
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(sessionService, wsPath).setAllowedOrigins("*");
+        registry.addHandler(getSessionService(), wsPath).setAllowedOrigins("*");
         log.debug("Registering WebSocker handler at {}", wsPath);
     }
     

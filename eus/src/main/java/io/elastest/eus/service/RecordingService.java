@@ -56,7 +56,6 @@ import io.elastest.eus.session.SessionInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.1.1
  */
-@Service
 public class RecordingService {
     final Logger log = getLogger(lookup().lookupClass());
 

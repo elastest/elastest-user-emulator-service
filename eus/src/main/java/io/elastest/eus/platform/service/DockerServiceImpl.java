@@ -33,8 +33,8 @@ import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 
-@Service
-public class DockerServiceImpl implements PlatformService {
+
+public class DockerServiceImpl extends PlatformService {
     final Logger logger = getLogger(lookup().lookupClass());
 
     @Value("${container.recording.folder}")
@@ -43,17 +43,8 @@ public class DockerServiceImpl implements PlatformService {
     private String containerSharedFilesFolder;
     @Value("${host.shared.files.relative.folder}")
     private String hostSharedFilesRelativeFolder;
-
-    @Value("${hub.exposedport}")
-    private int hubExposedPort;
-    @Value("${hub.vnc.exposedport}")
-    private int hubVncExposedPort;
-    @Value("${hub.novnc.exposedport}")
-    private int noVncExposedPort;
     @Value("${browser.screen.resolution}")
     private String browserScreenResolution;
-    @Value("${browser.shm.size}")
-    private long shmSize;
     @Value("${use.torm}")
     private boolean useTorm;
     @Value("${docker.network}")
@@ -104,11 +95,6 @@ public class DockerServiceImpl implements PlatformService {
             return dockerService.getContainerInfoStringByName(vncContainerName);
         }
         return "";
-    }
-
-    @Override
-    public String generateRandomContainerNameWithPrefix(String prefix) {
-        return prefix + randomUUID().toString();
     }
 
     @Override
