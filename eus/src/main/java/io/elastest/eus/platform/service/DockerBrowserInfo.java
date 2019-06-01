@@ -10,6 +10,8 @@ public class DockerBrowserInfo extends DockerServiceStatus {
     private String vncContainerName;
     protected String hubIp;
     protected String vncUrl;
+    protected String hostSharedFilesFolderPath;
+    protected String browserPod;
     
     public String getHubContainerName() {
         return hubContainerName;
@@ -58,6 +60,21 @@ public class DockerBrowserInfo extends DockerServiceStatus {
     public void setVncContainerName(String vncContainerName) {
         this.vncContainerName = vncContainerName;
     }
+    
+    public String getHostSharedFilesFolderPath() {
+        return hostSharedFilesFolderPath;
+    }
 
+    public void setHostSharedFilesFolderPath(String hostSharedFilesFolderPath) {
+        this.hostSharedFilesFolderPath = hostSharedFilesFolderPath;
+    }
+
+    public String getBrowserPod() {
+        return browserPod;
+    }
+
+    public void setBrowserPod(String browserPod) {
+        this.browserPod = browserPod;
+    }
 
 }

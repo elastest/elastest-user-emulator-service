@@ -4,10 +4,13 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +18,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.spotify.docker.client.messages.PortBinding;
 import com.spotify.docker.client.messages.HostConfig.Bind;
 import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
 
@@ -26,16 +28,23 @@ import io.elastest.epm.client.service.K8Service.PodInfo;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
+import io.elastest.eus.session.SessionInfo;
 
 public class EpmK8sClient extends PlatformService {
     final Logger logger = getLogger(lookup().lookupClass());
-    
+
     @Value("${host.shared.files.relative.folder}")
     private String hostSharedFilesRelativeFolder;
-    
+    @Value("${container.recording.folder}")
+    private String containerRecordingFolder;
+    @Value("${container.recording.folder}")
+    private String containerSharedFilesFolder;
+
     @Autowired
     private K8Service k8sService;
-    
+    @Autowired
+    private EusFilesService eusFilesService;
+
     @Override
     public List<String> getContainerNetworksByContainerPrefix(String prefix)
             throws Exception {
@@ -56,7 +65,31 @@ public class EpmK8sClient extends PlatformService {
         String exposedHubPort = Integer.toString(hubExposedPort);
         String exposedVncPort = Integer.toString(hubVncExposedPort);
         String exposedNoVncPort = Integer.toString(noVncExposedPort);
-      
+
+        /* **** Volumes **** */
+        logger.info("Folder path in host: {}", folderPath);
+        List<Bind> volumes = new ArrayList<>();
+
+        // Recording
+        Builder recordingsVolumeBuilder = Bind.builder();
+        recordingsVolumeBuilder.from(folderPath);
+        recordingsVolumeBuilder.to(containerRecordingFolder);
+        volumes.add(recordingsVolumeBuilder.build());
+
+        // Shared files
+        Builder sharedfilesVolumeBuilder = Bind.builder();
+        String hostSharedFilesFolderPath = folderPath
+                + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
+                        : EusFilesService.FILE_SEPARATOR)
+                + hostSharedFilesRelativeFolder;
+        ((SessionInfo) dockerBrowserInfo)
+                .setHostSharedFilesFolderPath(hostSharedFilesFolderPath);
+
+        eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
+
+        logger.debug("**** Paths for recordings ****");
+        logger.debug("Host path: {}", hostSharedFilesFolderPath);
+        logger.debug("Path in container: {}", containerSharedFilesFolder);
 
         /* **** Exposed ports **** */
         List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
@@ -79,12 +112,14 @@ public class EpmK8sClient extends PlatformService {
         dockerBrowserInfo.setHubContainerName(hubContainerName);
         dockerBrowserInfo.setVncContainerName(hubContainerName);
         dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        dockerBrowserInfo.setStatusMsg("Initializing...");       
+        dockerBrowserInfo.setStatusMsg("Initializing...");
         dockerBrowserInfo.setStatusMsg("Starting...");
 
         /* **** Start **** */
-        PodInfo podInfo = k8sService
-                .deployPod(dockerBuilder.build());
+        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
+
+        dockerBrowserInfo.setHostSharedFilesFolderPath(hostSharedFilesFolderPath);
+        dockerBrowserInfo.setBrowserPod(podInfo.getPodName());
 
         /* **** Set IPs and ports **** */
         dockerBrowserInfo.setHubIp(podInfo.getPodIp());
@@ -94,9 +129,9 @@ public class EpmK8sClient extends PlatformService {
     }
 
     @Override
-    public void execCommand(String hubContainerName, boolean awaitCompletion,
+    public void execCommand(String podName, boolean awaitCompletion,
             String... command) throws Exception {
-        // TODO Auto-generated method stub
+        k8sService.execCommand(k8sService.getPodByName(podName), podName, command);
 
     }
 
@@ -106,8 +141,8 @@ public class EpmK8sClient extends PlatformService {
     }
 
     @Override
-    public void removeServiceWithTimeout(String podName,
-            int killAfterSeconds) throws Exception {
+    public void removeServiceWithTimeout(String podName, int killAfterSeconds)
+            throws Exception {
         k8sService.deletePod(podName);
 
     }
@@ -131,6 +166,39 @@ public class EpmK8sClient extends PlatformService {
             throws Exception {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void copyFilesFromBrowserIfNecessary(
+            DockerBrowserInfo dockerBrowserInfo) throws IOException {
+        k8sService.copyFileFromContainer(dockerBrowserInfo.getBrowserPod(),
+                containerRecordingFolder,
+                dockerBrowserInfo.getHostSharedFilesFolderPath());
+        File recordingsDirectory = new File(
+                dockerBrowserInfo.getHostSharedFilesFolderPath()
+                        + containerRecordingFolder);
+        moveFiles(recordingsDirectory,
+                dockerBrowserInfo.getHostSharedFilesFolderPath());
+
+    }
+
+    private void moveFiles(File fileToMove, String targetPath)
+            throws IOException {
+        if (fileToMove.isDirectory()) {
+            for (File file : fileToMove.listFiles()) {
+                moveFiles(file, targetPath + "/" + file.getName());
+            }
+        } else {
+            try {
+                Files.move(Paths.get(fileToMove.getPath()),
+                        Paths.get(targetPath),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                logger.error("Error moving files to other directory.");
+                throw e;
+            }
+        }
+
     }
 
 }

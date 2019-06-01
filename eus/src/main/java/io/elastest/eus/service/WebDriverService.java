@@ -927,6 +927,7 @@ public class WebDriverService {
                 // Stop recording even if manually managed
                 recordingService.stopRecording(sessionInfo);
                 recordingService.storeMetadata(sessionInfo);
+                platformService.copyFilesFromBrowserIfNecessary(sessionInfo);
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 

@@ -33,7 +33,6 @@ import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 
-
 public class DockerServiceImpl extends PlatformService {
     final Logger logger = getLogger(lookup().lookupClass());
 
@@ -292,6 +291,13 @@ public class DockerServiceImpl extends PlatformService {
             int killAfterSeconds) throws Exception {
         dockerService.stopAndRemoveContainerWithKillTimeout(containerId,
                 killAfterSeconds);
+    }
+
+    @Override
+    public void copyFilesFromBrowserIfNecessary(
+            DockerBrowserInfo dockerBrowserInfo) {
+        // TODO Auto-generated method stub
+
     }
 
 }
