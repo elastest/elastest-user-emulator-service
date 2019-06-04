@@ -7,19 +7,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import com.spotify.docker.client.messages.HostConfig.Bind;
-import com.spotify.docker.client.messages.HostConfig.Bind.Builder;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
@@ -66,29 +64,14 @@ public class EpmK8sClient extends PlatformService {
         String exposedVncPort = Integer.toString(hubVncExposedPort);
         String exposedNoVncPort = Integer.toString(noVncExposedPort);
 
-        /* **** Volumes **** */
-        logger.info("Folder path in host: {}", folderPath);
-        List<Bind> volumes = new ArrayList<>();
+        String recordingsPath = createRecordingsPath(folderPath);
+        dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
+        ((SessionInfo)dockerBrowserInfo).setFolderPath(recordingsPath);
 
-        // Recording
-        Builder recordingsVolumeBuilder = Bind.builder();
-        recordingsVolumeBuilder.from(folderPath);
-        recordingsVolumeBuilder.to(containerRecordingFolder);
-        volumes.add(recordingsVolumeBuilder.build());
-
-        // Shared files
-        Builder sharedfilesVolumeBuilder = Bind.builder();
-        String hostSharedFilesFolderPath = folderPath
-                + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
-                        : EusFilesService.FILE_SEPARATOR)
-                + hostSharedFilesRelativeFolder;
-        ((SessionInfo) dockerBrowserInfo)
-                .setHostSharedFilesFolderPath(hostSharedFilesFolderPath);
-
-        eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
+        eusFilesService.createFolderIfNotExists(recordingsPath);
 
         logger.debug("**** Paths for recordings ****");
-        logger.debug("Host path: {}", hostSharedFilesFolderPath);
+        logger.debug("Host path: {}", recordingsPath);
         logger.debug("Path in container: {}", containerSharedFilesFolder);
 
         /* **** Exposed ports **** */
@@ -117,8 +100,6 @@ public class EpmK8sClient extends PlatformService {
 
         /* **** Start **** */
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
-
-        dockerBrowserInfo.setHostSharedFilesFolderPath(hostSharedFilesFolderPath);
         dockerBrowserInfo.setBrowserPod(podInfo.getPodName());
 
         /* **** Set IPs and ports **** */
@@ -128,10 +109,27 @@ public class EpmK8sClient extends PlatformService {
 
     }
 
+    public String createRecordingsPath(String hostPath) {
+        logger.debug("Creating recordings path from: {}", hostPath);
+        String recordingsPath = "";
+        String pathRecordingsInHost = hostPath
+                + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
+                        : EusFilesService.FILE_SEPARATOR);
+        String recordingsRelativePath = pathRecordingsInHost.substring(
+                pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR,
+                        pathRecordingsInHost
+                                .indexOf(eusFilesService.FILE_SEPARATOR) + 1));
+        recordingsPath = eusFilesService.getEtSharedFolder()
+                + recordingsRelativePath;
+
+        return recordingsPath;
+    }
+
     @Override
     public void execCommand(String podName, boolean awaitCompletion,
             String... command) throws Exception {
-        k8sService.execCommand(k8sService.getPodByName(podName), podName, command);
+        k8sService.execCommand(k8sService.getPodByName(podName), podName,
+                command);
 
     }
 
