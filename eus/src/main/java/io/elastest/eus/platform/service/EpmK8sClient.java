@@ -66,7 +66,7 @@ public class EpmK8sClient extends PlatformService {
 
         String recordingsPath = createRecordingsPath(folderPath);
         dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionInfo)dockerBrowserInfo).setFolderPath(recordingsPath);
+        ((SessionInfo) dockerBrowserInfo).setFolderPath(recordingsPath);
 
         eusFilesService.createFolderIfNotExists(recordingsPath);
 
@@ -115,10 +115,13 @@ public class EpmK8sClient extends PlatformService {
         String pathRecordingsInHost = hostPath
                 + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
                         : EusFilesService.FILE_SEPARATOR);
-        String recordingsRelativePath = pathRecordingsInHost.substring(
-                pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR,
+        String recordingsRelativePath = pathRecordingsInHost
+                .substring(
                         pathRecordingsInHost
-                                .indexOf(eusFilesService.FILE_SEPARATOR) + 1));
+                                .indexOf(eusFilesService.FILE_SEPARATOR,
+                                        pathRecordingsInHost.indexOf(
+                                                eusFilesService.FILE_SEPARATOR)
+                                                + 1));
         recordingsPath = eusFilesService.getEtSharedFolder()
                 + recordingsRelativePath;
 
@@ -129,7 +132,7 @@ public class EpmK8sClient extends PlatformService {
     public void execCommand(String podName, boolean awaitCompletion,
             String... command) throws Exception {
         k8sService.execCommand(k8sService.getPodByName(podName), podName,
-                command);
+                awaitCompletion, command);
 
     }
 
@@ -177,7 +180,6 @@ public class EpmK8sClient extends PlatformService {
                         + containerRecordingFolder);
         moveFiles(recordingsDirectory,
                 dockerBrowserInfo.getHostSharedFilesFolderPath());
-
     }
 
     private void moveFiles(File fileToMove, String targetPath)

@@ -5,10 +5,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.eus.api.model.ExecutionData;
@@ -123,5 +127,19 @@ public class EusFilesService {
             throws IllegalStateException, IOException {
         return uploadFileToSessionExecution(data, sessionId,
                 file.getOriginalFilename(), file);
+    }
+    
+    public File createFileFromString(String string, String targetPath)
+            throws IOException {
+        File file = new File(targetPath);
+        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
+        return ResourceUtils.getFile(targetPath);
+    }
+    
+    public File createFileFromInputStream(InputStream iStream,
+            String targetPath) throws IOException {
+        File file = new File(targetPath);
+        FileUtils.copyInputStreamToFile(iStream, file);
+        return ResourceUtils.getFile(targetPath);
     }
 }

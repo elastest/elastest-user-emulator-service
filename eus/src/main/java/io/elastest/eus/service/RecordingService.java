@@ -140,6 +140,8 @@ public class RecordingService {
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
+            log.error("Exception during sleep execution");
+            e.printStackTrace();
         }
     }
 
