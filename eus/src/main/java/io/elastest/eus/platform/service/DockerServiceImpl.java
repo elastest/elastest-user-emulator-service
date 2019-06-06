@@ -78,7 +78,7 @@ public class DockerServiceImpl extends PlatformService {
         // returns ContainernotFoundException (bug)
 
         if (isDirectory) {
-            return dockerService.getFilesFromContainer(
+            return dockerService.getFilesFromContainerAsInputStreamTar(
                     dockerBrowserInfo.getVncContainerName(), path);
         } else {
             return dockerService.getSingleFileFromContainer(
