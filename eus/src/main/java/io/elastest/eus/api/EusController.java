@@ -362,15 +362,16 @@ public class EusController implements EusApi {
         ResponseEntity<String> response;
         try {
             HttpMethod method = HttpMethod.resolve(request.getMethod());
+            ExecutionData eusData = webDriverService.getExecutionsMap()
+                    .get(key);
+            String filePath = webDriverService.eusFilesService
+                    .getHostSessionFolderFromExecution(eusData);
             if (method == GET) {
-                response = recordingService.getRecording(sessionId,
-                        webDriverService.getExecutionsMap().get(key)
-                                .getFolderPath());
+                response = recordingService.getRecording(sessionId, filePath);
             } else {
                 // The only option here is DELETE method
                 response = recordingService.deleteRecording(sessionId,
-                        webDriverService.getExecutionsMap().get(key)
-                                .getFolderPath());
+                        filePath);
             }
         } catch (Exception e) {
             response = webDriverService.getErrorResponse(

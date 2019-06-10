@@ -43,7 +43,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 import io.elastest.eus.EusException;
 import io.elastest.eus.json.WebSocketRecordedSession;
@@ -227,7 +226,8 @@ public class RecordingService {
 
     public ResponseEntity<String> deleteRecording(String sessionId,
             String folderPath) throws IOException {
-        log.debug("Deleting recording of session {}", sessionId);
+        log.debug("Deleting recording of session {} at {}", sessionId,
+                folderPath);
         String recordingFileName = getRecordingFileNameBySessionId(sessionId);
         String metadataFileName = getMetadataFileNameBySessionId(sessionId);
 

@@ -178,7 +178,7 @@ public class WebDriverService {
     private RecordingService recordingService;
     private TimeoutService timeoutService;
     private DynamicDataService dynamicDataService;
-    private EusFilesService eusFilesService;
+    public EusFilesService eusFilesService;
 
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
 
