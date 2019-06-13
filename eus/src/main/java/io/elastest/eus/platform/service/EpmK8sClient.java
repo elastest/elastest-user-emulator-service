@@ -21,8 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
-import io.elastest.epm.client.service.K8Service;
-import io.elastest.epm.client.service.K8Service.PodInfo;
+import io.elastest.epm.client.service.K8sService;
+import io.elastest.epm.client.service.K8sService.PodInfo;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
@@ -39,7 +39,7 @@ public class EpmK8sClient extends PlatformService {
     private String containerSharedFilesFolder;
 
     @Autowired
-    private K8Service k8sService;
+    private K8sService k8sService;
     @Autowired
     private EusFilesService eusFilesService;
 
