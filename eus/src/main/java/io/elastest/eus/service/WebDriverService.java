@@ -854,6 +854,7 @@ public class WebDriverService {
 
         logger.info("Using {} as Docker image for {}", imageId, browserName);
         SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setElastestExecutionData(execData);
         sessionInfo.setCapabilities(capabilities);
         sessionInfo.addObserver(sessionService);
 
