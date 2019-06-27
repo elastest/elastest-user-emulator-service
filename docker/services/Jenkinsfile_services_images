@@ -1,0 +1,55 @@
+node('docker'){
+    
+    stage "EUS Services images build"
+
+        try {
+            def mycontainer = docker.image('elastest/ci-docker-compose-siblings')
+            mycontainer.pull() // make sure we have the latest available from Docker Hub
+            mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v ${WORKSPACE}:/home/jenkins/.m2") {
+                
+                git 'https://github.com/elastest/elastest-user-emulator-service'
+                
+                stage "Browsersync image build"
+        
+                "Create Browsersync docker image"
+                
+                    echo ("Creating elastest/eus-browsersync image..")                
+                    sh 'cd ./docker/services/browser-sync; docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y-%m-%dT%H:%M:%S) -t elastest/eus-browsersync:latest .'
+        
+                stage "Publish Browsersync docker image"
+        
+                    echo ("Publish elastest/eus-browsersync image")
+                    def browsersyncimage = docker.image('elastest/eus-browsersync:latest')
+                    //this is work arround as withDockerRegistry is not working properly 
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
+                        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                        sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
+                        browsersyncimage.push()
+                    }
+
+            }
+        } catch (err) {
+         	if (currentBuild.result != "UNSTABLE") {
+                def errString = err.toString()
+		        echo 'Error: ' + errString
+		       	currentBuild.result = getJobStatus(errString)
+            }
+            echo 'Error!!! Send email to the people responsible for the builds.'
+            emailext body: 'Please go to  ${BUILD_URL}  and verify the build',
+            replyTo: '${BUILD_USER_EMAIL}', 
+            subject: 'Job ${JOB_NAME} - ${BUILD_NUMBER} RESULT: ${BUILD_STATUS}', 
+            to: '${MAIL_LIST}'
+
+            throw err
+        }
+}
+
+def getJobStatus(exceptionString) {
+	def status = 'SUCCESS'
+	if (exceptionString.contains('FlowInterruptedException') || exceptionString.contains('AbortException')) {
+	    status = 'ABORTED'
+	} else {
+	    status = 'FAILURE'
+	}
+    return status;
+}
