@@ -551,4 +551,35 @@ public class EusController implements EusApi {
         }
         return response;
     }
+
+    @Override
+    public ResponseEntity<String> crossBrowserSession(
+            HttpEntity<String> httpEntity, HttpServletRequest request) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.crossBrowserSession(httpEntity,
+                    request);
+        } catch (Exception e) {
+            log.error("Exception handling Crossbrowser session {}", request, e);
+            response = webDriverService
+                    .getErrorResponse("Exception handling Crossbrowser session", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> executionCrossBrowserSession(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpEntity<String> httpEntity, HttpServletRequest request) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService
+                    .crossBrowserSessionFromExecution(httpEntity, request, key);
+        } catch (Exception e) {
+            log.error("Exception handling Crossbrowser session {}", request, e);
+            response = webDriverService
+                    .getErrorResponse("Exception handling Crossbrowser session", e);
+        }
+        return response;
+    }
 }

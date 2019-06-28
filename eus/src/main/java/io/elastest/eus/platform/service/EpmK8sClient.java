@@ -24,8 +24,10 @@ import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.K8sService;
 import io.elastest.epm.client.service.K8sService.PodInfo;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
+import io.elastest.eus.services.model.BrowserSync;
 import io.elastest.eus.session.SessionInfo;
 
 public class EpmK8sClient extends PlatformService {
@@ -199,6 +201,14 @@ public class EpmK8sClient extends PlatformService {
             }
         }
 
+    }
+
+    @Override
+    public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

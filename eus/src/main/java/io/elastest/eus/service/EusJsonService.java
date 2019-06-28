@@ -21,14 +21,19 @@ import static net.thisptr.jackson.jq.JsonQuery.compile;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.elastest.eus.json.WebDriverCapabilities;
 import net.thisptr.jackson.jq.JsonQuery;
 
 /**
@@ -51,6 +56,12 @@ public class EusJsonService {
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(json, valueType);
+    }
+
+    public <T> T jsonToObject(String json, TypeReference<T> typeReference)
+            throws JsonParseException, JsonMappingException, IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, typeReference);
     }
 
     public String sanitizeMessage(String message) {

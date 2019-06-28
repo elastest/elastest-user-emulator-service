@@ -36,9 +36,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
@@ -60,12 +62,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.docker.client.exceptions.DockerException;
 
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.ElasTestWebdriverScript;
 import io.elastest.eus.json.WebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
@@ -75,6 +81,7 @@ import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.platform.service.PlatformService;
+import io.elastest.eus.services.model.BrowserSync;
 import io.elastest.eus.session.SessionInfo;
 
 /**
@@ -121,6 +128,8 @@ public class WebDriverService {
     private String browserTimezone;
     @Value("${webdriver.session.message}")
     private String webdriverSessionMessage;
+    @Value("${webdriver.crossbrowser.session.message}")
+    private String webdriverCrossbrowserSessionMessage;
     @Value("${webdriver.navigation.get.message}")
     private String webdriverNavigationGetMessage;
     @Value("${webdriver.execute.script.message}")
@@ -181,6 +190,7 @@ public class WebDriverService {
     public EusFilesService eusFilesService;
 
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
+    private Map<String, BrowserSync> crossBrowserRegistry = new ConcurrentHashMap<>();
 
     @Autowired
     public WebDriverService(PlatformService platformService,
@@ -212,6 +222,7 @@ public class WebDriverService {
                                 sessionId);
                     }
                 });
+        stopCrossBrowserSessions();
     }
 
     public Map<String, ExecutionData> getExecutionsMap() {
@@ -244,23 +255,36 @@ public class WebDriverService {
         return new ResponseEntity<>(statusBody, OK);
     }
 
+    public String getRequestContext(HttpServletRequest request) {
+        StringBuffer requestUrl = request.getRequestURL();
+        logger.debug("Request Url {}", requestUrl);
+        return requestUrl.substring(requestUrl.lastIndexOf(apiContextPath)
+                + apiContextPath.length());
+    }
+
+    public String parseRequestContext(String requestContext) {
+        requestContext = requestContext.replaceAll("/execution/[^/]*/", "/");
+        requestContext = requestContext.replaceAll("//", "/");
+        return requestContext;
+    }
+
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             HttpServletRequest request) throws DockerException, Exception {
+        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
+        String requestContext = getRequestContext(request);
+        return session(httpEntity, requestContext, requestBody,
+                request.getMethod());
+    }
+
+    public ResponseEntity<String> session(HttpEntity<String> httpEntity,
+            String requestContext, String requestBody, String method)
+            throws DockerException, Exception {
         boolean webrtcStatsActivated = etConfigWebRtcStats != null
                 && "true".equals(etConfigWebRtcStats);
 
-        String requestContext = getRequestContext(request);
-
-        return this.session(httpEntity, requestContext, request.getMethod(),
+        return this.session(httpEntity, requestContext, method, requestBody,
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
                 eusFilesService.getFilesPathInHostPath());
-    }
-
-    public String getRequestContext(HttpServletRequest request) {
-        StringBuffer requestUrl = request.getRequestURL();
-        logger.debug("{}", requestUrl);
-        return requestUrl.substring(requestUrl.lastIndexOf(apiContextPath)
-                + apiContextPath.length());
     }
 
     public ResponseEntity<String> sessionFromExecution(
@@ -274,39 +298,42 @@ public class WebDriverService {
         }
 
         ExecutionData data = executionsMap.get(executionKey);
+        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
+        String requestContext = parseRequestContext(getRequestContext(request));
+
+        return sessionFromExecution(httpEntity, requestContext, requestBody,
+                request.getMethod(), data);
+    }
+
+    public ResponseEntity<String> sessionFromExecution(
+            HttpEntity<String> httpEntity, String requestContext,
+            String requestBody, String method, ExecutionData data)
+            throws DockerException, Exception {
         logger.debug("Request from Execution {} received",
                 data.gettJobExecId());
 
-        String requestContext = parseRequestContext(getRequestContext(request));
-
-        return this.session(httpEntity, requestContext, request.getMethod(),
+        return this.session(httpEntity, requestContext, method, requestBody,
                 data.getMonitoringIndex(), data.isWebRtcStatsActivated(),
                 eusFilesService.getHostSessionFolderFromExecution(data),
                 eusFilesService.getHostSessionFolderFromExecution(data), data);
     }
 
-    public String parseRequestContext(String requestContext) {
-        requestContext = requestContext.replaceAll("/execution/[^/]*/", "/");
-        requestContext = requestContext.replaceAll("//", "/");
-        return requestContext;
-    }
-
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            String requestContext, String requestMethod, String monitoringIndex,
-            boolean webRtcActivated, String folderPath)
+            String requestContext, String requestMethod, String requestBody,
+            String monitoringIndex, boolean webRtcActivated, String folderPath)
             throws DockerException, Exception {
         return this.session(httpEntity, requestContext, requestMethod,
-                dynamicDataService.getDefaultEtMonExec(), webRtcActivated,
-                eusFilesService.getFilesPathInHostPath(), null, null);
+                requestBody, dynamicDataService.getDefaultEtMonExec(),
+                webRtcActivated, eusFilesService.getFilesPathInHostPath(), null,
+                null);
     }
 
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            String requestContext, String requestMethod, String monitoringIndex,
-            boolean webRtcActivated, String folderPath,
+            String requestContext, String requestMethod, String requestBody,
+            String monitoringIndex, boolean webRtcActivated, String folderPath,
             String sessionFolderPath, ExecutionData execData)
             throws DockerException, Exception {
         HttpMethod method = HttpMethod.resolve(requestMethod);
-        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
 
         logger.debug(">> Request: {} {} -- body: {}", method, requestContext,
                 requestBody);
@@ -323,9 +350,11 @@ public class WebDriverService {
                     ? " from execution " + execData.gettJobExecId()
                     : ""));
 
-            String browserName = jsonService
-                    .jsonToObject(requestBody, WebDriverCapabilities.class)
-                    .getDesiredCapabilities().getBrowserName();
+            WebDriverCapabilities webDriverCapabilities = jsonService
+                    .jsonToObject(requestBody, WebDriverCapabilities.class);
+
+            String browserName = webDriverCapabilities.getDesiredCapabilities()
+                    .getBrowserName();
             if (browserName == null) {
 
                 try {
@@ -340,9 +369,8 @@ public class WebDriverService {
                 }
             }
 
-            String version = jsonService
-                    .jsonToObject(requestBody, WebDriverCapabilities.class)
-                    .getDesiredCapabilities().getVersion();
+            String version = webDriverCapabilities.getDesiredCapabilities()
+                    .getVersion();
 
             newRequestBody = processStartSessionRequest(requestBody,
                     browserName);
@@ -837,84 +865,6 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    public SessionInfo startBrowser(String requestBody,
-            String originalRequestBody, String folderPath,
-            String sessionFolderPath, ExecutionData execData) throws Exception {
-        DesiredCapabilities capabilities = jsonService
-                .jsonToObject(requestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities();
-
-        String browserName = capabilities.getBrowserName();
-        browserName = browserName.equalsIgnoreCase("operablink") ? "opera"
-                : browserName;
-        String version = capabilities.getVersion();
-        String platform = capabilities.getPlatform();
-        String imageId = dockerHubService.getBrowserImageFromCapabilities(
-                browserName, version, platform);
-
-        logger.info("Using {} as Docker image for {}", imageId, browserName);
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setElastestExecutionData(execData);
-        sessionInfo.setCapabilities(capabilities);
-        sessionInfo.addObserver(sessionService);
-
-        // Envs
-        List<String> envs = asList(
-                "SCREEN_RESOLUTION=" + browserScreenResolution,
-                "TZ=" + browserTimezone);
-
-        Map<String, String> labels = new HashMap<>();
-        labels.put(etTypeLabel, etTypeTSSLabelValue);
-        labels.put(etTJobTssTypeLabel, "aux");
-
-        if (execData != null) {
-            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
-            labels.put(etTJobIdLabel, execData.gettJobId().toString());
-        }
-
-        boolean liveSession = sessionService.isLive(requestBody);
-        sessionInfo.setBrowser(browserName);
-        sessionInfo.setLiveSession(liveSession);
-        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
-        sessionInfo.setFolderPath(sessionFolderPath);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
-        sessionInfo.setCreationTime(dateFormat.format(new Date()));
-        boolean manualRecording = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().isManualRecording();
-        sessionInfo.setManualRecording(manualRecording);
-        String testName = jsonService
-                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
-                .getDesiredCapabilities().getTestName();
-        sessionInfo.setTestName(testName);
-
-        platformService.buildAndRunBrowserInContainer(sessionInfo,
-                eusContainerPrefix + hubContainerSufix, originalRequestBody,
-                folderPath, execData, envs, labels, capabilities, imageId);
-
-        sessionInfo.buildHubUrl();
-        String vncUrlFormat = "http://%s:%d/" + vncHtml
-                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = format(vncUrlFormat, sessionInfo.getHubIp(),
-                sessionInfo.getNoVncBindedPort());
-        String internalVncUrl = vncUrl;
-
-        String etHost = getenv(etHostEnv);
-        String etHostType = getenv(etHostEnvType);
-        if (etHostType != null && etHost != null) {
-            // If server-address
-            if (!"default".equalsIgnoreCase(etHostType)) {
-                String hubIp = etHost;
-                vncUrl = format(vncUrlFormat, hubIp,
-                        sessionInfo.getNoVncBindedPort());
-            }
-        }
-        sessionInfo.setVncUrl(vncUrl);
-        platformService.waitForBrowserReady(internalVncUrl, sessionInfo);
-
-        return sessionInfo;
-    }
-
     public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
         try {
             if (timeout) {
@@ -953,10 +903,6 @@ public class WebDriverService {
             throw new EusException("Timeout of " + sessionInfo.getTimeout()
                     + " seconds in session " + sessionInfo.getSessionId());
         }
-    }
-
-    private void stopBrowser(SessionInfo sessionInfo) {
-        deleteSession(sessionInfo, false);
     }
 
     private boolean isPostSessionRequest(HttpMethod method,
@@ -1089,4 +1035,327 @@ public class WebDriverService {
         return platformService.getSessionContextInfo(sessionInfo);
 
     }
+
+    /* ************************************************** */
+    /* ********* Manage Browser And EusServices ********* */
+    /* ************************************************** */
+
+    public SessionInfo startBrowser(String requestBody,
+            String originalRequestBody, String folderPath,
+            String sessionFolderPath, ExecutionData execData) throws Exception {
+        DesiredCapabilities capabilities = jsonService
+                .jsonToObject(requestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities();
+
+        String browserName = capabilities.getBrowserName();
+        browserName = browserName.equalsIgnoreCase("operablink") ? "opera"
+                : browserName;
+        String version = capabilities.getVersion();
+        String platform = capabilities.getPlatform();
+        String imageId = dockerHubService.getBrowserImageFromCapabilities(
+                browserName, version, platform);
+
+        logger.info("Using {} as Docker image for {}", imageId, browserName);
+        SessionInfo sessionInfo = new SessionInfo();
+        sessionInfo.setElastestExecutionData(execData);
+        sessionInfo.setCapabilities(capabilities);
+        sessionInfo.addObserver(sessionService);
+
+        // Envs
+        List<String> envs = asList(
+                "SCREEN_RESOLUTION=" + browserScreenResolution,
+                "TZ=" + browserTimezone);
+
+        Map<String, String> labels = new HashMap<>();
+        labels.put(etTypeLabel, etTypeTSSLabelValue);
+        labels.put(etTJobTssTypeLabel, "aux");
+
+        if (execData != null) {
+            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
+            labels.put(etTJobIdLabel, execData.gettJobId().toString());
+        }
+
+        boolean liveSession = sessionService.isLive(requestBody);
+        sessionInfo.setBrowser(browserName);
+        sessionInfo.setLiveSession(liveSession);
+        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
+        sessionInfo.setFolderPath(sessionFolderPath);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
+        sessionInfo.setCreationTime(dateFormat.format(new Date()));
+        boolean manualRecording = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().isManualRecording();
+        sessionInfo.setManualRecording(manualRecording);
+        String testName = jsonService
+                .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
+                .getDesiredCapabilities().getTestName();
+        sessionInfo.setTestName(testName);
+
+        platformService.buildAndRunBrowserInContainer(sessionInfo,
+                eusContainerPrefix + hubContainerSufix, originalRequestBody,
+                folderPath, execData, envs, labels, capabilities, imageId);
+
+        sessionInfo.buildHubUrl();
+        String vncUrlFormat = "http://%s:%d/" + vncHtml
+                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
+        String vncUrl = format(vncUrlFormat, sessionInfo.getHubIp(),
+                sessionInfo.getNoVncBindedPort());
+        String internalVncUrl = vncUrl;
+
+        String etHost = getenv(etHostEnv);
+        String etHostType = getenv(etHostEnvType);
+        if (etHostType != null && etHost != null) {
+            // If server-address
+            if (!"default".equalsIgnoreCase(etHostType)) {
+                String hubIp = etHost;
+                vncUrl = format(vncUrlFormat, hubIp,
+                        sessionInfo.getNoVncBindedPort());
+            }
+        }
+        sessionInfo.setVncUrl(vncUrl);
+        platformService.waitForBrowserReady(internalVncUrl, sessionInfo);
+
+        return sessionInfo;
+    }
+
+    private void stopBrowser(SessionInfo sessionInfo) {
+        deleteSession(sessionInfo, false);
+    }
+
+    /* ********** Cross browser ********** */
+
+    public BrowserSync startBrowsersyncService(ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
+            throws Exception {
+        BrowserSync browserSync = platformService.buildAndRunBrowsersyncService(
+                execData, crossBrowserCapabilities);
+
+        return browserSync;
+    }
+
+    public void stopBrowsersyncService(BrowserSync browserSync)
+            throws Exception {
+        String id = browserSync.getIdentifier();
+
+        int killTimeoutInSeconds = 10;
+        if (id != null && platformService.existServiceWithName(id)) {
+            platformService.removeServiceWithTimeout(id, killTimeoutInSeconds);
+        }
+    }
+
+    private CrossBrowserWebDriverCapabilities getCrossBrowserWebDriverCapabilities(
+            HttpEntity<String> httpEntity) throws IOException {
+        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
+        CrossBrowserWebDriverCapabilities crossBrowserCapabilities = jsonService
+                .jsonToObject(requestBody,
+                        CrossBrowserWebDriverCapabilities.class);
+        return crossBrowserCapabilities;
+    }
+
+    public ResponseEntity<String> crossBrowserSession(
+            HttpEntity<String> httpEntity, HttpServletRequest request)
+            throws DockerException, Exception {
+        return crossBrowserSession(httpEntity, request, null);
+    }
+
+    public ResponseEntity<String> crossBrowserSessionFromExecution(
+            HttpEntity<String> httpEntity, HttpServletRequest request,
+            String executionKey) throws DockerException, Exception {
+        if (!executionsMap.containsKey(executionKey)) {
+            logger.error(
+                    "Cross Browser Request from Execution received but execution key {} not registered",
+                    executionKey);
+            return new ResponseEntity<>(executionKey, HttpStatus.BAD_REQUEST);
+        }
+
+        ExecutionData data = executionsMap.get(executionKey);
+        logger.debug("Cross Browser Request from Execution {} received",
+                data.gettJobExecId());
+        return crossBrowserSession(httpEntity, request, data);
+    }
+
+    public ResponseEntity<String> crossBrowserSession(
+            HttpEntity<String> httpEntity, HttpServletRequest request,
+            ExecutionData data) throws DockerException, Exception {
+        HttpMethod method = HttpMethod.resolve(request.getMethod());
+        String requestContext = getRequestContext(request);
+
+        if (data != null) {
+            requestContext = parseRequestContext(requestContext);
+        }
+
+        String requestBody = jsonService.sanitizeMessage(httpEntity.getBody());
+        logger.debug(">> CrossBrowser Request: {} {} -- body: {}", method,
+                requestContext, requestBody);
+
+        switch (method) {
+        case POST:
+            return startCrossBrowserSession(httpEntity, request, requestContext,
+                    data);
+        case DELETE:
+            return stopCrossBrowserSession(requestContext);
+        default:
+            return new ResponseEntity<String>("Method not allowed",
+                    HttpStatus.METHOD_NOT_ALLOWED);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private ResponseEntity<String> startCrossBrowserSession(
+            HttpEntity<String> httpEntity, HttpServletRequest request,
+            String requestContext, ExecutionData data)
+            throws IOException, Exception, JsonProcessingException,
+            DockerException, JsonParseException, JsonMappingException {
+        CrossBrowserWebDriverCapabilities crossBrowserCapabilities = getCrossBrowserWebDriverCapabilities(
+                httpEntity);
+
+        BrowserSync browserSync = startBrowsersyncService(null,
+                crossBrowserCapabilities);
+
+        String sessionRequestContext = getRequestContextWithoutCrossBrowser(
+                requestContext);
+
+        // Start each sessions
+        for (WebDriverCapabilities sessionCapabilities : crossBrowserCapabilities
+                .getSessionsCapabilities()) {
+            String currentRequestBody = jsonService
+                    .objectToJson(sessionCapabilities);
+            ResponseEntity<String> response;
+
+            // From Execution
+            if (data != null) {
+                response = sessionFromExecution(httpEntity,
+                        sessionRequestContext, currentRequestBody,
+                        request.getMethod(), data);
+            } else { // Normal session
+                response = session(httpEntity, sessionRequestContext,
+                        currentRequestBody, request.getMethod());
+            }
+
+            Map<String, Object> responseMap = jsonService.jsonToObject(
+                    response.getBody(),
+                    new TypeReference<Map<String, Object>>() {
+                    });
+            if (responseMap != null && responseMap.containsKey("value")) {
+                LinkedHashMap<String, Object> value = (LinkedHashMap<String, Object>) responseMap
+                        .get("value");
+                if (value.containsKey("sessionId")) {
+                    String sessionId = (String) value.get("sessionId");
+
+                    // Get Session Info and save in BrowserSync
+                    Optional<SessionInfo> optionalSessionInfo = sessionService
+                            .getSession(sessionId);
+                    SessionInfo sessionInfo = optionalSessionInfo.get();
+                    if (sessionInfo != null) {
+                        browserSync.getSessions().add(sessionInfo);
+
+                        // Open app url in browser
+                        String getUrlContext = sessionRequestContext + "/"
+                                + sessionId + "/url";
+                        String getUrlRequestBody = "{ \"url\": \""
+                                + browserSync.getAppUrl() + "\" }";
+
+                        Optional<HttpEntity<String>> optionalHttpEntity = Optional
+                                .of(new HttpEntity<String>(getUrlRequestBody,
+                                        httpEntity.getHeaders()));
+
+                        String responseBody = exchange(httpEntity,
+                                getUrlContext, POST, sessionInfo,
+                                optionalHttpEntity, false);
+                    }
+                }
+            }
+        }
+
+        crossBrowserRegistry.put(browserSync.getIdentifier(), browserSync);
+
+        return new ResponseEntity<String>(jsonService.objectToJson(browserSync),
+                OK);
+    }
+
+    private ResponseEntity<String> stopCrossBrowserSession(
+            String requestContext)
+            throws IOException, Exception, JsonProcessingException,
+            DockerException, JsonParseException, JsonMappingException {
+
+        Optional<String> crossBrowserIdFromPath = getCrossBrowserIdFromPath(
+                requestContext);
+        if (crossBrowserIdFromPath.isPresent()) {
+            String crossBrowserId = crossBrowserIdFromPath.get();
+            return stopCrossBrowserSessionById(crossBrowserId);
+        } else {
+            return notFound();
+        }
+
+    }
+
+    private ResponseEntity<String> stopCrossBrowserSessionById(
+            String crossBrowserId) throws Exception {
+        if (crossBrowserRegistry.containsKey(crossBrowserId)) {
+            BrowserSync browserSync = crossBrowserRegistry.get(crossBrowserId);
+            if (browserSync != null) {
+                // Stop all sessions
+                for (SessionInfo sessionInfo : browserSync.getSessions()) {
+                    deleteSession(sessionInfo, false);
+                }
+
+                stopBrowsersyncService(browserSync);
+
+                crossBrowserRegistry.remove(crossBrowserId);
+                return new ResponseEntity<>("Crossbrowser with id "
+                        + crossBrowserId + " has been stopper", OK);
+            } else {
+                return notFound();
+            }
+        } else {
+            return notFound();
+        }
+    }
+
+    public void stopCrossBrowserSessions() {
+        for (ConcurrentHashMap.Entry<String, BrowserSync> crossBrowser : crossBrowserRegistry
+                .entrySet()) {
+            String identifier = crossBrowser.getValue().getIdentifier();
+            try {
+                stopCrossBrowserSessionById(identifier);
+            } catch (Exception e) {
+                logger.error("Error on stop cross browser session with id {}",
+                        identifier);
+            }
+        }
+    }
+
+    public Optional<String> getCrossBrowserIdFromPath(String path) {
+        Optional<String> out = Optional.empty();
+        int i = path.indexOf(webdriverCrossbrowserSessionMessage);
+
+        if (i != -1) {
+            int j = path.indexOf('/',
+                    i + webdriverCrossbrowserSessionMessage.length());
+            if (j != -1) {
+                int k = path.indexOf('/', j + 1);
+                int cut = (k == -1) ? path.length() : k;
+
+                String sessionId = path.substring(j + 1, cut);
+                out = Optional.of(sessionId);
+            }
+        }
+
+        logger.trace("getCrossBrowserIdFromPath -- path: {} crossbrowser id {}",
+                path, out);
+
+        return out;
+    }
+
+    public String getRequestContextWithoutCrossBrowser(String contextPath) {
+        String newContextPath = "";
+        try {
+            // If context path == .../crossbrowser/...
+            newContextPath += contextPath.split("/crossbrowser")[0];
+        } catch (Exception e) {
+        }
+
+        return newContextPath + "/session";
+    }
+
 }

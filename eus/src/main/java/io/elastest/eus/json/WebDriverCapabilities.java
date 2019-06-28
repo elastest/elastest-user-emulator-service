@@ -47,6 +47,17 @@ public class WebDriverCapabilities {
                 platform);
     }
 
+    public WebDriverCapabilities(DesiredCapabilities desiredCapabilities,
+            Object capabilities, Object requiredCapabilities,
+            Object alwaysMatch, Object firstMatch) {
+        super();
+        this.desiredCapabilities = desiredCapabilities;
+        this.capabilities = capabilities;
+        this.requiredCapabilities = requiredCapabilities;
+        this.alwaysMatch = alwaysMatch;
+        this.firstMatch = firstMatch;
+    }
+
     public DesiredCapabilities getDesiredCapabilities() {
         return desiredCapabilities;
     }
@@ -78,7 +89,7 @@ public class WebDriverCapabilities {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class DesiredCapabilities {
+    public static class DesiredCapabilities {
         LoggingPrefs loggingPrefs;
         String browserName;
 

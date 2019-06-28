@@ -2,10 +2,10 @@ package io.elastest.eus.platform.service;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,7 +14,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -30,8 +29,10 @@ import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
+import io.elastest.eus.services.model.BrowserSync;
 
 public class DockerServiceImpl extends PlatformService {
     final Logger logger = getLogger(lookup().lookupClass());
@@ -48,6 +49,21 @@ public class DockerServiceImpl extends PlatformService {
     private boolean useTorm;
     @Value("${docker.network}")
     private String dockerNetwork;
+
+    @Value("${eus.container.prefix}")
+    private String eusContainerPrefix;
+
+    @Value("${eus.service.browsersync.prefix}")
+    private String eusServiceBrowsersyncPrefix;
+
+    @Value("${eus.service.browsersync.image.name}")
+    private String eusServiceBrowsersyncImageName;
+
+    @Value("${eus.service.browsersync.gui.port}")
+    private String eusServiceBrowsersyncGUIPort;
+
+    @Value("${eus.service.browsersync.app.port}")
+    private String eusServiceBrowsersyncAppPort;
 
     private DockerService dockerService;
     private EusFilesService eusFilesService;
@@ -167,44 +183,11 @@ public class DockerServiceImpl extends PlatformService {
         }
 
         /* **** Obtain networks for the browser **** */
-        List<String> networks = new ArrayList<>();
-        String network = dockerNetwork;
-        if (execData != null) {
-            String sutPrefix = execData.getSutContainerPrefix();
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
+                execData);
 
-            List<String> additionalNetworks = new ArrayList<>();
-            if (execData.isUseSutNetwork() && sutPrefix != null
-                    && !"".equals(sutPrefix)) {
-                logger.debug("Sut prefix: {}", sutPrefix);
-
-                additionalNetworks = getContainerNetworksByContainerPrefix(
-                        sutPrefix);
-                if (additionalNetworks.size() > 0) {
-                    logger.debug("Sut networks: {}", additionalNetworks);
-
-                    if (additionalNetworks != null) {
-                        network = additionalNetworks.get(0);
-                        boolean first = true;
-                        for (String currentNetwork : additionalNetworks) {
-                            if (!first && currentNetwork != null) {
-                                networks.add(currentNetwork);
-                            }
-                            first = false;
-                        }
-                    }
-                    if (additionalNetworks == null
-                            || additionalNetworks.size() == 0 || network == null
-                            || "".equals(network)) {
-                        network = dockerNetwork;
-                        logger.error(
-                                "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
-                                dockerNetwork);
-                    }
-                    logger.debug("First Sut network: {}", network);
-                    logger.debug("Sut additional networks: {}", networks);
-                }
-            }
-        }
+        List<String> networks = networksMap.get("networks");
+        String network = networksMap.get("network").get(0);
 
         if (useTorm) {
             dockerBuilder.network(network);
@@ -244,6 +227,54 @@ public class DockerServiceImpl extends PlatformService {
         dockerBrowserInfo.setHubIp(dockerService.getDockerServerIp());
         dockerBrowserInfo.setHubPort(hubPort);
         dockerBrowserInfo.setNoVncBindedPort(noVncBindedPort);
+    }
+
+    public Map<String, List<String>> getNetworksFromExecutionData(
+            ExecutionData execData) throws Exception {
+        Map<String, List<String>> networksMap = new HashMap<>();
+        String network = dockerNetwork;
+        List<String> networks = new ArrayList<>();
+
+        if (execData != null) {
+            String sutPrefix = execData.getSutContainerPrefix();
+
+            List<String> additionalNetworks = new ArrayList<>();
+            if (execData.isUseSutNetwork() && sutPrefix != null
+                    && !"".equals(sutPrefix)) {
+                logger.debug("Sut prefix: {}", sutPrefix);
+
+                additionalNetworks = getContainerNetworksByContainerPrefix(
+                        sutPrefix);
+                if (additionalNetworks.size() > 0) {
+                    logger.debug("Sut networks: {}", additionalNetworks);
+
+                    if (additionalNetworks != null) {
+                        network = additionalNetworks.get(0);
+                        boolean first = true;
+                        for (String currentNetwork : additionalNetworks) {
+                            if (!first && currentNetwork != null) {
+                                networks.add(currentNetwork);
+                            }
+                            first = false;
+                        }
+                    }
+                    if (additionalNetworks == null
+                            || additionalNetworks.size() == 0 || network == null
+                            || "".equals(network)) {
+                        network = dockerNetwork;
+                        logger.error(
+                                "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
+                                dockerNetwork);
+                    }
+                    logger.debug("First Sut network: {}", network);
+                    logger.debug("Sut additional networks: {}", networks);
+                }
+            }
+        }
+        networksMap.put("network", Arrays.asList(network));
+        networksMap.put("networks", networks);
+
+        return networksMap;
     }
 
     public void waitForBrowserReady(String internalVncUrl,
@@ -298,6 +329,82 @@ public class DockerServiceImpl extends PlatformService {
             DockerBrowserInfo dockerBrowserInfo) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
+            throws Exception {
+        String serviceContainerName = generateRandomContainerNameWithPrefix(
+                eusContainerPrefix + eusServiceBrowsersyncPrefix);
+        BrowserSync browsersync = new BrowserSync();
+
+        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
+                .getDesiredCapabilities();
+
+        String sutUrl = crossBrowserCapabilities.getSutUrl();
+
+        // TODO labels
+        Map<String, String> labels = new HashMap<>();
+
+        List<String> envs = new ArrayList<>();
+        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
+                + "' --open 'external'";
+        envs.add(optionsEnv);
+
+        /* **** Obtain networks **** */
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
+                execData);
+
+        List<String> networks = networksMap.get("networks");
+        String network = networksMap.get("network").get(0);
+
+        /* **** Docker Builder **** */
+        DockerBuilder dockerBuilder = new DockerBuilder(
+                eusServiceBrowsersyncImageName);
+        dockerBuilder.containerName(serviceContainerName);
+        dockerBuilder.envs(envs);
+        dockerBuilder.labels(labels);
+        dockerBuilder.network(network);
+
+        // ExtraHosts
+        if (desiredCapabilities.getExtraHosts() != null) {
+            dockerBuilder.extraHosts(desiredCapabilities.getExtraHosts());
+        }
+
+        /* **** Start **** */
+        String containerId = dockerService
+                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+
+        /* **** Additional Networks **** */
+        if (networks != null && networks.size() > 0) {
+            logger.debug(
+                    "Inserting Browsersync service container into additional networks");
+            for (String additionalNetwork : networks) {
+                if (additionalNetwork != null
+                        && !"".equals(additionalNetwork)) {
+                    logger.debug(
+                            "Inserting Browsersync service container into {} network",
+                            additionalNetwork);
+                    dockerService.insertIntoNetwork(additionalNetwork,
+                            containerId);
+                }
+            }
+        }
+
+        String ip = dockerService.getContainerIp(containerId, network);
+        String guiUrl = "http://" + ip + ":" + eusServiceBrowsersyncGUIPort;
+
+        URL sutUrlObj = new URL(sutUrl);
+        String appProtocol = sutUrlObj.getProtocol();
+        String appUrl = appProtocol + "://" + ip + ":"
+                + eusServiceBrowsersyncAppPort;
+
+        browsersync.setIdentifier(serviceContainerName);
+        browsersync.setGuiUrl(guiUrl);
+        browsersync.setAppUrl(appUrl);
+
+        return browsersync;
     }
 
 }

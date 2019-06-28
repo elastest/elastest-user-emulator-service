@@ -10,7 +10,9 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.services.model.BrowserSync;
 
 public abstract class PlatformService {
 
@@ -58,4 +60,8 @@ public abstract class PlatformService {
     public abstract void waitForBrowserReady(String internalVncUrl,
             DockerBrowserInfo dockerBrowserInfo) throws Exception;
 
+    public abstract BrowserSync buildAndRunBrowsersyncService(
+            ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
+            throws Exception;
 }

@@ -572,4 +572,45 @@ public interface EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             @RequestParam(value = "file") MultipartFile file);
+
+    /* ************************************** */
+    /* ************ CrossBrowser ************ */
+    /* ************************************** */
+
+    /**
+     * GET/POST/DELETE /execution/{key}/session/**
+     *
+     * Operations for CrossBrowser session
+     */
+
+    @ApiOperation(value = "Starts a new Browsersync service", notes = "Starts a new Browsersync service", response = String.class, tags = {
+            "Services", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 404, message = "No such element", response = String.class) })
+    @RequestMapping(value = "/crossbrowser/**", produces = {
+            "application/json" }, consumes = {
+                    "application/json" }, method = POST)
+    ResponseEntity<String> crossBrowserSession(HttpEntity<String> httpEntity,
+            HttpServletRequest request);
+
+    /**
+     * GET/POST/DELETE /execution/{key}/session/**
+     *
+     * Operations for Execution CrossBrowser session
+     */
+    @ApiOperation(value = "Starts a new Browsersync service", notes = "Starts a new Browsersync service", response = String.class, tags = {
+            "Services", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 404, message = "No such element", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/crossbrowser/**", produces = {
+            "application/json" }, consumes = {
+                    "application/json" }, method = POST)
+    ResponseEntity<String> executionCrossBrowserSession(
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpEntity<String> httpEntity, HttpServletRequest request);
+
 }
