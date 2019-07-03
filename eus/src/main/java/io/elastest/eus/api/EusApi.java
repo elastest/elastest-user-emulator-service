@@ -590,8 +590,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
             @ApiResponse(code = 404, message = "No such element", response = String.class) })
     @RequestMapping(value = "/crossbrowser/**", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = { GET, POST, DELETE })
+            "application/json" }, method = { GET, POST, DELETE })
     ResponseEntity<String> crossBrowserSession(HttpEntity<String> httpEntity,
             HttpServletRequest request);
 
@@ -607,8 +606,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
             @ApiResponse(code = 404, message = "No such element", response = String.class) })
     @RequestMapping(value = "/execution/{key}/crossbrowser/**", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = { GET, POST, DELETE })
+            "application/json" }, method = { GET, POST, DELETE })
     ResponseEntity<String> executionCrossBrowserSession(
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpEntity<String> httpEntity, HttpServletRequest request);

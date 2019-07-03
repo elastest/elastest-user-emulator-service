@@ -1194,6 +1194,8 @@ public class WebDriverService {
                     data);
         case DELETE:
             return stopCrossBrowserSession(requestContext);
+        case GET:
+            return getCrossBrowserSession(requestContext);
         default:
             return new ResponseEntity<String>("Method not allowed",
                     HttpStatus.METHOD_NOT_ALLOWED);
@@ -1328,6 +1330,26 @@ public class WebDriverService {
                         identifier);
             }
         }
+    }
+
+    private ResponseEntity<String> getCrossBrowserSession(String requestContext)
+            throws IOException, Exception, JsonProcessingException,
+            DockerException, JsonParseException, JsonMappingException {
+
+        Optional<String> crossBrowserIdFromPath = getCrossBrowserIdFromPath(
+                requestContext);
+        if (crossBrowserIdFromPath.isPresent()) {
+            String crossBrowserId = crossBrowserIdFromPath.get();
+            if (crossBrowserRegistry.containsKey(crossBrowserId)) {
+                BrowserSync browserSync = crossBrowserRegistry
+                        .get(crossBrowserId);
+                return new ResponseEntity<String>(
+                        jsonService.objectToJson(browserSync), OK);
+            }
+        } else {
+            return notFound();
+        }
+        return notFound();
     }
 
     public Optional<String> getCrossBrowserIdFromPath(String path) {
