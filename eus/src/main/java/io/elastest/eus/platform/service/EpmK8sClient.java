@@ -176,7 +176,7 @@ public class EpmK8sClient extends PlatformService {
             DockerBrowserInfo dockerBrowserInfo) throws IOException {
         k8sService.copyFileFromContainer(dockerBrowserInfo.getBrowserPod(),
                 containerRecordingFolder,
-                dockerBrowserInfo.getHostSharedFilesFolderPath());
+                dockerBrowserInfo.getHostSharedFilesFolderPath(), null);
         File recordingsDirectory = new File(
                 dockerBrowserInfo.getHostSharedFilesFolderPath()
                         + containerRecordingFolder);
