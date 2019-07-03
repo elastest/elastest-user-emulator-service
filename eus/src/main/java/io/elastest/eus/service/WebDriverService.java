@@ -1258,10 +1258,15 @@ public class WebDriverService {
                         Optional<HttpEntity<String>> optionalHttpEntity = Optional
                                 .of(new HttpEntity<String>(getUrlRequestBody,
                                         httpEntity.getHeaders()));
-
-                        String responseBody = exchange(httpEntity,
-                                getUrlContext, POST, sessionInfo,
-                                optionalHttpEntity, false);
+                        try {
+                            String responseBody = exchange(httpEntity,
+                                    getUrlContext, POST, sessionInfo,
+                                    optionalHttpEntity, false);
+                        } catch (Exception e) {
+                            logger.error(
+                                    "Error on navigate to url in Crossbrowser session {}: {}",
+                                    sessionId, e.getMessage());
+                        }
                     }
                 }
             }
