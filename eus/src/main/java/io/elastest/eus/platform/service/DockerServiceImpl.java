@@ -50,21 +50,6 @@ public class DockerServiceImpl extends PlatformService {
     @Value("${docker.network}")
     private String dockerNetwork;
 
-    @Value("${eus.container.prefix}")
-    private String eusContainerPrefix;
-
-    @Value("${eus.service.browsersync.prefix}")
-    private String eusServiceBrowsersyncPrefix;
-
-    @Value("${eus.service.browsersync.image.name}")
-    private String eusServiceBrowsersyncImageName;
-
-    @Value("${eus.service.browsersync.gui.port}")
-    private String eusServiceBrowsersyncGUIPort;
-
-    @Value("${eus.service.browsersync.app.port}")
-    private String eusServiceBrowsersyncAppPort;
-
     private DockerService dockerService;
     private EusFilesService eusFilesService;
 
@@ -333,8 +318,8 @@ public class DockerServiceImpl extends PlatformService {
 
     @Override
     public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
-            throws Exception {
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception {
         String serviceContainerName = generateRandomContainerNameWithPrefix(
                 eusContainerPrefix + eusServiceBrowsersyncPrefix);
         BrowserSync browsersync = new BrowserSync();
@@ -343,9 +328,6 @@ public class DockerServiceImpl extends PlatformService {
                 .getDesiredCapabilities();
 
         String sutUrl = crossBrowserCapabilities.getSutUrl();
-
-        // TODO labels
-        Map<String, String> labels = new HashMap<>();
 
         List<String> envs = new ArrayList<>();
         String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl

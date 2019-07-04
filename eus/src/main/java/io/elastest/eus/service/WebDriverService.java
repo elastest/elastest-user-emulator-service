@@ -1127,8 +1127,17 @@ public class WebDriverService {
     public BrowserSync startBrowsersyncService(ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
             throws Exception {
+        Map<String, String> labels = new HashMap<>();
+        labels.put(etTypeLabel, etTypeTSSLabelValue);
+        labels.put(etTJobTssTypeLabel, "aux");
+
+        if (execData != null) {
+            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
+            labels.put(etTJobIdLabel, execData.gettJobId().toString());
+        }
+
         BrowserSync browserSync = platformService.buildAndRunBrowsersyncService(
-                execData, crossBrowserCapabilities);
+                execData, crossBrowserCapabilities, labels);
 
         return browserSync;
     }

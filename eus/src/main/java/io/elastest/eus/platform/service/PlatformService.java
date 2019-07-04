@@ -25,6 +25,21 @@ public abstract class PlatformService {
     @Value("${browser.shm.size}")
     protected long shmSize;
 
+    @Value("${eus.container.prefix}")
+    protected String eusContainerPrefix;
+
+    @Value("${eus.service.browsersync.prefix}")
+    protected String eusServiceBrowsersyncPrefix;
+
+    @Value("${eus.service.browsersync.image.name}")
+    protected String eusServiceBrowsersyncImageName;
+
+    @Value("${eus.service.browsersync.gui.port}")
+    protected String eusServiceBrowsersyncGUIPort;
+
+    @Value("${eus.service.browsersync.app.port}")
+    protected String eusServiceBrowsersyncAppPort;
+
     public abstract List<String> getContainerNetworksByContainerPrefix(
             String prefix) throws Exception;
 
@@ -62,6 +77,6 @@ public abstract class PlatformService {
 
     public abstract BrowserSync buildAndRunBrowsersyncService(
             ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
-            throws Exception;
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception;
 }

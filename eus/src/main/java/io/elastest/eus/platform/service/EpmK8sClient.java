@@ -7,11 +7,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -205,10 +205,50 @@ public class EpmK8sClient extends PlatformService {
 
     @Override
     public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception {
+        String serviceContainerName = generateRandomContainerNameWithPrefix(
+                eusContainerPrefix + eusServiceBrowsersyncPrefix);
+        BrowserSync browsersync = new BrowserSync();
+
+        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
+                .getDesiredCapabilities();
+
+        String sutUrl = crossBrowserCapabilities.getSutUrl();
+
+        List<String> envs = new ArrayList<>();
+        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
+                + "' --open 'external'";
+        envs.add(optionsEnv);
+
+        /* **** Docker Builder **** */
+        DockerBuilder dockerBuilder = new DockerBuilder(
+                eusServiceBrowsersyncImageName);
+        dockerBuilder.containerName(serviceContainerName);
+        dockerBuilder.envs(envs);
+        dockerBuilder.labels(labels);
+
+        // ExtraHosts
+        if (desiredCapabilities.getExtraHosts() != null) {
+            dockerBuilder.extraHosts(desiredCapabilities.getExtraHosts());
+        }
+
+        /* **** Start **** */
+        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
+
+        String ip = podInfo.getPodIp();
+        String guiUrl = "http://" + ip + ":" + eusServiceBrowsersyncGUIPort;
+
+        URL sutUrlObj = new URL(sutUrl);
+        String appProtocol = sutUrlObj.getProtocol();
+        String appUrl = appProtocol + "://" + ip + ":"
+                + eusServiceBrowsersyncAppPort;
+
+        browsersync.setIdentifier(serviceContainerName);
+        browsersync.setGuiUrl(guiUrl);
+        browsersync.setAppUrl(appUrl);
+
+        return browsersync;
     }
 
 }
