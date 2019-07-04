@@ -464,9 +464,9 @@ public class WebDriverService {
                                 + maximizeChrome,
                         method, sessionInfo, optionalHttpEntity, false);
             } catch (Exception e) {
-                logger.error("Exception on window maximize with '{}'",
-                        maximizeChrome, e);
-                logger.debug("Trying with '{}'", maximizeOther);
+                logger.error("Exception on window maximize with '{}' : {}",
+                        maximizeChrome, e.getMessage());
+                logger.debug("Trying maximize with '{}'", maximizeOther);
 
                 try {
                     exchange(httpEntity,
@@ -1340,6 +1340,8 @@ public class WebDriverService {
                 requestContext);
         if (crossBrowserIdFromPath.isPresent()) {
             String crossBrowserId = crossBrowserIdFromPath.get();
+            logger.debug("Getting crossbrowser data with id {}",
+                    crossBrowserId);
             if (crossBrowserRegistry.containsKey(crossBrowserId)) {
                 BrowserSync browserSync = crossBrowserRegistry
                         .get(crossBrowserId);
