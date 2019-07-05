@@ -1,5 +1,7 @@
 package io.elastest.eus.platform.service;
 
+import static java.lang.String.format;
+import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -23,6 +25,7 @@ import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.K8sService;
 import io.elastest.epm.client.service.K8sService.PodInfo;
+import io.elastest.epm.client.service.K8sService.ServiceInfo;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
@@ -79,6 +82,9 @@ public class EpmK8sClient extends PlatformService {
         /* **** Exposed ports **** */
         List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
                 exposedNoVncPort);
+        
+        //Add extra labels
+        labels.put(k8sService.LABEL_POD_NAME, hubContainerName);
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
@@ -104,10 +110,19 @@ public class EpmK8sClient extends PlatformService {
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
         dockerBrowserInfo.setBrowserPod(podInfo.getPodName());
 
+        // Binding ports
+        ServiceInfo hubServiceInfo = k8sService.createService(hubContainerName,
+                hubExposedPort, "http", null, k8sService.LABEL_POD_NAME);
+        ServiceInfo noVncServiceInfo = k8sService.createService(
+                hubContainerName, noVncExposedPort, "http", null,
+                k8sService.LABEL_POD_NAME);
+
         /* **** Set IPs and ports **** */
-        dockerBrowserInfo.setHubIp(podInfo.getPodIp());
-        dockerBrowserInfo.setHubPort(hubExposedPort);
-        dockerBrowserInfo.setNoVncBindedPort(noVncExposedPort);
+        dockerBrowserInfo.setHubIp(hubServiceInfo.getServiceURL().getHost());
+        dockerBrowserInfo
+                .setHubPort(Integer.parseInt(hubServiceInfo.getServicePort()));
+        dockerBrowserInfo.setNoVncBindedPort(
+                Integer.parseInt(noVncServiceInfo.getServicePort()));
 
     }
 
@@ -146,6 +161,7 @@ public class EpmK8sClient extends PlatformService {
     @Override
     public void removeServiceWithTimeout(String podName, int killAfterSeconds)
             throws Exception {
+        k8sService.deleteService(podName, null);
         k8sService.deletePod(podName);
 
     }

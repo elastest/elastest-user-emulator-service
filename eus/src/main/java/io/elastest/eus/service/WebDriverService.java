@@ -1101,12 +1101,14 @@ public class WebDriverService {
         String vncUrl = format(vncUrlFormat, sessionInfo.getHubIp(),
                 sessionInfo.getNoVncBindedPort());
         String internalVncUrl = vncUrl;
+        logger.debug("HubUrl: {}", vncUrl);
 
         String etHost = getenv(etHostEnv);
         String etHostType = getenv(etHostEnvType);
         if (etHostType != null && etHost != null) {
-            // If server-address
-            if (!"default".equalsIgnoreCase(etHostType)) {
+            // If server-address and the platform is docker
+            if (!"default".equalsIgnoreCase(etHostType)
+                    && !etHost.equals("localhost")) {
                 String hubIp = etHost;
                 vncUrl = format(vncUrlFormat, hubIp,
                         sessionInfo.getNoVncBindedPort());
