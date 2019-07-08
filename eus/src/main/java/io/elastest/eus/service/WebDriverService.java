@@ -878,7 +878,8 @@ public class WebDriverService {
                 // Stop recording even if manually managed
                 recordingService.stopRecording(sessionInfo);
                 recordingService.storeMetadata(sessionInfo);
-                platformService.copyFilesFromBrowserIfNecessary(sessionInfo);
+                platformService.copyFilesFromBrowserIfNecessary(sessionInfo,
+                        null);
                 sessionService.sendRecordingToAllClients(sessionInfo);
             }
 
@@ -1115,7 +1116,8 @@ public class WebDriverService {
             }
         }
         sessionInfo.setVncUrl(vncUrl);
-        platformService.waitForBrowserReady(internalVncUrl, sessionInfo);
+        platformService.waitForBrowserReady(sessionInfo.getHubContainerName(),
+                internalVncUrl, sessionInfo);
 
         return sessionInfo;
     }

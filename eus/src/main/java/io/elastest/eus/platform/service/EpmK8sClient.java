@@ -126,25 +126,6 @@ public class EpmK8sClient extends PlatformService {
 
     }
 
-    public String createRecordingsPath(String hostPath) {
-        logger.debug("Creating recordings path from: {}", hostPath);
-        String recordingsPath = "";
-        String pathRecordingsInHost = hostPath
-                + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
-                        : EusFilesService.FILE_SEPARATOR);
-        String recordingsRelativePath = pathRecordingsInHost
-                .substring(
-                        pathRecordingsInHost
-                                .indexOf(eusFilesService.FILE_SEPARATOR,
-                                        pathRecordingsInHost.indexOf(
-                                                eusFilesService.FILE_SEPARATOR)
-                                                + 1));
-        recordingsPath = eusFilesService.getEtSharedFolder()
-                + recordingsRelativePath;
-
-        return recordingsPath;
-    }
-
     @Override
     public void execCommand(String podName, boolean awaitCompletion,
             String... command) throws Exception {
@@ -167,8 +148,9 @@ public class EpmK8sClient extends PlatformService {
     }
 
     @Override
-    public void waitForBrowserReady(String internalVncUrl,
-            DockerBrowserInfo dockerBrowserInfo) throws Exception {
+    public void waitForBrowserReady(String serviceNameOrId,
+            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }
@@ -189,7 +171,8 @@ public class EpmK8sClient extends PlatformService {
 
     @Override
     public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo) throws IOException {
+            DockerBrowserInfo dockerBrowserInfo, String instanceId)
+            throws IOException {
         k8sService.copyFileFromContainer(dockerBrowserInfo.getBrowserPod(),
                 containerRecordingFolder,
                 dockerBrowserInfo.getHostSharedFilesFolderPath(), null);
@@ -198,25 +181,6 @@ public class EpmK8sClient extends PlatformService {
                         + containerRecordingFolder);
         moveFiles(recordingsDirectory,
                 dockerBrowserInfo.getHostSharedFilesFolderPath());
-    }
-
-    private void moveFiles(File fileToMove, String targetPath)
-            throws IOException {
-        if (fileToMove.isDirectory()) {
-            for (File file : fileToMove.listFiles()) {
-                moveFiles(file, targetPath + "/" + file.getName());
-            }
-        } else {
-            try {
-                Files.move(Paths.get(fileToMove.getPath()),
-                        Paths.get(targetPath),
-                        StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                logger.error("Error moving files to other directory.");
-                throw e;
-            }
-        }
-
     }
 
     @Override

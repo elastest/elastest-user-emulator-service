@@ -262,8 +262,9 @@ public class DockerServiceImpl extends PlatformService {
         return networksMap;
     }
 
-    public void waitForBrowserReady(String internalVncUrl,
-            DockerBrowserInfo dockerBrowserInfo) throws Exception {
+    public void waitForBrowserReady(String serviceNameOrId,
+            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
+            throws Exception {
         dockerService.waitForHostIsReachable(internalVncUrl);
         dockerBrowserInfo.setStatusMsg("Ready");
         dockerBrowserInfo.setStatus(DockerServiceStatusEnum.READY);
@@ -311,7 +312,7 @@ public class DockerServiceImpl extends PlatformService {
 
     @Override
     public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo) {
+            DockerBrowserInfo dockerBrowserInfo, String instanceId) {
         // TODO Auto-generated method stub
 
     }

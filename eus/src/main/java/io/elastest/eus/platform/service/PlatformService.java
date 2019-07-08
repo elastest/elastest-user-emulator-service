@@ -1,20 +1,30 @@
 package io.elastest.eus.platform.service;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.UUID.randomUUID;
+import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
 
 public abstract class PlatformService {
+    final Logger logger = getLogger(lookup().lookupClass());
 
     @Value("${hub.exposedport}")
     protected int hubExposedPort;
@@ -40,6 +50,16 @@ public abstract class PlatformService {
     @Value("${eus.service.browsersync.app.port}")
     protected String eusServiceBrowsersyncAppPort;
 
+    @Value("${host.shared.files.relative.folder}")
+    protected String hostSharedFilesRelativeFolder;
+    @Value("${container.recording.folder}")
+    protected String containerRecordingFolder;
+    @Value("${container.recording.folder}")
+    protected String containerSharedFilesFolder;
+
+    @Autowired
+    private EusFilesService eusFilesService;
+
     public abstract List<String> getContainerNetworksByContainerPrefix(
             String prefix) throws Exception;
 
@@ -48,7 +68,7 @@ public abstract class PlatformService {
             Boolean isDirectory) throws Exception;
 
     public abstract void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo) throws IOException;
+            DockerBrowserInfo dockerBrowserInfo, String instanceId) throws IOException;
 
     public abstract String getSessionContextInfo(
             DockerBrowserInfo dockerBrowserInfo) throws Exception;
@@ -72,11 +92,50 @@ public abstract class PlatformService {
     public abstract void removeServiceWithTimeout(String containerId,
             int killAfterSeconds) throws Exception;
 
-    public abstract void waitForBrowserReady(String internalVncUrl,
-            DockerBrowserInfo dockerBrowserInfo) throws Exception;
+    public abstract void waitForBrowserReady(String serviceNameOrId,
+            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
+            throws Exception;
 
     public abstract BrowserSync buildAndRunBrowsersyncService(
             ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception;
+
+    protected String createRecordingsPath(String hostPath) {
+        logger.debug("Creating recordings path from: {}", hostPath);
+        String recordingsPath = "";
+        String pathRecordingsInHost = hostPath
+                + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
+                        : EusFilesService.FILE_SEPARATOR);
+        String recordingsRelativePath = pathRecordingsInHost
+                .substring(
+                        pathRecordingsInHost
+                                .indexOf(eusFilesService.FILE_SEPARATOR,
+                                        pathRecordingsInHost.indexOf(
+                                                eusFilesService.FILE_SEPARATOR)
+                                                + 1));
+        recordingsPath = eusFilesService.getEtSharedFolder()
+                + recordingsRelativePath;
+
+        return recordingsPath;
+    }
+
+    protected void moveFiles(File fileToMove, String targetPath)
+            throws IOException {
+        if (fileToMove.isDirectory()) {
+            for (File file : fileToMove.listFiles()) {
+                moveFiles(file, targetPath + "/" + file.getName());
+            }
+        } else {
+            try {
+                Files.move(Paths.get(fileToMove.getPath()),
+                        Paths.get(targetPath),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                logger.error("Error moving files to other directory.");
+                throw e;
+            }
+        }
+
+    }
 }
