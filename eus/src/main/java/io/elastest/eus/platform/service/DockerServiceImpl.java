@@ -382,6 +382,10 @@ public class DockerServiceImpl extends PlatformService {
         String appUrl = appProtocol + "://" + ip + ":"
                 + eusServiceBrowsersyncAppPort;
 
+        if (sutUrlObj.getFile() != null) {
+            appUrl += sutUrlObj.getFile();
+        }
+
         browsersync.setIdentifier(serviceContainerName);
         browsersync.setGuiUrl(guiUrl);
         browsersync.setAppUrl(appUrl);
