@@ -1249,12 +1249,15 @@ public class WebDriverService {
                     response.getBody(),
                     new TypeReference<Map<String, Object>>() {
                     });
-            if (responseMap != null && responseMap.containsKey("value")) {
-                LinkedHashMap<String, Object> value = (LinkedHashMap<String, Object>) responseMap
-                        .get("value");
-                if (value.containsKey("sessionId")) {
-                    String sessionId = (String) value.get("sessionId");
+            if (responseMap != null) {
+                String sessionId = (String) responseMap.get("sessionId");
+                if (sessionId == null && responseMap.get("value") != null) {
+                    LinkedHashMap<String, Object> value = (LinkedHashMap<String, Object>) responseMap
+                            .get("value");
+                    sessionId = (String) value.get("sessionId");
+                }
 
+                if (sessionId != null) {
                     // Get Session Info and save in BrowserSync
                     Optional<SessionInfo> optionalSessionInfo = sessionService
                             .getSession(sessionId);
@@ -1280,8 +1283,15 @@ public class WebDriverService {
                                     "Error on navigate to url in Crossbrowser session {}: {}",
                                     sessionId, e.getMessage());
                         }
+                    } else {
+                        logger.error(
+                                "Crossbrowser session Error: Session Info is null");
                     }
+                } else {
+                    logger.error(
+                            "Crossbrowser session Error: Session ID is null");
                 }
+
             }
         }
 
