@@ -39,19 +39,11 @@ public class BrowserK8sManager extends PlatformManager {
         this.k8sService = k8sService;
     }
 
-    @Override
-    public List<String> getContainerNetworksByContainerPrefix(String prefix)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     @SuppressWarnings("static-access")
     @Override
-    public void buildAndRunBrowserInContainer(
-            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
-            String originalRequestBody, String folderPath,
-            ExecutionData execData, List<String> envs,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody,
+            String folderPath, ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
@@ -65,8 +57,8 @@ public class BrowserK8sManager extends PlatformManager {
                 .toString(contextProperties.noVncExposedPort);
 
         String recordingsPath = createRecordingsPath(folderPath);
-        dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionManager) dockerBrowserInfo).setFolderPath(recordingsPath);
+        sessionManager.setHostSharedFilesFolderPath(recordingsPath);
+        ((SessionManager) sessionManager).setFolderPath(recordingsPath);
 
         eusFilesService.createFolderIfNotExists(recordingsPath);
 
@@ -96,15 +88,15 @@ public class BrowserK8sManager extends PlatformManager {
         }
 
         /* **** Save info **** */
-        dockerBrowserInfo.setHubContainerName(hubContainerName);
-        dockerBrowserInfo.setVncContainerName(hubContainerName);
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        dockerBrowserInfo.setStatusMsg("Initializing...");
-        dockerBrowserInfo.setStatusMsg("Starting...");
+        sessionManager.setHubContainerName(hubContainerName);
+        sessionManager.setVncContainerName(hubContainerName);
+        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionManager.setStatusMsg("Initializing...");
+        sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
-        dockerBrowserInfo.setBrowserPod(podInfo.getPodName());
+        sessionManager.setBrowserPod(podInfo.getPodName());
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(hubContainerName,
@@ -115,10 +107,10 @@ public class BrowserK8sManager extends PlatformManager {
                 null, k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
-        dockerBrowserInfo.setHubIp(hubServiceInfo.getServiceURL().getHost());
-        dockerBrowserInfo
+        sessionManager.setHubIp(hubServiceInfo.getServiceURL().getHost());
+        sessionManager
                 .setHubPort(Integer.parseInt(hubServiceInfo.getServicePort()));
-        dockerBrowserInfo.setNoVncBindedPort(
+        sessionManager.setNoVncBindedPort(
                 Integer.parseInt(noVncServiceInfo.getServicePort()));
 
     }
@@ -145,39 +137,37 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void waitForBrowserReady(String serviceNameOrId,
-            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
-            throws Exception {
+    public void waitForBrowserReady(String internalVncUrl,
+            SessionManager sessionManager) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
+    public InputStream getFileFromBrowser(SessionManager sessionManager,
             String path, Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public String getSessionContextInfo(DockerBrowserInfo dockerBrowserInfo)
+    public String getSessionContextInfo(SessionManager sessionManager)
             throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo, String instanceId)
-            throws IOException {
-        k8sService.copyFileFromContainer(dockerBrowserInfo.getBrowserPod(),
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
+            String instanceId) throws IOException {
+        k8sService.copyFileFromContainer(sessionManager.getBrowserPod(),
                 contextProperties.containerRecordingFolder,
-                dockerBrowserInfo.getHostSharedFilesFolderPath(), null);
+                sessionManager.getHostSharedFilesFolderPath(), null);
         File recordingsDirectory = new File(
-                dockerBrowserInfo.getHostSharedFilesFolderPath()
+                sessionManager.getHostSharedFilesFolderPath()
                         + contextProperties.containerRecordingFolder);
         moveFiles(recordingsDirectory,
-                dockerBrowserInfo.getHostSharedFilesFolderPath());
+                sessionManager.getHostSharedFilesFolderPath());
     }
 
     @Override

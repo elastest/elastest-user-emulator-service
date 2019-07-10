@@ -103,13 +103,13 @@ public class RecordingService {
     }
 
     public void startRecording(SessionManager sessionManager,
-            String hubContainerName, String recordingFileName)
+            String browserServiceNameOrId, String recordingFileName)
             throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
-                sessionManager.getSessionId(), hubContainerName,
+                sessionManager.getSessionId(), browserServiceNameOrId,
                 recordingFileName);
-        sessionManager.getPlatformManager().execCommand(hubContainerName, false,
-                startRecordingScript, "-n", recordingFileName);
+        sessionManager.getPlatformManager().execCommand(browserServiceNameOrId,
+                false, startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
@@ -117,30 +117,32 @@ public class RecordingService {
     }
 
     public void startRecording(SessionManager sessionManager) throws Exception {
-        String noVncContainerName = sessionManager.getVncContainerName();
+        String browserServiceNameOrId = sessionManager
+                .getBrowserServiceNameOrId();
         String recordingFileName = sessionManager.getIdForFiles();
 
-        this.startRecording(sessionManager, noVncContainerName,
+        this.startRecording(sessionManager, browserServiceNameOrId,
                 recordingFileName);
     }
 
-    public void stopRecording(SessionManager sessionManager) throws Exception {
-        String noNvcContainerName = sessionManager.getVncContainerName();
-        this.stopRecording(sessionManager, noNvcContainerName);
-    }
-
     public void stopRecording(SessionManager sessionManager,
-            String hubContainerName) throws Exception {
+            String browserServiceNameOrId) throws Exception {
         log.debug("Stopping recording session {} of container {}",
-                sessionManager.getSessionId(), hubContainerName);
-        sessionManager.getPlatformManager().execCommand(hubContainerName, true,
-                stopRecordingScript);
+                sessionManager.getSessionId(), browserServiceNameOrId);
+        sessionManager.getPlatformManager().execCommand(browserServiceNameOrId,
+                true, stopRecordingScript);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
             log.error("Exception during sleep execution");
             e.printStackTrace();
         }
+    }
+
+    public void stopRecording(SessionManager sessionManager) throws Exception {
+        String browserServiceNameOrId = sessionManager
+                .getBrowserServiceNameOrId();
+        this.stopRecording(sessionManager, browserServiceNameOrId);
     }
 
     public void storeMetadata(SessionManager sessionManager)

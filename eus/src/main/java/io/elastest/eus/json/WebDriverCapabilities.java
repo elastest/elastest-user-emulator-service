@@ -110,7 +110,6 @@ public class WebDriverCapabilities {
 
         Integer elastestTimeout;
 
-        // TODO
         AWSConfig awsConfig;
 
         /* ************************** */

@@ -322,6 +322,15 @@ public class SessionService extends TextWebSocketHandler implements Observer {
             platformManager.removeServiceWithTimeout(vncContainerName,
                     killTimeoutInSeconds);
         }
+
+        String awsInstance = sessionManager.getAwsInstanceId();
+
+        if (sessionManager.isAWSSession() && awsInstance != null
+                && platformManager.existServiceWithName(awsInstance)) {
+            platformManager.removeServiceWithTimeout(awsInstance,
+                    killTimeoutInSeconds);
+        }
+
     }
 
     boolean isLive(String jsonMessage) {

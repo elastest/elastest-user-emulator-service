@@ -1134,9 +1134,7 @@ public class WebDriverService {
             }
         }
         sessionManager.setVncUrl(vncUrl);
-        platformManager.waitForBrowserReady(
-                sessionManager.getHubContainerName(), internalVncUrl,
-                sessionManager);
+        platformManager.waitForBrowserReady(internalVncUrl, sessionManager);
 
         return sessionManager;
     }

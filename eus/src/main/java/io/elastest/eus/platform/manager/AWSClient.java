@@ -1,11 +1,14 @@
 package io.elastest.eus.platform.manager;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,15 +64,14 @@ public class AWSClient {
         StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
                 .create(credentials);
         ec2 = Ec2Client.builder().credentialsProvider(credentialsProvider)
-                .endpointOverride(awsConfig.getEndpoint())
                 .region(awsConfig.getRegion()).build();
 
     }
 
-    public AWSClient(URI endpoint, Region region, String secretAccessKey,
-            String accessKeyId, String sshUser, String sshPrivateKey) {
-        this(new AWSConfig(endpoint, region, secretAccessKey, accessKeyId,
-                sshUser, sshPrivateKey));
+    public AWSClient(Region region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey) {
+        this(new AWSConfig(region, secretAccessKey, accessKeyId, sshUser,
+                sshPrivateKey));
     }
 
     public List<Instance> provideInstances(String amiId,
@@ -96,8 +98,12 @@ public class AWSClient {
 
     public void waitForInstance(Instance instance, int timeoutSeconds) {
         long endWaitTime = System.currentTimeMillis() + timeoutSeconds * 1000;
+
         boolean isRunning = instanceIsRunning(instance);
         while (System.currentTimeMillis() < endWaitTime && !isRunning) {
+            logger.debug("Waiting for instance wiht ID {}. (Timeout: {}s)",
+                    instance.instanceId(), timeoutSeconds);
+            instance = describeInstance(instance.instanceId());
             isRunning = instanceIsRunning(instance);
             if (isRunning) {
                 break;
@@ -159,12 +165,26 @@ public class AWSClient {
         return null;
     }
 
-    public List<Instance> describeInstances(Collection<Filter> filters) {
+    /* ************************************************** */
+    /* ******************** Describe ******************** */
+    /* ************************************************** */
+
+    public List<Instance> describeInstances(List<String> instancesIds,
+            Collection<Filter> filters) {
         List<Instance> instances = new ArrayList<>();
         String nextToken = null;
         do {
             Builder describeInstancesRequestBuilder = DescribeInstancesRequest
-                    .builder().maxResults(6).nextToken(nextToken);
+                    .builder();
+            if (instancesIds != null && instancesIds.size() > 0) {
+                describeInstancesRequestBuilder = describeInstancesRequestBuilder
+                        .instanceIds(instancesIds);
+            } else {
+                describeInstancesRequestBuilder = describeInstancesRequestBuilder
+                        .maxResults(6);
+            }
+            describeInstancesRequestBuilder = describeInstancesRequestBuilder
+                    .nextToken(nextToken);
 
             if (filters != null) {
                 describeInstancesRequestBuilder = describeInstancesRequestBuilder
@@ -184,41 +204,30 @@ public class AWSClient {
         return instances;
     }
 
+    public List<Instance> describeInstances(Collection<Filter> filters) {
+        return describeInstances(null, filters);
+    }
+
     public List<Instance> describeInstances() {
-        return describeInstances(null);
+        return describeInstances(null, null);
     }
 
     public Instance describeInstance(String instanceId,
             Collection<Filter> filters) {
-        List<Instance> instances = new ArrayList<>();
-        String nextToken = null;
-        do {
-            Builder describeInstancesRequestBuilder = DescribeInstancesRequest
-                    .builder().maxResults(6)
-                    .instanceIds(Arrays.asList(instanceId))
-                    .nextToken(nextToken);
-
-            if (filters != null) {
-                describeInstancesRequestBuilder = describeInstancesRequestBuilder
-                        .filters(filters);
-            }
-
-            DescribeInstancesRequest request = describeInstancesRequestBuilder
-                    .build();
-            DescribeInstancesResponse response = ec2.describeInstances(request);
-
-            for (Reservation reservation : response.reservations()) {
-                instances.addAll(reservation.instances());
-            }
-            nextToken = response.nextToken();
-
-        } while (nextToken != null);
-        return instances.get(0);
+        return describeInstances(Arrays.asList(instanceId), filters).get(0);
     }
 
     public Instance describeInstance(String instanceId) {
         return describeInstance(instanceId, null);
     }
+
+    public Instance describeInstance(Instance instance) {
+        return describeInstance(instance.instanceId());
+    }
+
+    /* ************************************************* */
+    /* ******************** Monitor ******************** */
+    /* ************************************************* */
 
     public MonitorInstancesResponse monitorInstance(String instance_id) {
         // snippet-start:[ec2.java2.monitor_instance.main]
@@ -236,18 +245,41 @@ public class AWSClient {
         ec2.unmonitorInstances(request);
     }
 
+    /* *************************************************** */
+    /* ****************** Exec Commands ****************** */
+    /* *************************************************** */
+
     public String executeCommand(String instanceId, String command)
-            throws JSchException {
+            throws Exception {
         Instance instance = describeInstance(instanceId);
         JSch jsch = new JSch();
+
+        File temp = File.createTempFile(
+                "temp-privatekey-" + instanceId + "-" + randomUUID().toString(),
+                ".tmp");
+        temp.setWritable(true);
+        temp.setReadable(true);
+        temp.setExecutable(false);
+
+        BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+        bw.write(awsConfig.getSshPrivateKey());
+        bw.close();
+
+        jsch.addIdentity(temp.getAbsolutePath());
+
+        String host = instance.publicIpAddress();
+        int port = 22;
+        String user = awsConfig.getSshUser();
+        logger.debug("Execute command => Connecting to {} at {} with user {}",
+                host, port, user);
+
+        Session jschSession = jsch.getSession(user, host, port);
+
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
         config.put("PreferredAuthentications", "publickey");
-        jsch.addIdentity(awsConfig.getSshPrivateKey());
-        Session jschSession = jsch.getSession(awsConfig.getSshUser(),
-                instance.publicIpAddress(), 22);
         jschSession.setConfig(config);
-        jschSession.connect(10000);
+        jschSession.connect(180000);
 
         if (jschSession.isConnected()) {
             StringBuilder outputBuffer = new StringBuilder();
@@ -273,8 +305,7 @@ public class AWSClient {
 
                 if (errorBuffer.length() > 0) {
                     logger.error("Error sending command '{}' to {}: {}",
-                            command, instance.publicIpAddress(),
-                            errorBuffer.toString());
+                            command, host, errorBuffer.toString());
                 }
 
                 channel.disconnect();
@@ -294,8 +325,12 @@ public class AWSClient {
         }
     }
 
+    /* ************************************************** */
+    /* ********************** Wait ********************** */
+    /* ************************************************** */
+
     public void waitForInternalHostIsReachable(String instanceId, String url,
-            int timeoutSeconds) throws JSchException {
+            int timeoutSeconds) throws Exception {
         String command = "curl -s --head " + url
                 + " | head -n 1 | grep 'HTTP/.* [23]..' | awk '{print $2}'";
 
@@ -327,7 +362,9 @@ public class AWSClient {
         Instance instance = describeInstance(instanceId);
 
         ScpFileDownloader fileDownloader = new ScpFileDownloader(
-                awsConfig.getSshUser(), instance.publicIpAddress(),
+                awsConfig.getSshUser(),
+                instance.publicDnsName() != null ? instance.publicDnsName()
+                        : instance.publicIpAddress(),
                 awsConfig.getSshPrivateKey());
         fileDownloader.downloadFile(remotePath, filename, localPath);
     }
@@ -349,7 +386,7 @@ public class AWSClient {
                 }
             }
 
-        } catch (JSchException e1) {
+        } catch (Exception e1) {
             logger.error("Error on get names of files: {}", e1.getMessage());
         }
 

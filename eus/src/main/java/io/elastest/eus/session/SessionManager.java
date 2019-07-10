@@ -54,6 +54,8 @@ public class SessionManager extends DockerBrowserInfo {
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
 
+    private String awsInstanceId;
+
     PlatformManager platformManager;
 
     public SessionManager(PlatformManager platformManager) {
@@ -173,9 +175,22 @@ public class SessionManager extends DockerBrowserInfo {
         this.platformManager = platformManager;
     }
 
+    public String getAwsInstanceId() {
+        return awsInstanceId;
+    }
+
+    public void setAwsInstanceId(String awsInstanceId) {
+        this.awsInstanceId = awsInstanceId;
+    }
+    
     /* ********************************************* */
     /* *************** Other methods *************** */
     /* ********************************************* */
+
+    public boolean isAWSSession() {
+        return this.capabilities != null
+                && this.capabilities.getAwsConfig() != null;
+    }
 
     public String getIdForFiles() {
         String id = sessionId;
@@ -202,5 +217,9 @@ public class SessionManager extends DockerBrowserInfo {
                 + ", folderPath=" + folderPath + ", elastestExecutionData="
                 + elastestExecutionData + ", capabilities=" + capabilities
                 + ", toString()=" + super.toString() + "]";
+    }
+
+    public String getBrowserServiceNameOrId() {
+        return isAWSSession() ? this.awsInstanceId : this.getVncContainerName();
     }
 }

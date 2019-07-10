@@ -18,10 +18,13 @@
 package io.elastest.eus.utils;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,7 +36,6 @@ import org.slf4j.Logger;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 /**
@@ -59,11 +61,17 @@ public class ScpFileDownloader {
         config.put("StrictHostKeyChecking", "no");
         config.put("PreferredAuthentications", "publickey");
         try {
-            jsch.addIdentity(privatekey);
+            File temp = File.createTempFile("temp-privatekey-" + hostname + "-"
+                    + randomUUID().toString(), ".tmp");
+            BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+            bw.write(privatekey);
+            bw.close();
+
+            jsch.addIdentity(temp.getAbsolutePath());
             jschSession = jsch.getSession(username, hostname, 22);
             jschSession.setConfig(config);
             jschSession.connect();
-        } catch (JSchException e) {
+        } catch (Exception e) {
             log.error("Couldn't connect to {} to download file", hostname);
         }
     }

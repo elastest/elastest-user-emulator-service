@@ -2,7 +2,6 @@ package io.elastest.eus.platform.manager;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +32,13 @@ public class BrowserAWSManager extends PlatformManager {
         this.awsClient = awsClient;
     }
 
-    public BrowserAWSManager(URI endpoint, Region region,
-            String secretAccessKey, String accessKeyId, String sshUser,
-            String sshPrivateKey, EusFilesService eusFilesService,
+    public BrowserAWSManager(Region region, String secretAccessKey,
+            String accessKeyId, String sshUser, String sshPrivateKey,
+            EusFilesService eusFilesService,
             ContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
-        this.awsClient = new AWSClient(endpoint, region, secretAccessKey,
-                accessKeyId, sshUser, sshPrivateKey);
+        this.awsClient = new AWSClient(region, secretAccessKey, accessKeyId,
+                sshUser, sshPrivateKey);
     }
 
     public BrowserAWSManager(AWSConfig awsConfig,
@@ -50,51 +49,40 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public List<String> getContainerNetworksByContainerPrefix(String prefix)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
+    public InputStream getFileFromBrowser(SessionManager sessionManager,
             String path, Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo, String instanceId)
-            throws IOException {
-        // TODO copy videos
-
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
+            String instanceId) throws IOException {
         String remotePath = contextProperties.containerRecordingFolder;
-        String localPath = dockerBrowserInfo.getHostSharedFilesFolderPath();
+        String localPath = sessionManager.getHostSharedFilesFolderPath();
 
         awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
     }
 
     @Override
-    public String getSessionContextInfo(DockerBrowserInfo dockerBrowserInfo)
+    public String getSessionContextInfo(SessionManager sessionManager)
             throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(
-            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
-            String originalRequestBody, String folderPath,
-            ExecutionData execData, List<String> envs,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody,
+            String folderPath, ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        dockerBrowserInfo.setStatusMsg("Initializing...");
+        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionManager.setStatusMsg("Initializing...");
 
         String recordingsPath = createRecordingsPath(folderPath);
-        dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionManager) dockerBrowserInfo).setFolderPath(recordingsPath);
+        sessionManager.setHostSharedFilesFolderPath(recordingsPath);
+        ((SessionManager) sessionManager).setFolderPath(recordingsPath);
 
         AWSInstancesConfig awsInstanceConfig = capabilities.getAwsConfig()
                 .getAwsInstancesConfig();
@@ -112,19 +100,27 @@ public class BrowserAWSManager extends PlatformManager {
         Collection<TagSpecification> tagSpecifications = awsInstanceConfig
                 .getTagSpecifications();
 
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.STARTING);
-        dockerBrowserInfo.setStatusMsg("Starting...");
+        sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
+        sessionManager.setStatusMsg("Starting...");
 
         // Call to AwsClient to create instances
         Instance instance = awsClient.provideInstance(amiId, instanceType,
                 keyName, securityGroups, tagSpecifications);
         // Wait
         awsClient.waitForInstance(instance, 600);
+        instance = awsClient.describeInstance(instance);
 
-        dockerBrowserInfo.setHubIp(instance.publicIpAddress());
-        dockerBrowserInfo.setHubPort(contextProperties.hubExposedPort);
-        dockerBrowserInfo
-                .setNoVncBindedPort(contextProperties.noVncExposedPort);
+        String hubIp = instance.publicDnsName();
+
+        if (hubIp == null || "".equals(hubIp)) {
+            hubIp = instance.publicIpAddress();
+        }
+
+        sessionManager.setHubIp(hubIp);
+        sessionManager.setHubPort(contextProperties.hubExposedPort);
+        sessionManager.setNoVncBindedPort(contextProperties.noVncExposedPort);
+
+        sessionManager.setAwsInstanceId(instance.instanceId());
     }
 
     @Override
@@ -156,13 +152,19 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void waitForBrowserReady(String serviceNameOrId,
-            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
-            throws Exception {
-        awsClient.waitForInternalHostIsReachable(serviceNameOrId,
-                internalVncUrl, 45);
-        dockerBrowserInfo.setStatusMsg("Ready");
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.READY);
+    public void waitForBrowserReady(String internalVncUrl,
+            SessionManager sessionManager) throws Exception {
+        try {
+            awsClient.waitForInternalHostIsReachable(
+                    sessionManager.getAwsInstanceId(), internalVncUrl, 45);
+            sessionManager.setStatusMsg("Ready");
+            sessionManager.setStatus(DockerServiceStatusEnum.READY);
+        } catch (Exception e) {
+            logger.error("Error on wait for host reachable: {}",
+                    e.getMessage());
+            removeServiceWithTimeout(sessionManager.getAwsInstanceId(), 60);
+            throw e;
+        }
     }
 
     @Override

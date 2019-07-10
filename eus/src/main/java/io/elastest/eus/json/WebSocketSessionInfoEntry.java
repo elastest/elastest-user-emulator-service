@@ -37,6 +37,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
     String folderPath;
     boolean live;
     ExecutionData elastestExecutionData;
+    String awsInstanceId;
 
     public WebSocketSessionInfoEntry() {
         // Empty default construct (needed by Jackson)
@@ -54,6 +55,7 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         this.setStatusMsg(sessionManager.getStatusMsg());
         this.live = sessionManager.isLiveSession();
         this.elastestExecutionData = sessionManager.getElastestExecutionData();
+        this.awsInstanceId = sessionManager.getAwsInstanceId();
     }
 
     public String getId() {
@@ -92,6 +94,10 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         return elastestExecutionData;
     }
 
+    public String getAwsInstanceId() {
+        return awsInstanceId;
+    }
+
     @Override
     public String toString() {
         return "WebSocketSessionInfoEntry [id=" + id + ", url=" + url
@@ -99,7 +105,8 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
                 + ", creationTime=" + creationTime + ", hubContainerName="
                 + hubContainerName + ", folderPath=" + folderPath + ", live="
                 + live + ", elastestExecutionData=" + elastestExecutionData
-                + ", toString()=" + super.toString() + "]";
+                + ", awsInstanceId=" + awsInstanceId + ", toString()="
+                + super.toString() + "]";
     }
 
 }

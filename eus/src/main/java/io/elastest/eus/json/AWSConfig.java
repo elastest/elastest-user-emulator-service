@@ -1,14 +1,19 @@
 package io.elastest.eus.json;
 
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
+import software.amazon.awssdk.services.ec2.model.Tag;
 import software.amazon.awssdk.services.ec2.model.TagSpecification;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AWSConfig {
-    URI endpoint;
     Region region;
     String secretAccessKey;
     String accessKeyId;
@@ -22,10 +27,9 @@ public class AWSConfig {
         // Empty default construct
     }
 
-    public AWSConfig(URI endpoint, Region region, String secretAccessKey,
-            String accessKeyId, String sshUser, String sshPrivateKey) {
+    public AWSConfig(Region region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey) {
         super();
-        this.endpoint = endpoint;
         this.region = region;
         this.secretAccessKey = secretAccessKey;
         this.accessKeyId = accessKeyId;
@@ -34,20 +38,36 @@ public class AWSConfig {
         this.sshPrivateKey = sshPrivateKey;
     }
 
-    public AWSConfig(URI endpoint, Region region, String secretAccessKey,
-            String accessKeyId, String sshUser, String sshPrivateKey,
+    public AWSConfig(Region region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey,
             AWSInstancesConfig awsInstancesConfig) {
-        this(endpoint, region, secretAccessKey, accessKeyId, sshUser,
-                sshPrivateKey);
+        this(region, secretAccessKey, accessKeyId, sshUser, sshPrivateKey);
         this.awsInstancesConfig = awsInstancesConfig;
     }
 
-    public URI getEndpoint() {
-        return endpoint;
+    public AWSConfig(String region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey) {
+        this(Region.of(region), secretAccessKey, accessKeyId, sshUser,
+                sshPrivateKey);
+    }
+
+    public AWSConfig(String region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey,
+            AWSInstancesConfig awsInstancesConfig) {
+        this(Region.of(region), secretAccessKey, accessKeyId, sshUser,
+                sshPrivateKey, awsInstancesConfig);
     }
 
     public Region getRegion() {
         return region;
+    }
+
+    public void setRegion(Region region) {
+        this.region = region;
+    }
+
+    public void setRegion(String region) {
+        this.setRegion(Region.of(region));
     }
 
     public String getSecretAccessKey() {
@@ -70,6 +90,7 @@ public class AWSConfig {
         return awsInstancesConfig;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class AWSInstancesConfig {
         String amiId;
         InstanceType instanceType;
@@ -97,6 +118,10 @@ public class AWSConfig {
             this.instanceType = instanceType;
         }
 
+        public void setInstanceType(String instanceType) {
+            this.setInstanceType(InstanceType.fromValue(instanceType));
+        }
+
         public String getKeyName() {
             return keyName;
         }
@@ -117,9 +142,33 @@ public class AWSConfig {
             return tagSpecifications;
         }
 
+        // public void setTagSpecifications(
+        // Collection<TagSpecification> tagSpecifications) {
+        // this.tagSpecifications = tagSpecifications;
+        // }
+        //
+
         public void setTagSpecifications(
-                Collection<TagSpecification> tagSpecifications) {
-            this.tagSpecifications = tagSpecifications;
+                List<Map<String, Object>> tagSpecifications) {
+            if (tagSpecifications != null) {
+                this.tagSpecifications = new ArrayList<>();
+                for (Map<String, Object> tagSpec : tagSpecifications) {
+                    if (tagSpec != null) {
+                        String resourceType = (String) tagSpec
+                                .get("resourceType");
+                        List<Tag> tags = new ArrayList<>();
+                        if (tagSpec.get("tags") != null) {
+                            for (Map<String, String> tag : (List<Map<String, String>>) tagSpec
+                                    .get("tags")) {
+                                tags.add(Tag.builder().key(tag.get("key"))
+                                        .value(tag.get("value")).build());
+                            }
+                        }
+                        this.tagSpecifications.add(TagSpecification.builder()
+                                .resourceType(resourceType).tags(tags).build());
+                    }
+                }
+            }
         }
 
         public Integer getNumInstances() {
@@ -142,11 +191,10 @@ public class AWSConfig {
 
     @Override
     public String toString() {
-        return "AWSConfig [endpoint=" + endpoint + ", region=" + region
-                + ", secretAccessKey=" + secretAccessKey + ", accessKeyId="
-                + accessKeyId + ", sshUser=" + sshUser + ", sshPrivateKey="
-                + sshPrivateKey + ", awsInstancesConfig=" + awsInstancesConfig
-                + "]";
+        return "AWSConfig [region=" + region + ", secretAccessKey="
+                + secretAccessKey + ", accessKeyId=" + accessKeyId
+                + ", sshUser=" + sshUser + ", sshPrivateKey=" + sshPrivateKey
+                + ", awsInstancesConfig=" + awsInstancesConfig + "]";
     }
 
 }

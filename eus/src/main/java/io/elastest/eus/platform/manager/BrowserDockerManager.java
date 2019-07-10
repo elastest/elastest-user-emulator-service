@@ -33,6 +33,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.session.SessionManager;
 
 public class BrowserDockerManager extends PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
@@ -46,7 +47,6 @@ public class BrowserDockerManager extends PlatformManager {
         this.dockerService = dockerService;
     }
 
-    @Override
     public List<String> getContainerNetworksByContainerPrefix(String prefix)
             throws Exception {
         List<String> networks = new ArrayList<>();
@@ -60,24 +60,24 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
+    public InputStream getFileFromBrowser(SessionManager sessionManager,
             String path, Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
 
         if (isDirectory) {
             return dockerService.getFilesFromContainerAsInputStreamTar(
-                    dockerBrowserInfo.getVncContainerName(), path);
+                    sessionManager.getVncContainerName(), path);
         } else {
             return dockerService.getSingleFileFromContainer(
-                    dockerBrowserInfo.getVncContainerName(), path);
+                    sessionManager.getVncContainerName(), path);
         }
     }
 
     @Override
-    public String getSessionContextInfo(DockerBrowserInfo dockerBrowserInfo)
+    public String getSessionContextInfo(SessionManager sessionManager)
             throws Exception {
-        String vncContainerName = dockerBrowserInfo.getVncContainerName();
+        String vncContainerName = sessionManager.getVncContainerName();
         if (vncContainerName != null) {
             return dockerService.getContainerInfoStringByName(vncContainerName);
         }
@@ -85,10 +85,9 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(
-            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
-            String originalRequestBody, String folderPath,
-            ExecutionData execData, List<String> envs,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody,
+            String folderPath, ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
@@ -169,16 +168,16 @@ public class BrowserDockerManager extends PlatformManager {
             dockerBuilder.network(network);
         }
         /* **** Save info **** */
-        dockerBrowserInfo.setHubContainerName(hubContainerName);
-        dockerBrowserInfo.setVncContainerName(hubContainerName);
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        dockerBrowserInfo.setStatusMsg("Initializing...");
+        sessionManager.setHubContainerName(hubContainerName);
+        sessionManager.setVncContainerName(hubContainerName);
+        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionManager.setStatusMsg("Initializing...");
 
         /* **** Pull **** */
         dockerService.pullImageWithProgressHandler(imageId,
-                getBrowserProgressHandler(imageId, dockerBrowserInfo));
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.STARTING);
-        dockerBrowserInfo.setStatusMsg("Starting...");
+                getBrowserProgressHandler(imageId, sessionManager));
+        sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
+        sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
         String containerId = dockerService
@@ -200,9 +199,9 @@ public class BrowserDockerManager extends PlatformManager {
         }
 
         /* **** Set IPs and ports **** */
-        dockerBrowserInfo.setHubIp(dockerService.getDockerServerIp());
-        dockerBrowserInfo.setHubPort(hubPort);
-        dockerBrowserInfo.setNoVncBindedPort(noVncBindedPort);
+        sessionManager.setHubIp(dockerService.getDockerServerIp());
+        sessionManager.setHubPort(hubPort);
+        sessionManager.setNoVncBindedPort(noVncBindedPort);
     }
 
     public Map<String, List<String>> getNetworksFromExecutionData(
@@ -253,12 +252,11 @@ public class BrowserDockerManager extends PlatformManager {
         return networksMap;
     }
 
-    public void waitForBrowserReady(String serviceNameOrId,
-            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
-            throws Exception {
+    public void waitForBrowserReady(String internalVncUrl,
+            SessionManager sessionManager) throws Exception {
         dockerService.waitForHostIsReachable(internalVncUrl);
-        dockerBrowserInfo.setStatusMsg("Ready");
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.READY);
+        sessionManager.setStatusMsg("Ready");
+        sessionManager.setStatus(DockerServiceStatusEnum.READY);
     }
 
     private ProgressHandler getBrowserProgressHandler(String image,
@@ -302,8 +300,8 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo, String instanceId) {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
+            String instanceId) {
         // TODO Auto-generated method stub
 
     }

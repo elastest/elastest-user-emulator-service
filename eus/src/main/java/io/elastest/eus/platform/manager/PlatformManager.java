@@ -21,6 +21,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.session.SessionManager;
 
 public abstract class PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
@@ -35,26 +36,23 @@ public abstract class PlatformManager {
         this.contextProperties = contextProperties;
     }
 
-    public abstract List<String> getContainerNetworksByContainerPrefix(
-            String prefix) throws Exception;
-
     public abstract InputStream getFileFromBrowser(
-            DockerBrowserInfo dockerBrowserInfo, String path,
-            Boolean isDirectory) throws Exception;
+            SessionManager sessionManager, String path, Boolean isDirectory)
+            throws Exception;
 
     public abstract void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo, String instanceId)
+            SessionManager sessionManager, String instanceId)
             throws IOException;
 
-    public abstract String getSessionContextInfo(
-            DockerBrowserInfo dockerBrowserInfo) throws Exception;
+    public abstract String getSessionContextInfo(SessionManager sessionManager)
+            throws Exception;
 
     public String generateRandomContainerNameWithPrefix(String prefix) {
         return prefix + randomUUID().toString();
     }
 
     public abstract void buildAndRunBrowserInContainer(
-            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
+            SessionManager sessionManager, String containerPrefix,
             String originalRequestBody, String folderPath,
             ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
@@ -68,9 +66,8 @@ public abstract class PlatformManager {
     public abstract void removeServiceWithTimeout(String containerId,
             int killAfterSeconds) throws Exception;
 
-    public abstract void waitForBrowserReady(String serviceNameOrId,
-            String internalVncUrl, DockerBrowserInfo dockerBrowserInfo)
-            throws Exception;
+    public abstract void waitForBrowserReady(String internalVncUrl,
+            SessionManager sessionManager) throws Exception;
 
     public abstract BrowserSync buildAndRunBrowsersyncService(
             ExecutionData execData,
