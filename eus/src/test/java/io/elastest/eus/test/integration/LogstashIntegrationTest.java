@@ -40,7 +40,9 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import io.elastest.epm.client.service.DockerService;
-import io.elastest.eus.platform.service.DockerServiceImpl;
+import io.elastest.eus.config.ApplicationContextProvider;
+import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.platform.manager.BrowserDockerManager;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusLogstashService;
 import io.elastest.eus.session.SessionManager;
@@ -91,8 +93,10 @@ public class LogstashIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Send dummy console logs to mock logstash")
     void test() {
-        DockerServiceImpl dockerServiceImpl = new DockerServiceImpl(
-                dockerService, eusFilesService);
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
+                dockerService, eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setSessionId("sessionId");
         logstashService.sendBrowserConsoleToLogstash("{}", sessionManager,

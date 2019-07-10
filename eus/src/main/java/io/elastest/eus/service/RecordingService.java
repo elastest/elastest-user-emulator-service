@@ -108,7 +108,7 @@ public class RecordingService {
         log.debug("Recording session {} in container {} with file name {}",
                 sessionManager.getSessionId(), hubContainerName,
                 recordingFileName);
-        sessionManager.getPlatformService().execCommand(hubContainerName, false,
+        sessionManager.getPlatformManager().execCommand(hubContainerName, false,
                 startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
@@ -133,7 +133,7 @@ public class RecordingService {
             String hubContainerName) throws Exception {
         log.debug("Stopping recording session {} of container {}",
                 sessionManager.getSessionId(), hubContainerName);
-        sessionManager.getPlatformService().execCommand(hubContainerName, true,
+        sessionManager.getPlatformManager().execCommand(hubContainerName, true,
                 stopRecordingScript);
         try {
             Thread.sleep(1200);

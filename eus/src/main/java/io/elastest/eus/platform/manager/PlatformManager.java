@@ -1,4 +1,4 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.UUID.randomUUID;
@@ -14,51 +14,26 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
 
-public abstract class PlatformService {
+public abstract class PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
 
-    @Value("${hub.exposedport}")
-    protected int hubExposedPort;
-    @Value("${hub.vnc.exposedport}")
-    protected int hubVncExposedPort;
-    @Value("${hub.novnc.exposedport}")
-    protected int noVncExposedPort;
-    @Value("${browser.shm.size}")
-    protected long shmSize;
+    protected ContextProperties contextProperties;
+    protected EusFilesService eusFilesService;
 
-    @Value("${eus.container.prefix}")
-    protected String eusContainerPrefix;
-
-    @Value("${eus.service.browsersync.prefix}")
-    protected String eusServiceBrowsersyncPrefix;
-
-    @Value("${eus.service.browsersync.image.name}")
-    protected String eusServiceBrowsersyncImageName;
-
-    @Value("${eus.service.browsersync.gui.port}")
-    protected String eusServiceBrowsersyncGUIPort;
-
-    @Value("${eus.service.browsersync.app.port}")
-    protected String eusServiceBrowsersyncAppPort;
-
-    @Value("${host.shared.files.relative.folder}")
-    protected String hostSharedFilesRelativeFolder;
-    @Value("${container.recording.folder}")
-    protected String containerRecordingFolder;
-    @Value("${container.recording.folder}")
-    protected String containerSharedFilesFolder;
-
-    @Autowired
-    private EusFilesService eusFilesService;
+    public PlatformManager(EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super();
+        this.eusFilesService = eusFilesService;
+        this.contextProperties = contextProperties;
+    }
 
     public abstract List<String> getContainerNetworksByContainerPrefix(
             String prefix) throws Exception;
@@ -68,7 +43,8 @@ public abstract class PlatformService {
             Boolean isDirectory) throws Exception;
 
     public abstract void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo, String instanceId) throws IOException;
+            DockerBrowserInfo dockerBrowserInfo, String instanceId)
+            throws IOException;
 
     public abstract String getSessionContextInfo(
             DockerBrowserInfo dockerBrowserInfo) throws Exception;
@@ -138,4 +114,5 @@ public abstract class PlatformService {
         }
 
     }
+
 }

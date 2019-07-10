@@ -1,4 +1,4 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
 import io.elastest.epm.client.model.DockerServiceStatus;
 

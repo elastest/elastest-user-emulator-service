@@ -1,4 +1,4 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;

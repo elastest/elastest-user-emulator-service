@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
-import io.elastest.eus.platform.service.DockerBrowserInfo;
-import io.elastest.eus.platform.service.PlatformService;
+import io.elastest.eus.platform.manager.DockerBrowserInfo;
+import io.elastest.eus.platform.manager.PlatformManager;
 
 /**
  * Session information.
@@ -54,11 +54,11 @@ public class SessionManager extends DockerBrowserInfo {
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
 
-    PlatformService platformService;
+    PlatformManager platformManager;
 
-    public SessionManager(PlatformService platformService) {
+    public SessionManager(PlatformManager platformManager) {
         super();
-        this.platformService = platformService;
+        this.platformManager = platformManager;
     }
 
     public String getHubUrl() {
@@ -165,12 +165,12 @@ public class SessionManager extends DockerBrowserInfo {
         this.capabilities = capabilities;
     }
 
-    public PlatformService getPlatformService() {
-        return platformService;
+    public PlatformManager getPlatformManager() {
+        return platformManager;
     }
 
-    public void setPlatformService(PlatformService platformService) {
-        this.platformService = platformService;
+    public void setPlatformManager(PlatformManager platformManager) {
+        this.platformManager = platformManager;
     }
 
     /* ********************************************* */
@@ -194,7 +194,7 @@ public class SessionManager extends DockerBrowserInfo {
     @Override
     public String toString() {
         return "SessionInfo [log=" + log + ", sessionId=" + sessionId
-                + ", hubUrl=" + hubUrl  + ", creationTime=" + creationTime
+                + ", hubUrl=" + hubUrl + ", creationTime=" + creationTime
                 + ", browser=" + browser + ", version=" + version
                 + ", liveSession=" + liveSession + ", timeoutFutures="
                 + timeoutFutures + ", timeout=" + timeout + ", testName="

@@ -31,12 +31,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.elastest.epm.client.service.DockerService;
-import io.elastest.eus.platform.service.DockerServiceImpl;
-import io.elastest.eus.platform.service.EpmK8sClient;
-import io.elastest.eus.platform.service.PlatformService;
 import io.elastest.eus.service.AlluxioService;
-import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
@@ -58,32 +53,11 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Value("${ws.path}")
     private String wsPath;
-    @Value("${et.enable.cloud.mode}")
-    public boolean enableCloudMode;
 
-    @Autowired
-    private DockerService dockerService;
-    @Autowired
-    private EusFilesService eusFilesService;
     @Autowired
     private EusJsonService eusJsonService;
     @Autowired
     AlluxioService alluxioService;
-
-    @Bean
-    @Primary
-    public PlatformService getPlatformService() {
-        log.debug("Initializing the EUS's PlatformService");
-        PlatformService platformService = null;
-        if (enableCloudMode) {
-            log.debug("EUS over K8s");
-            platformService = new EpmK8sClient();
-        } else {
-            platformService = new DockerServiceImpl(dockerService,
-                    eusFilesService);
-        }
-        return platformService;
-    }
 
     @Bean
     public RecordingService getRecordingService() {

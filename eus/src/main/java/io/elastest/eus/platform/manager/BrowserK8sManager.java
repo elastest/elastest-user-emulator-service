@@ -1,7 +1,5 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
-import static java.lang.String.format;
-import static java.lang.System.getenv;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -10,16 +8,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
@@ -27,26 +20,24 @@ import io.elastest.epm.client.service.K8sService;
 import io.elastest.epm.client.service.K8sService.PodInfo;
 import io.elastest.epm.client.service.K8sService.ServiceInfo;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
 import io.elastest.eus.session.SessionManager;
 
-public class EpmK8sClient extends PlatformService {
+public class BrowserK8sManager extends PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
 
-    @Value("${host.shared.files.relative.folder}")
-    private String hostSharedFilesRelativeFolder;
-    @Value("${container.recording.folder}")
-    private String containerRecordingFolder;
-    @Value("${container.recording.folder}")
-    private String containerSharedFilesFolder;
-
-    @Autowired
     private K8sService k8sService;
-    @Autowired
-    private EusFilesService eusFilesService;
+
+    public BrowserK8sManager(K8sService k8sService,
+            EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super(eusFilesService, contextProperties);
+        this.k8sService = k8sService;
+    }
 
     @Override
     public List<String> getContainerNetworksByContainerPrefix(String prefix)
@@ -55,6 +46,7 @@ public class EpmK8sClient extends PlatformService {
         return null;
     }
 
+    @SuppressWarnings("static-access")
     @Override
     public void buildAndRunBrowserInContainer(
             DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
@@ -65,9 +57,12 @@ public class EpmK8sClient extends PlatformService {
         String hubContainerName = generateRandomContainerNameWithPrefix(
                 containerPrefix);
 
-        String exposedHubPort = Integer.toString(hubExposedPort);
-        String exposedVncPort = Integer.toString(hubVncExposedPort);
-        String exposedNoVncPort = Integer.toString(noVncExposedPort);
+        String exposedHubPort = Integer
+                .toString(contextProperties.hubExposedPort);
+        String exposedVncPort = Integer
+                .toString(contextProperties.hubVncExposedPort);
+        String exposedNoVncPort = Integer
+                .toString(contextProperties.noVncExposedPort);
 
         String recordingsPath = createRecordingsPath(folderPath);
         dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
@@ -77,20 +72,21 @@ public class EpmK8sClient extends PlatformService {
 
         logger.debug("**** Paths for recordings ****");
         logger.debug("Host path: {}", recordingsPath);
-        logger.debug("Path in container: {}", containerSharedFilesFolder);
+        logger.debug("Path in container: {}",
+                contextProperties.containerSharedFilesFolder);
 
         /* **** Exposed ports **** */
         List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
                 exposedNoVncPort);
-        
-        //Add extra labels
+
+        // Add extra labels
         labels.put(k8sService.LABEL_POD_NAME, hubContainerName);
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
         dockerBuilder.containerName(hubContainerName);
         dockerBuilder.exposedPorts(exposedPorts);
-        dockerBuilder.shmSize(shmSize);
+        dockerBuilder.shmSize(contextProperties.shmSize);
         dockerBuilder.envs(envs);
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
         dockerBuilder.labels(labels);
@@ -112,10 +108,11 @@ public class EpmK8sClient extends PlatformService {
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(hubContainerName,
-                hubExposedPort, "http", null, k8sService.LABEL_POD_NAME);
-        ServiceInfo noVncServiceInfo = k8sService.createService(
-                hubContainerName, noVncExposedPort, "http", null,
+                contextProperties.hubExposedPort, "http", null,
                 k8sService.LABEL_POD_NAME);
+        ServiceInfo noVncServiceInfo = k8sService.createService(
+                hubContainerName, contextProperties.noVncExposedPort, "http",
+                null, k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
         dockerBrowserInfo.setHubIp(hubServiceInfo.getServiceURL().getHost());
@@ -174,11 +171,11 @@ public class EpmK8sClient extends PlatformService {
             DockerBrowserInfo dockerBrowserInfo, String instanceId)
             throws IOException {
         k8sService.copyFileFromContainer(dockerBrowserInfo.getBrowserPod(),
-                containerRecordingFolder,
+                contextProperties.containerRecordingFolder,
                 dockerBrowserInfo.getHostSharedFilesFolderPath(), null);
         File recordingsDirectory = new File(
                 dockerBrowserInfo.getHostSharedFilesFolderPath()
-                        + containerRecordingFolder);
+                        + contextProperties.containerRecordingFolder);
         moveFiles(recordingsDirectory,
                 dockerBrowserInfo.getHostSharedFilesFolderPath());
     }
@@ -188,8 +185,9 @@ public class EpmK8sClient extends PlatformService {
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         String serviceContainerName = generateRandomContainerNameWithPrefix(
-                eusContainerPrefix + eusServiceBrowsersyncPrefix);
-        BrowserSync browsersync = new BrowserSync();
+                contextProperties.eusContainerPrefix
+                        + contextProperties.eusServiceBrowsersyncPrefix);
+        BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
         DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
                 .getDesiredCapabilities();
@@ -203,7 +201,7 @@ public class EpmK8sClient extends PlatformService {
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(
-                eusServiceBrowsersyncImageName);
+                contextProperties.eusServiceBrowsersyncImageName);
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.envs(envs);
         dockerBuilder.labels(labels);
@@ -217,12 +215,13 @@ public class EpmK8sClient extends PlatformService {
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
 
         String ip = podInfo.getPodIp();
-        String guiUrl = "http://" + ip + ":" + eusServiceBrowsersyncGUIPort;
+        String guiUrl = "http://" + ip + ":"
+                + contextProperties.eusServiceBrowsersyncGUIPort;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
         String appUrl = appProtocol + "://" + ip + ":"
-                + eusServiceBrowsersyncAppPort;
+                + contextProperties.eusServiceBrowsersyncAppPort;
 
         browsersync.setIdentifier(serviceContainerName);
         browsersync.setGuiUrl(guiUrl);

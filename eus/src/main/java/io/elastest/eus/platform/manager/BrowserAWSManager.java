@@ -1,4 +1,4 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,10 +9,12 @@ import java.util.Map;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.AWSConfig;
 import io.elastest.eus.json.AWSConfig.AWSInstancesConfig;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
+import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
 import io.elastest.eus.session.SessionManager;
 import software.amazon.awssdk.regions.Region;
@@ -20,24 +22,30 @@ import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
 import software.amazon.awssdk.services.ec2.model.TagSpecification;
 
-public class AWSService extends PlatformService {
+public class BrowserAWSManager extends PlatformManager {
 
     AWSClient awsClient;
 
-    public AWSService(AWSClient awsClient) {
-        super();
+    public BrowserAWSManager(AWSClient awsClient,
+            EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super(eusFilesService, contextProperties);
         this.awsClient = awsClient;
     }
 
-    public AWSService(URI endpoint, Region region, String secretAccessKey,
-            String accessKeyId, String sshUser, String sshPrivateKey) {
-        super();
+    public BrowserAWSManager(URI endpoint, Region region,
+            String secretAccessKey, String accessKeyId, String sshUser,
+            String sshPrivateKey, EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super(eusFilesService, contextProperties);
         this.awsClient = new AWSClient(endpoint, region, secretAccessKey,
                 accessKeyId, sshUser, sshPrivateKey);
     }
 
-    public AWSService(AWSConfig awsConfig) {
-        super();
+    public BrowserAWSManager(AWSConfig awsConfig,
+            EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super(eusFilesService, contextProperties);
         this.awsClient = new AWSClient(awsConfig);
     }
 
@@ -61,7 +69,7 @@ public class AWSService extends PlatformService {
             throws IOException {
         // TODO copy videos
 
-        String remotePath = containerRecordingFolder;
+        String remotePath = contextProperties.containerRecordingFolder;
         String localPath = dockerBrowserInfo.getHostSharedFilesFolderPath();
 
         awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
@@ -114,8 +122,9 @@ public class AWSService extends PlatformService {
         awsClient.waitForInstance(instance, 600);
 
         dockerBrowserInfo.setHubIp(instance.publicIpAddress());
-        dockerBrowserInfo.setHubPort(hubExposedPort);
-        dockerBrowserInfo.setNoVncBindedPort(noVncExposedPort);
+        dockerBrowserInfo.setHubPort(contextProperties.hubExposedPort);
+        dockerBrowserInfo
+                .setNoVncBindedPort(contextProperties.noVncExposedPort);
     }
 
     @Override

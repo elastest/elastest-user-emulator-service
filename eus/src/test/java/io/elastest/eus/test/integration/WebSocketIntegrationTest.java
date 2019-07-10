@@ -32,9 +32,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.config.ApplicationContextProvider;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
-import io.elastest.eus.platform.service.DockerServiceImpl;
+import io.elastest.eus.platform.manager.BrowserDockerManager;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.SessionService;
@@ -73,8 +75,10 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests messages about a session through WebSocket")
     void testSessions() throws Exception {
-        DockerServiceImpl dockerServiceImpl = new DockerServiceImpl(
-                dockerService, eusFilesService);
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
+                dockerService, eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
         sessionManager.setVersion("59");
@@ -109,8 +113,10 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests recording messages through WebSocket")
     void testRecordings() throws Exception {
-        DockerServiceImpl dockerServiceImpl = new DockerServiceImpl(
-                dockerService, eusFilesService);
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
+                dockerService, eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
         sessionManager.setVersion("65");

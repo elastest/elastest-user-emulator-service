@@ -69,8 +69,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.docker.client.exceptions.DockerException;
 
+import io.elastest.epm.client.service.DockerService;
+import io.elastest.epm.client.service.K8sService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.config.ApplicationContextProvider;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.ElasTestWebdriverScript;
 import io.elastest.eus.json.WebDriverCapabilities;
@@ -80,7 +84,10 @@ import io.elastest.eus.json.WebDriverScriptBody;
 import io.elastest.eus.json.WebDriverSessionResponse;
 import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
-import io.elastest.eus.platform.service.PlatformService;
+import io.elastest.eus.platform.manager.BrowserAWSManager;
+import io.elastest.eus.platform.manager.BrowserDockerManager;
+import io.elastest.eus.platform.manager.BrowserK8sManager;
+import io.elastest.eus.platform.manager.PlatformManager;
 import io.elastest.eus.services.model.BrowserSync;
 import io.elastest.eus.session.SessionManager;
 
@@ -117,6 +124,9 @@ public class WebDriverService {
     private String etHostEnv;
     @Value("${et.host.type.env}")
     private String etHostEnvType;
+
+    @Value("${et.enable.cloud.mode}")
+    public boolean enableCloudMode;
 
     // Defined as String instead of integer for testing purposes (inject with
     // @TestPropertySource)
@@ -180,8 +190,9 @@ public class WebDriverService {
 
     String etInstrumentationKey = "elastest-instrumentation";
 
-    private PlatformService platformService;
     private DockerHubService dockerHubService;
+    private DockerService dockerService;
+    private K8sService k8sService;
     private EusJsonService jsonService;
     private SessionService sessionService;
     private RecordingService recordingService;
@@ -193,14 +204,15 @@ public class WebDriverService {
     private Map<String, BrowserSync> crossBrowserRegistry = new ConcurrentHashMap<>();
 
     @Autowired
-    public WebDriverService(PlatformService platformService,
-            DockerHubService dockerHubService, EusJsonService jsonService,
+    public WebDriverService(DockerHubService dockerHubService,
+            K8sService k8sService, EusJsonService jsonService,
             SessionService sessionService, RecordingService recordingService,
             TimeoutService timeoutService,
             DynamicDataService dynamicDataService,
-            EusFilesService eusFilesService) {
-        this.platformService = platformService;
+            EusFilesService eusFilesService, DockerService dockerService) {
+        this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
+        this.k8sService = k8sService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
         this.recordingService = recordingService;
@@ -882,8 +894,8 @@ public class WebDriverService {
                 // Stop recording even if manually managed
                 recordingService.stopRecording(sessionManager);
                 recordingService.storeMetadata(sessionManager);
-                platformService.copyFilesFromBrowserIfNecessary(sessionManager,
-                        null);
+                sessionManager.getPlatformManager()
+                        .copyFilesFromBrowserIfNecessary(sessionManager, null);
                 sessionService.sendRecordingToAllClients(sessionManager);
             }
 
@@ -1012,32 +1024,30 @@ public class WebDriverService {
 
     public InputStreamResource getFileFromBrowser(String sessionId,
             String filePath, Boolean isDirectory) throws Exception {
-        SessionManager sessionManager;
         Optional<SessionManager> optionalSession = sessionService
                 .getSession(sessionId);
-        if (optionalSession.isPresent()) {
-            sessionManager = optionalSession.get();
-        } else {
+        if (!optionalSession.isPresent()) {
             throw new Exception("Session " + sessionId + " not found");
         }
 
-        InputStream fileStream = platformService
+        SessionManager sessionManager = optionalSession.get();
+
+        InputStream fileStream = sessionManager.getPlatformManager()
                 .getFileFromBrowser(sessionManager, filePath, isDirectory);
 
         return new InputStreamResource(fileStream);
     }
 
     public String getSessionContextInfo(String sessionId) throws Exception {
-        SessionManager sessionManager;
         Optional<SessionManager> optionalSession = sessionService
                 .getSession(sessionId);
-        if (optionalSession.isPresent()) {
-            sessionManager = optionalSession.get();
-        } else {
+        if (!optionalSession.isPresent()) {
             throw new Exception("Session " + sessionId + " not found");
         }
+        SessionManager sessionManager = optionalSession.get();
 
-        return platformService.getSessionContextInfo(sessionManager);
+        return sessionManager.getPlatformManager()
+                .getSessionContextInfo(sessionManager);
 
     }
 
@@ -1061,7 +1071,8 @@ public class WebDriverService {
                 browserName, version, platform);
 
         logger.info("Using {} as Docker image for {}", imageId, browserName);
-        SessionManager sessionManager = new SessionManager(platformService);
+        SessionManager sessionManager = new SessionManager(
+                getPlatformManager(capabilities));
         sessionManager.setElastestExecutionData(execData);
         sessionManager.setCapabilities(capabilities);
         sessionManager.addObserver(sessionService);
@@ -1097,7 +1108,9 @@ public class WebDriverService {
                 .getDesiredCapabilities().getTestName();
         sessionManager.setTestName(testName);
 
-        platformService.buildAndRunBrowserInContainer(sessionManager,
+        PlatformManager platformManager = sessionManager.getPlatformManager();
+
+        platformManager.buildAndRunBrowserInContainer(sessionManager,
                 eusContainerPrefix + hubContainerSufix, originalRequestBody,
                 folderPath, execData, envs, labels, capabilities, imageId);
 
@@ -1121,7 +1134,7 @@ public class WebDriverService {
             }
         }
         sessionManager.setVncUrl(vncUrl);
-        platformService.waitForBrowserReady(
+        platformManager.waitForBrowserReady(
                 sessionManager.getHubContainerName(), internalVncUrl,
                 sessionManager);
 
@@ -1146,7 +1159,10 @@ public class WebDriverService {
             labels.put(etTJobIdLabel, execData.gettJobId().toString());
         }
 
-        BrowserSync browserSync = platformService.buildAndRunBrowsersyncService(
+        PlatformManager platformManager = getPlatformManager(
+                crossBrowserCapabilities);
+
+        BrowserSync browserSync = platformManager.buildAndRunBrowsersyncService(
                 execData, crossBrowserCapabilities, labels);
 
         return browserSync;
@@ -1156,9 +1172,12 @@ public class WebDriverService {
             throws Exception {
         String id = browserSync.getIdentifier();
 
+        PlatformManager platformManager = getPlatformManager(
+                browserSync.getCrossBrowserWebDriverCapabilities());
+
         int killTimeoutInSeconds = 10;
-        if (id != null && platformService.existServiceWithName(id)) {
-            platformService.removeServiceWithTimeout(id, killTimeoutInSeconds);
+        if (id != null && platformManager.existServiceWithName(id)) {
+            platformManager.removeServiceWithTimeout(id, killTimeoutInSeconds);
         }
     }
 
@@ -1418,4 +1437,34 @@ public class WebDriverService {
         return newContextPath + "/session";
     }
 
+    public PlatformManager getPlatformManager(
+            DesiredCapabilities capabilities) {
+        PlatformManager platformManager = null;
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        if (capabilities != null && capabilities.getAwsConfig() != null) {
+            platformManager = new BrowserAWSManager(capabilities.getAwsConfig(),
+                    eusFilesService, contextProperties);
+        } else {
+            if (enableCloudMode) {
+                logger.debug("EUS over K8s");
+                platformManager = new BrowserK8sManager(k8sService,
+                        eusFilesService, contextProperties);
+            } else {
+                platformManager = new BrowserDockerManager(dockerService,
+                        eusFilesService, contextProperties);
+            }
+        }
+        return platformManager;
+    }
+
+    public PlatformManager getPlatformManager(
+            WebDriverCapabilities capabilities) {
+        DesiredCapabilities desiredCapabilities = null;
+        if (capabilities != null) {
+            desiredCapabilities = capabilities.getDesiredCapabilities();
+
+        }
+        return getPlatformManager(desiredCapabilities);
+    }
 }

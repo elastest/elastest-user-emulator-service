@@ -40,7 +40,7 @@ import io.elastest.eus.json.WebSocketNewLiveSession;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
-import io.elastest.eus.platform.service.PlatformService;
+import io.elastest.eus.platform.manager.PlatformManager;
 import io.elastest.eus.session.SessionManager;
 
 /**
@@ -309,17 +309,17 @@ public class SessionService extends TextWebSocketHandler implements Observer {
             throws Exception {
         String hubContainerName = sessionManager.getHubContainerName();
         int killTimeoutInSeconds = 10;
-        PlatformService platformService = sessionManager.getPlatformService();
+        PlatformManager platformManager = sessionManager.getPlatformManager();
         if (hubContainerName != null
-                && platformService.existServiceWithName(hubContainerName)) {
-            platformService.removeServiceWithTimeout(hubContainerName,
+                && platformManager.existServiceWithName(hubContainerName)) {
+            platformManager.removeServiceWithTimeout(hubContainerName,
                     killTimeoutInSeconds);
         }
 
         String vncContainerName = sessionManager.getVncContainerName();
         if (vncContainerName != null
-                && platformService.existServiceWithName(vncContainerName)) {
-            platformService.removeServiceWithTimeout(vncContainerName,
+                && platformManager.existServiceWithName(vncContainerName)) {
+            platformManager.removeServiceWithTimeout(vncContainerName,
                     killTimeoutInSeconds);
         }
     }
