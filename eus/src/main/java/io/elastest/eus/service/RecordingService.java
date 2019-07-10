@@ -46,8 +46,7 @@ import org.springframework.http.ResponseEntity;
 
 import io.elastest.eus.EusException;
 import io.elastest.eus.json.WebSocketRecordedSession;
-import io.elastest.eus.platform.service.PlatformService;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Service implementation for recording capabilities.
@@ -84,7 +83,6 @@ public class RecordingService {
 
     private EusJsonService jsonService;
     private AlluxioService alluxioService;
-    private PlatformService platformService;
 
     @PostConstruct
     private void postConstruct() {
@@ -99,17 +97,18 @@ public class RecordingService {
 
     @Autowired
     public RecordingService(EusJsonService jsonService,
-            AlluxioService alluxioService, PlatformService platformService) {
+            AlluxioService alluxioService) {
         this.jsonService = jsonService;
         this.alluxioService = alluxioService;
-        this.platformService = platformService;
     }
 
-    public void startRecording(String sessionId, String hubContainerName,
-            String recordingFileName) throws Exception {
+    public void startRecording(SessionManager sessionManager,
+            String hubContainerName, String recordingFileName)
+            throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
-                sessionId, hubContainerName, recordingFileName);
-        platformService.execCommand(hubContainerName, false,
+                sessionManager.getSessionId(), hubContainerName,
+                recordingFileName);
+        sessionManager.getPlatformService().execCommand(hubContainerName, false,
                 startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
@@ -117,24 +116,24 @@ public class RecordingService {
         }
     }
 
-    public void startRecording(SessionInfo sessionInfo) throws Exception {
-        String sessionId = sessionInfo.getSessionId();
-        String noVncContainerName = sessionInfo.getVncContainerName();
-        String recordingFileName = sessionInfo.getIdForFiles();
+    public void startRecording(SessionManager sessionManager) throws Exception {
+        String noVncContainerName = sessionManager.getVncContainerName();
+        String recordingFileName = sessionManager.getIdForFiles();
 
-        this.startRecording(sessionId, noVncContainerName, recordingFileName);
+        this.startRecording(sessionManager, noVncContainerName,
+                recordingFileName);
     }
 
-    public void stopRecording(SessionInfo sessionInfo) throws Exception {
-        String noNvcContainerName = sessionInfo.getVncContainerName();
-        this.stopRecording(sessionInfo.getSessionId(), noNvcContainerName);
+    public void stopRecording(SessionManager sessionManager) throws Exception {
+        String noNvcContainerName = sessionManager.getVncContainerName();
+        this.stopRecording(sessionManager, noNvcContainerName);
     }
 
-    public void stopRecording(String sessionId, String hubContainerName)
-            throws Exception {
-        log.debug("Stopping recording session {} of container {}", sessionId,
-                hubContainerName);
-        platformService.execCommand(hubContainerName, true,
+    public void stopRecording(SessionManager sessionManager,
+            String hubContainerName) throws Exception {
+        log.debug("Stopping recording session {} of container {}",
+                sessionManager.getSessionId(), hubContainerName);
+        sessionManager.getPlatformService().execCommand(hubContainerName, true,
                 stopRecordingScript);
         try {
             Thread.sleep(1200);
@@ -144,15 +143,16 @@ public class RecordingService {
         }
     }
 
-    public void storeMetadata(SessionInfo sessionInfo) throws IOException {
-        String idForFiles = sessionInfo.getIdForFiles();
+    public void storeMetadata(SessionManager sessionManager)
+            throws IOException {
+        String idForFiles = sessionManager.getIdForFiles();
         String metadataFileName = idForFiles + registryMetadataExtension;
         WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(
-                sessionInfo);
+                sessionManager);
         log.debug("Storing metadata {}", recordedSession);
-        String sessionInfoToJson = jsonService.objectToJson(recordedSession);
-        String folderPath = sessionInfo.getFolderPath() != null
-                ? sessionInfo.getFolderPath()
+        String sessionManagerToJson = jsonService.objectToJson(recordedSession);
+        String folderPath = sessionManager.getFolderPath() != null
+                ? sessionManager.getFolderPath()
                 : etFilesPath;
         log.debug("Storing metadata file in {}", folderPath);
 
@@ -169,12 +169,12 @@ public class RecordingService {
 
             FileUtils.writeStringToFile(
                     new File(folderPath + File.separator + metadataFileName),
-                    sessionInfoToJson, defaultCharset());
+                    sessionManagerToJson, defaultCharset());
 
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
             alluxioService.writeFile(metadataFileName,
-                    sessionInfoToJson.getBytes());
+                    sessionManagerToJson.getBytes());
         }
     }
 

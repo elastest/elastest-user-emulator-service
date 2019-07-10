@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -58,8 +59,10 @@ import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
 import io.elastest.eus.service.DockerHubService;
 import io.elastest.eus.service.RecordingService;
+import io.elastest.eus.service.SessionService;
 import io.elastest.eus.service.VncService;
 import io.elastest.eus.service.WebDriverService;
+import io.elastest.eus.session.SessionManager;
 import io.swagger.annotations.ApiParam;
 
 /**
@@ -79,16 +82,19 @@ public class EusController implements EusApi {
     private RecordingService recordingService;
     private DockerHubService dockerHubService;
     private JsonService jsonService;
+    SessionService sessionService;
 
     @Autowired
     public EusController(WebDriverService webDriverService,
             VncService vncService, RecordingService recordingService,
-            DockerHubService dockerHubService, JsonService jsonService) {
+            DockerHubService dockerHubService, JsonService jsonService,
+            SessionService sessionService) {
         this.webDriverService = webDriverService;
         this.vncService = vncService;
         this.recordingService = recordingService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
+        this.sessionService = sessionService;
     }
 
     public ResponseEntity<Void> deleteSubscription(
@@ -390,8 +396,10 @@ public class EusController implements EusApi {
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
             @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName) {
         try {
-            recordingService.startRecording(sessionId, hubContainerName,
-                    videoName);
+            Optional<SessionManager> sessionManager = sessionService
+                    .getSession(sessionId);
+            recordingService.startRecording(sessionManager.get(),
+                    hubContainerName, videoName);
             return new ResponseEntity<String>(OK);
 
         } catch (Exception e) {
@@ -422,7 +430,10 @@ public class EusController implements EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName) {
         try {
-            recordingService.stopRecording(sessionId, hubContainerName);
+            Optional<SessionManager> sessionManager = sessionService
+                    .getSession(sessionId);
+            recordingService.stopRecording(sessionManager.get(),
+                    hubContainerName);
             return new ResponseEntity<String>(OK);
 
         } catch (Exception e) {
@@ -561,8 +572,8 @@ public class EusController implements EusApi {
                     request);
         } catch (Exception e) {
             log.error("Exception handling Crossbrowser session {}", request, e);
-            response = webDriverService
-                    .getErrorResponse("Exception handling Crossbrowser session", e);
+            response = webDriverService.getErrorResponse(
+                    "Exception handling Crossbrowser session", e);
         }
         return response;
     }
@@ -577,8 +588,8 @@ public class EusController implements EusApi {
                     .crossBrowserSessionFromExecution(httpEntity, request, key);
         } catch (Exception e) {
             log.error("Exception handling Crossbrowser session {}", request, e);
-            response = webDriverService
-                    .getErrorResponse("Exception handling Crossbrowser session", e);
+            response = webDriverService.getErrorResponse(
+                    "Exception handling Crossbrowser session", e);
         }
         return response;
     }

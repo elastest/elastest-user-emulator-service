@@ -39,8 +39,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
+import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.platform.service.DockerServiceImpl;
+import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusLogstashService;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 import io.elastest.eus.test.BaseTest;
 
 /**
@@ -55,6 +58,12 @@ import io.elastest.eus.test.BaseTest;
 public class LogstashIntegrationTest extends BaseTest {
     @Autowired
     EusLogstashService logstashService;
+
+    @Autowired
+    DockerService dockerService;
+
+    @Autowired
+    EusFilesService eusFilesService;
 
     WireMockServer wireMockServer;
 
@@ -82,9 +91,11 @@ public class LogstashIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Send dummy console logs to mock logstash")
     void test() {
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setSessionId("sessionId");
-        logstashService.sendBrowserConsoleToLogstash("{}", sessionInfo,
+        DockerServiceImpl dockerServiceImpl = new DockerServiceImpl(
+                dockerService, eusFilesService);
+        SessionManager sessionManager = new SessionManager(dockerServiceImpl);
+        sessionManager.setSessionId("sessionId");
+        logstashService.sendBrowserConsoleToLogstash("{}", sessionManager,
                 "normal");
         verify(postRequestedFor(urlEqualTo("/")).withHeader("Content-Type",
                 equalTo("application/json; charset=UTF-8")));

@@ -31,7 +31,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 public class EpmK8sClient extends PlatformService {
     final Logger logger = getLogger(lookup().lookupClass());
@@ -71,7 +71,7 @@ public class EpmK8sClient extends PlatformService {
 
         String recordingsPath = createRecordingsPath(folderPath);
         dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionInfo) dockerBrowserInfo).setFolderPath(recordingsPath);
+        ((SessionManager) dockerBrowserInfo).setFolderPath(recordingsPath);
 
         eusFilesService.createFolderIfNotExists(recordingsPath);
 

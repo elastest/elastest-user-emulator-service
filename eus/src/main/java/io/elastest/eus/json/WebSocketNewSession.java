@@ -16,7 +16,7 @@
  */
 package io.elastest.eus.json;
 
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Utility class for serialize JSON messages (new session).
@@ -32,8 +32,8 @@ public class WebSocketNewSession {
         // Empty default construct (needed by Jackson)
     }
 
-    public WebSocketNewSession(SessionInfo sessionInfo) {
-        newSession = new WebSocketSessionInfoEntry(sessionInfo);
+    public WebSocketNewSession(SessionManager sessionManager) {
+        newSession = new WebSocketSessionInfoEntry(sessionManager);
     }
 
     public WebSocketSessionInfoEntry getNewSession() {

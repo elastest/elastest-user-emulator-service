@@ -14,7 +14,7 @@ import io.elastest.eus.json.AWSConfig.AWSInstancesConfig;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.services.model.BrowserSync;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
@@ -86,7 +86,7 @@ public class AWSService extends PlatformService {
 
         String recordingsPath = createRecordingsPath(folderPath);
         dockerBrowserInfo.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionInfo) dockerBrowserInfo).setFolderPath(recordingsPath);
+        ((SessionManager) dockerBrowserInfo).setFolderPath(recordingsPath);
 
         AWSInstancesConfig awsInstanceConfig = capabilities.getAwsConfig()
                 .getAwsInstancesConfig();

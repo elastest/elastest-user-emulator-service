@@ -51,7 +51,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableSwagger2
 @EnableWebSocket
-@ComponentScan(basePackages = {"io.elastest.eus", "io.elastest.epm.client"})
+@ComponentScan(basePackages = { "io.elastest.eus", "io.elastest.epm.client" })
 public class EusSpringBootApp implements WebSocketConfigurer {
 
     final Logger log = getLogger(lookup().lookupClass());
@@ -67,8 +67,9 @@ public class EusSpringBootApp implements WebSocketConfigurer {
     private EusFilesService eusFilesService;
     @Autowired
     private EusJsonService eusJsonService;
-    @Autowired AlluxioService alluxioService;
-    
+    @Autowired
+    AlluxioService alluxioService;
+
     @Bean
     @Primary
     public PlatformService getPlatformService() {
@@ -78,21 +79,22 @@ public class EusSpringBootApp implements WebSocketConfigurer {
             log.debug("EUS over K8s");
             platformService = new EpmK8sClient();
         } else {
-            platformService = new DockerServiceImpl(dockerService, eusFilesService);
+            platformService = new DockerServiceImpl(dockerService,
+                    eusFilesService);
         }
         return platformService;
     }
-    
+
     @Bean
     public RecordingService getRecordingService() {
-        return new RecordingService(eusJsonService, alluxioService, getPlatformService());
+        return new RecordingService(eusJsonService, alluxioService);
     }
-    
+
     @Bean
     @Primary
     public SessionService getSessionService() {
-        return new SessionService(getPlatformService(), eusJsonService, getRecordingService());
-        
+        return new SessionService(eusJsonService, getRecordingService());
+
     }
 
     @Override
@@ -100,7 +102,7 @@ public class EusSpringBootApp implements WebSocketConfigurer {
         registry.addHandler(getSessionService(), wsPath).setAllowedOrigins("*");
         log.debug("Registering WebSocker handler at {}", wsPath);
     }
-    
+
     public static void main(String[] args) {
         new SpringApplication(EusSpringBootApp.class).run(args);
     }

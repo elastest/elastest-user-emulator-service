@@ -82,7 +82,7 @@ import io.elastest.eus.json.WebDriverSessionValue;
 import io.elastest.eus.json.WebDriverStatus;
 import io.elastest.eus.platform.service.PlatformService;
 import io.elastest.eus.services.model.BrowserSync;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Service implementation for W3C WebDriver/JSON Wire Protocol.
@@ -214,9 +214,9 @@ public class WebDriverService {
         // Before shutting down the EUS, all recording files must have been
         // processed
         sessionService.getSessionRegistry()
-                .forEach((sessionId, sessionInfo) -> {
+                .forEach((sessionId, sessionManager) -> {
                     try {
-                        stopBrowser(sessionInfo);
+                        stopBrowser(sessionManager);
                     } catch (Exception e) {
                         logger.debug("Error on stop browser with session Id {}",
                                 sessionId);
@@ -338,7 +338,7 @@ public class WebDriverService {
         logger.debug(">> Request: {} {} -- body: {}", method, requestContext,
                 requestBody);
 
-        SessionInfo sessionInfo;
+        SessionManager sessionManager;
         boolean liveSession = false;
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
 
@@ -378,8 +378,8 @@ public class WebDriverService {
 
             // If live, no timeout
             liveSession = sessionService.isLive(requestBody);
-            sessionInfo = startBrowser(newRequestBody, requestBody, folderPath,
-                    sessionFolderPath, execData);
+            sessionManager = startBrowser(newRequestBody, requestBody,
+                    folderPath, sessionFolderPath, execData);
             optionalHttpEntity = optionalHttpEntity(newRequestBody, browserName,
                     version);
 
@@ -388,26 +388,26 @@ public class WebDriverService {
                     requestContext);
             if (sessionIdFromPath.isPresent()) {
                 String sessionId = sessionIdFromPath.get();
-                Optional<SessionInfo> optionalSession = sessionService
+                Optional<SessionManager> optionalSession = sessionService
                         .getSession(sessionId);
                 if (optionalSession.isPresent()) {
-                    sessionInfo = optionalSession.get();
+                    sessionManager = optionalSession.get();
                 } else {
                     return notFound();
                 }
-                liveSession = sessionInfo.isLiveSession();
+                liveSession = sessionManager.isLiveSession();
 
             } else {
                 return notFound();
             }
         }
 
-        sessionInfo.setElastestExecutionData(execData);
+        sessionManager.setElastestExecutionData(execData);
 
         if (isExecuteScript(method, requestContext)) {
             // Execute Script to intercept by EUS and finish
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
-                    sessionInfo);
+                    sessionManager);
             if (isIntercepted) {
                 String interceptedMsg = "{\"msg\": \"ElasTest script intercepted successfully\"}";
                 logger.debug(interceptedMsg);
@@ -422,20 +422,20 @@ public class WebDriverService {
         int numRetries = 0;
         do {
             responseBody = exchange(httpEntity, requestContext, method,
-                    sessionInfo, optionalHttpEntity, isCreateSession);
+                    sessionManager, optionalHttpEntity, isCreateSession);
             exchangeAgain = responseBody == null;
             if (this.isPostUrlRequest(method, requestContext)) {
                 logger.debug("post Url is activated. webRtcActivated={}",
                         webRtcActivated);
-                this.manageWebRtcMonitoring(sessionInfo, webRtcActivated,
+                this.manageWebRtcMonitoring(sessionManager, webRtcActivated,
                         monitoringIndex);
             }
             if (exchangeAgain) {
                 if (numRetries < createSessionRetries) {
                     logger.debug("Stopping browser and starting new one {}",
-                            sessionInfo);
-                    stopBrowser(sessionInfo);
-                    sessionInfo = startBrowser(newRequestBody, requestBody,
+                            sessionManager);
+                    stopBrowser(sessionManager);
+                    sessionManager = startBrowser(newRequestBody, requestBody,
                             eusFilesService.getFilesPathInHostPath(),
                             sessionFolderPath, execData);
                     numRetries++;
@@ -452,7 +452,7 @@ public class WebDriverService {
 
         // Handle response
         HttpStatus responseStatus = sessionResponse(requestContext, method,
-                sessionInfo, liveSession, responseBody);
+                sessionManager, liveSession, responseBody);
 
         if (isCreateSession) {
             // Maximize Browser Window
@@ -460,9 +460,9 @@ public class WebDriverService {
             String maximizeOther = "/window/maximize";
             try {
                 exchange(httpEntity,
-                        requestContext + "/" + sessionInfo.getSessionId()
+                        requestContext + "/" + sessionManager.getSessionId()
                                 + maximizeChrome,
-                        method, sessionInfo, optionalHttpEntity, false);
+                        method, sessionManager, optionalHttpEntity, false);
             } catch (Exception e) {
                 logger.error("Exception on window maximize with '{}' : {}",
                         maximizeChrome, e.getMessage());
@@ -470,30 +470,30 @@ public class WebDriverService {
 
                 try {
                     exchange(httpEntity,
-                            requestContext + "/" + sessionInfo.getSessionId()
+                            requestContext + "/" + sessionManager.getSessionId()
                                     + maximizeOther,
-                            method, sessionInfo, optionalHttpEntity, false);
+                            method, sessionManager, optionalHttpEntity, false);
                 } catch (Exception e1) {
                     logger.error("Exception on window maximize with '{}' too",
                             maximizeOther, e1);
                 }
             }
             // Start Recording if not is manual recording
-            if (!sessionInfo.isManualRecording()) {
+            if (!sessionManager.isManualRecording()) {
                 // Start Recording
                 logger.debug("Session with automatic recording");
-                recordingService.startRecording(sessionInfo);
+                recordingService.startRecording(sessionManager);
             }
         }
 
         // Handle timeout
-        handleTimeout(requestContext, method, sessionInfo, isCreateSession,
+        handleTimeout(requestContext, method, sessionManager, isCreateSession,
                 monitoringIndex);
 
         // Send Hub Container name too
 
         String jqSetHubContainerName = "walk(if type == \"object\" then .hubContainerName += \""
-                + sessionInfo.getHubContainerName() + "\"  else . end)";
+                + sessionManager.getHubContainerName() + "\"  else . end)";
 
         responseBody = jsonService.processJsonWithJq(responseBody,
                 jqSetHubContainerName);
@@ -502,7 +502,7 @@ public class WebDriverService {
     }
 
     public boolean interceptScriptIfIsNecessary(String requestBody,
-            SessionInfo sessionInfo) {
+            SessionManager sessionManager) {
         try {
             WebDriverScriptBody scriptObj = new WebDriverScriptBody(
                     requestBody);
@@ -533,36 +533,36 @@ public class WebDriverService {
                                     "Intercepted 'Start Test' Script. Restarting recording...");
 
                             // Stop
-                            recordingService.stopRecording(sessionInfo);
-                            recordingService.storeMetadata(sessionInfo);
+                            recordingService.stopRecording(sessionManager);
+                            recordingService.storeMetadata(sessionManager);
 
                             // If no testName, delete recording
-                            if (sessionInfo.getTestName() == null) {
+                            if (sessionManager.getTestName() == null) {
                                 try {
                                     Thread.sleep(1500);
                                 } catch (Exception e) {
                                 }
-                                if (sessionInfo.getFolderPath() == null) {
+                                if (sessionManager.getFolderPath() == null) {
 
                                     recordingService.deleteRecording(
-                                            sessionInfo.getSessionId());
+                                            sessionManager.getSessionId());
                                 } else {
                                     recordingService.deleteRecording(
-                                            sessionInfo.getSessionId(),
-                                            sessionInfo.getFolderPath());
+                                            sessionManager.getSessionId(),
+                                            sessionManager.getFolderPath());
                                 }
                             }
-                            sessionService
-                                    .sendRemoveSessionToAllClients(sessionInfo);
+                            sessionService.sendRemoveSessionToAllClients(
+                                    sessionManager);
 
                             // Set test name
-                            sessionInfo.setTestName((String) etScript.getArgs()
-                                    .get("testName"));
+                            sessionManager.setTestName((String) etScript
+                                    .getArgs().get("testName"));
 
                             // Start recording
                             sessionService
-                                    .sendNewSessionToAllClients(sessionInfo);
-                            recordingService.startRecording(sessionInfo);
+                                    .sendNewSessionToAllClients(sessionManager);
+                            recordingService.startRecording(sessionManager);
                         } catch (Exception e) {
                             throw new Exception("Error on restart recording",
                                     e);
@@ -580,7 +580,7 @@ public class WebDriverService {
         return false;
     }
 
-    public boolean manageWebRtcMonitoring(SessionInfo sessionInfo,
+    public boolean manageWebRtcMonitoring(SessionManager sessionManager,
             boolean activated, String monitoringIndex) {
         boolean manageSuccessful = false;
         if (activated) {
@@ -588,8 +588,8 @@ public class WebDriverService {
             try {
                 String configLocalStorageStr = this
                         .getWebRtcMonitoringLocalStorageStr(
-                                sessionInfo.getSessionId(), monitoringIndex);
-                String postResponse = this.postScript(sessionInfo,
+                                sessionManager.getSessionId(), monitoringIndex);
+                String postResponse = this.postScript(sessionManager,
                         configLocalStorageStr, new ArrayList<>());
                 manageSuccessful = postResponse != null;
 
@@ -642,10 +642,10 @@ public class WebDriverService {
                 + content + "\"" + ");";
     }
 
-    public String postScript(SessionInfo sessionInfo, String script,
+    public String postScript(SessionManager sessionManager, String script,
             List<Object> args) throws JsonProcessingException, JSONException {
         String requestContext = webdriverSessionMessage + "/"
-                + sessionInfo.getSessionId() + webdriverExecuteScriptMessage;
+                + sessionManager.getSessionId() + webdriverExecuteScriptMessage;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -658,7 +658,7 @@ public class WebDriverService {
         HttpEntity<String> httpEntity = new HttpEntity<>(body, headers);
 
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
-        return exchange(httpEntity, requestContext, POST, sessionInfo,
+        return exchange(httpEntity, requestContext, POST, sessionManager,
                 optionalHttpEntity, false);
 
     }
@@ -679,35 +679,35 @@ public class WebDriverService {
     }
 
     private void handleTimeout(String requestContext, HttpMethod method,
-            SessionInfo sessionInfo, boolean isCreateSession,
+            SessionManager sessionManager, boolean isCreateSession,
             String monitoringIndex) {
         // Browser log thread
         if (isCreateSession) {
-            timeoutService.launchLogMonitor(sessionInfo, monitoringIndex);
+            timeoutService.launchLogMonitor(sessionManager, monitoringIndex);
         }
 
         boolean disableTimeout = false;
         Integer timeout = Integer.parseInt(hubTimeout);
-        if (sessionInfo.getCapabilities() != null
-                && sessionInfo.getCapabilities().getElastestTimeout() != null) {
-            timeout = sessionInfo.getCapabilities().getElastestTimeout();
+        if (sessionManager.getCapabilities() != null && sessionManager
+                .getCapabilities().getElastestTimeout() != null) {
+            timeout = sessionManager.getCapabilities().getElastestTimeout();
             if (timeout == 0) {
                 disableTimeout = true;
                 logger.debug("Timer disabled for session {}",
-                        sessionInfo.getSessionId());
+                        sessionManager.getSessionId());
             }
         }
         if (!disableTimeout) {
             logger.debug("Timer enabled for session {} with {} seconds",
-                    sessionInfo.getSessionId(), timeout);
-            timeoutService.shutdownSessionTimer(sessionInfo);
-            final SessionInfo finalSessionInfo = sessionInfo;
+                    sessionManager.getSessionId(), timeout);
+            timeoutService.shutdownSessionTimer(sessionManager);
+            final SessionManager finalSessionManager = sessionManager;
             Runnable deleteSession = () -> {
-                deleteSession(finalSessionInfo, true);
+                deleteSession(finalSessionManager, true);
             };
 
             if (!isDeleteSessionRequest(method, requestContext)) {
-                timeoutService.startSessionTimer(sessionInfo, timeout,
+                timeoutService.startSessionTimer(sessionManager, timeout,
                         deleteSession);
             }
         }
@@ -745,19 +745,19 @@ public class WebDriverService {
     }
 
     private HttpStatus sessionResponse(String requestContext, HttpMethod method,
-            SessionInfo sessionInfo, boolean isLive, String responseBody)
+            SessionManager sessionManager, boolean isLive, String responseBody)
             throws Exception {
         HttpStatus responseStatus = OK;
 
         // Intercept again create session
         if (isPostSessionRequest(method, requestContext)) {
-            postSessionRequest(sessionInfo, isLive, responseBody);
+            postSessionRequest(sessionManager, isLive, responseBody);
         }
 
         // Intercept destroy session
         if (isDeleteSessionRequest(method, requestContext)) {
             logger.trace("Intercepted DELETE session ({})", method);
-            stopBrowser(sessionInfo);
+            stopBrowser(sessionManager);
         }
 
         logger.debug("<< Response: {} -- body: {}", responseStatus,
@@ -766,10 +766,11 @@ public class WebDriverService {
     }
 
     private String exchange(HttpEntity<String> httpEntity,
-            String requestContext, HttpMethod method, SessionInfo sessionInfo,
+            String requestContext, HttpMethod method,
+            SessionManager sessionManager,
             Optional<HttpEntity<String>> optionalHttpEntity,
             boolean isCreateSession) throws JsonProcessingException {
-        String hubUrl = sessionInfo.getHubUrl();
+        String hubUrl = sessionManager.getHubUrl();
 
         HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
         if (isCreateSession) {
@@ -813,8 +814,9 @@ public class WebDriverService {
         return responseBody;
     }
 
-    private void postSessionRequest(SessionInfo sessionInfo, boolean isLive,
-            String responseBody) throws IOException, InterruptedException {
+    private void postSessionRequest(SessionManager sessionManager,
+            boolean isLive, String responseBody)
+            throws IOException, InterruptedException {
         logger.trace("Session response: JSON: {}", responseBody);
         WebDriverSessionResponse sessionResponse = jsonService
                 .jsonToObject(responseBody, WebDriverSessionResponse.class);
@@ -829,11 +831,11 @@ public class WebDriverService {
             logger.debug("Response value {}", responseValue);
             sessionId = responseValue.getValue().getSessionId();
         }
-        sessionInfo.setSessionId(sessionId);
-        sessionInfo.setLiveSession(isLive);
+        sessionManager.setSessionId(sessionId);
+        sessionManager.setLiveSession(isLive);
 
-        sessionService.putSession(sessionId, sessionInfo);
-        sessionService.sendNewSessionToAllClients(sessionInfo);
+        sessionService.putSession(sessionId, sessionManager);
+        sessionService.sendNewSessionToAllClients(sessionManager);
     }
 
     private Optional<HttpEntity<String>> optionalHttpEntity(String requestBody,
@@ -865,44 +867,46 @@ public class WebDriverService {
         return responseEntity;
     }
 
-    public void deleteSession(SessionInfo sessionInfo, boolean timeout) {
+    public void deleteSession(SessionManager sessionManager, boolean timeout) {
         try {
             if (timeout) {
                 logger.warn("Deleting session {} due to timeout of {} seconds",
-                        sessionInfo.getSessionId(), sessionInfo.getTimeout());
+                        sessionManager.getSessionId(),
+                        sessionManager.getTimeout());
             } else {
-                logger.info("Deleting session {}", sessionInfo.getSessionId());
+                logger.info("Deleting session {}",
+                        sessionManager.getSessionId());
             }
 
-            if (sessionInfo.getVncContainerName() != null) {
+            if (sessionManager.getVncContainerName() != null) {
                 // Stop recording even if manually managed
-                recordingService.stopRecording(sessionInfo);
-                recordingService.storeMetadata(sessionInfo);
-                platformService.copyFilesFromBrowserIfNecessary(sessionInfo,
+                recordingService.stopRecording(sessionManager);
+                recordingService.storeMetadata(sessionManager);
+                platformService.copyFilesFromBrowserIfNecessary(sessionManager,
                         null);
-                sessionService.sendRecordingToAllClients(sessionInfo);
+                sessionService.sendRecordingToAllClients(sessionManager);
             }
 
-            sessionService.sendRemoveSessionToAllClients(sessionInfo);
+            sessionService.sendRemoveSessionToAllClients(sessionManager);
 
         } catch (Exception e) {
             logger.error("There was a problem deleting session {}",
-                    sessionInfo.getSessionId(), e);
+                    sessionManager.getSessionId(), e);
             throw new EusException(e);
         } finally {
             try {
-                sessionService.stopAllContainerOfSession(sessionInfo);
+                sessionService.stopAllContainerOfSession(sessionManager);
             } catch (Exception e) {
                 logger.debug("Containers of session {} not removed",
-                        sessionInfo.getSessionId());
+                        sessionManager.getSessionId());
             }
-            sessionService.removeSession(sessionInfo.getSessionId());
+            sessionService.removeSession(sessionManager.getSessionId());
 
-            timeoutService.shutdownSessionTimer(sessionInfo);
+            timeoutService.shutdownSessionTimer(sessionManager);
         }
         if (timeout) {
-            throw new EusException("Timeout of " + sessionInfo.getTimeout()
-                    + " seconds in session " + sessionInfo.getSessionId());
+            throw new EusException("Timeout of " + sessionManager.getTimeout()
+                    + " seconds in session " + sessionManager.getSessionId());
         }
     }
 
@@ -1008,32 +1012,32 @@ public class WebDriverService {
 
     public InputStreamResource getFileFromBrowser(String sessionId,
             String filePath, Boolean isDirectory) throws Exception {
-        SessionInfo sessionInfo;
-        Optional<SessionInfo> optionalSession = sessionService
+        SessionManager sessionManager;
+        Optional<SessionManager> optionalSession = sessionService
                 .getSession(sessionId);
         if (optionalSession.isPresent()) {
-            sessionInfo = optionalSession.get();
+            sessionManager = optionalSession.get();
         } else {
             throw new Exception("Session " + sessionId + " not found");
         }
 
-        InputStream fileStream = platformService.getFileFromBrowser(sessionInfo,
-                filePath, isDirectory);
+        InputStream fileStream = platformService
+                .getFileFromBrowser(sessionManager, filePath, isDirectory);
 
         return new InputStreamResource(fileStream);
     }
 
     public String getSessionContextInfo(String sessionId) throws Exception {
-        SessionInfo sessionInfo;
-        Optional<SessionInfo> optionalSession = sessionService
+        SessionManager sessionManager;
+        Optional<SessionManager> optionalSession = sessionService
                 .getSession(sessionId);
         if (optionalSession.isPresent()) {
-            sessionInfo = optionalSession.get();
+            sessionManager = optionalSession.get();
         } else {
             throw new Exception("Session " + sessionId + " not found");
         }
 
-        return platformService.getSessionContextInfo(sessionInfo);
+        return platformService.getSessionContextInfo(sessionManager);
 
     }
 
@@ -1041,7 +1045,7 @@ public class WebDriverService {
     /* ********* Manage Browser And EusServices ********* */
     /* ************************************************** */
 
-    public SessionInfo startBrowser(String requestBody,
+    public SessionManager startBrowser(String requestBody,
             String originalRequestBody, String folderPath,
             String sessionFolderPath, ExecutionData execData) throws Exception {
         DesiredCapabilities capabilities = jsonService
@@ -1057,10 +1061,10 @@ public class WebDriverService {
                 browserName, version, platform);
 
         logger.info("Using {} as Docker image for {}", imageId, browserName);
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setElastestExecutionData(execData);
-        sessionInfo.setCapabilities(capabilities);
-        sessionInfo.addObserver(sessionService);
+        SessionManager sessionManager = new SessionManager(platformService);
+        sessionManager.setElastestExecutionData(execData);
+        sessionManager.setCapabilities(capabilities);
+        sessionManager.addObserver(sessionService);
 
         // Envs
         List<String> envs = asList(
@@ -1077,30 +1081,31 @@ public class WebDriverService {
         }
 
         boolean liveSession = sessionService.isLive(requestBody);
-        sessionInfo.setBrowser(browserName);
-        sessionInfo.setLiveSession(liveSession);
-        sessionInfo.setVersion(dockerHubService.getVersionFromImage(imageId));
-        sessionInfo.setFolderPath(sessionFolderPath);
+        sessionManager.setBrowser(browserName);
+        sessionManager.setLiveSession(liveSession);
+        sessionManager
+                .setVersion(dockerHubService.getVersionFromImage(imageId));
+        sessionManager.setFolderPath(sessionFolderPath);
         SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
-        sessionInfo.setCreationTime(dateFormat.format(new Date()));
+        sessionManager.setCreationTime(dateFormat.format(new Date()));
         boolean manualRecording = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().isManualRecording();
-        sessionInfo.setManualRecording(manualRecording);
+        sessionManager.setManualRecording(manualRecording);
         String testName = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
                 .getDesiredCapabilities().getTestName();
-        sessionInfo.setTestName(testName);
+        sessionManager.setTestName(testName);
 
-        platformService.buildAndRunBrowserInContainer(sessionInfo,
+        platformService.buildAndRunBrowserInContainer(sessionManager,
                 eusContainerPrefix + hubContainerSufix, originalRequestBody,
                 folderPath, execData, envs, labels, capabilities, imageId);
 
-        sessionInfo.buildHubUrl();
+        sessionManager.buildHubUrl();
         String vncUrlFormat = "http://%s:%d/" + vncHtml
                 + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
-        String vncUrl = format(vncUrlFormat, sessionInfo.getHubIp(),
-                sessionInfo.getNoVncBindedPort());
+        String vncUrl = format(vncUrlFormat, sessionManager.getHubIp(),
+                sessionManager.getNoVncBindedPort());
         String internalVncUrl = vncUrl;
         logger.debug("HubUrl: {}", vncUrl);
 
@@ -1112,18 +1117,19 @@ public class WebDriverService {
                     && !etHost.equals("localhost")) {
                 String hubIp = etHost;
                 vncUrl = format(vncUrlFormat, hubIp,
-                        sessionInfo.getNoVncBindedPort());
+                        sessionManager.getNoVncBindedPort());
             }
         }
-        sessionInfo.setVncUrl(vncUrl);
-        platformService.waitForBrowserReady(sessionInfo.getHubContainerName(),
-                internalVncUrl, sessionInfo);
+        sessionManager.setVncUrl(vncUrl);
+        platformService.waitForBrowserReady(
+                sessionManager.getHubContainerName(), internalVncUrl,
+                sessionManager);
 
-        return sessionInfo;
+        return sessionManager;
     }
 
-    private void stopBrowser(SessionInfo sessionInfo) {
-        deleteSession(sessionInfo, false);
+    private void stopBrowser(SessionManager sessionManager) {
+        deleteSession(sessionManager, false);
     }
 
     /* ********** Cross browser ********** */
@@ -1260,12 +1266,13 @@ public class WebDriverService {
                 }
 
                 if (sessionId != null) {
-                    // Get Session Info and save in BrowserSync
-                    Optional<SessionInfo> optionalSessionInfo = sessionService
+                    // Get Session Manager and save in BrowserSync
+                    Optional<SessionManager> optionalSessionManager = sessionService
                             .getSession(sessionId);
-                    SessionInfo sessionInfo = optionalSessionInfo.get();
-                    if (sessionInfo != null) {
-                        browserSync.getSessions().add(sessionInfo);
+                    SessionManager sessionManager = optionalSessionManager
+                            .get();
+                    if (sessionManager != null) {
+                        browserSync.getSessions().add(sessionManager);
 
                         // Open app url in browser
                         String getUrlContext = sessionRequestContext + "/"
@@ -1278,7 +1285,7 @@ public class WebDriverService {
                                         httpEntity.getHeaders()));
                         try {
                             String responseBody = exchange(httpEntity,
-                                    getUrlContext, POST, sessionInfo,
+                                    getUrlContext, POST, sessionManager,
                                     optionalHttpEntity, false);
                         } catch (Exception e) {
                             logger.error(
@@ -1287,7 +1294,7 @@ public class WebDriverService {
                         }
                     } else {
                         logger.error(
-                                "Crossbrowser session Error: Session Info is null");
+                                "Crossbrowser session Error: Session Manager is null");
                     }
                 } else {
                     logger.error(
@@ -1325,8 +1332,9 @@ public class WebDriverService {
             BrowserSync browserSync = crossBrowserRegistry.get(crossBrowserId);
             if (browserSync != null) {
                 // Stop all sessions
-                for (SessionInfo sessionInfo : browserSync.getSessions()) {
-                    deleteSession(sessionInfo, false);
+                for (SessionManager sessionManager : browserSync
+                        .getSessions()) {
+                    deleteSession(sessionManager, false);
                 }
 
                 stopBrowsersyncService(browserSync);

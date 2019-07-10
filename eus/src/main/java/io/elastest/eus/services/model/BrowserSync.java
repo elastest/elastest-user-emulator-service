@@ -3,10 +3,10 @@ package io.elastest.eus.services.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 public class BrowserSync extends EusServiceModel {
-    List<SessionInfo> sessions;
+    List<SessionManager> sessions;
 
     String guiUrl;
     String appUrl;
@@ -16,11 +16,11 @@ public class BrowserSync extends EusServiceModel {
         this.sessions = new ArrayList<>();
     }
 
-    public List<SessionInfo> getSessions() {
+    public List<SessionManager> getSessions() {
         return sessions;
     }
 
-    public void setSessions(List<SessionInfo> sessions) {
+    public void setSessions(List<SessionManager> sessions) {
         this.sessions = sessions;
     }
 

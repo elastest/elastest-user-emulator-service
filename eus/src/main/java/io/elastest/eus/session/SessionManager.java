@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.platform.service.DockerBrowserInfo;
+import io.elastest.eus.platform.service.PlatformService;
 
 /**
  * Session information.
@@ -35,13 +36,12 @@ import io.elastest.eus.platform.service.DockerBrowserInfo;
  * @author Boni Garcia (boni.garcia@urjc.es)
  * @since 0.0.1
  */
-public class SessionInfo extends DockerBrowserInfo {
+public class SessionManager extends DockerBrowserInfo {
     final Logger log = getLogger(lookup().lookupClass());
     private static String HUB_PATH = "/wd/hub";
-    
+
     private String sessionId;
     private String hubUrl;
-    private String hubContainerName;
     private String creationTime;
     private String browser;
     private String version;
@@ -53,9 +53,12 @@ public class SessionInfo extends DockerBrowserInfo {
     private String folderPath;
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
-    
-    public SessionInfo() {
+
+    PlatformService platformService;
+
+    public SessionManager(PlatformService platformService) {
         super();
+        this.platformService = platformService;
     }
 
     public String getHubUrl() {
@@ -64,14 +67,6 @@ public class SessionInfo extends DockerBrowserInfo {
 
     public void setHubUrl(String hubUrl) {
         this.hubUrl = hubUrl;
-    }
-
-    public String getHubContainerName() {
-        return hubContainerName;
-    }
-
-    public void setHubContainerName(String hubContainerName) {
-        this.hubContainerName = hubContainerName;
     }
 
     public String getCreationTime() {
@@ -170,6 +165,18 @@ public class SessionInfo extends DockerBrowserInfo {
         this.capabilities = capabilities;
     }
 
+    public PlatformService getPlatformService() {
+        return platformService;
+    }
+
+    public void setPlatformService(PlatformService platformService) {
+        this.platformService = platformService;
+    }
+
+    /* ********************************************* */
+    /* *************** Other methods *************** */
+    /* ********************************************* */
+
     public String getIdForFiles() {
         String id = sessionId;
         if (testName != null && !testName.isEmpty()) {
@@ -179,17 +186,16 @@ public class SessionInfo extends DockerBrowserInfo {
         }
         return id;
     }
-    
+
     public void buildHubUrl() {
-      hubUrl = "http://" + hubIp + ":" + hubPort + HUB_PATH;
+        hubUrl = "http://" + hubIp + ":" + hubPort + HUB_PATH;
     }
 
     @Override
     public String toString() {
         return "SessionInfo [log=" + log + ", sessionId=" + sessionId
-                + ", hubUrl=" + hubUrl + ", hubContainerName="
-                + hubContainerName + ", creationTime="
-                + creationTime + ", browser=" + browser + ", version=" + version
+                + ", hubUrl=" + hubUrl  + ", creationTime=" + creationTime
+                + ", browser=" + browser + ", version=" + version
                 + ", liveSession=" + liveSession + ", timeoutFutures="
                 + timeoutFutures + ", timeout=" + timeout + ", testName="
                 + testName + ", manualRecording=" + manualRecording
