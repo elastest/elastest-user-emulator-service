@@ -101,7 +101,7 @@ public class AWSClient {
 
         boolean isRunning = instanceIsRunning(instance);
         while (System.currentTimeMillis() < endWaitTime && !isRunning) {
-            logger.debug("Waiting for instance wiht ID {}. (Timeout: {}s)",
+            logger.debug("Waiting for instance with ID {}. (Timeout: {}s)",
                     instance.instanceId(), timeoutSeconds);
             instance = describeInstance(instance.instanceId());
             isRunning = instanceIsRunning(instance);
@@ -245,12 +245,14 @@ public class AWSClient {
         ec2.unmonitorInstances(request);
     }
 
-    /* *************************************************** */
-    /* ****************** Exec Commands ****************** */
-    /* *************************************************** */
+    /* ************************************************** */
+    /* ********************* Others ********************* */
+    /* ************************************************** */
 
-    public String executeCommand(String instanceId, String command)
-            throws Exception {
+    public String executeCommand(String instanceId, String command,
+            int connectTimeoutSecs) throws Exception {
+        logger.debug("AWS instance {} => Executing command: {}", instanceId,
+                command);
         Instance instance = describeInstance(instanceId);
         JSch jsch = new JSch();
 
@@ -279,7 +281,13 @@ public class AWSClient {
         config.put("StrictHostKeyChecking", "no");
         config.put("PreferredAuthentications", "publickey");
         jschSession.setConfig(config);
-        jschSession.connect(180000);
+
+        try {
+            jschSession.connect(connectTimeoutSecs);
+        } catch (Exception e) {
+            jschSession.disconnect();
+            throw e;
+        }
 
         if (jschSession.isConnected()) {
             StringBuilder outputBuffer = new StringBuilder();
@@ -309,48 +317,31 @@ public class AWSClient {
                 }
 
                 channel.disconnect();
+                jschSession.disconnect();
             } catch (IOException e) {
                 logger.warn(e.getMessage());
+                jschSession.disconnect();
                 return null;
             } catch (JSchException e) {
                 logger.warn(e.getMessage());
+                jschSession.disconnect();
                 return null;
             }
-            return outputBuffer.toString();
+            String result = outputBuffer.toString();
+            logger.debug("AWS Command Result: {}", result);
+            return result;
         } else {
             logger.error(
                     "There's no SSH connection to instance {}. Cannot send command '{}'",
                     instanceId, command);
+            jschSession.disconnect();
             return null;
         }
     }
 
-    /* ************************************************** */
-    /* ********************** Wait ********************** */
-    /* ************************************************** */
-
-    public void waitForInternalHostIsReachable(String instanceId, String url,
-            int timeoutSeconds) throws Exception {
-        String command = "curl -s --head " + url
-                + " | head -n 1 | grep 'HTTP/.* [23]..' | awk '{print $2}'";
-
-        String result = executeCommand(instanceId, command);
-        String OK_CODE = "200";
-
-        long endWaitTime = System.currentTimeMillis() + timeoutSeconds * 1000;
-        boolean isRunning = result.equals(OK_CODE);
-        while (System.currentTimeMillis() < endWaitTime && !isRunning) {
-            result = executeCommand(instanceId, command);
-            isRunning = result.equals(OK_CODE);
-            if (isRunning) {
-                break;
-            } else {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                }
-            }
-        }
+    public String executeCommand(String instanceId, String command)
+            throws Exception {
+        return executeCommand(instanceId, command, 120000);
     }
 
     /* ************************************************* */

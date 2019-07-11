@@ -41,8 +41,7 @@ public abstract class PlatformManager {
             throws Exception;
 
     public abstract void copyFilesFromBrowserIfNecessary(
-            SessionManager sessionManager, String instanceId)
-            throws IOException;
+            SessionManager sessionManager) throws IOException;
 
     public abstract String getSessionContextInfo(SessionManager sessionManager)
             throws Exception;

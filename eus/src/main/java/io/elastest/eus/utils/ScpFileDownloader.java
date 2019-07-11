@@ -80,8 +80,9 @@ public class ScpFileDownloader {
             String localPath) {
         try {
 
-            log.info("Downloading file {} from {}", remotePath + "/" + filename,
-                    jschSession.getHost());
+            log.info("Downloading file {} from {} to local path {}",
+                    remotePath + "/" + filename, jschSession.getHost(),
+                    localPath);
 
             // Exec 'scp -f FILE_PATH'
             String command = "scp -f " + remotePath + "/" + filename;

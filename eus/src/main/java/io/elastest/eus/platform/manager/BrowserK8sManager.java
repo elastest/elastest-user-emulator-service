@@ -158,8 +158,8 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
-            String instanceId) throws IOException {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
+            throws IOException {
         k8sService.copyFileFromContainer(sessionManager.getBrowserPod(),
                 contextProperties.containerRecordingFolder,
                 sessionManager.getHostSharedFilesFolderPath(), null);

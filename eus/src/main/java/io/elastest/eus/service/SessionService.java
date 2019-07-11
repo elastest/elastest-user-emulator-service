@@ -275,8 +275,9 @@ public class SessionService extends TextWebSocketHandler implements Observer {
 
     public void removeSession(String sessionId) {
         if (sessionId != null) {
-            log.debug("Remove session {}", sessionId);
+            log.debug("Removing session {}", sessionId);
             sessionRegistry.remove(sessionId);
+            log.debug("Session {} removed", sessionId);
         }
     }
 
@@ -310,25 +311,28 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         String hubContainerName = sessionManager.getHubContainerName();
         int killTimeoutInSeconds = 10;
         PlatformManager platformManager = sessionManager.getPlatformManager();
-        if (hubContainerName != null
-                && platformManager.existServiceWithName(hubContainerName)) {
-            platformManager.removeServiceWithTimeout(hubContainerName,
-                    killTimeoutInSeconds);
-        }
-
-        String vncContainerName = sessionManager.getVncContainerName();
-        if (vncContainerName != null
-                && platformManager.existServiceWithName(vncContainerName)) {
-            platformManager.removeServiceWithTimeout(vncContainerName,
-                    killTimeoutInSeconds);
-        }
 
         String awsInstance = sessionManager.getAwsInstanceId();
 
+        // AWS session
         if (sessionManager.isAWSSession() && awsInstance != null
                 && platformManager.existServiceWithName(awsInstance)) {
             platformManager.removeServiceWithTimeout(awsInstance,
                     killTimeoutInSeconds);
+        } else { // Docker or K8s
+            if (hubContainerName != null
+                    && platformManager.existServiceWithName(hubContainerName)) {
+                platformManager.removeServiceWithTimeout(hubContainerName,
+                        killTimeoutInSeconds);
+            }
+
+            String vncContainerName = sessionManager.getVncContainerName();
+            if (vncContainerName != null
+                    && platformManager.existServiceWithName(vncContainerName)) {
+                platformManager.removeServiceWithTimeout(vncContainerName,
+                        killTimeoutInSeconds);
+            }
+
         }
 
     }

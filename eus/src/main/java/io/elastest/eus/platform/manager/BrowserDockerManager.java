@@ -27,6 +27,7 @@ import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
+import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
@@ -254,7 +255,7 @@ public class BrowserDockerManager extends PlatformManager {
 
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
-        dockerService.waitForHostIsReachable(internalVncUrl);
+        UtilTools.waitForHostIsReachable(internalVncUrl, 25);
         sessionManager.setStatusMsg("Ready");
         sessionManager.setStatus(DockerServiceStatusEnum.READY);
     }
@@ -300,8 +301,7 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
-            String instanceId) {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) {
         // TODO Auto-generated method stub
 
     }

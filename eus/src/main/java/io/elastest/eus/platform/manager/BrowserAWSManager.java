@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
+import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.AWSConfig;
@@ -56,12 +57,13 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager,
-            String instanceId) throws IOException {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
+            throws IOException {
         String remotePath = contextProperties.containerRecordingFolder;
         String localPath = sessionManager.getHostSharedFilesFolderPath();
 
-        awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
+        awsClient.downloadFolderFiles(sessionManager.getAwsInstanceId(),
+                remotePath, localPath);
     }
 
     @Override
@@ -116,24 +118,37 @@ public class BrowserAWSManager extends PlatformManager {
             hubIp = instance.publicIpAddress();
         }
 
+        String instanceId = instance.instanceId();
+        sessionManager.setAwsInstanceId(instanceId);
+
         sessionManager.setHubIp(hubIp);
         sessionManager.setHubPort(contextProperties.hubExposedPort);
         sessionManager.setNoVncBindedPort(contextProperties.noVncExposedPort);
 
-        sessionManager.setAwsInstanceId(instance.instanceId());
+        String browserServiceName = getBrowserServiceName(instanceId);
+        sessionManager.setHubContainerName(browserServiceName);
+        sessionManager.setVncContainerName(browserServiceName);
     }
 
     @Override
     public void execCommand(String instanceId, boolean awaitCompletion,
             String... command) throws Exception {
         if (command != null) {
-            String mergedCommand = "";
+            // Commands executed in browser container
+            String mergedCommand = "docker exec -t ";
+            if (!awaitCompletion) {
+                mergedCommand += "-d ";
+            }
+            mergedCommand += getBrowserServiceName(instanceId) + " ";
+
+            boolean firstIteration = true;
 
             for (String currentCommandPart : command) {
-                if (!"".equals(mergedCommand)) {
+                if (!firstIteration) {
                     mergedCommand += " ";
                 }
                 mergedCommand += currentCommandPart;
+                firstIteration = false;
             }
 
             awsClient.executeCommand(instanceId, mergedCommand);
@@ -155,8 +170,7 @@ public class BrowserAWSManager extends PlatformManager {
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
         try {
-            awsClient.waitForInternalHostIsReachable(
-                    sessionManager.getAwsInstanceId(), internalVncUrl, 45);
+            UtilTools.waitForHostIsReachable(internalVncUrl, 25);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
@@ -173,6 +187,11 @@ public class BrowserAWSManager extends PlatformManager {
             Map<String, String> labels) throws Exception {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public String getBrowserServiceName(String instanceId) throws Exception {
+        String command = "docker ps -a | grep elastestbrowser | awk '{print $1}' | tr -d '\\n'";
+        return awsClient.executeCommand(instanceId, command);
     }
 
 }

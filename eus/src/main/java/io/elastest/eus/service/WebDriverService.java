@@ -895,7 +895,7 @@ public class WebDriverService {
                 recordingService.stopRecording(sessionManager);
                 recordingService.storeMetadata(sessionManager);
                 sessionManager.getPlatformManager()
-                        .copyFilesFromBrowserIfNecessary(sessionManager, null);
+                        .copyFilesFromBrowserIfNecessary(sessionManager);
                 sessionService.sendRecordingToAllClients(sessionManager);
             }
 
@@ -909,8 +909,8 @@ public class WebDriverService {
             try {
                 sessionService.stopAllContainerOfSession(sessionManager);
             } catch (Exception e) {
-                logger.debug("Containers of session {} not removed",
-                        sessionManager.getSessionId());
+                logger.debug("Containers of session {} not removed: {}",
+                        sessionManager.getSessionId(), e.getMessage());
             }
             sessionService.removeSession(sessionManager.getSessionId());
 
