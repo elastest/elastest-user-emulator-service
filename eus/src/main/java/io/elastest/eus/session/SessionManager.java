@@ -25,6 +25,8 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.platform.manager.DockerBrowserInfo;
@@ -56,6 +58,7 @@ public class SessionManager extends DockerBrowserInfo {
 
     private String awsInstanceId;
 
+    @JsonIgnore
     PlatformManager platformManager;
 
     public SessionManager(PlatformManager platformManager) {

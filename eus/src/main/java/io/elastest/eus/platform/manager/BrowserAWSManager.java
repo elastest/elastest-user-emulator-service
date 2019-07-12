@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
-import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.AWSConfig;
@@ -170,7 +169,7 @@ public class BrowserAWSManager extends PlatformManager {
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
         try {
-            UtilTools.waitForHostIsReachable(internalVncUrl, 25);
+            waitForHostIsReachable(internalVncUrl, 25);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
@@ -179,6 +178,8 @@ public class BrowserAWSManager extends PlatformManager {
             removeServiceWithTimeout(sessionManager.getAwsInstanceId(), 60);
             throw e;
         }
+        // Wait some seconds for Hub (4444) ready
+        Thread.sleep(5000);
     }
 
     @Override

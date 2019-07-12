@@ -27,7 +27,6 @@ import io.elastest.epm.client.model.DockerPullImageProgress;
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
-import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
@@ -255,9 +254,16 @@ public class BrowserDockerManager extends PlatformManager {
 
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
-        UtilTools.waitForHostIsReachable(internalVncUrl, 25);
-        sessionManager.setStatusMsg("Ready");
-        sessionManager.setStatus(DockerServiceStatusEnum.READY);
+        try {
+            dockerService.waitForHostIsReachable(internalVncUrl);
+            sessionManager.setStatusMsg("Ready");
+            sessionManager.setStatus(DockerServiceStatusEnum.READY);
+        } catch (Exception e) {
+            logger.error("Error on wait for host reachable: {}",
+                    e.getMessage());
+            removeServiceWithTimeout(sessionManager.getHubContainerName(), 60);
+            throw e;
+        }
     }
 
     private ProgressHandler getBrowserProgressHandler(String image,

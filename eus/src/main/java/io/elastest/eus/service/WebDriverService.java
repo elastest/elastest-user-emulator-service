@@ -444,6 +444,10 @@ public class WebDriverService {
             }
             if (exchangeAgain) {
                 if (numRetries < createSessionRetries) {
+                    if (sessionManager.isAWSSession()) {
+                        throw new EusException(
+                                "Exception creating session in AWS remote browser");
+                    }
                     logger.debug("Stopping browser and starting new one {}",
                             sessionManager);
                     stopBrowser(sessionManager);
@@ -1120,7 +1124,7 @@ public class WebDriverService {
         String vncUrl = format(vncUrlFormat, sessionManager.getHubIp(),
                 sessionManager.getNoVncBindedPort());
         String internalVncUrl = vncUrl;
-        logger.debug("HubUrl: {}", vncUrl);
+        logger.debug("Internal Vnc Url: {}", internalVncUrl);
 
         String etHost = getenv(etHostEnv);
         String etHostType = getenv(etHostEnvType);
@@ -1133,9 +1137,11 @@ public class WebDriverService {
                         sessionManager.getNoVncBindedPort());
             }
         }
+        logger.debug("Vnc Url to Use: {}", internalVncUrl);
         sessionManager.setVncUrl(vncUrl);
         platformManager.waitForBrowserReady(internalVncUrl, sessionManager);
 
+        logger.debug("Hub Url: {}", sessionManager.getHubUrl());
         return sessionManager;
     }
 
@@ -1247,78 +1253,83 @@ public class WebDriverService {
         CrossBrowserWebDriverCapabilities crossBrowserCapabilities = getCrossBrowserWebDriverCapabilities(
                 httpEntity);
 
-        BrowserSync browserSync = startBrowsersyncService(null,
+        BrowserSync browserSync = startBrowsersyncService(data,
                 crossBrowserCapabilities);
+        try {
+            String sessionRequestContext = getRequestContextWithoutCrossBrowser(
+                    requestContext);
 
-        String sessionRequestContext = getRequestContextWithoutCrossBrowser(
-                requestContext);
+            // Start each sessions
+            for (WebDriverCapabilities sessionCapabilities : crossBrowserCapabilities
+                    .getSessionsCapabilities()) {
+                String currentRequestBody = jsonService
+                        .objectToJson(sessionCapabilities);
+                ResponseEntity<String> response;
 
-        // Start each sessions
-        for (WebDriverCapabilities sessionCapabilities : crossBrowserCapabilities
-                .getSessionsCapabilities()) {
-            String currentRequestBody = jsonService
-                    .objectToJson(sessionCapabilities);
-            ResponseEntity<String> response;
-
-            // From Execution
-            if (data != null) {
-                response = sessionFromExecution(httpEntity,
-                        sessionRequestContext, currentRequestBody,
-                        request.getMethod(), data);
-            } else { // Normal session
-                response = session(httpEntity, sessionRequestContext,
-                        currentRequestBody, request.getMethod());
-            }
-
-            Map<String, Object> responseMap = jsonService.jsonToObject(
-                    response.getBody(),
-                    new TypeReference<Map<String, Object>>() {
-                    });
-            if (responseMap != null) {
-                String sessionId = (String) responseMap.get("sessionId");
-                if (sessionId == null && responseMap.get("value") != null) {
-                    LinkedHashMap<String, Object> value = (LinkedHashMap<String, Object>) responseMap
-                            .get("value");
-                    sessionId = (String) value.get("sessionId");
+                // From Execution
+                if (data != null) {
+                    response = sessionFromExecution(httpEntity,
+                            sessionRequestContext, currentRequestBody,
+                            request.getMethod(), data);
+                } else { // Normal session
+                    response = session(httpEntity, sessionRequestContext,
+                            currentRequestBody, request.getMethod());
                 }
 
-                if (sessionId != null) {
-                    // Get Session Manager and save in BrowserSync
-                    Optional<SessionManager> optionalSessionManager = sessionService
-                            .getSession(sessionId);
-                    SessionManager sessionManager = optionalSessionManager
-                            .get();
-                    if (sessionManager != null) {
-                        browserSync.getSessions().add(sessionManager);
+                Map<String, Object> responseMap = jsonService.jsonToObject(
+                        response.getBody(),
+                        new TypeReference<Map<String, Object>>() {
+                        });
+                if (responseMap != null) {
+                    String sessionId = (String) responseMap.get("sessionId");
+                    if (sessionId == null && responseMap.get("value") != null) {
+                        LinkedHashMap<String, Object> value = (LinkedHashMap<String, Object>) responseMap
+                                .get("value");
+                        sessionId = (String) value.get("sessionId");
+                    }
 
-                        // Open app url in browser
-                        String getUrlContext = sessionRequestContext + "/"
-                                + sessionId + "/url";
-                        String getUrlRequestBody = "{ \"url\": \""
-                                + browserSync.getAppUrl() + "\" }";
+                    if (sessionId != null) {
+                        // Get Session Manager and save in BrowserSync
+                        Optional<SessionManager> optionalSessionManager = sessionService
+                                .getSession(sessionId);
+                        SessionManager sessionManager = optionalSessionManager
+                                .get();
+                        if (sessionManager != null) {
+                            browserSync.getSessions().add(sessionManager);
 
-                        Optional<HttpEntity<String>> optionalHttpEntity = Optional
-                                .of(new HttpEntity<String>(getUrlRequestBody,
-                                        httpEntity.getHeaders()));
-                        try {
-                            String responseBody = exchange(httpEntity,
-                                    getUrlContext, POST, sessionManager,
-                                    optionalHttpEntity, false);
-                        } catch (Exception e) {
+                            // Open app url in browser
+                            String getUrlContext = sessionRequestContext + "/"
+                                    + sessionId + "/url";
+                            String getUrlRequestBody = "{ \"url\": \""
+                                    + browserSync.getAppUrl() + "\" }";
+
+                            Optional<HttpEntity<String>> optionalHttpEntity = Optional
+                                    .of(new HttpEntity<String>(
+                                            getUrlRequestBody,
+                                            httpEntity.getHeaders()));
+                            try {
+                                String responseBody = exchange(httpEntity,
+                                        getUrlContext, POST, sessionManager,
+                                        optionalHttpEntity, false);
+                            } catch (Exception e) {
+                                logger.error(
+                                        "Error on navigate to url in Crossbrowser session {}: {}",
+                                        sessionId, e.getMessage());
+                            }
+                        } else {
                             logger.error(
-                                    "Error on navigate to url in Crossbrowser session {}: {}",
-                                    sessionId, e.getMessage());
+                                    "Crossbrowser session Error: Session Manager is null");
                         }
                     } else {
                         logger.error(
-                                "Crossbrowser session Error: Session Manager is null");
+                                "Crossbrowser session Error: Session ID is null");
                     }
-                } else {
-                    logger.error(
-                            "Crossbrowser session Error: Session ID is null");
-                }
 
+                }
             }
+        } catch (Exception e) {
+            stopCrossBrowserSessionById(browserSync.getIdentifier());
+            throw e;
         }
 
         crossBrowserRegistry.put(browserSync.getIdentifier(), browserSync);
