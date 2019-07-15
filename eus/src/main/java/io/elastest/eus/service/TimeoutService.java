@@ -39,7 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import io.elastest.eus.json.WebDriverLog;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Service for timeout.
@@ -81,10 +81,10 @@ public class TimeoutService {
         logExecutor.shutdown();
     }
 
-    public void launchLogMonitor(SessionInfo sessionInfo, String monitoringIndex) {
-        String sessionId = sessionInfo.getSessionId();        
+    public void launchLogMonitor(SessionManager sesssionManager, String monitoringIndex) {
+        String sessionId = sesssionManager.getSessionId();        
         if (!logFutureMap.containsKey(sessionId)) {
-            String postUrl = sessionInfo.getHubUrl() + "/session/" + sessionId
+            String postUrl = sesssionManager.getHubUrl() + "/session/" + sessionId
                     + "/log";
             
             log.info("Launching log monitor using URL {}", postUrl);
@@ -100,7 +100,7 @@ public class TimeoutService {
                                     .getJsonMessageFromValueList(
                                             response.getValue());
                             logstashService.sendBrowserConsoleToLogstash(
-                                    jsonMessages, sessionInfo, monitoringIndex);
+                                    jsonMessages, sesssionManager, monitoringIndex);
                         }
                         sleep(logPollMs);
 
@@ -114,28 +114,28 @@ public class TimeoutService {
         }
     }
 
-    public void startSessionTimer(SessionInfo sessionInfo, int timeout,
+    public void startSessionTimer(SessionManager sesssionManager, int timeout,
             Runnable deleteSession) {
-        if (sessionInfo != null) {
+        if (sesssionManager != null) {
             Future<?> timeoutFuture = timeoutExecutor.schedule(deleteSession,
                     timeout, SECONDS);
-            sessionInfo.addTimeoutFuture(timeoutFuture);
-            sessionInfo.setTimeout(timeout);
+            sesssionManager.addTimeoutFuture(timeoutFuture);
+            sesssionManager.setTimeout(timeout);
             log.trace("Starting timer in session {} (future {}) ({} seconds)",
-                    sessionInfo.getSessionId(), timeoutFuture, timeout);
+                    sesssionManager.getSessionId(), timeoutFuture, timeout);
         }
     }
 
-    public void shutdownSessionTimer(SessionInfo sessionInfo) {
-        if (sessionInfo != null) {
-            sessionInfo.getTimeoutFutures().forEach(timeoutFuture -> {
+    public void shutdownSessionTimer(SessionManager sesssionManager) {
+        if (sesssionManager != null) {
+            sesssionManager.getTimeoutFutures().forEach(timeoutFuture -> {
                 if (timeoutFuture != null) {
                     timeoutFuture.cancel(true);
                     log.trace("Canceling timer in session {} (future {}) ",
-                            sessionInfo.getSessionId(), timeoutFuture);
+                            sesssionManager.getSessionId(), timeoutFuture);
                 }
             });
-            sessionInfo.getTimeoutFutures().clear();
+            sesssionManager.getTimeoutFutures().clear();
         }
     }
 

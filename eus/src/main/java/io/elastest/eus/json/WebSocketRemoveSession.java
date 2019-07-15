@@ -16,7 +16,7 @@
  */
 package io.elastest.eus.json;
 
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Utility class for serialize JSON messages (remove session).
@@ -32,8 +32,8 @@ public class WebSocketRemoveSession {
         // Empty default construct (needed by Jackson)
     }
 
-    public WebSocketRemoveSession(SessionInfo sessionInfo) {
-        removeSession = new WebSocketSessionInfoEntry(sessionInfo);
+    public WebSocketRemoveSession(SessionManager sessionManager) {
+        removeSession = new WebSocketSessionInfoEntry(sessionManager);
     }
 
     public WebSocketSessionInfoEntry getRemoveSession() {

@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Logstash service.
@@ -81,7 +81,7 @@ public class EusLogstashService {
     // }
 
     public void sendBrowserConsoleToLogstash(String jsonMessages,
-            SessionInfo sessionInfo, String monitoringIndex) {
+            SessionManager sessionManager, String monitoringIndex) {
         String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
         log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
         if (lsHttpApi == null || monitoringIndex == null) {
@@ -96,7 +96,7 @@ public class EusLogstashService {
             http.setRequestMethod("POST");
             http.setDoOutput(true);
 
-            String component = getComponent(sessionInfo);
+            String component = getComponent(sessionManager);
 
             String body = "{" + "\"component\":\"" + component + "\""
                     + ",\"exec\":\"" + monitoringIndex + "\""
@@ -104,7 +104,7 @@ public class EusLogstashService {
                     + jsonMessages + "}";
             byte[] out = body.getBytes(UTF_8);
             log.debug("{} => Sending browser log to logstash ({}): {}",
-                    sessionInfo.getSessionId(), lsHttpApi, body);
+                    sessionManager.getSessionId(), lsHttpApi, body);
             int length = out.length;
 
             http.setFixedLengthStreamingMode(length);
@@ -120,7 +120,7 @@ public class EusLogstashService {
 
     }
 
-    public String getComponent(SessionInfo sessionInfo) {
+    public String getComponent(SessionManager sessionInfo) {
         String sessionId = sessionInfo.getSessionId();
         String component = etBrowserComponentPrefix;
 

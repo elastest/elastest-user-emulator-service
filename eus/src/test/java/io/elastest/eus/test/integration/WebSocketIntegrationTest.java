@@ -31,11 +31,16 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import io.elastest.epm.client.service.DockerService;
+import io.elastest.eus.config.ApplicationContextProvider;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
+import io.elastest.eus.platform.manager.BrowserDockerManager;
+import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.SessionService;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 import io.elastest.eus.test.BaseTest;
 import io.elastest.eus.test.util.WebSocketClient;
 import io.elastest.eus.test.util.WebSocketClient.MessageHandler;
@@ -56,6 +61,12 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Autowired
     private EusJsonService jsonService;
 
+    @Autowired
+    DockerService dockerService;
+
+    @Autowired
+    EusFilesService eusFilesService;
+
     @BeforeEach
     void setup() {
         log.debug("App started on port {}", serverPort);
@@ -64,12 +75,16 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests messages about a session through WebSocket")
     void testSessions() throws Exception {
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setBrowser("chrome");
-        sessionInfo.setVersion("59");
-        sessionService.putSession("my-session-id", sessionInfo);
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
+                dockerService, eusFilesService, contextProperties);
+        SessionManager sessionManager = new SessionManager(dockerServiceImpl);
+        sessionManager.setBrowser("chrome");
+        sessionManager.setVersion("59");
+        sessionService.putSession("my-session-id", sessionManager);
 
-        String jsonMessage = jsonService.objectToJson(sessionInfo);
+        String jsonMessage = jsonService.objectToJson(sessionManager);
         assertNotNull(jsonMessage);
 
         final String sentMessage = wsProtocolGetSessions;
@@ -98,16 +113,20 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests recording messages through WebSocket")
     void testRecordings() throws Exception {
-        SessionInfo sessionInfo = new SessionInfo();
-        sessionInfo.setBrowser("chrome");
-        sessionInfo.setVersion("65");
+        ContextProperties contextProperties = ApplicationContextProvider
+                .getContextPropertiesObject();
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
+                dockerService, eusFilesService, contextProperties);
+        SessionManager sessionManager = new SessionManager(dockerServiceImpl);
+        sessionManager.setBrowser("chrome");
+        sessionManager.setVersion("65");
         String sessionId = "my-session-id";
-        sessionService.putSession(sessionId, sessionInfo);
+        sessionService.putSession(sessionId, sessionManager);
 
         String jsonFileName = sessionId + registryMetadataExtension;
 
-        String sessionInfoToJson = jsonService
-                .objectToJson(new WebSocketRecordedSession(sessionInfo));
+        String sessionManagerToJson = jsonService
+                .objectToJson(new WebSocketRecordedSession(sessionManager));
         try {
             File dir = new File(registryFolder);
             if (!dir.exists()) {
@@ -124,10 +143,10 @@ public class WebSocketIntegrationTest extends BaseTest {
         log.debug("Saving {} file into {} folder", jsonFileName,
                 registryFolder);
 
-        writeStringToFile(file, sessionInfoToJson, Charset.defaultCharset());
+        writeStringToFile(file, sessionManagerToJson, Charset.defaultCharset());
 
         String jsonMessage = jsonService
-                .objectToJson(new WebSocketNewSession(sessionInfo));
+                .objectToJson(new WebSocketNewSession(sessionManager));
         assertNotNull(jsonMessage);
 
         final String sentMessage = wsProtocolGetRecordings;

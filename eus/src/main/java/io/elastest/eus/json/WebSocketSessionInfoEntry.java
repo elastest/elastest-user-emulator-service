@@ -18,7 +18,7 @@ package io.elastest.eus.json;
 
 import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Utility JSON messages sent by WebSocket.
@@ -37,23 +37,25 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
     String folderPath;
     boolean live;
     ExecutionData elastestExecutionData;
+    String awsInstanceId;
 
     public WebSocketSessionInfoEntry() {
         // Empty default construct (needed by Jackson)
     }
 
-    public WebSocketSessionInfoEntry(SessionInfo sessionInfo) {
-        this.id = sessionInfo.getIdForFiles();
-        this.url = sessionInfo.getVncUrl();
-        this.browser = sessionInfo.getBrowser();
-        this.version = sessionInfo.getVersion();
-        this.creationTime = sessionInfo.getCreationTime();
-        this.hubContainerName = sessionInfo.getHubContainerName();
-        this.folderPath = sessionInfo.getFolderPath();
-        this.setStatus(sessionInfo.getStatus());
-        this.setStatusMsg(sessionInfo.getStatusMsg());
-        this.live = sessionInfo.isLiveSession();
-        this.elastestExecutionData = sessionInfo.getElastestExecutionData();
+    public WebSocketSessionInfoEntry(SessionManager sessionManager) {
+        this.id = sessionManager.getIdForFiles();
+        this.url = sessionManager.getVncUrl();
+        this.browser = sessionManager.getBrowser();
+        this.version = sessionManager.getVersion();
+        this.creationTime = sessionManager.getCreationTime();
+        this.hubContainerName = sessionManager.getHubContainerName();
+        this.folderPath = sessionManager.getFolderPath();
+        this.setStatus(sessionManager.getStatus());
+        this.setStatusMsg(sessionManager.getStatusMsg());
+        this.live = sessionManager.isLiveSession();
+        this.elastestExecutionData = sessionManager.getElastestExecutionData();
+        this.awsInstanceId = sessionManager.getAwsInstanceId();
     }
 
     public String getId() {
@@ -92,6 +94,10 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
         return elastestExecutionData;
     }
 
+    public String getAwsInstanceId() {
+        return awsInstanceId;
+    }
+
     @Override
     public String toString() {
         return "WebSocketSessionInfoEntry [id=" + id + ", url=" + url
@@ -99,7 +105,8 @@ public class WebSocketSessionInfoEntry extends DockerServiceStatus {
                 + ", creationTime=" + creationTime + ", hubContainerName="
                 + hubContainerName + ", folderPath=" + folderPath + ", live="
                 + live + ", elastestExecutionData=" + elastestExecutionData
-                + ", toString()=" + super.toString() + "]";
+                + ", awsInstanceId=" + awsInstanceId + ", toString()="
+                + super.toString() + "]";
     }
 
 }

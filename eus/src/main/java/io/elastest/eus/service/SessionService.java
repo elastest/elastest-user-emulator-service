@@ -40,8 +40,8 @@ import io.elastest.eus.json.WebSocketNewLiveSession;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.json.WebSocketRemoveSession;
-import io.elastest.eus.platform.service.PlatformService;
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.platform.manager.PlatformManager;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Session service (WebSocket and session registry).
@@ -64,15 +64,13 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     private String wsProtocolGetRecordings;
 
     private Map<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
-    private Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
+    private Map<String, SessionManager> sessionRegistry = new ConcurrentHashMap<>();
 
-    private PlatformService platformService;
     private EusJsonService jsonService;
     private RecordingService recordingService;
 
-    public SessionService(PlatformService platformService,
-            EusJsonService jsonService, RecordingService recordingService) {
-        this.platformService = platformService;
+    public SessionService(EusJsonService jsonService,
+            RecordingService recordingService) {
         this.jsonService = jsonService;
         this.recordingService = recordingService;
     }
@@ -139,11 +137,11 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         }
     }
 
-    public void sendRecordingToAllClients(SessionInfo sessionInfo)
+    public void sendRecordingToAllClients(SessionManager sessionManager)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(
-                    sessionInfo);
+                    sessionManager);
             log.debug("Sending recording {} to session {}", recordedSession,
                     session);
             sendTextMessage(session, jsonService.objectToJson(recordedSession));
@@ -154,20 +152,20 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     /* *** Generic New Session (live and non live) *** */
     /* *********************************************** */
 
-    public void sendNewSessionToAllClients(SessionInfo sessionInfo)
+    public void sendNewSessionToAllClients(SessionManager sessionManager)
             throws IOException {
         if (activeWebSocketSessions()) {
-            this.sendNewSessionToAllClients(sessionInfo, true);
+            this.sendNewSessionToAllClients(sessionManager, true);
         }
     }
 
-    public void sendNewSessionToAllClients(SessionInfo sessionInfo,
+    public void sendNewSessionToAllClients(SessionManager sessionManager,
             boolean printDebug) throws IOException {
         if (activeWebSocketSessions()) {
-            if (!sessionInfo.isLiveSession()) {
-                sendNewNormalSessionToAllClients(sessionInfo, printDebug);
+            if (!sessionManager.isLiveSession()) {
+                sendNewNormalSessionToAllClients(sessionManager, printDebug);
             } else {
-                sendNewLiveSessionToAllClients(sessionInfo, printDebug);
+                sendNewLiveSessionToAllClients(sessionManager, printDebug);
             }
         }
     }
@@ -176,25 +174,26 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     /* *** Non-Live Session *** */
     /* ************************ */
 
-    public void sendNewNormalSessionToAllClients(SessionInfo sessionInfo)
+    public void sendNewNormalSessionToAllClients(SessionManager sessionManager)
             throws IOException {
-        this.sendNewNormalSessionToAllClients(sessionInfo, true);
+        this.sendNewNormalSessionToAllClients(sessionManager, true);
     }
 
-    public void sendNewNormalSessionToAllClients(SessionInfo sessionInfo,
+    public void sendNewNormalSessionToAllClients(SessionManager sessionManager,
             boolean printDebug) throws IOException {
-        if (!sessionInfo.isLiveSession()) {
+        if (!sessionManager.isLiveSession()) {
             for (WebSocketSession session : activeSessions.values()) {
-                sendNewNormalSessionToGivenSessionClient(session, sessionInfo,
-                        printDebug);
+                sendNewNormalSessionToGivenSessionClient(session,
+                        sessionManager, printDebug);
             }
         }
     }
 
     public void sendNewNormalSessionToGivenSessionClient(
-            WebSocketSession session, SessionInfo sessionInfo,
+            WebSocketSession session, SessionManager sessionManager,
             boolean printDebug) throws JsonProcessingException, IOException {
-        WebSocketNewSession newSession = new WebSocketNewSession(sessionInfo);
+        WebSocketNewSession newSession = new WebSocketNewSession(
+                sessionManager);
         if (printDebug) {
             log.debug("Sending newSession message {} to session {}", newSession,
                     session);
@@ -204,10 +203,10 @@ public class SessionService extends TextWebSocketHandler implements Observer {
 
     public void sendAllSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                if (!sessionInfo.isLiveSession()) {
+            for (SessionManager sessionManager : sessionRegistry.values()) {
+                if (!sessionManager.isLiveSession()) {
                     sendNewNormalSessionToGivenSessionClient(session,
-                            sessionInfo, true);
+                            sessionManager, true);
                 }
             }
         }
@@ -217,26 +216,26 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     /* *** Live Session *** */
     /* ******************** */
 
-    public void sendNewLiveSessionToAllClients(SessionInfo sessionInfo)
+    public void sendNewLiveSessionToAllClients(SessionManager sessionManager)
             throws IOException {
-        this.sendNewLiveSessionToAllClients(sessionInfo, true);
+        this.sendNewLiveSessionToAllClients(sessionManager, true);
     }
 
-    public void sendNewLiveSessionToAllClients(SessionInfo sessionInfo,
+    public void sendNewLiveSessionToAllClients(SessionManager sessionManager,
             boolean printDebug) throws IOException {
-        if (sessionInfo.isLiveSession()) {
+        if (sessionManager.isLiveSession()) {
             for (WebSocketSession session : activeSessions.values()) {
                 this.sendNewLiveSessionToGivenSessionClient(session,
-                        sessionInfo, printDebug);
+                        sessionManager, printDebug);
             }
         }
     }
 
     public void sendNewLiveSessionToGivenSessionClient(WebSocketSession session,
-            SessionInfo sessionInfo, boolean printDebug)
+            SessionManager sessionManager, boolean printDebug)
             throws JsonProcessingException, IOException {
         WebSocketNewLiveSession newLiveSession = new WebSocketNewLiveSession(
-                sessionInfo);
+                sessionManager);
         if (printDebug) {
             log.debug("Sending newLiveSession message {} to session {}",
                     newLiveSession, session);
@@ -246,10 +245,10 @@ public class SessionService extends TextWebSocketHandler implements Observer {
 
     public void sendAllLiveSessionsInfoToAllClients() throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
-            for (SessionInfo sessionInfo : sessionRegistry.values()) {
-                if (sessionInfo.isLiveSession()) {
-                    sendNewLiveSessionToGivenSessionClient(session, sessionInfo,
-                            true);
+            for (SessionManager sessionManager : sessionRegistry.values()) {
+                if (sessionManager.isLiveSession()) {
+                    sendNewLiveSessionToGivenSessionClient(session,
+                            sessionManager, true);
                 }
             }
         }
@@ -259,11 +258,11 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     /* *** Remove Session *** */
     /* ********************** */
 
-    public void sendRemoveSessionToAllClients(SessionInfo sessionInfo)
+    public void sendRemoveSessionToAllClients(SessionManager sessionManager)
             throws IOException {
         for (WebSocketSession session : activeSessions.values()) {
             WebSocketRemoveSession removeSession = new WebSocketRemoveSession(
-                    sessionInfo);
+                    sessionManager);
             log.debug("Sending remove session message {} to session {}",
                     removeSession, session);
             sendTextMessage(session, jsonService.objectToJson(removeSession));
@@ -276,8 +275,9 @@ public class SessionService extends TextWebSocketHandler implements Observer {
 
     public void removeSession(String sessionId) {
         if (sessionId != null) {
-            log.debug("Remove session {}", sessionId);
+            log.debug("Removing session {}", sessionId);
             sessionRegistry.remove(sessionId);
+            log.debug("Session {} removed", sessionId);
         }
     }
 
@@ -285,11 +285,11 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         return !activeSessions.isEmpty();
     }
 
-    public void putSession(String sessionId, SessionInfo sessionEntry) {
+    public void putSession(String sessionId, SessionManager sessionEntry) {
         sessionRegistry.put(sessionId, sessionEntry);
     }
 
-    public Optional<SessionInfo> getSession(String sessionId) {
+    public Optional<SessionManager> getSession(String sessionId) {
         if (sessionRegistry.containsKey(sessionId)) {
             return Optional.of(sessionRegistry.get(sessionId));
         } else {
@@ -297,30 +297,44 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         }
     }
 
-    public void updateSessionInfo(String sessionId, SessionInfo sessionInfo) {
-        sessionRegistry.put(sessionId, sessionInfo);
+    public void updateSessionManager(String sessionId,
+            SessionManager sessionManager) {
+        sessionRegistry.put(sessionId, sessionManager);
     }
 
-    public Map<String, SessionInfo> getSessionRegistry() {
+    public Map<String, SessionManager> getSessionRegistry() {
         return sessionRegistry;
     }
 
-    public void stopAllContainerOfSession(SessionInfo sessionInfo)
+    public void stopAllContainerOfSession(SessionManager sessionManager)
             throws Exception {
-        String hubContainerName = sessionInfo.getHubContainerName();
+        String hubContainerName = sessionManager.getHubContainerName();
         int killTimeoutInSeconds = 10;
-        if (hubContainerName != null
-                && platformService.existServiceWithName(hubContainerName)) {
-            platformService.removeServiceWithTimeout(hubContainerName,
+        PlatformManager platformManager = sessionManager.getPlatformManager();
+
+        String awsInstance = sessionManager.getAwsInstanceId();
+
+        // AWS session
+        if (sessionManager.isAWSSession() && awsInstance != null
+                && platformManager.existServiceWithName(awsInstance)) {
+            platformManager.removeServiceWithTimeout(awsInstance,
                     killTimeoutInSeconds);
+        } else { // Docker or K8s
+            if (hubContainerName != null
+                    && platformManager.existServiceWithName(hubContainerName)) {
+                platformManager.removeServiceWithTimeout(hubContainerName,
+                        killTimeoutInSeconds);
+            }
+
+            String vncContainerName = sessionManager.getVncContainerName();
+            if (vncContainerName != null
+                    && platformManager.existServiceWithName(vncContainerName)) {
+                platformManager.removeServiceWithTimeout(vncContainerName,
+                        killTimeoutInSeconds);
+            }
+
         }
 
-        String vncContainerName = sessionInfo.getVncContainerName();
-        if (vncContainerName != null
-                && platformService.existServiceWithName(vncContainerName)) {
-            platformService.removeServiceWithTimeout(vncContainerName,
-                    killTimeoutInSeconds);
-        }
     }
 
     boolean isLive(String jsonMessage) {
@@ -341,7 +355,7 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     @Override
     public void update(Observable o, Object arg) {
         try {
-            sendNewSessionToAllClients((SessionInfo) arg, false);
+            sendNewSessionToAllClients((SessionManager) arg, false);
         } catch (IOException io) {
             log.error("Error sending browser status to all clients: {}",
                     io.getMessage());

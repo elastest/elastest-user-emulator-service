@@ -110,6 +110,8 @@ public class WebDriverCapabilities {
 
         Integer elastestTimeout;
 
+        AWSConfig awsConfig;
+
         /* ************************** */
         /* ****** Constructors ****** */
         /* ************************** */
@@ -189,6 +191,10 @@ public class WebDriverCapabilities {
             this.elastestTimeout = elastestTimeout;
         }
 
+        public AWSConfig getAwsConfig() {
+            return awsConfig;
+        }
+
         @Override
         public String toString() {
             return "DesiredCapabilities [getLoggingPrefs()=" + getLoggingPrefs()
@@ -202,7 +208,8 @@ public class WebDriverCapabilities {
                     + ", getTestName()=" + getTestName()
                     + ", isManualRecording()=" + isManualRecording()
                     + ", getExtraHosts()=" + getExtraHosts()
-                    + ", getElastestTimeout()=" + getElastestTimeout() + "]";
+                    + ", getElastestTimeout()=" + getElastestTimeout()
+                    + ", getAwsConfig()=" + getAwsConfig() + "]";
         }
 
     }
@@ -212,7 +219,7 @@ public class WebDriverCapabilities {
 
         public LoggingPrefs() {
             // Empty default construct
-        }
+        }   
 
         public String getBrowser() {
             return browser;

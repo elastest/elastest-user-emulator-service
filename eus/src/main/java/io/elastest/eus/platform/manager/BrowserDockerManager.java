@@ -1,4 +1,4 @@
-package io.elastest.eus.platform.service;
+package io.elastest.eus.platform.manager;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -29,37 +28,25 @@ import io.elastest.epm.client.model.DockerServiceStatus;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.config.ContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.session.SessionManager;
 
-public class DockerServiceImpl extends PlatformService {
+public class BrowserDockerManager extends PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
 
-    @Value("${container.recording.folder}")
-    private String containerRecordingFolder;
-    @Value("${container.shared.files.folder}")
-    private String containerSharedFilesFolder;
-    @Value("${host.shared.files.relative.folder}")
-    private String hostSharedFilesRelativeFolder;
-    @Value("${browser.screen.resolution}")
-    private String browserScreenResolution;
-    @Value("${use.torm}")
-    private boolean useTorm;
-    @Value("${docker.network}")
-    private String dockerNetwork;
-
     private DockerService dockerService;
-    private EusFilesService eusFilesService;
 
-    public DockerServiceImpl(DockerService dockerService,
-            EusFilesService eusFilesService) {
+    public BrowserDockerManager(DockerService dockerService,
+            EusFilesService eusFilesService,
+            ContextProperties contextProperties) {
+        super(eusFilesService, contextProperties);
         this.dockerService = dockerService;
-        this.eusFilesService = eusFilesService;
     }
 
-    @Override
     public List<String> getContainerNetworksByContainerPrefix(String prefix)
             throws Exception {
         List<String> networks = new ArrayList<>();
@@ -73,24 +60,24 @@ public class DockerServiceImpl extends PlatformService {
     }
 
     @Override
-    public InputStream getFileFromBrowser(DockerBrowserInfo dockerBrowserInfo,
+    public InputStream getFileFromBrowser(SessionManager sessionManager,
             String path, Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
 
         if (isDirectory) {
             return dockerService.getFilesFromContainerAsInputStreamTar(
-                    dockerBrowserInfo.getVncContainerName(), path);
+                    sessionManager.getVncContainerName(), path);
         } else {
             return dockerService.getSingleFileFromContainer(
-                    dockerBrowserInfo.getVncContainerName(), path);
+                    sessionManager.getVncContainerName(), path);
         }
     }
 
     @Override
-    public String getSessionContextInfo(DockerBrowserInfo dockerBrowserInfo)
+    public String getSessionContextInfo(SessionManager sessionManager)
             throws Exception {
-        String vncContainerName = dockerBrowserInfo.getVncContainerName();
+        String vncContainerName = sessionManager.getVncContainerName();
         if (vncContainerName != null) {
             return dockerService.getContainerInfoStringByName(vncContainerName);
         }
@@ -98,10 +85,9 @@ public class DockerServiceImpl extends PlatformService {
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(
-            DockerBrowserInfo dockerBrowserInfo, String containerPrefix,
-            String originalRequestBody, String folderPath,
-            ExecutionData execData, List<String> envs,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody,
+            String folderPath, ExecutionData execData, List<String> envs,
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
@@ -114,7 +100,7 @@ public class DockerServiceImpl extends PlatformService {
         // Recording
         Builder recordingsVolumeBuilder = Bind.builder();
         recordingsVolumeBuilder.from(folderPath);
-        recordingsVolumeBuilder.to(containerRecordingFolder);
+        recordingsVolumeBuilder.to(contextProperties.containerRecordingFolder);
         volumes.add(recordingsVolumeBuilder.build());
 
         // Shared files
@@ -122,29 +108,33 @@ public class DockerServiceImpl extends PlatformService {
         String hostSharedFilesFolderPath = folderPath
                 + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
                         : EusFilesService.FILE_SEPARATOR)
-                + hostSharedFilesRelativeFolder;
+                + contextProperties.hostSharedFilesRelativeFolder;
 
         eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
 
         sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
-        sharedfilesVolumeBuilder.to(containerSharedFilesFolder);
+        sharedfilesVolumeBuilder
+                .to(contextProperties.containerSharedFilesFolder);
         volumes.add(sharedfilesVolumeBuilder.build());
 
         /* **** Port binding **** */
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
 
         int hubPort = dockerService.findRandomOpenPort();
-        String exposedHubPort = Integer.toString(hubExposedPort);
+        String exposedHubPort = Integer
+                .toString(contextProperties.hubExposedPort);
         portBindings.put(exposedHubPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
 
         int vncPort = dockerService.findRandomOpenPort();
-        String exposedVncPort = Integer.toString(hubVncExposedPort);
+        String exposedVncPort = Integer
+                .toString(contextProperties.hubVncExposedPort);
         portBindings.put(exposedVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
 
         int noVncBindedPort = dockerService.findRandomOpenPort();
-        String exposedNoVncPort = Integer.toString(noVncExposedPort);
+        String exposedNoVncPort = Integer
+                .toString(contextProperties.noVncExposedPort);
         portBindings.put(exposedNoVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
 
@@ -158,7 +148,7 @@ public class DockerServiceImpl extends PlatformService {
         dockerBuilder.exposedPorts(exposedPorts);
         dockerBuilder.portBindings(portBindings);
         dockerBuilder.volumeBindList(volumes);
-        dockerBuilder.shmSize(shmSize);
+        dockerBuilder.shmSize(contextProperties.shmSize);
         dockerBuilder.envs(envs);
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
         dockerBuilder.labels(labels);
@@ -174,20 +164,20 @@ public class DockerServiceImpl extends PlatformService {
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
 
-        if (useTorm) {
+        if (contextProperties.useTorm) {
             dockerBuilder.network(network);
         }
         /* **** Save info **** */
-        dockerBrowserInfo.setHubContainerName(hubContainerName);
-        dockerBrowserInfo.setVncContainerName(hubContainerName);
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        dockerBrowserInfo.setStatusMsg("Initializing...");
+        sessionManager.setHubContainerName(hubContainerName);
+        sessionManager.setVncContainerName(hubContainerName);
+        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionManager.setStatusMsg("Initializing...");
 
         /* **** Pull **** */
         dockerService.pullImageWithProgressHandler(imageId,
-                getBrowserProgressHandler(imageId, dockerBrowserInfo));
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.STARTING);
-        dockerBrowserInfo.setStatusMsg("Starting...");
+                getBrowserProgressHandler(imageId, sessionManager));
+        sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
+        sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
         String containerId = dockerService
@@ -209,15 +199,15 @@ public class DockerServiceImpl extends PlatformService {
         }
 
         /* **** Set IPs and ports **** */
-        dockerBrowserInfo.setHubIp(dockerService.getDockerServerIp());
-        dockerBrowserInfo.setHubPort(hubPort);
-        dockerBrowserInfo.setNoVncBindedPort(noVncBindedPort);
+        sessionManager.setHubIp(dockerService.getDockerServerIp());
+        sessionManager.setHubPort(hubPort);
+        sessionManager.setNoVncBindedPort(noVncBindedPort);
     }
 
     public Map<String, List<String>> getNetworksFromExecutionData(
             ExecutionData execData) throws Exception {
         Map<String, List<String>> networksMap = new HashMap<>();
-        String network = dockerNetwork;
+        String network = contextProperties.dockerNetwork;
         List<String> networks = new ArrayList<>();
 
         if (execData != null) {
@@ -246,10 +236,10 @@ public class DockerServiceImpl extends PlatformService {
                     if (additionalNetworks == null
                             || additionalNetworks.size() == 0 || network == null
                             || "".equals(network)) {
-                        network = dockerNetwork;
+                        network = contextProperties.dockerNetwork;
                         logger.error(
                                 "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
-                                dockerNetwork);
+                                contextProperties.dockerNetwork);
                     }
                     logger.debug("First Sut network: {}", network);
                     logger.debug("Sut additional networks: {}", networks);
@@ -263,10 +253,17 @@ public class DockerServiceImpl extends PlatformService {
     }
 
     public void waitForBrowserReady(String internalVncUrl,
-            DockerBrowserInfo dockerBrowserInfo) throws Exception {
-        dockerService.waitForHostIsReachable(internalVncUrl);
-        dockerBrowserInfo.setStatusMsg("Ready");
-        dockerBrowserInfo.setStatus(DockerServiceStatusEnum.READY);
+            SessionManager sessionManager) throws Exception {
+        try {
+            dockerService.waitForHostIsReachable(internalVncUrl);
+            sessionManager.setStatusMsg("Ready");
+            sessionManager.setStatus(DockerServiceStatusEnum.READY);
+        } catch (Exception e) {
+            logger.error("Error on wait for host reachable: {}",
+                    e.getMessage());
+            removeServiceWithTimeout(sessionManager.getHubContainerName(), 60);
+            throw e;
+        }
     }
 
     private ProgressHandler getBrowserProgressHandler(String image,
@@ -310,8 +307,7 @@ public class DockerServiceImpl extends PlatformService {
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(
-            DockerBrowserInfo dockerBrowserInfo) {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) {
         // TODO Auto-generated method stub
 
     }
@@ -321,8 +317,9 @@ public class DockerServiceImpl extends PlatformService {
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         String serviceContainerName = generateRandomContainerNameWithPrefix(
-                eusContainerPrefix + eusServiceBrowsersyncPrefix);
-        BrowserSync browsersync = new BrowserSync();
+                contextProperties.eusContainerPrefix
+                        + contextProperties.eusServiceBrowsersyncPrefix);
+        BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
         DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
                 .getDesiredCapabilities();
@@ -343,7 +340,7 @@ public class DockerServiceImpl extends PlatformService {
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(
-                eusServiceBrowsersyncImageName);
+                contextProperties.eusServiceBrowsersyncImageName);
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.envs(envs);
         dockerBuilder.labels(labels);
@@ -375,12 +372,13 @@ public class DockerServiceImpl extends PlatformService {
         }
 
         String ip = dockerService.getContainerIp(containerId, network);
-        String guiUrl = "http://" + ip + ":" + eusServiceBrowsersyncGUIPort;
+        String guiUrl = "http://" + ip + ":"
+                + contextProperties.eusServiceBrowsersyncGUIPort;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
         String appUrl = appProtocol + "://" + ip + ":"
-                + eusServiceBrowsersyncAppPort;
+                + contextProperties.eusServiceBrowsersyncAppPort;
 
         if (sutUrlObj.getFile() != null) {
             appUrl += sutUrlObj.getFile();

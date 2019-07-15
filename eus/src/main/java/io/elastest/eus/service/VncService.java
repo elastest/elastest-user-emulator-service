@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import io.elastest.eus.session.SessionInfo;
+import io.elastest.eus.session.SessionManager;
 
 /**
  * Service implementation for VNC capabilities.
@@ -49,7 +49,7 @@ public class VncService {
     }
 
     public ResponseEntity<String> getVnc(String sessionId) {
-        Optional<SessionInfo> sessionInfo = sessionService
+        Optional<SessionManager> sessionInfo = sessionService
                 .getSession(sessionId);
         ResponseEntity<String> responseEntity;
         if (sessionInfo.isPresent()) {
