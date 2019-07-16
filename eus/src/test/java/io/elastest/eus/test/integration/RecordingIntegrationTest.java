@@ -61,7 +61,7 @@ public class RecordingIntegrationTest extends BaseTest {
         mockMvc.perform(post(apiContextPath
                 + "/session/sessionId/recording/hubContainerName/start")
                         .content(videoName).contentType("text/plain"))
-                .andExpect(status().isOk());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class RecordingIntegrationTest extends BaseTest {
     void testStopRecording() throws Exception {
         mockMvc.perform(delete(apiContextPath
                 + "/session/sessionId/recording/hubContainerName/stop"))
-                .andExpect(status().isOk());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
