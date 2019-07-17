@@ -174,9 +174,7 @@ public class BrowserK8sManager extends PlatformManager {
     public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
-        String serviceContainerName = generateRandomContainerNameWithPrefix(
-                contextProperties.eusContainerPrefix
-                        + contextProperties.eusServiceBrowsersyncPrefix);
+        String serviceContainerName = getBrowserSyncServiceName();
         BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
         DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
@@ -219,5 +217,4 @@ public class BrowserK8sManager extends PlatformManager {
 
         return browsersync;
     }
-
 }

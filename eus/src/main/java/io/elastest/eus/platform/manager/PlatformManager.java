@@ -120,4 +120,10 @@ public abstract class PlatformManager {
     public String toString() {
         return "";
     }
+
+    public String getBrowserSyncServiceName() {
+        return generateRandomContainerNameWithPrefix(
+                contextProperties.eusContainerPrefix
+                        + contextProperties.eusServiceBrowsersyncPrefix);
+    }
 }

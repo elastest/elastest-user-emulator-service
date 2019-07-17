@@ -1253,8 +1253,22 @@ public class WebDriverService {
         CrossBrowserWebDriverCapabilities crossBrowserCapabilities = getCrossBrowserWebDriverCapabilities(
                 httpEntity);
 
-        BrowserSync browserSync = startBrowsersyncService(data,
-                crossBrowserCapabilities);
+        BrowserSync browserSync = null;
+        // With browsersync
+        if (crossBrowserCapabilities.getWithBrowserSync()) {
+            browserSync = startBrowsersyncService(data,
+                    crossBrowserCapabilities);
+        } else { // only browsers
+            browserSync = new BrowserSync(crossBrowserCapabilities);
+            PlatformManager platformManager = getPlatformManager(
+                    crossBrowserCapabilities);
+
+            String identifier = platformManager.getBrowserSyncServiceName();
+            browserSync.setIdentifier(identifier);
+            String sutUrl = crossBrowserCapabilities.getSutUrl();
+            browserSync.setAppUrl(sutUrl);
+        }
+
         try {
             String sessionRequestContext = getRequestContextWithoutCrossBrowser(
                     requestContext);
@@ -1295,22 +1309,10 @@ public class WebDriverService {
                         SessionManager sessionManager = optionalSessionManager
                                 .get();
                         if (sessionManager != null) {
-                            browserSync.getSessions().add(sessionManager);
-
-                            // Open app url in browser
-                            String getUrlContext = sessionRequestContext + "/"
-                                    + sessionId + "/url";
-                            String getUrlRequestBody = "{ \"url\": \""
-                                    + browserSync.getAppUrl() + "\" }";
-
-                            Optional<HttpEntity<String>> optionalHttpEntity = Optional
-                                    .of(new HttpEntity<String>(
-                                            getUrlRequestBody,
-                                            httpEntity.getHeaders()));
                             try {
-                                String responseBody = exchange(httpEntity,
-                                        getUrlContext, POST, sessionManager,
-                                        optionalHttpEntity, false);
+                                navigateToUrlInCrossbrowser(httpEntity,
+                                        browserSync, sessionRequestContext,
+                                        sessionId, sessionManager);
                             } catch (Exception e) {
                                 logger.error(
                                         "Error on navigate to url in Crossbrowser session {}: {}",
@@ -1327,7 +1329,9 @@ public class WebDriverService {
 
                 }
             }
-        } catch (Exception e) {
+        } catch (
+
+        Exception e) {
             stopCrossBrowserSessionById(browserSync.getIdentifier());
             throw e;
         }
@@ -1336,6 +1340,25 @@ public class WebDriverService {
 
         return new ResponseEntity<String>(jsonService.objectToJson(browserSync),
                 OK);
+    }
+
+    private String navigateToUrlInCrossbrowser(HttpEntity<String> httpEntity,
+            BrowserSync browserSync, String sessionRequestContext,
+            String sessionId, SessionManager sessionManager)
+            throws JsonProcessingException {
+        browserSync.getSessions().add(sessionManager);
+
+        // Open app url in browser
+        String getUrlContext = sessionRequestContext + "/" + sessionId + "/url";
+        String getUrlRequestBody = "{ \"url\": \"" + browserSync.getAppUrl()
+                + "\" }";
+
+        Optional<HttpEntity<String>> optionalHttpEntity = Optional
+                .of(new HttpEntity<String>(getUrlRequestBody,
+                        httpEntity.getHeaders()));
+
+        return exchange(httpEntity, getUrlContext, POST, sessionManager,
+                optionalHttpEntity, false);
     }
 
     private ResponseEntity<String> stopCrossBrowserSession(
