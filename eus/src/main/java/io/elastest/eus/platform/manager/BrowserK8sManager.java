@@ -103,7 +103,7 @@ public class BrowserK8sManager extends PlatformManager {
                 contextProperties.hubExposedPort, "http", null,
                 k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
-                hubContainerName, contextProperties.noVncExposedPort, "http",
+                hubContainerName, null, contextProperties.noVncExposedPort, "http",
                 null, k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
