@@ -100,7 +100,7 @@ public class BrowserK8sManager extends PlatformManager {
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(hubContainerName,
-                contextProperties.hubExposedPort, "http", null,
+                null, contextProperties.hubExposedPort, "http", null,
                 k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
                 hubContainerName, null, contextProperties.noVncExposedPort, "http",
@@ -131,7 +131,7 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public void removeServiceWithTimeout(String podName, int killAfterSeconds)
             throws Exception {
-        k8sService.deleteService(podName, null);
+        k8sService.deleteServiceAssociatedWithAPOD(podName, null);
         k8sService.deletePod(podName);
 
     }
