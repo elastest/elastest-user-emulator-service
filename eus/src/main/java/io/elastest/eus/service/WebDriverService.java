@@ -1310,9 +1310,20 @@ public class WebDriverService {
                                 .get();
                         if (sessionManager != null) {
                             try {
+                                browserSync.getSessions().add(sessionManager);
+
+                                // Navigate to sutUrl
                                 navigateToUrlInCrossbrowser(httpEntity,
                                         browserSync, sessionRequestContext,
                                         sessionId, sessionManager);
+
+                                // Fullscreen if is enabled
+                                if (crossBrowserCapabilities.getFullscreen()) {
+                                    sendFullscreenEventToCrossbrowser(
+                                            httpEntity, browserSync,
+                                            sessionRequestContext, sessionId,
+                                            sessionManager);
+                                }
                             } catch (Exception e) {
                                 logger.error(
                                         "Error on navigate to url in Crossbrowser session {}: {}",
@@ -1346,12 +1357,28 @@ public class WebDriverService {
             BrowserSync browserSync, String sessionRequestContext,
             String sessionId, SessionManager sessionManager)
             throws JsonProcessingException {
-        browserSync.getSessions().add(sessionManager);
 
         // Open app url in browser
         String getUrlContext = sessionRequestContext + "/" + sessionId + "/url";
         String getUrlRequestBody = "{ \"url\": \"" + browserSync.getAppUrl()
                 + "\" }";
+
+        Optional<HttpEntity<String>> optionalHttpEntity = Optional
+                .of(new HttpEntity<String>(getUrlRequestBody,
+                        httpEntity.getHeaders()));
+
+        return exchange(httpEntity, getUrlContext, POST, sessionManager,
+                optionalHttpEntity, false);
+    }
+
+    private String sendFullscreenEventToCrossbrowser(
+            HttpEntity<String> httpEntity, BrowserSync browserSync,
+            String sessionRequestContext, String sessionId,
+            SessionManager sessionManager) throws JsonProcessingException {
+
+        String getUrlContext = sessionRequestContext + "/" + sessionId
+                + "/window/fullscreen";
+        String getUrlRequestBody = "{}";
 
         Optional<HttpEntity<String>> optionalHttpEntity = Optional
                 .of(new HttpEntity<String>(getUrlRequestBody,

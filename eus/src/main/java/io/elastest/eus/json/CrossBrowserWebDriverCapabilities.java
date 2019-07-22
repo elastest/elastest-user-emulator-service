@@ -10,6 +10,7 @@ public class CrossBrowserWebDriverCapabilities extends WebDriverCapabilities {
     protected List<WebDriverCapabilities> sessionsCapabilities;
     protected String sutUrl;
     protected Boolean withBrowserSync;
+    protected Boolean fullscreen;
 
     public CrossBrowserWebDriverCapabilities() {
         super();
@@ -51,10 +52,20 @@ public class CrossBrowserWebDriverCapabilities extends WebDriverCapabilities {
         this.withBrowserSync = withBrowserSync;
     }
 
+    public Boolean getFullscreen() {
+        return fullscreen;
+    }
+
+    public void setFullscreen(Boolean fullscreen) {
+        this.fullscreen = fullscreen;
+    }
+
     @Override
     public String toString() {
         return "CrossBrowserWebDriverCapabilities [sessionsCapabilities="
                 + sessionsCapabilities + ", sutUrl=" + sutUrl
-                + ", withBrowserSync=" + withBrowserSync + "]";
+                + ", withBrowserSync=" + withBrowserSync + ", fullscreen="
+                + fullscreen + "]";
     }
+
 }
