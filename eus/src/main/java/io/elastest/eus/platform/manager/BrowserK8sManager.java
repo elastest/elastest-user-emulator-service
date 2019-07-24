@@ -118,7 +118,7 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public void execCommand(String podName, boolean awaitCompletion,
             String... command) throws Exception {
-        k8sService.execCommand(k8sService.getPodByName(podName), podName,
+        k8sService.execCommand(k8sService.getPodByName(podName, null), podName,
                 awaitCompletion, command);
 
     }
