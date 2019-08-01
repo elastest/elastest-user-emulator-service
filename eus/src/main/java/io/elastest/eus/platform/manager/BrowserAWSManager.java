@@ -175,7 +175,7 @@ public class BrowserAWSManager extends PlatformManager {
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
         try {
-            UtilTools.waitForHostIsReachable(internalVncUrl, 25);
+            UtilTools.waitForHostIsReachable(internalVncUrl, 45);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
