@@ -144,6 +144,7 @@ public class ScpFileDownloader {
 
                 String filePath = localPath + "/" + remoteFileName;
                 f = new File(filePath);
+                f.getParentFile().mkdirs();
 
                 if (fileSizeAux > 0) {
                     downloadProgressThread = new Thread(() -> {

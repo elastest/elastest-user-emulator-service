@@ -185,10 +185,15 @@ public class SessionManager extends DockerBrowserInfo {
     public void setAwsInstanceId(String awsInstanceId) {
         this.awsInstanceId = awsInstanceId;
     }
-    
+
     /* ********************************************* */
     /* *************** Other methods *************** */
     /* ********************************************* */
+
+    public boolean isSessionFromExecution() {
+        return (elastestExecutionData != null
+                && elastestExecutionData.gettJobId() != null);
+    }
 
     public boolean isAWSSession() {
         return this.capabilities != null

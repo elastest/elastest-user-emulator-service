@@ -60,7 +60,12 @@ public class BrowserAWSManager extends PlatformManager {
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
             throws IOException {
         String remotePath = contextProperties.containerRecordingFolder;
-        String localPath = sessionManager.getHostSharedFilesFolderPath();
+        String localPath = eusFilesService.getEusFilesPath();
+
+        if (sessionManager.isSessionFromExecution()) {
+            localPath = eusFilesService.getInternalSessionFolderFromExecution(
+                    sessionManager.getElastestExecutionData());
+        }
 
         awsClient.downloadFolderFiles(sessionManager.getAwsInstanceId(),
                 remotePath, localPath);
