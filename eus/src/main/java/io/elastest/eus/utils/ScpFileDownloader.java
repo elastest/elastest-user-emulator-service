@@ -188,8 +188,8 @@ public class ScpFileDownloader {
 
             if (downloadProgressThread != null) {
                 downloadProgressThread.interrupt();
-                keepProgressThread.set(false);
             }
+            keepProgressThread.set(false);
             jschSession.disconnect();
             printProgress(f, null);
 
