@@ -30,12 +30,15 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusResponse;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest.Builder;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse;
 import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ec2.model.InstanceStatus;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
 import software.amazon.awssdk.services.ec2.model.MonitorInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.MonitorInstancesResponse;
@@ -46,6 +49,7 @@ import software.amazon.awssdk.services.ec2.model.StartInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.StartInstancesResponse;
 import software.amazon.awssdk.services.ec2.model.StopInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.StopInstancesResponse;
+import software.amazon.awssdk.services.ec2.model.SummaryStatus;
 import software.amazon.awssdk.services.ec2.model.TagSpecification;
 import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.TerminateInstancesResponse;
@@ -99,17 +103,20 @@ public class AWSClient {
     public void waitForInstance(Instance instance, int timeoutSeconds) {
         long endWaitTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 
-        boolean isRunning = instanceIsRunning(instance);
-        while (System.currentTimeMillis() < endWaitTime && !isRunning) {
+        boolean isRunningCompletely = instanceIsRunningAndInitializedCompletely(
+                instance);
+        while (System.currentTimeMillis() < endWaitTime
+                && !isRunningCompletely) {
             logger.debug("Waiting for instance with ID {}. (Timeout: {}s)",
                     instance.instanceId(), timeoutSeconds);
             instance = describeInstance(instance.instanceId());
-            isRunning = instanceIsRunning(instance);
-            if (isRunning) {
+            isRunningCompletely = instanceIsRunningAndInitializedCompletely(
+                    instance);
+            if (isRunningCompletely) {
                 break;
             } else {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                 }
             }
@@ -128,6 +135,37 @@ public class AWSClient {
     public boolean instanceIsRunning(Instance instance) {
         return instance != null && instance.state() != null
                 && instance.state().name() == InstanceStateName.RUNNING;
+    }
+
+    public InstanceStatus getInstanceStatus(Instance instance) {
+        DescribeInstanceStatusRequest statusRequest = DescribeInstanceStatusRequest
+                .builder().instanceIds(instance.instanceId()).build();
+
+        DescribeInstanceStatusResponse response = ec2
+                .describeInstanceStatus(statusRequest);
+        if (response != null && response.instanceStatuses().size() > 0) {
+            return response.instanceStatuses().get(0);
+        }
+        return null;
+    }
+
+    public boolean instanceStatusIsOk(Instance instance) {
+        boolean isOk = true;
+
+        InstanceStatus status = getInstanceStatus(instance);
+        if (status != null && status.instanceStatus() != null) {
+            isOk = isOk && status.instanceStatus().status()
+                    .equals(SummaryStatus.OK);
+        } else {
+            isOk = false;
+        }
+
+        return isOk;
+    }
+
+    public boolean instanceIsRunningAndInitializedCompletely(
+            Instance instance) {
+        return instanceIsRunning(instance) && instanceStatusIsOk(instance);
     }
 
     public StartInstancesResponse startInstance(String instance_id) {
