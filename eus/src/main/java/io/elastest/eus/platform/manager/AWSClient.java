@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 
@@ -100,7 +101,8 @@ public class AWSClient {
                 tagSpecifications, 1, 1).get(0);
     }
 
-    public void waitForInstance(Instance instance, int timeoutSeconds) {
+    public void waitForInstance(Instance instance, int timeoutSeconds)
+            throws TimeoutException {
         long endWaitTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 
         boolean isRunningCompletely = instanceIsRunningAndInitializedCompletely(
@@ -121,15 +123,11 @@ public class AWSClient {
                 }
             }
         }
-    }
-
-    public void waitForInstances(List<Instance> instances, int timeoutSeconds) {
-        if (instances != null) {
-            for (Instance instance : instances) {
-                waitForInstance(instance, timeoutSeconds);
-            }
+        if (!isRunningCompletely) {
+            throw new TimeoutException("Timeout (" + timeoutSeconds
+                    + "s) during waiting for AWS instance with ID "
+                    + instance.instanceId());
         }
-
     }
 
     public boolean instanceIsRunning(Instance instance) {
@@ -305,7 +303,15 @@ public class AWSClient {
         bw.write(awsConfig.getSshPrivateKey());
         bw.close();
 
-        jsch.addIdentity(temp.getAbsolutePath());
+        try {
+            jsch.addIdentity(temp.getAbsolutePath());
+        } catch (JSchException e) {
+            logger.error(
+                    "AWS instance {} => Error on execute command {}: Private Key with path {} is invalid",
+                    instanceId, command, temp.getAbsolutePath());
+            temp.delete();
+            throw e;
+        }
 
         String host = instance.publicIpAddress();
         int port = 22;
@@ -325,6 +331,11 @@ public class AWSClient {
         } catch (Exception e) {
             jschSession.disconnect();
             throw e;
+        }
+
+        try {
+            temp.delete();
+        } catch (Exception e) {
         }
 
         if (jschSession.isConnected()) {
