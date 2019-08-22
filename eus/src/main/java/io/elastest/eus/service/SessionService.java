@@ -116,11 +116,14 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         activeSessions.remove(sessionId);
     }
 
-    public void sendTextMessage(WebSocketSession session, String message)
+    public void sendTextMessage(WebSocketSession wsSession, String message)
             throws IOException {
         TextMessage textMessage = new TextMessage(message);
-        log.trace("Sending {} to session {}", message, session.getId());
-        session.sendMessage(textMessage);
+        log.trace("Sending {} to session {}", message, wsSession.getId());
+
+        synchronized (wsSession) {
+            wsSession.sendMessage(textMessage);
+        }
     }
 
     /* ****************** */
@@ -182,23 +185,23 @@ public class SessionService extends TextWebSocketHandler implements Observer {
     public void sendNewNormalSessionToAllClients(SessionManager sessionManager,
             boolean printDebug) throws IOException {
         if (!sessionManager.isLiveSession()) {
-            for (WebSocketSession session : activeSessions.values()) {
-                sendNewNormalSessionToGivenSessionClient(session,
+            for (WebSocketSession wsSession : activeSessions.values()) {
+                sendNewNormalSessionToGivenSessionClient(wsSession,
                         sessionManager, printDebug);
             }
         }
     }
 
     public void sendNewNormalSessionToGivenSessionClient(
-            WebSocketSession session, SessionManager sessionManager,
+            WebSocketSession wsSession, SessionManager sessionManager,
             boolean printDebug) throws JsonProcessingException, IOException {
         WebSocketNewSession newSession = new WebSocketNewSession(
                 sessionManager);
         if (printDebug) {
             log.debug("Sending newSession message {} to session {}", newSession,
-                    session);
+                    wsSession);
         }
-        sendTextMessage(session, jsonService.objectToJson(newSession));
+        sendTextMessage(wsSession, jsonService.objectToJson(newSession));
     }
 
     public void sendAllSessionsInfoToAllClients() throws IOException {
