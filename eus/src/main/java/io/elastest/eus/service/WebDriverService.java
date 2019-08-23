@@ -1129,9 +1129,11 @@ public class WebDriverService {
         String etHost = getenv(etHostEnv);
         String etHostType = getenv(etHostEnvType);
         if (etHostType != null && etHost != null) {
-            // If server-address and the platform is docker
+            // If server-address and the platform is docker and is Not AWS
+            // session
             if (!"default".equalsIgnoreCase(etHostType)
-                    && !etHost.equals("localhost")) {
+                    && !etHost.equals("localhost")
+                    && !sessionManager.isAWSSession()) {
                 String hubIp = etHost;
                 vncUrl = format(vncUrlFormat, hubIp,
                         sessionManager.getNoVncBindedPort());
