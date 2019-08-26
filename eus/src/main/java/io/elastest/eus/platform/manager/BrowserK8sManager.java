@@ -99,12 +99,14 @@ public class BrowserK8sManager extends PlatformManager {
         sessionManager.setBrowserPod(podInfo.getPodName());
 
         // Binding ports
-        ServiceInfo hubServiceInfo = k8sService.createService(hubContainerName,
-                null, contextProperties.hubExposedPort, "http", null,
-                k8sService.LABEL_POD_NAME);
+        ServiceInfo hubServiceInfo = k8sService.createService(
+                hubContainerName + "-" + contextProperties.hubExposedPort,
+                hubContainerName, null, contextProperties.hubExposedPort,
+                "http", null, k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
-                hubContainerName, null, contextProperties.noVncExposedPort, "http",
-                null, k8sService.LABEL_POD_NAME);
+                hubContainerName + "-" + contextProperties.noVncExposedPort,
+                hubContainerName, null, contextProperties.noVncExposedPort,
+                "http", null, k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
         sessionManager.setHubIp(hubServiceInfo.getServiceURL().getHost());
