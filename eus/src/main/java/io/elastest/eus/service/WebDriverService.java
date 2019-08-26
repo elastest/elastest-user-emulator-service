@@ -59,6 +59,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -803,9 +804,16 @@ public class WebDriverService {
         ResponseEntity<String> response = null;
         logger.debug("-> Request to browser: {} {} {}", method, finalUrl,
                 finalHttpEntity);
+        HttpStatus responseStatusCode = null;
+        String responseBody = null;
         try {
             response = restTemplate.exchange(finalUrl, method, finalHttpEntity,
                     String.class);
+            responseStatusCode = response.getStatusCode();
+            responseBody = response.getBody();
+        } catch (final HttpClientErrorException e) {
+            responseStatusCode = e.getStatusCode();
+            responseBody = e.getResponseBodyAsString();
         } catch (Exception e) {
             if (isCreateSession) {
                 logger.debug("## Exception exchanging request", e);
@@ -814,8 +822,6 @@ public class WebDriverService {
                 throw e;
             }
         }
-        HttpStatus responseStatusCode = response.getStatusCode();
-        String responseBody = response.getBody();
         logger.debug("<- Response from browser: {} {}", responseStatusCode,
                 responseBody);
 
