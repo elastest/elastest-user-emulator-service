@@ -430,13 +430,14 @@ public class WebDriverService {
         }
 
         // Proxy request to browser
-        String responseBody = null;
+        ResponseEntity<String> response = null;
         boolean exchangeAgain = false;
         int numRetries = 0;
         do {
-            responseBody = exchange(httpEntity, requestContext, method,
+            response = exchange(httpEntity, requestContext, method,
                     sessionManager, optionalHttpEntity, isCreateSession);
-            exchangeAgain = responseBody == null;
+
+            exchangeAgain = response.getBody() == null;
             if (this.isPostUrlRequest(method, requestContext)) {
                 logger.debug("post Url is activated. webRtcActivated={}",
                         webRtcActivated);
@@ -468,33 +469,36 @@ public class WebDriverService {
         } while (exchangeAgain);
 
         // Handle response
-        HttpStatus responseStatus = sessionResponse(requestContext, method,
-                sessionManager, liveSession, responseBody);
+        response = sessionResponse(requestContext, method, sessionManager,
+                liveSession, response);
 
         if (isCreateSession) {
             // Maximize Browser Window
             String maximizeChrome = "/window/:windowHandle/maximize";
             String maximizeOther = "/window/maximize";
-            try {
-                exchange(httpEntity,
-                        requestContext + "/" + sessionManager.getSessionId()
-                                + maximizeChrome,
-                        method, sessionManager, optionalHttpEntity, false);
-            } catch (Exception e) {
-                logger.error("Exception on window maximize with '{}' : {}",
-                        maximizeChrome, e.getMessage());
-                logger.debug("Trying maximize with '{}'", maximizeOther);
+            ResponseEntity<String> maximizeResponse = exchange(httpEntity,
+                    requestContext + "/" + sessionManager.getSessionId()
+                            + maximizeChrome,
+                    method, sessionManager, optionalHttpEntity, false);
 
-                try {
-                    exchange(httpEntity,
-                            requestContext + "/" + sessionManager.getSessionId()
-                                    + maximizeOther,
-                            method, sessionManager, optionalHttpEntity, false);
-                } catch (Exception e1) {
-                    logger.error("Exception on window maximize with '{}' too",
-                            maximizeOther, e1);
+            if (!OK.equals(maximizeResponse.getStatusCode())) {
+                logger.error(
+                        "Error on window maximize with '{}' =>  Status: {}, Body: {}",
+                        maximizeChrome, maximizeResponse.getStatusCode(),
+                        maximizeResponse.getBody());
+                logger.debug("Trying maximize with '{}'", maximizeOther);
+                maximizeResponse = exchange(httpEntity,
+                        requestContext + "/" + sessionManager.getSessionId()
+                                + maximizeOther,
+                        method, sessionManager, optionalHttpEntity, false);
+                if (!OK.equals(maximizeResponse.getStatusCode())) {
+                    logger.error(
+                            "Error on window maximize with '{}' too =>  Status: {}, Body: {}",
+                            maximizeChrome, maximizeResponse.getStatusCode(),
+                            maximizeResponse.getBody());
                 }
             }
+
             // Start Recording if not is manual recording
             if (!sessionManager.isManualRecording()) {
                 // Start Recording
@@ -512,10 +516,10 @@ public class WebDriverService {
         String jqSetHubContainerName = "walk(if type == \"object\" then .hubContainerName += \""
                 + sessionManager.getHubContainerName() + "\"  else . end)";
 
-        responseBody = jsonService.processJsonWithJq(responseBody,
+        String responseBody = jsonService.processJsonWithJq(response.getBody(),
                 jqSetHubContainerName);
 
-        return new ResponseEntity<>(responseBody, responseStatus);
+        return new ResponseEntity<>(responseBody, response.getStatusCode());
     }
 
     public boolean interceptScriptIfIsNecessary(String requestBody,
@@ -675,9 +679,8 @@ public class WebDriverService {
         HttpEntity<String> httpEntity = new HttpEntity<>(body, headers);
 
         Optional<HttpEntity<String>> optionalHttpEntity = empty();
-        return exchange(httpEntity, requestContext, POST, sessionManager,
-                optionalHttpEntity, false);
-
+        return exchangeAndGetBody(httpEntity, requestContext, POST,
+                sessionManager, optionalHttpEntity, false);
     }
 
     public ResponseEntity<String> getErrorResponse(String message,
@@ -761,10 +764,13 @@ public class WebDriverService {
         return newRequestBody;
     }
 
-    private HttpStatus sessionResponse(String requestContext, HttpMethod method,
-            SessionManager sessionManager, boolean isLive, String responseBody)
-            throws Exception {
-        HttpStatus responseStatus = OK;
+    private ResponseEntity<String> sessionResponse(String requestContext,
+            HttpMethod method, SessionManager sessionManager, boolean isLive,
+            ResponseEntity<String> response) throws Exception {
+        String responseBody = response.getBody();
+        HttpStatus code = response.getStatusCode() != null
+                ? response.getStatusCode()
+                : OK;
 
         // Intercept again create session
         if (isPostSessionRequest(method, requestContext)) {
@@ -777,12 +783,11 @@ public class WebDriverService {
             stopBrowser(sessionManager);
         }
 
-        logger.debug("<< Response: {} -- body: {}", responseStatus,
-                responseBody);
-        return responseStatus;
+        logger.debug("<< Response: {} -- body: {}", code, responseBody);
+        return new ResponseEntity<String>(responseBody, code);
     }
 
-    private String exchange(HttpEntity<String> httpEntity,
+    private ResponseEntity<String> exchange(HttpEntity<String> httpEntity,
             String requestContext, HttpMethod method,
             SessionManager sessionManager,
             Optional<HttpEntity<String>> optionalHttpEntity,
@@ -833,7 +838,17 @@ public class WebDriverService {
 
             responseBody = jsonService.objectToJson(sessionResponse);
         }
-        return responseBody;
+
+        return new ResponseEntity<>(responseBody, responseStatusCode);
+    }
+
+    private String exchangeAndGetBody(HttpEntity<String> httpEntity,
+            String requestContext, HttpMethod method,
+            SessionManager sessionManager,
+            Optional<HttpEntity<String>> optionalHttpEntity,
+            boolean isCreateSession) throws JsonProcessingException {
+        return exchange(httpEntity, requestContext, method, sessionManager,
+                optionalHttpEntity, isCreateSession).getBody();
     }
 
     private void postSessionRequest(SessionManager sessionManager,
@@ -1375,8 +1390,8 @@ public class WebDriverService {
                 .of(new HttpEntity<String>(getUrlRequestBody,
                         httpEntity.getHeaders()));
 
-        return exchange(httpEntity, getUrlContext, POST, sessionManager,
-                optionalHttpEntity, false);
+        return exchangeAndGetBody(httpEntity, getUrlContext, POST,
+                sessionManager, optionalHttpEntity, false);
     }
 
     private String sendFullscreenEventToCrossbrowser(
@@ -1392,8 +1407,8 @@ public class WebDriverService {
                 .of(new HttpEntity<String>(getUrlRequestBody,
                         httpEntity.getHeaders()));
 
-        return exchange(httpEntity, getUrlContext, POST, sessionManager,
-                optionalHttpEntity, false);
+        return exchangeAndGetBody(httpEntity, getUrlContext, POST,
+                sessionManager, optionalHttpEntity, false);
     }
 
     private ResponseEntity<String> stopCrossBrowserSession(
