@@ -44,10 +44,9 @@ import io.github.bonigarcia.SeleniumExtension;
  * @since 0.1.1
  */
 @Tag("e2e")
-@DisplayName("ETM E2E test of OpenVidu WebRTC project")
+@DisplayName("EUS E2E test of OpenVidu WebRTC project")
 @ExtendWith(SeleniumExtension.class)
 public class EusWebRtcE2eTest extends EusBaseTest {
-    final String projectName = "E2E_EUS_OpenVidu_WebRTC";
     final String sutName = "OpenVidu Test App";
     final int timeout = 600;
 
@@ -59,10 +58,10 @@ public class EusWebRtcE2eTest extends EusBaseTest {
 
     void createProjectAndSut(WebDriver driver) throws Exception {
         navigateToTorm(driver);
-        if (!etProjectExists(driver, projectName)) {
-            createNewETProject(driver, projectName);
+        if (!etProjectExists(driver, PROJECT_NAME)) {
+            createNewETProject(driver, PROJECT_NAME);
         }
-        if (!etSutExistsIntoProject(driver, projectName, sutName)) {
+        if (!etSutExistsIntoProject(driver, PROJECT_NAME, sutName)) {
             // Create SuT
             String sutDesc = "OpenVidu Description";
             String sutImage = "elastest/test-etm-alpinedockernode";
@@ -89,7 +88,7 @@ public class EusWebRtcE2eTest extends EusBaseTest {
                     + "echo -n \"cd openvidu;\" >> Dockerfile\n"
                     + "echo -n \"git checkout tags/v2.7.0; \" >> Dockerfile\n"
                     + "echo -n \"cd openvidu-browser;\" >> Dockerfile"
-                    
+
                     + "echo -n \"npm install; \" >> Dockerfile\n"
                     + "echo -n \"npm run build; \" >> Dockerfile\n"
                     + "echo -n \"npm link; \" >> Dockerfile\n"
@@ -123,16 +122,16 @@ public class EusWebRtcE2eTest extends EusBaseTest {
             TestInfo testInfo) throws Exception {
         setupTestBrowser(testInfo, BrowserType.CHROME, localDriver);
         this.createProjectAndSut(driver);
-        navigateToETProject(driver, projectName);
+        navigateToETProject(driver, PROJECT_NAME);
 
         String tJobName = "Videocall Test";
-        if (!etTJobExistsIntoProject(driver, projectName, tJobName)) {
+        if (!etTJobExistsIntoProject(driver, PROJECT_NAME, tJobName)) {
             String tJobTestResultPath = "/demo-projects/openvidu-test/target/surefire-reports/";
             String tJobImage = "elastest/test-etm-alpinegitjava";
             String commands = "echo \"Cloning project\"; git clone https://github.com/elastest/demo-projects; cd demo-projects/openvidu-test; echo \"Compiling project\"; mvn -DskipTests=true -B package; echo \"Executing test\"; mvn -B test;";
 
             createNewTJob(driver, tJobName, tJobTestResultPath, sutName,
-                    tJobImage, false, commands, null, tssMap, null, true);
+                    tJobImage, false, commands, null, tssMap, null, 5, true);
         }
         // Run TJob
         runTJobFromProjectPage(driver, tJobName);
@@ -145,6 +144,8 @@ public class EusWebRtcE2eTest extends EusBaseTest {
         Thread.sleep(20000);
 
         String webRtcMetricsXpath = ".//*[@id='metricsTree']//div/div/tree-node-collection/div//div/tree-node-children/div/tree-node-collection/div/tree-node/div/tree-node-wrapper/div/div//span[contains(string(), 'webRtc') or contains(string(), 'webrtc')]";
-        assertNotNull(getElementByXpath(driver, webRtcMetricsXpath, true));
+        assertNotNull(getElementByXpath(driver,
+                ExpectedConditionsEnum.PRESENCE_OF_ELEMENT_LOCATED,
+                webRtcMetricsXpath, true));
     }
 }

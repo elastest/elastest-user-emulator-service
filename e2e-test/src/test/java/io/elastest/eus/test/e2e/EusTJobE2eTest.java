@@ -54,7 +54,6 @@ import io.github.bonigarcia.SeleniumExtension;
 @ExtendWith(SeleniumExtension.class)
 public class EusTJobE2eTest extends EusBaseTest {
     final Logger log = getLogger(lookup().lookupClass());
-    String projectName = "e2e-eus-test-project";
 
     private static final Map<String, List<String>> tssMap;
     static {
@@ -64,8 +63,8 @@ public class EusTJobE2eTest extends EusBaseTest {
 
     void createProject(WebDriver driver) throws Exception {
         navigateToTorm(driver);
-        if (!etProjectExists(driver, projectName)) {
-            createNewETProject(driver, projectName);
+        if (!etProjectExists(driver, PROJECT_NAME)) {
+            createNewETProject(driver, PROJECT_NAME);
         }
     }
 
@@ -77,15 +76,15 @@ public class EusTJobE2eTest extends EusBaseTest {
 
         // Setting up the TJob used in the test
         this.createProject(driver);
-        navigateToETProject(driver, projectName);
+        navigateToETProject(driver, PROJECT_NAME);
         String tJobName = "eus-test-tjob";
-        if (!etTJobExistsIntoProject(driver, projectName, tJobName)) {
+        if (!etTJobExistsIntoProject(driver, PROJECT_NAME, tJobName)) {
             String tJobTestResultPath = "/home/jenkins/elastest-user-emulator-service/tjob-test/target/surefire-reports/TEST-io.elastest.eus.test.e2e.TJobEusTest.xml";
             String sutName = null;
             String tJobImage = "elastest/ci-docker-e2e";
             String commands = "git clone https://github.com/elastest/elastest-user-emulator-service; cd elastest-user-emulator-service/tjob-test; mvn test;";
             createNewTJob(driver, tJobName, tJobTestResultPath, sutName,
-                    tJobImage, false, commands, null, tssMap, null);
+                    tJobImage, false, commands, null, tssMap, null, 5);
         }
         // Run the TJob
         runTJobFromProjectPage(driver, tJobName);
