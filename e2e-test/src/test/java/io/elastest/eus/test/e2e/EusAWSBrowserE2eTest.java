@@ -99,12 +99,12 @@ public class EusAWSBrowserE2eTest extends EusBaseTest {
 
             createNewTJob(driver, tJobName, tJobMultiBrowserTestResultPath,
                     sutName, tJobImage, false, commands, params, tssMap, null,
-                    null);
+                    null, true);
         }
         // Run TJob
-        runTJobFromProjectPage(driver, tJobName);
+        runTJobFromProjectPage(driver, tJobName, true, null);
 
-        this.checkFinishTJobExec(driver, timeout, "FAIL", true);
+        this.checkFinishTJobExec(driver, timeout, "FAIL", false);
 
         // Navigate To First Test Case execution page
         navigateToExecTestCase(driver, 1, 1, true);
