@@ -402,7 +402,7 @@ public class EusBaseTest {
 
     protected String getProjectXpathFromProjectPage(String projectName) {
         String xpath = getProjectsTableXpathFromProjectPage();
-        xpath += "//*/td/div/div[text()='" + projectName + "']";
+        xpath += "//*/td/div/div[contains(.,'" + projectName + "')]";
 
         return xpath;
     }
@@ -578,7 +578,7 @@ public class EusBaseTest {
 
     protected String getSutXpathFromProjectPage(String sutName) {
         String xpath = getSutsTableXpathFromProjectPage();
-        xpath += "//*/td/*/span[text()='" + sutName + "']";
+        xpath += "//*/td/*/span[contains(.,'" + sutName + "')]";
 
         return xpath;
     }
@@ -715,7 +715,7 @@ public class EusBaseTest {
 
     protected String getTJobXpathFromProjectPage(String tJobName) {
         String xpath = getTJobsTableXpathFromProjectPage();
-        xpath += "//*/td/div/span[text()='" + tJobName + "']";
+        xpath += "//*/td/div/span[contains(.,'" + tJobName + "')]";
 
         return xpath;
     }
