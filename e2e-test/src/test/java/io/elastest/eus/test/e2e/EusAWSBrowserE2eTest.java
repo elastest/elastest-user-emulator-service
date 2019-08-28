@@ -73,7 +73,7 @@ public class EusAWSBrowserE2eTest extends EusBaseTest {
 
     @Test
     @DisplayName("Create Example.org Test")
-    void testCreateChromeTest(
+    void testBrowserInAWSTest(
             @DockerBrowser(type = CHROME) RemoteWebDriver localDriver,
             TestInfo testInfo) throws Exception {
         setupTestBrowser(testInfo, CHROME, localDriver);
