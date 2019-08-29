@@ -1144,22 +1144,21 @@ public class EusBaseTest {
 
     protected void checkFinishTJobExec(WebDriver driver, int timeout,
             String expectedResult, boolean waitForMetrics) {
+        log.info("Waiting for Execution ends");
 
-        log.info("Wait for the execution page to show");
         if (waitForMetrics) {
             log.info("Wait for metrics");
             getElementsByClassName(driver, "tick", timeout);
         }
 
-        log.info("Wait for Execution ends");
-        WebDriverWait wait = new WebDriverWait(driver, timeout);
-        wait.until(invisibilityOfElementLocated(By.id("runningSpinner")));
+        log.info("Wait for the execution page to show");
+        getElementById(driver, "finishedTJobExecDetailsCard", timeout);
 
         log.info("Check finish Execution status. Expected result {}",
                 expectedResult);
-        
-        WebDriverWait wait2 = new WebDriverWait(driver, 30);
-        wait2.until(textToBePresentInElementLocated(By.id("resultMsgText"),
+
+        WebDriverWait wait = new WebDriverWait(driver, 30);
+        wait.until(textToBePresentInElementLocated(By.id("resultMsgText"),
                 expectedResult));
     }
 
