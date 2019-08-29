@@ -62,6 +62,7 @@ import io.github.bonigarcia.BrowserType;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 
+//Copy-pasted from ETM e2e at 28/08/2019
 public class EusBaseTest {
     protected static final String BROWSER_VERSION_LATEST = "latest";
     protected final Logger log = getLogger(lookup().lookupClass());
