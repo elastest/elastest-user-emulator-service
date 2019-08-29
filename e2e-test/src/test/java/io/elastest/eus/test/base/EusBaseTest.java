@@ -1157,7 +1157,9 @@ public class EusBaseTest {
 
         log.info("Check finish Execution status. Expected result {}",
                 expectedResult);
-        wait.until(textToBePresentInElementLocated(By.id("resultMsgText"),
+        
+        WebDriverWait wait2 = new WebDriverWait(driver, 30);
+        wait2.until(textToBePresentInElementLocated(By.id("resultMsgText"),
                 expectedResult));
     }
 
