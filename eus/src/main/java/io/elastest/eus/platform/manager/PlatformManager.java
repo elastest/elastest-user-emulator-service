@@ -16,7 +16,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
@@ -26,11 +26,11 @@ import io.elastest.eus.session.SessionManager;
 public abstract class PlatformManager {
     final Logger logger = getLogger(lookup().lookupClass());
 
-    protected ContextProperties contextProperties;
+    protected EusContextProperties contextProperties;
     protected EusFilesService eusFilesService;
 
     public PlatformManager(EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super();
         this.eusFilesService = eusFilesService;
         this.contextProperties = contextProperties;

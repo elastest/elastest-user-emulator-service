@@ -288,8 +288,8 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         return !activeSessions.isEmpty();
     }
 
-    public void putSession(String sessionId, SessionManager sessionEntry) {
-        sessionRegistry.put(sessionId, sessionEntry);
+    public void putSession(String sessionId, SessionManager sessionManager) {
+        sessionRegistry.put(sessionId, sessionManager);
     }
 
     public Optional<SessionManager> getSession(String sessionId) {
@@ -298,11 +298,6 @@ public class SessionService extends TextWebSocketHandler implements Observer {
         } else {
             return Optional.empty();
         }
-    }
-
-    public void updateSessionManager(String sessionId,
-            SessionManager sessionManager) {
-        sessionRegistry.put(sessionId, sessionManager);
     }
 
     public Map<String, SessionManager> getSessionRegistry() {

@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ApplicationContextProvider implements ApplicationContextAware {
+public class EusApplicationContextProvider implements ApplicationContextAware {
 
     private static ApplicationContext context;
 
@@ -14,8 +14,8 @@ public class ApplicationContextProvider implements ApplicationContextAware {
         return context;
     }
 
-    public static ContextProperties getContextPropertiesObject() {
-        return getApplicationContext().getBean(ContextProperties.class);
+    public static EusContextProperties getContextPropertiesObject() {
+        return getApplicationContext().getBean(EusContextProperties.class);
     }
 
     @Override

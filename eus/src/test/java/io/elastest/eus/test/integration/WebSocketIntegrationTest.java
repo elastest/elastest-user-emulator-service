@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.elastest.epm.client.service.DockerService;
-import io.elastest.eus.config.ApplicationContextProvider;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusApplicationContextProvider;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.WebSocketNewSession;
 import io.elastest.eus.json.WebSocketRecordedSession;
 import io.elastest.eus.platform.manager.BrowserDockerManager;
@@ -75,7 +75,7 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests messages about a session through WebSocket")
     void testSessions() throws Exception {
-        ContextProperties contextProperties = ApplicationContextProvider
+        EusContextProperties contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
         BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
                 dockerService, eusFilesService, contextProperties);
@@ -113,7 +113,7 @@ public class WebSocketIntegrationTest extends BaseTest {
     @Test
     @DisplayName("Tests recording messages through WebSocket")
     void testRecordings() throws Exception {
-        ContextProperties contextProperties = ApplicationContextProvider
+        EusContextProperties contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
         BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
                 dockerService, eusFilesService, contextProperties);

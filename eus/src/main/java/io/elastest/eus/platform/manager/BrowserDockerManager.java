@@ -29,7 +29,7 @@ import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
@@ -43,7 +43,7 @@ public class BrowserDockerManager extends PlatformManager {
 
     public BrowserDockerManager(DockerService dockerService,
             EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.dockerService = dockerService;
     }

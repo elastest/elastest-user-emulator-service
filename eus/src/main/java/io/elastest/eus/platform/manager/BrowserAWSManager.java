@@ -9,7 +9,7 @@ import java.util.Map;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.AWSConfig;
 import io.elastest.eus.json.AWSConfig.AWSInstancesConfig;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
@@ -28,7 +28,7 @@ public class BrowserAWSManager extends PlatformManager {
 
     public BrowserAWSManager(AWSClient awsClient,
             EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.awsClient = awsClient;
     }
@@ -36,7 +36,7 @@ public class BrowserAWSManager extends PlatformManager {
     public BrowserAWSManager(Region region, String secretAccessKey,
             String accessKeyId, String sshUser, String sshPrivateKey,
             EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.awsClient = new AWSClient(region, secretAccessKey, accessKeyId,
                 sshUser, sshPrivateKey);
@@ -44,7 +44,7 @@ public class BrowserAWSManager extends PlatformManager {
 
     public BrowserAWSManager(AWSConfig awsConfig,
             EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.awsClient = new AWSClient(awsConfig);
     }

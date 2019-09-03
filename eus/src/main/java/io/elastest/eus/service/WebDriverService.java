@@ -74,8 +74,8 @@ import io.elastest.epm.client.service.DockerService;
 import io.elastest.epm.client.service.K8sService;
 import io.elastest.eus.EusException;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.config.ApplicationContextProvider;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusApplicationContextProvider;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.ElasTestWebdriverScript;
 import io.elastest.eus.json.WebDriverCapabilities;
@@ -750,10 +750,18 @@ public class WebDriverService {
 
         // JSON processing to remove banner if chrome
         if (browserName.equalsIgnoreCase("chrome")) {
-            // Concat
+            // <76
             String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities.chromeOptions.args += .desiredCapabilities.chromeOptions.args + [\"disable-infobars\"] else . end)";
             newRequestBody = jsonService.processJsonWithJq(newRequestBody,
                     jqChromeBanner);
+
+            // >76 TODO
+            // "chromeOptions": {
+            // "excludeSwitches": [
+            // "enable-automation"
+            // ],
+            // "useAutomationExtension": false
+            // }
         }
 
         // JSON processing to remove browserId
@@ -1522,7 +1530,7 @@ public class WebDriverService {
     public PlatformManager getPlatformManager(
             DesiredCapabilities capabilities) {
         PlatformManager platformManager = null;
-        ContextProperties contextProperties = ApplicationContextProvider
+        EusContextProperties contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
         if (capabilities != null && capabilities.getAwsConfig() != null) {
             platformManager = new BrowserAWSManager(capabilities.getAwsConfig(),

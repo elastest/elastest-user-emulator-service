@@ -20,7 +20,7 @@ import io.elastest.epm.client.service.K8sService;
 import io.elastest.epm.client.service.K8sService.PodInfo;
 import io.elastest.epm.client.service.K8sService.ServiceInfo;
 import io.elastest.eus.api.model.ExecutionData;
-import io.elastest.eus.config.ContextProperties;
+import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
@@ -34,7 +34,7 @@ public class BrowserK8sManager extends PlatformManager {
 
     public BrowserK8sManager(K8sService k8sService,
             EusFilesService eusFilesService,
-            ContextProperties contextProperties) {
+            EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.k8sService = k8sService;
     }
