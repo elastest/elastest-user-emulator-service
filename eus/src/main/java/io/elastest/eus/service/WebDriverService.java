@@ -145,10 +145,14 @@ public class WebDriverService {
     private String webdriverNavigationGetMessage;
     @Value("${webdriver.execute.script.message}")
     private String webdriverExecuteScriptMessage;
+    @Value("${webdriver.execute.sync.script.message}")
+    private String webdriverExecuteSyncScriptMessage;
     @Value("${webdriver.execute.async.script.message}")
     private String webdriverExecuteAsyncScriptMessage;
     @Value("${et.intercept.script.prefix}")
     private String etInterceptScriptPrefix;
+    @Value("${et.intercept.script.escaped.prefix}")
+    private String etInterceptScriptEscapedPrefix;
     @Value("${create.session.timeout.sec}")
     private int createSessionTimeoutSec;
     @Value("${create.session.retries}")
@@ -418,6 +422,8 @@ public class WebDriverService {
         sessionManager.setElastestExecutionData(execData);
 
         if (isExecuteScript(method, requestContext)) {
+            logger.debug("Is Execute Script. Processing...");
+
             // Execute Script to intercept by EUS and finish
             boolean isIntercepted = interceptScriptIfIsNecessary(requestBody,
                     sessionManager);
@@ -427,6 +433,8 @@ public class WebDriverService {
                 return new ResponseEntity<String>(interceptedMsg,
                         HttpStatus.OK);
             }
+        } else {
+            logger.debug("Is not Execute Script. Continuing...");
         }
 
         // Proxy request to browser
@@ -532,7 +540,12 @@ public class WebDriverService {
             String scriptContent = scriptObj.getScript();
             boolean startsWithEtScriptPrefix = scriptContent
                     .startsWith(etInterceptScriptPrefix)
-                    || scriptContent.startsWith("'" + etInterceptScriptPrefix);
+                    || scriptContent.startsWith("'" + etInterceptScriptPrefix)
+                    || scriptContent.startsWith(etInterceptScriptEscapedPrefix)
+                    || scriptContent
+                            .startsWith("'" + etInterceptScriptEscapedPrefix);
+            logger.debug("Starts With EtScript Prefix?: {}",
+                    startsWithEtScriptPrefix);
 
             if (startsWithEtScriptPrefix) {
                 String scriptData = scriptContent;
@@ -983,6 +996,7 @@ public class WebDriverService {
 
     private boolean isExecuteScript(HttpMethod method, String requestContext) {
         String context = new String(requestContext);
+        // if double slash at start (//session/id//execute...) remove first
         if (context.startsWith("/" + webdriverSessionMessage)) {
             context = context.substring(1);
         }
@@ -990,9 +1004,14 @@ public class WebDriverService {
         int chars = countCharsInString(context, '/');
 
         return method == POST && context.startsWith(webdriverSessionMessage)
-                && chars == 3
-                && (context.endsWith(webdriverExecuteScriptMessage) || context
-                        .endsWith(webdriverExecuteAsyncScriptMessage));
+                && (
+                // /session/id/execute || /session/id/execute_async
+                chars == 3 && (context.endsWith(webdriverExecuteScriptMessage)
+                        || context
+                                .endsWith(webdriverExecuteAsyncScriptMessage)))
+                // /session/id/execute/sync
+                || (chars == 4
+                        && context.endsWith(webdriverExecuteSyncScriptMessage));
     }
 
     public Optional<String> getSessionIdFromPath(String path) {
