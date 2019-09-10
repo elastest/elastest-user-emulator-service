@@ -19,6 +19,7 @@ import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.service.K8sService;
 import io.elastest.epm.client.service.K8sService.PodInfo;
 import io.elastest.epm.client.service.K8sService.ServiceInfo;
+import io.elastest.epm.client.utils.UtilTools;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
@@ -141,7 +142,18 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public void waitForBrowserReady(String internalVncUrl,
             SessionManager sessionManager) throws Exception {
-        // TODO Auto-generated method stub
+        try {
+            UtilTools.waitForHostIsReachable(internalVncUrl, 20);
+            sessionManager.setStatusMsg("Ready");
+            sessionManager.setStatus(DockerServiceStatusEnum.READY);
+        } catch (Exception e) {
+            logger.error("Error on wait for host reachable: {}",
+                    e.getMessage());
+            removeServiceWithTimeout(sessionManager.getHubContainerName(), 60);
+            throw e;
+        }
+        // Wait some seconds for Hub (4444) ready
+        Thread.sleep(5000);
 
     }
 
