@@ -46,8 +46,15 @@ public abstract class PlatformManager {
     public abstract String getSessionContextInfo(SessionManager sessionManager)
             throws Exception;
 
-    public String generateRandomContainerNameWithPrefix(String prefix) {
-        return prefix + randomUUID().toString();
+    public String generateRandomContainerNameWithPrefix(String prefix,
+            ExecutionData execData) {
+        String name = prefix + randomUUID().toString();
+
+        if (execData != null && execData.gettJobExecId() != null) {
+            name += "_exec_" + execData.gettJobExecId();
+        }
+
+        return name;
     }
 
     public abstract void buildAndRunBrowserInContainer(
@@ -121,9 +128,10 @@ public abstract class PlatformManager {
         return "";
     }
 
-    public String getBrowserSyncServiceName() {
+    public String getBrowserSyncServiceName(ExecutionData execData) {
         return generateRandomContainerNameWithPrefix(
                 contextProperties.eusContainerPrefix
-                        + contextProperties.eusServiceBrowsersyncPrefix);
+                        + contextProperties.eusServiceBrowsersyncPrefix,
+                execData);
     }
 }

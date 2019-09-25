@@ -48,7 +48,7 @@ public class BrowserK8sManager extends PlatformManager {
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
-                containerPrefix);
+                containerPrefix, execData);
 
         String exposedHubPort = Integer
                 .toString(contextProperties.hubExposedPort);
@@ -188,7 +188,7 @@ public class BrowserK8sManager extends PlatformManager {
     public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
-        String serviceContainerName = getBrowserSyncServiceName();
+        String serviceContainerName = getBrowserSyncServiceName(execData);
         BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
         DesiredCapabilities desiredCapabilities = crossBrowserCapabilities

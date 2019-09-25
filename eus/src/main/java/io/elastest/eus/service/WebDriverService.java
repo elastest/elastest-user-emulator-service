@@ -1297,7 +1297,7 @@ public class WebDriverService {
     @SuppressWarnings("unchecked")
     private ResponseEntity<String> startCrossBrowserSession(
             HttpEntity<String> httpEntity, HttpServletRequest request,
-            String requestContext, ExecutionData data)
+            String requestContext, ExecutionData execData)
             throws IOException, Exception, JsonProcessingException,
             DockerException, JsonParseException, JsonMappingException {
         CrossBrowserWebDriverCapabilities crossBrowserCapabilities = getCrossBrowserWebDriverCapabilities(
@@ -1306,14 +1306,15 @@ public class WebDriverService {
         BrowserSync browserSync = null;
         // With browsersync
         if (crossBrowserCapabilities.getWithBrowserSync()) {
-            browserSync = startBrowsersyncService(data,
+            browserSync = startBrowsersyncService(execData,
                     crossBrowserCapabilities);
         } else { // only browsers
             browserSync = new BrowserSync(crossBrowserCapabilities);
             PlatformManager platformManager = getPlatformManager(
                     crossBrowserCapabilities);
 
-            String identifier = platformManager.getBrowserSyncServiceName();
+            String identifier = platformManager
+                    .getBrowserSyncServiceName(execData);
             browserSync.setIdentifier(identifier);
             String sutUrl = crossBrowserCapabilities.getSutUrl();
             browserSync.setAppUrl(sutUrl);
@@ -1331,10 +1332,10 @@ public class WebDriverService {
                 ResponseEntity<String> response;
 
                 // From Execution
-                if (data != null) {
+                if (execData != null) {
                     response = sessionFromExecution(httpEntity,
                             sessionRequestContext, currentRequestBody,
-                            request.getMethod(), data);
+                            request.getMethod(), execData);
                 } else { // Normal session
                     response = session(httpEntity, sessionRequestContext,
                             currentRequestBody, request.getMethod());

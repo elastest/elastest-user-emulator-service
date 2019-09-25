@@ -92,7 +92,7 @@ public class BrowserDockerManager extends PlatformManager {
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         String hubContainerName = generateRandomContainerNameWithPrefix(
-                containerPrefix);
+                containerPrefix, execData);
 
         /* **** Volumes **** */
         logger.info("Folder path in host: {}", folderPath);
@@ -317,7 +317,7 @@ public class BrowserDockerManager extends PlatformManager {
     public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
-        String serviceContainerName = getBrowserSyncServiceName();
+        String serviceContainerName = getBrowserSyncServiceName(execData);
         BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
         DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
