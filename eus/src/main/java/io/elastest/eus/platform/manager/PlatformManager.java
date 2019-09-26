@@ -51,7 +51,7 @@ public abstract class PlatformManager {
         String name = prefix + randomUUID().toString();
 
         if (execData != null && execData.gettJobExecId() != null) {
-            name += "_exec_" + execData.gettJobExecId();
+            name += "-exec-" + execData.gettJobExecId();
         }
 
         return name;
