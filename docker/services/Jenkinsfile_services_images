@@ -9,6 +9,24 @@ node('docker'){
                 
                 git 'https://github.com/elastest/elastest-user-emulator-service'
                 
+                stage "ElasTest WebRTC QoE Metrics image build"
+        
+                "Create ElasTest WebRTC QoE Metrics docker image"
+                
+                    echo ("Creating elastest/eus-webrtc-qoe-meter image..")                
+                    sh 'cd ./docker/services/elastest-webrtc-qoe-meter; docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y-%m-%dT%H:%M:%S) -t elastest/eus-webrtc-qoe-meter:latest .'
+        
+                stage "Publish ElasTest WebRTC QoE Metrics docker image"
+        
+                    echo ("Publish elastest/eus-webrtc-qoe-meter image")
+                    def qoemeterimage = docker.image('elastest/eus-webrtc-qoe-meter:latest')
+                    //this is work arround as withDockerRegistry is not working properly 
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
+                        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                        sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
+                        qoemeterimage.push()
+                    }
+
                 stage "Browsersync image build"
         
                 "Create Browsersync docker image"
