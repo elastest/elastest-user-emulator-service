@@ -409,33 +409,45 @@ public class AWSClient {
         fileDownloader.downloadFile(remotePath, filename, localPath);
     }
 
-    public List<String> listFolderFiles(String instanceId, String remotePath) {
-        String command = "ls -p " + remotePath + " | grep -v / | tr '\\n' ','";
+    public List<String> listFolderFiles(String instanceId, String remotePath,
+            String filter) throws Exception {
+        String grepFilter = "";
+        if (filter != null && !"".equals(filter)) {
+            grepFilter = " | grep " + filter;
+        }
+
+        String command = "ls -p " + remotePath + grepFilter
+                + " | grep -v / | tr '\\n' ','";
         List<String> filesNames = null;
-        try {
-            String response = executeCommand(instanceId, command);
+        String response = executeCommand(instanceId, command);
 
-            if (response != null) {
-                try {
-                    String[] filesNamesArr = response.split(",");
-                    filesNames = Arrays.asList(filesNamesArr);
-                } catch (Exception e) {
-                    logger.error(
-                            "Error on get names of files from response: {}",
-                            response);
-                }
+        if (response != null) {
+            try {
+                String[] filesNamesArr = response.split(",");
+                filesNames = Arrays.asList(filesNamesArr);
+            } catch (Exception e) {
+                throw new Exception(
+                        "Error on get names of files from response: "
+                                + response);
             }
-
-        } catch (Exception e1) {
-            logger.error("Error on get names of files: {}", e1.getMessage());
         }
 
         return filesNames;
     }
 
+    public List<String> listFolderFiles(String instanceId, String remotePath)
+            throws Exception {
+        return listFolderFiles(instanceId, remotePath, "");
+    }
+
     public void downloadFolderFiles(String instanceId, String remotePath,
             String localPath) {
-        List<String> filesNames = listFolderFiles(instanceId, remotePath);
+        List<String> filesNames = null;
+        try {
+            filesNames = listFolderFiles(instanceId, remotePath);
+        } catch (Exception e1) {
+            logger.error("Error on get names of files: {}", e1.getMessage());
+        }
         if (filesNames != null) {
             for (String fileName : filesNames) {
                 downloadFile(instanceId, remotePath, fileName, localPath);

@@ -40,7 +40,7 @@ public class EusServiceModel {
     /* *********** Enums *********** */
     /* ***************************** */
     public enum EusServiceName {
-        BROWSERSYNC("browsersync");
+        BROWSERSYNC("browsersync"), WEBRTC_QOE_METER("webrtc_qoe_meter");
 
         private String value;
 

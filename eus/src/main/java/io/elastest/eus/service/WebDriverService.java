@@ -171,6 +171,7 @@ public class WebDriverService {
     public String etTJobIdLabel;
     @Value("${et.tjob.exec.id.label}")
     public String etTJobExecIdLabel;
+    
     @Value("${et.tjob.sut.service.name.label}")
     public String etTJobSutServiceNameLabel;
     @Value("${et.tjob.tss.id.label}")
@@ -191,6 +192,7 @@ public class WebDriverService {
     public String etTypeMonitoringLabelValue;
     @Value("${et.type.tool.label.value}")
     public String etTypeToolLabelValue;
+    
     /* *** END of ET container labels *** */
 
     String etInstrumentationKey = "elastest-instrumentation";

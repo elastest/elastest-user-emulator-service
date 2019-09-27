@@ -16,6 +16,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.model.Instance;
@@ -199,6 +200,27 @@ public class BrowserAWSManager extends PlatformManager {
     public String getBrowserServiceName(String instanceId) throws Exception {
         String command = "docker ps -a | grep elastestbrowser | awk '{print $1}' | tr -d '\\n'";
         return awsClient.executeCommand(instanceId, command);
+    }
+
+    @Override
+    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
+            String completePresenterPath) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public List<String> getFolderFilesList(String containerId,
+            String remotePath, String filter) throws Exception {
+        return awsClient.listFolderFiles(containerId, remotePath, filter);
+    }
+
+    @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            ExecutionData execData, Map<String, String> labels)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

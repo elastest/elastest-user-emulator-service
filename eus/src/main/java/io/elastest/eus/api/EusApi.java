@@ -611,4 +611,114 @@ public interface EusApi {
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpEntity<String> httpEntity, HttpServletRequest request);
 
+    /* *************************************** */
+    /* ************* QoE metrics ************* */
+    /* *************************************** */
+
+    /**
+     * GET /session/{sessionId}/webrtc/qoe/meter/start
+     *
+     * Start WebRTC QoE Meter process by session
+     */
+    @ApiOperation(value = "Start WebRTC QoE Meter process by session", notes = "Starts QoE service, downloads presenter/viewer videos and upload to service. After, calculates QoE metrics async and returns QoE service Id", response = String.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/start", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> startWebRTCQoEMeter(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath);
+
+    /**
+     * GET /execution/{key}/session/{sessionId}/webrtc/qoe/meter/start
+     *
+     * Start WebRTC QoE Meter process by session
+     */
+    @ApiOperation(value = "Start WebRTC QoE Meter process by session", notes = "Starts QoE service, downloads presenter/viewer videos and upload to service. After, calculates QoE metrics async and returns QoE service Id", response = String.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/start", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> executionStartWebRTCQoEMeter(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath);
+
+    /**
+     * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
+     *
+     * Checks if WebRTC QoE Meter CSV is already generated
+     */
+    @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = Boolean.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Boolean.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Boolean.class) })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+
+    /**
+     * GET
+     * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
+     *
+     * Checks if WebRTC QoE Meter CSV is already generated
+     */
+    @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = Boolean.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Boolean.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Boolean.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+
+    /**
+     * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
+     *
+     * Get WebRTC QoE Meter CSV
+     */
+    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = Boolean.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = Boolean.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Boolean.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Boolean.class) })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<Boolean> getWebRTCQoEMeterCsv(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+
+    /**
+     * GET
+     * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
+     *
+     * Get WebRTC QoE Meter CSV
+     */
+    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = Boolean.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = Boolean.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Boolean.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Boolean.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<Boolean> executionGetWebRTCQoEMeterCsv(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+
 }

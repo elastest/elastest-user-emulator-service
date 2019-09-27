@@ -34,6 +34,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
 public class BrowserDockerManager extends PlatformManager {
@@ -390,4 +391,65 @@ public class BrowserDockerManager extends PlatformManager {
         return browsersync;
     }
 
+     @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            ExecutionData execData, Map<String, String> labels)
+            throws Exception {
+
+        String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
+        WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
+
+        /* **** Obtain networks **** */
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
+                execData);
+
+        List<String> networks = networksMap.get("networks");
+        String network = networksMap.get("network").get(0);
+
+        /* **** Docker Builder **** */
+        DockerBuilder dockerBuilder = new DockerBuilder(
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
+        dockerBuilder.containerName(serviceContainerName);
+        dockerBuilder.labels(labels);
+        dockerBuilder.network(network);
+
+        /* **** Start **** */
+        String containerId = dockerService
+                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+
+        /* **** Additional Networks **** */
+        if (networks != null && networks.size() > 0) {
+            logger.debug(
+                    "Inserting WebRTCQoEMeter service container into additional networks");
+            for (String additionalNetwork : networks) {
+                if (additionalNetwork != null
+                        && !"".equals(additionalNetwork)) {
+                    logger.debug(
+                            "Inserting WebRTCQoEMeter service container into {} network",
+                            additionalNetwork);
+                    dockerService.insertIntoNetwork(additionalNetwork,
+                            containerId);
+                }
+            }
+        }
+
+        webRTCQoEMeter.setIdentifier(serviceContainerName);
+
+        return webRTCQoEMeter;
+    }
+
+    @Override
+    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
+            String completePresenterPath) throws Exception {
+        // dockerService.file
+        dockerService.copyFileToContainer(serviceNameOrId, tarStreamFile,
+                completePresenterPath);
+    }
+
+    @Override
+    public List<String> getFolderFilesList(String containerId,
+            String remotePath, String filter) throws Exception {
+        return dockerService.getFilesListFromContainerFolder(containerId,
+                remotePath, filter);
+    }
 }

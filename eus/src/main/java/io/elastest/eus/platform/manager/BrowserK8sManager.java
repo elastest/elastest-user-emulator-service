@@ -26,6 +26,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
 public class BrowserK8sManager extends PlatformManager {
@@ -230,5 +231,27 @@ public class BrowserK8sManager extends PlatformManager {
         browsersync.setAppUrl(appUrl);
 
         return browsersync;
+    }
+
+    @Override
+    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
+            String completePresenterPath) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public List<String> getFolderFilesList(String containerId,
+            String remotePath, String filter) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            ExecutionData execData, Map<String, String> labels)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

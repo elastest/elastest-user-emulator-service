@@ -58,6 +58,7 @@ import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
 import io.elastest.eus.service.DockerHubService;
+import io.elastest.eus.service.QoEService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.service.VncService;
@@ -82,19 +83,21 @@ public class EusController implements EusApi {
     private RecordingService recordingService;
     private DockerHubService dockerHubService;
     private JsonService jsonService;
-    SessionService sessionService;
+    private SessionService sessionService;
+    private QoEService qoeService;
 
     @Autowired
     public EusController(WebDriverService webDriverService,
             VncService vncService, RecordingService recordingService,
             DockerHubService dockerHubService, JsonService jsonService,
-            SessionService sessionService) {
+            SessionService sessionService, QoEService qoeService) {
         this.webDriverService = webDriverService;
         this.vncService = vncService;
         this.recordingService = recordingService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
+        this.qoeService = qoeService;
     }
 
     public ResponseEntity<Void> deleteSubscription(
@@ -103,7 +106,7 @@ public class EusController implements EusApi {
         log.debug("[deleteSubscription] sessionId={} subscriptionId={}",
                 sessionId, subscriptionId);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -114,7 +117,7 @@ public class EusController implements EusApi {
         log.debug("[getAudioLevel] sessionId={} elementId={}", sessionId,
                 elementId);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -127,7 +130,7 @@ public class EusController implements EusApi {
         log.debug("[getColorByCoordinates] sessionId={} elementId={} x={} y={}",
                 sessionId, elementId, x, y);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -138,7 +141,7 @@ public class EusController implements EusApi {
         log.debug("[getStats] sessionId={} subscriptionId={}", sessionId,
                 subscriptionId);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -149,7 +152,7 @@ public class EusController implements EusApi {
         log.debug("[getSubscriptionValue] sessionId={} peerconnectionId={}",
                 sessionId, peerconnectionId);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -159,7 +162,7 @@ public class EusController implements EusApi {
             @ApiParam(value = "Media URL to take WebRTC user media", required = true) @RequestBody UserMedia body) {
         log.debug("[setUserMedia] sessionId={} userMedia={}", sessionId, body);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -171,7 +174,7 @@ public class EusController implements EusApi {
         log.debug("[subscribeToEvent] sessionId={} elementId={} latency={}",
                 sessionId, elementId, body);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -183,7 +186,7 @@ public class EusController implements EusApi {
         log.debug("[subscribeToLatency] sessionId={} elementId={} quality={}",
                 sessionId, elementId, body);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -195,7 +198,7 @@ public class EusController implements EusApi {
         log.debug("[subscribeToQuality] sessionId={} elementId={} event={}",
                 sessionId, elementId, body);
 
-        // Not implemented yet
+        // TODO Not implemented yet
 
         return new ResponseEntity<>(OK);
     }
@@ -592,5 +595,70 @@ public class EusController implements EusApi {
                     "Exception handling Crossbrowser session", e);
         }
         return response;
+    }
+
+    /* *************************************** */
+    /* ************* QoE metrics ************* */
+    /* *************************************** */
+
+    public ResponseEntity<String> startWebRTCQoEMeter(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath) {
+        try {
+            SessionManager sessionManager = sessionService.getSession(sessionId)
+                    .get();
+
+            String identifier = qoeService.startService(sessionManager);
+
+            qoeService.downloadVideosFromBrowserAndUploadToQoE(sessionManager,
+                    identifier, presenterCompleteFilePath,
+                    viewerCompleteFilePath);
+            // Async
+            qoeService.calculateQoEMetricsAsync(sessionManager, identifier);
+
+            return new ResponseEntity<String>(identifier, OK);
+
+        } catch (Exception e) {
+            ResponseEntity<String> response = webDriverService.getErrorResponse(
+                    "Exception starting WebRTC QoE Meter with in session "
+                            + sessionId,
+                    e);
+            return response;
+        }
+    }
+
+    public ResponseEntity<String> executionStartWebRTCQoEMeter(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath) {
+        return this.startWebRTCQoEMeter(sessionId, presenterCompleteFilePath,
+                viewerCompleteFilePath);
+    }
+
+    public ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
+        Boolean generated = qoeService.isCsvAlreadyGenerated(identifier);
+        return new ResponseEntity<Boolean>(generated, OK);
+    }
+
+    public ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
+        return this.executionIsWebRTCQoEMeterCsvGenerated(sessionId,
+                identifier);
+    }
+
+    public ResponseEntity<Boolean> getWebRTCQoEMeterCsv(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
+        return null;// TODO
+    }
+
+    public ResponseEntity<Boolean> executionGetWebRTCQoEMeterCsv(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
+        return this.getWebRTCQoEMeterCsv(sessionId, identifier);
     }
 }

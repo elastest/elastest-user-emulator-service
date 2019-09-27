@@ -21,6 +21,7 @@ import io.elastest.eus.json.CrossBrowserWebDriverCapabilities;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
 public abstract class PlatformManager {
@@ -80,6 +81,17 @@ public abstract class PlatformManager {
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception;
 
+    public abstract void uploadFile(String serviceNameOrId,
+            InputStream tarStreamFile, String completePresenterPath)
+            throws Exception;
+
+    public abstract List<String> getFolderFilesList(String containerId,
+            String remotePath, String filter) throws Exception;
+
+    public abstract WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            ExecutionData execData, Map<String, String> labels)
+            throws Exception;
+
     /* *************************************** */
     /* ********* Implemented Methods ********* */
     /* *************************************** */
@@ -123,15 +135,23 @@ public abstract class PlatformManager {
 
     }
 
-    @Override
-    public String toString() {
-        return "";
-    }
-
     public String getBrowserSyncServiceName(ExecutionData execData) {
         return generateRandomContainerNameWithPrefix(
                 contextProperties.eusContainerPrefix
                         + contextProperties.eusServiceBrowsersyncPrefix,
                 execData);
     }
+
+    public String getWebRTCQoEMeterServiceName(ExecutionData execData) {
+        return generateRandomContainerNameWithPrefix(
+                contextProperties.eusContainerPrefix
+                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PREFIX,
+                execData);
+    }
+
+    @Override
+    public String toString() {
+        return "";
+    }
+
 }
