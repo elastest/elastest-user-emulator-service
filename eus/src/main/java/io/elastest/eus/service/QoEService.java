@@ -30,8 +30,9 @@ public class QoEService {
 
     @PostConstruct
     public void init() {
-        contextProperties = EusApplicationContextProvider
-                .getContextPropertiesObject();
+        // TODO fix
+//        contextProperties = EusApplicationContextProvider
+//                .getContextPropertiesObject();
     }
 
     /* ************************************ */
