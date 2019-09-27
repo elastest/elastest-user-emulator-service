@@ -102,7 +102,7 @@ public class BrowserDockerManager extends PlatformManager {
         // Recording
         Builder recordingsVolumeBuilder = Bind.builder();
         recordingsVolumeBuilder.from(folderPath);
-        recordingsVolumeBuilder.to(contextProperties.containerRecordingFolder);
+        recordingsVolumeBuilder.to(contextProperties.CONTAINER_RECORDING_FOLDER);
         volumes.add(recordingsVolumeBuilder.build());
 
         // Shared files
@@ -110,13 +110,13 @@ public class BrowserDockerManager extends PlatformManager {
         String hostSharedFilesFolderPath = folderPath
                 + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
                         : EusFilesService.FILE_SEPARATOR)
-                + contextProperties.hostSharedFilesRelativeFolder;
+                + contextProperties.HOST_SHARED_FILES_RELATIVE_FOLDER;
 
         eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
 
         sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
         sharedfilesVolumeBuilder
-                .to(contextProperties.containerSharedFilesFolder);
+                .to(contextProperties.CONTAINER_SHARED_FILES_FOLDER);
         volumes.add(sharedfilesVolumeBuilder.build());
 
         /* **** Port binding **** */
@@ -124,19 +124,19 @@ public class BrowserDockerManager extends PlatformManager {
 
         int hubPort = dockerService.findRandomOpenPort();
         String exposedHubPort = Integer
-                .toString(contextProperties.hubExposedPort);
+                .toString(contextProperties.HUB_EXPOSED_PORT);
         portBindings.put(exposedHubPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
 
         int vncPort = dockerService.findRandomOpenPort();
         String exposedVncPort = Integer
-                .toString(contextProperties.hubVncExposedPort);
+                .toString(contextProperties.HUB_VNC_EXPOSED_PORT);
         portBindings.put(exposedVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
 
         int noVncBindedPort = dockerService.findRandomOpenPort();
         String exposedNoVncPort = Integer
-                .toString(contextProperties.noVncExposedPort);
+                .toString(contextProperties.NO_VNC_EXPOSED_PORT);
         portBindings.put(exposedNoVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
 
@@ -150,7 +150,7 @@ public class BrowserDockerManager extends PlatformManager {
         dockerBuilder.exposedPorts(exposedPorts);
         dockerBuilder.portBindings(portBindings);
         dockerBuilder.volumeBindList(volumes);
-        dockerBuilder.shmSize(contextProperties.shmSize);
+        dockerBuilder.shmSize(contextProperties.SHM_SIZE);
         dockerBuilder.envs(envs);
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
         dockerBuilder.labels(labels);
@@ -166,7 +166,7 @@ public class BrowserDockerManager extends PlatformManager {
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
 
-        if (contextProperties.useTorm) {
+        if (contextProperties.USE_TORM) {
             dockerBuilder.network(network);
         }
         /* **** Save info **** */
@@ -209,7 +209,7 @@ public class BrowserDockerManager extends PlatformManager {
     public Map<String, List<String>> getNetworksFromExecutionData(
             ExecutionData execData) throws Exception {
         Map<String, List<String>> networksMap = new HashMap<>();
-        String network = contextProperties.dockerNetwork;
+        String network = contextProperties.DOCKER_NETWORK;
         List<String> networks = new ArrayList<>();
 
         if (execData != null) {
@@ -238,10 +238,10 @@ public class BrowserDockerManager extends PlatformManager {
                     if (additionalNetworks == null
                             || additionalNetworks.size() == 0 || network == null
                             || "".equals(network)) {
-                        network = contextProperties.dockerNetwork;
+                        network = contextProperties.DOCKER_NETWORK;
                         logger.error(
                                 "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
-                                contextProperties.dockerNetwork);
+                                contextProperties.DOCKER_NETWORK);
                     }
                     logger.debug("First Sut network: {}", network);
                     logger.debug("Sut additional networks: {}", networks);
@@ -340,7 +340,7 @@ public class BrowserDockerManager extends PlatformManager {
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(
-                contextProperties.eusServiceBrowsersyncImageName);
+                contextProperties.EUS_SERVICE_BROWSERSYNC_IMAGE_NAME);
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.envs(envs);
         dockerBuilder.labels(labels);
@@ -373,12 +373,12 @@ public class BrowserDockerManager extends PlatformManager {
 
         String ip = dockerService.getContainerIp(containerId, network);
         String guiUrl = "http://" + ip + ":"
-                + contextProperties.eusServiceBrowsersyncGUIPort;
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
         String appUrl = appProtocol + "://" + ip + ":"
-                + contextProperties.eusServiceBrowsersyncAppPort;
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_APP_PORT;
 
         if (sutUrlObj.getFile() != null) {
             appUrl += sutUrlObj.getFile();

@@ -26,7 +26,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -35,7 +34,6 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import io.elastest.eus.config.EusApplicationContextProvider;
 import io.elastest.eus.service.AlluxioService;
 import io.elastest.eus.service.EusJsonService;
-import io.elastest.eus.service.QoEService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -66,12 +64,6 @@ public class EusSpringBootApp implements WebSocketConfigurer {
     @Primary
     public EusApplicationContextProvider getEusApplicationContextProvider() {
         return new EusApplicationContextProvider();
-    }
-
-    @Bean
-    @DependsOn({ "eusContext" })
-    public QoEService getQoEService() {
-        return new QoEService();
     }
 
     @Bean

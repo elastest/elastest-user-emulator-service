@@ -52,11 +52,11 @@ public class BrowserK8sManager extends PlatformManager {
                 containerPrefix, execData);
 
         String exposedHubPort = Integer
-                .toString(contextProperties.hubExposedPort);
+                .toString(contextProperties.HUB_EXPOSED_PORT);
         String exposedVncPort = Integer
-                .toString(contextProperties.hubVncExposedPort);
+                .toString(contextProperties.HUB_VNC_EXPOSED_PORT);
         String exposedNoVncPort = Integer
-                .toString(contextProperties.noVncExposedPort);
+                .toString(contextProperties.NO_VNC_EXPOSED_PORT);
 
         String recordingsPath = createRecordingsPath(folderPath);
         sessionManager.setHostSharedFilesFolderPath(recordingsPath);
@@ -67,7 +67,7 @@ public class BrowserK8sManager extends PlatformManager {
         logger.debug("**** Paths for recordings ****");
         logger.debug("Host path: {}", recordingsPath);
         logger.debug("Path in container: {}",
-                contextProperties.containerSharedFilesFolder);
+                contextProperties.CONTAINER_SHARED_FILES_FOLDER);
 
         /* **** Exposed ports **** */
         List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
@@ -80,7 +80,7 @@ public class BrowserK8sManager extends PlatformManager {
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
         dockerBuilder.containerName(hubContainerName);
         dockerBuilder.exposedPorts(exposedPorts);
-        dockerBuilder.shmSize(contextProperties.shmSize);
+        dockerBuilder.shmSize(contextProperties.SHM_SIZE);
         dockerBuilder.envs(envs);
         dockerBuilder.capAdd(asList("SYS_ADMIN"));
         dockerBuilder.labels(labels);
@@ -102,12 +102,12 @@ public class BrowserK8sManager extends PlatformManager {
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(
-                hubContainerName + "-" + contextProperties.hubExposedPort,
-                hubContainerName, null, contextProperties.hubExposedPort,
+                hubContainerName + "-" + contextProperties.HUB_EXPOSED_PORT,
+                hubContainerName, null, contextProperties.HUB_EXPOSED_PORT,
                 "http", null, k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
-                hubContainerName + "-" + contextProperties.noVncExposedPort,
-                hubContainerName, null, contextProperties.noVncExposedPort,
+                hubContainerName + "-" + contextProperties.NO_VNC_EXPOSED_PORT,
+                hubContainerName, null, contextProperties.NO_VNC_EXPOSED_PORT,
                 "http", null, k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
@@ -176,11 +176,11 @@ public class BrowserK8sManager extends PlatformManager {
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
             throws IOException {
         k8sService.copyFileFromContainer(sessionManager.getBrowserPod(),
-                contextProperties.containerRecordingFolder,
+                contextProperties.CONTAINER_RECORDING_FOLDER,
                 sessionManager.getHostSharedFilesFolderPath(), null);
         File recordingsDirectory = new File(
                 sessionManager.getHostSharedFilesFolderPath()
-                        + contextProperties.containerRecordingFolder);
+                        + contextProperties.CONTAINER_RECORDING_FOLDER);
         moveFiles(recordingsDirectory,
                 sessionManager.getHostSharedFilesFolderPath());
     }
@@ -204,7 +204,7 @@ public class BrowserK8sManager extends PlatformManager {
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(
-                contextProperties.eusServiceBrowsersyncImageName);
+                contextProperties.EUS_SERVICE_BROWSERSYNC_IMAGE_NAME);
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.envs(envs);
         dockerBuilder.labels(labels);
@@ -219,12 +219,12 @@ public class BrowserK8sManager extends PlatformManager {
 
         String ip = podInfo.getPodIp();
         String guiUrl = "http://" + ip + ":"
-                + contextProperties.eusServiceBrowsersyncGUIPort;
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
         String appUrl = appProtocol + "://" + ip + ":"
-                + contextProperties.eusServiceBrowsersyncAppPort;
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_APP_PORT;
 
         browsersync.setIdentifier(serviceContainerName);
         browsersync.setGuiUrl(guiUrl);

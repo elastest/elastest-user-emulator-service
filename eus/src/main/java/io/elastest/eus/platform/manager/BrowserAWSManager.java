@@ -60,7 +60,7 @@ public class BrowserAWSManager extends PlatformManager {
     @Override
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
             throws IOException {
-        String remotePath = contextProperties.containerRecordingFolder;
+        String remotePath = contextProperties.CONTAINER_RECORDING_FOLDER;
         String localPath = eusFilesService.getEusFilesPath();
 
         if (sessionManager.isSessionFromExecution()) {
@@ -128,8 +128,8 @@ public class BrowserAWSManager extends PlatformManager {
         sessionManager.setAwsInstanceId(instanceId);
 
         sessionManager.setHubIp(hubIp);
-        sessionManager.setHubPort(contextProperties.hubExposedPort);
-        sessionManager.setNoVncBindedPort(contextProperties.noVncExposedPort);
+        sessionManager.setHubPort(contextProperties.HUB_EXPOSED_PORT);
+        sessionManager.setNoVncBindedPort(contextProperties.NO_VNC_EXPOSED_PORT);
 
         String browserServiceName = getBrowserServiceName(instanceId);
         sessionManager.setHubContainerName(browserServiceName);

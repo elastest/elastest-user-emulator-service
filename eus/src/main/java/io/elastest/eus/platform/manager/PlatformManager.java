@@ -137,14 +137,14 @@ public abstract class PlatformManager {
 
     public String getBrowserSyncServiceName(ExecutionData execData) {
         return generateRandomContainerNameWithPrefix(
-                contextProperties.eusContainerPrefix
-                        + contextProperties.eusServiceBrowsersyncPrefix,
+                contextProperties.EUS_CONTAINER_PREFIX
+                        + contextProperties.EUS_SERVICE_BROWSERSYNC_PREFIX,
                 execData);
     }
 
     public String getWebRTCQoEMeterServiceName(ExecutionData execData) {
         return generateRandomContainerNameWithPrefix(
-                contextProperties.eusContainerPrefix
+                contextProperties.EUS_CONTAINER_PREFIX
                         + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PREFIX,
                 execData);
     }

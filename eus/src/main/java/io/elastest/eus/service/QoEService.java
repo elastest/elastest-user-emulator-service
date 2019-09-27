@@ -12,8 +12,9 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusApplicationContextProvider;
@@ -21,21 +22,18 @@ import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
+@Service
+@DependsOn({ "eusContext" })
 public class QoEService {
     final Logger log = getLogger(lookup().lookupClass());
     EusContextProperties contextProperties;
 
-    Map<String, WebRTCQoEMeter> webRTCQoEMeterMap;
+    Map<String, WebRTCQoEMeter> webRTCQoEMeterMap = new HashMap<>();
 
     @PostConstruct
     public void init() {
         contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
-    }
-
-    @Autowired
-    public QoEService() {
-        webRTCQoEMeterMap = new HashMap<>();
     }
 
     /* ************************************ */
@@ -45,16 +43,16 @@ public class QoEService {
     // Step 1
     public String startService(SessionManager sessionManager) throws Exception {
         Map<String, String> labels = new HashMap<>();
-        labels.put(contextProperties.etTypeLabel,
-                contextProperties.etTypeTSSLabelValue);
-        labels.put(contextProperties.etTJobTssTypeLabel, "aux");
+        labels.put(contextProperties.ET_TYPE_LABEL,
+                contextProperties.ET_TYPE_TSS_LABEL_VALUE);
+        labels.put(contextProperties.ET_TJOB_TSS_TYPE_LABEL, "aux");
 
         final ExecutionData execData = sessionManager
                 .getElastestExecutionData();
         if (execData != null) {
-            labels.put(contextProperties.etTJobExecIdLabel,
+            labels.put(contextProperties.ET_TJOB_EXEC_ID_LABEL,
                     execData.gettJobExecId().toString());
-            labels.put(contextProperties.etTJobIdLabel,
+            labels.put(contextProperties.ET_TJOB_ID_LABEL,
                     execData.gettJobId().toString());
         }
 

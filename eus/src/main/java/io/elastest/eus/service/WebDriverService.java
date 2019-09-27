@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 
@@ -49,7 +50,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -99,100 +100,11 @@ import io.elastest.eus.session.SessionManager;
  * @since 0.0.1
  */
 @Service
+@DependsOn({ "eusContext" })
 public class WebDriverService {
-
     final Logger logger = getLogger(lookup().lookupClass());
+    EusContextProperties contextProperties;
 
-    @Value("${api.context.path}")
-    private String apiContextPath;
-    @Value("${eus.container.prefix}")
-    private String eusContainerPrefix;
-    @Value("${hub.exposedport}")
-    private int hubExposedPort;
-    @Value("${hub.vnc.exposedport}")
-    private int hubVncExposedPort;
-    @Value("${hub.novnc.exposedport}")
-    private int noVncExposedPort;
-    @Value("${hub.container.sufix}")
-    private String hubContainerSufix;
-    @Value("${ws.dateformat}")
-    private String wsDateFormat;
-    @Value("${novnc.html}")
-    private String vncHtml;
-    @Value("${hub.vnc.password}")
-    private String hubVncPassword;
-    @Value("${et.host.env}")
-    private String etHostEnv;
-    @Value("${et.host.type.env}")
-    private String etHostEnvType;
-
-    @Value("${et.enable.cloud.mode}")
-    public boolean enableCloudMode;
-
-    // Defined as String instead of integer for testing purposes (inject with
-    // @TestPropertySource)
-    @Value("${hub.timeout}")
-    private String hubTimeout;
-    @Value("${browser.screen.resolution}")
-    private String browserScreenResolution;
-    @Value("${browser.timezone}")
-    private String browserTimezone;
-    @Value("${webdriver.session.message}")
-    private String webdriverSessionMessage;
-    @Value("${webdriver.crossbrowser.session.message}")
-    private String webdriverCrossbrowserSessionMessage;
-    @Value("${webdriver.navigation.get.message}")
-    private String webdriverNavigationGetMessage;
-    @Value("${webdriver.execute.script.message}")
-    private String webdriverExecuteScriptMessage;
-    @Value("${webdriver.execute.sync.script.message}")
-    private String webdriverExecuteSyncScriptMessage;
-    @Value("${webdriver.execute.async.script.message}")
-    private String webdriverExecuteAsyncScriptMessage;
-    @Value("${et.intercept.script.prefix}")
-    private String etInterceptScriptPrefix;
-    @Value("${et.intercept.script.escaped.prefix}")
-    private String etInterceptScriptEscapedPrefix;
-    @Value("${create.session.timeout.sec}")
-    private int createSessionTimeoutSec;
-    @Value("${create.session.retries}")
-    private int createSessionRetries;
-    @Value("${et.config.web.rtc.stats}")
-    private String etConfigWebRtcStats;
-    @Value("${et.mon.interval}")
-    private String etMonInterval;
-    @Value("${et.browser.component.prefix}")
-    private String etBrowserComponentPrefix;
-
-    /* *** ET container labels *** */
-    @Value("${et.type.label}")
-    public String etTypeLabel;
-    @Value("${et.tjob.id.label}")
-    public String etTJobIdLabel;
-    @Value("${et.tjob.exec.id.label}")
-    public String etTJobExecIdLabel;
-    
-    @Value("${et.tjob.sut.service.name.label}")
-    public String etTJobSutServiceNameLabel;
-    @Value("${et.tjob.tss.id.label}")
-    public String etTJobTSSIdLabel;
-    @Value("${et.tjob.tss.type.label}")
-    public String etTJobTssTypeLabel;
-    @Value("${et.type.test.label.value}")
-    public String etTypeTestLabelValue;
-    @Value("${et.type.sut.label.value}")
-    public String etTypeSutLabelValue;
-    @Value("${et.type.tss.label.value}")
-    public String etTypeTSSLabelValue;
-    @Value("${et.type.core.label.value}")
-    public String etTypeCoreLabelValue;
-    @Value("${et.type.te.label.value}")
-    public String etTypeTELabelValue;
-    @Value("${et.type.monitoring.label.value}")
-    public String etTypeMonitoringLabelValue;
-    @Value("${et.type.tool.label.value}")
-    public String etTypeToolLabelValue;
-    
     /* *** END of ET container labels *** */
 
     String etInstrumentationKey = "elastest-instrumentation";
@@ -226,6 +138,12 @@ public class WebDriverService {
         this.timeoutService = timeoutService;
         this.dynamicDataService = dynamicDataService;
         this.eusFilesService = eusFilesService;
+    }
+
+    @PostConstruct
+    public void init() {
+        contextProperties = EusApplicationContextProvider
+                .getContextPropertiesObject();
     }
 
     @PreDestroy
@@ -277,8 +195,9 @@ public class WebDriverService {
     public String getRequestContext(HttpServletRequest request) {
         StringBuffer requestUrl = request.getRequestURL();
         logger.debug("Request Url {}", requestUrl);
-        return requestUrl.substring(requestUrl.lastIndexOf(apiContextPath)
-                + apiContextPath.length());
+        return requestUrl.substring(
+                requestUrl.lastIndexOf(contextProperties.API_CONTEXT_PATH)
+                        + contextProperties.API_CONTEXT_PATH.length());
     }
 
     public String parseRequestContext(String requestContext) {
@@ -298,8 +217,8 @@ public class WebDriverService {
     public ResponseEntity<String> session(HttpEntity<String> httpEntity,
             String requestContext, String requestBody, String method)
             throws DockerException, Exception {
-        boolean webrtcStatsActivated = etConfigWebRtcStats != null
-                && "true".equals(etConfigWebRtcStats);
+        boolean webrtcStatsActivated = contextProperties.ET_CONFIG_WEB_RTC_STATS != null
+                && "true".equals(contextProperties.ET_CONFIG_WEB_RTC_STATS);
 
         return this.session(httpEntity, requestContext, method, requestBody,
                 dynamicDataService.getDefaultEtMonExec(), webrtcStatsActivated,
@@ -455,7 +374,7 @@ public class WebDriverService {
                         monitoringIndex);
             }
             if (exchangeAgain) {
-                if (numRetries < createSessionRetries) {
+                if (numRetries < contextProperties.CREATE_SESSION_RETRIES) {
                     if (sessionManager.isAWSSession()) {
                         throw new EusException(
                                 "Exception creating session in AWS remote browser");
@@ -469,12 +388,12 @@ public class WebDriverService {
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
-                            numRetries, createSessionRetries);
+                            numRetries, contextProperties.CREATE_SESSION_RETRIES);
                     continue;
                 }
                 throw new EusException(
                         "Exception creating session in remote browser (num retries "
-                                + createSessionRetries + ")");
+                                + contextProperties.CREATE_SESSION_RETRIES + ")");
             }
         } while (exchangeAgain);
 
@@ -541,11 +460,13 @@ public class WebDriverService {
             // Starts with prefix or 'prefix
             String scriptContent = scriptObj.getScript();
             boolean startsWithEtScriptPrefix = scriptContent
-                    .startsWith(etInterceptScriptPrefix)
-                    || scriptContent.startsWith("'" + etInterceptScriptPrefix)
-                    || scriptContent.startsWith(etInterceptScriptEscapedPrefix)
-                    || scriptContent
-                            .startsWith("'" + etInterceptScriptEscapedPrefix);
+                    .startsWith(contextProperties.ET_INTERCEPT_SCRIPT_PREFIX)
+                    || scriptContent.startsWith(
+                            "'" + contextProperties.ET_INTERCEPT_SCRIPT_PREFIX)
+                    || scriptContent.startsWith(
+                            contextProperties.ET_INTERCEPT_SCRIPT_ESCAPED_PREFIX)
+                    || scriptContent.startsWith("'"
+                            + contextProperties.ET_INTERCEPT_SCRIPT_ESCAPED_PREFIX);
             logger.debug("Starts With EtScript Prefix?: {}",
                     startsWithEtScriptPrefix);
 
@@ -653,10 +574,11 @@ public class WebDriverService {
         JSONObject configJson = new JSONObject();
         JSONObject elastestInstrumentationJson = new JSONObject();
         JSONObject webRtcJson = new JSONObject();
-        String component = etBrowserComponentPrefix + sessionId;
+        String component = contextProperties.ET_BROWSER_COMPONENT_PREFIX
+                + sessionId;
 
         webRtcJson.put("httpEndpoint", lsSSLHttpApi);
-        webRtcJson.put("interval", etMonInterval);
+        webRtcJson.put("interval", contextProperties.ET_MON_INTERVAL);
 
         elastestInstrumentationJson.put("webrtc", webRtcJson);
         elastestInstrumentationJson.put("exec", monitoringIndex);
@@ -680,8 +602,9 @@ public class WebDriverService {
 
     public String postScript(SessionManager sessionManager, String script,
             List<Object> args) throws JsonProcessingException, JSONException {
-        String requestContext = webdriverSessionMessage + "/"
-                + sessionManager.getSessionId() + webdriverExecuteScriptMessage;
+        String requestContext = contextProperties.WEBDRIVER_SESSION_MESSAGE + "/"
+                + sessionManager.getSessionId()
+                + contextProperties.WEBDRIVER_EXECUTE_SCRIPT_MESSAGE;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -722,7 +645,7 @@ public class WebDriverService {
         }
 
         boolean disableTimeout = false;
-        Integer timeout = Integer.parseInt(hubTimeout);
+        Integer timeout = Integer.parseInt(contextProperties.HUB_TIMEOUT);
         if (sessionManager.getCapabilities() != null && sessionManager
                 .getCapabilities().getElastestTimeout() != null) {
             timeout = sessionManager.getCapabilities().getElastestTimeout();
@@ -819,7 +742,8 @@ public class WebDriverService {
 
         HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
         if (isCreateSession) {
-            int timeoutMillis = (int) SECONDS.toMillis(createSessionTimeoutSec);
+            int timeoutMillis = (int) SECONDS
+                    .toMillis(contextProperties.CREATE_SESSION_TIMEOUT_SEC);
             httpRequestFactory.setConnectTimeout(timeoutMillis);
             httpRequestFactory.setConnectionRequestTimeout(timeoutMillis);
             httpRequestFactory.setReadTimeout(timeoutMillis);
@@ -976,52 +900,59 @@ public class WebDriverService {
         if (context.startsWith("//")) {
             context = context.substring(1);
         }
-        return method == POST && context.equals(webdriverSessionMessage);
+        return method == POST
+                && context.equals(contextProperties.WEBDRIVER_SESSION_MESSAGE);
     }
 
     private boolean isPostUrlRequest(HttpMethod method, String context) {
         // TODO remove
         logger.debug("Checking if request {} is post url request:", context);
         logger.debug("method == POST: {} | context.endsWith({}): {}",
-                method == POST, webdriverNavigationGetMessage,
-                context.endsWith(webdriverNavigationGetMessage));
+                method == POST, contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE,
+                context.endsWith(
+                        contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE));
 
-        return method == POST
-                && context.endsWith(webdriverNavigationGetMessage);
+        return method == POST && context
+                .endsWith(contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE);
     }
 
     private boolean isDeleteSessionRequest(HttpMethod method, String context) {
         int chars = countCharsInString(context, '/');
-        return method == DELETE && context.startsWith(webdriverSessionMessage)
+        return method == DELETE
+                && context.startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
                 && (chars == 2 || (chars == 3 && context.endsWith("window")));
     }
 
     private boolean isExecuteScript(HttpMethod method, String requestContext) {
         String context = new String(requestContext);
         // if double slash at start (//session/id//execute...) remove first
-        if (context.startsWith("/" + webdriverSessionMessage)) {
+        if (context
+                .startsWith("/" + contextProperties.WEBDRIVER_SESSION_MESSAGE)) {
             context = context.substring(1);
         }
 
         int chars = countCharsInString(context, '/');
 
-        return method == POST && context.startsWith(webdriverSessionMessage)
+        return method == POST
+                && context.startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
                 && (
                 // /session/id/execute || /session/id/execute_async
-                chars == 3 && (context.endsWith(webdriverExecuteScriptMessage)
-                        || context
-                                .endsWith(webdriverExecuteAsyncScriptMessage)))
+                chars == 3 && (context.endsWith(
+                        contextProperties.WEBDRIVER_EXECUTE_SCRIPT_MESSAGE)
+                        || context.endsWith(
+                                contextProperties.WEBDRIVER_EXECUTE_ASYNC_SCRIPT_MESSAGE)))
                 // /session/id/execute/sync
-                || (chars == 4
-                        && context.endsWith(webdriverExecuteSyncScriptMessage));
+                || (chars == 4 && context.endsWith(
+                        contextProperties.WEBDRIVER_EXECUTE_SYNC_SCRIPT_MESSAGE));
     }
 
     public Optional<String> getSessionIdFromPath(String path) {
         Optional<String> out = Optional.empty();
-        int i = path.indexOf(webdriverSessionMessage);
+        int i = path.indexOf(contextProperties.WEBDRIVER_SESSION_MESSAGE);
 
         if (i != -1) {
-            int j = path.indexOf('/', i + webdriverSessionMessage.length());
+            int j = path.indexOf('/',
+                    i + contextProperties.WEBDRIVER_SESSION_MESSAGE.length());
             if (j != -1) {
                 int k = path.indexOf('/', j + 1);
                 int cut = (k == -1) ? path.length() : k;
@@ -1133,16 +1064,20 @@ public class WebDriverService {
 
         // Envs
         List<String> envs = asList(
-                "SCREEN_RESOLUTION=" + browserScreenResolution,
-                "TZ=" + browserTimezone);
+                "SCREEN_RESOLUTION="
+                        + contextProperties.BROWSER_SCREEN_RESOLUTION,
+                "TZ=" + contextProperties.BROWSER_TIMEZONE);
 
         Map<String, String> labels = new HashMap<>();
-        labels.put(etTypeLabel, etTypeTSSLabelValue);
-        labels.put(etTJobTssTypeLabel, "aux");
+        labels.put(contextProperties.ET_TYPE_LABEL,
+                contextProperties.ET_TYPE_TSS_LABEL_VALUE);
+        labels.put(contextProperties.ET_TJOB_TSS_TYPE_LABEL, "aux");
 
         if (execData != null) {
-            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
-            labels.put(etTJobIdLabel, execData.gettJobId().toString());
+            labels.put(contextProperties.ET_TJOB_EXEC_ID_LABEL,
+                    execData.gettJobExecId().toString());
+            labels.put(contextProperties.ET_TJOB_ID_LABEL,
+                    execData.gettJobId().toString());
         }
 
         boolean liveSession = sessionService.isLive(requestBody);
@@ -1151,7 +1086,8 @@ public class WebDriverService {
         sessionManager
                 .setVersion(dockerHubService.getVersionFromImage(imageId));
         sessionManager.setFolderPath(sessionFolderPath);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(wsDateFormat);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(
+                contextProperties.WS_DATE_FORMAT);
         sessionManager.setCreationTime(dateFormat.format(new Date()));
         boolean manualRecording = jsonService
                 .jsonToObject(originalRequestBody, WebDriverCapabilities.class)
@@ -1165,19 +1101,22 @@ public class WebDriverService {
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         platformManager.buildAndRunBrowserInContainer(sessionManager,
-                eusContainerPrefix + hubContainerSufix, originalRequestBody,
-                folderPath, execData, envs, labels, capabilities, imageId);
+                contextProperties.EUS_CONTAINER_PREFIX
+                        + contextProperties.HUB_CONTAINER_SUFIX,
+                originalRequestBody, folderPath, execData, envs, labels,
+                capabilities, imageId);
 
         sessionManager.buildHubUrl();
-        String vncUrlFormat = "http://%s:%d/" + vncHtml
-                + "?resize=scale&autoconnect=true&password=" + hubVncPassword;
+        String vncUrlFormat = "http://%s:%d/" + contextProperties.VNC_HTML
+                + "?resize=scale&autoconnect=true&password="
+                + contextProperties.HUB_VNC_PASSWORD;
         String vncUrl = format(vncUrlFormat, sessionManager.getHubIp(),
                 sessionManager.getNoVncBindedPort());
         String internalVncUrl = vncUrl;
         logger.debug("Internal Vnc Url: {}", internalVncUrl);
 
-        String etHost = getenv(etHostEnv);
-        String etHostType = getenv(etHostEnvType);
+        String etHost = getenv(contextProperties.ET_HOST_ENV);
+        String etHostType = getenv(contextProperties.ET_HOST_ENV_TYPE);
         if (etHostType != null && etHost != null) {
             // If server-address and the platform is docker and is Not AWS
             // session
@@ -1207,12 +1146,15 @@ public class WebDriverService {
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
             throws Exception {
         Map<String, String> labels = new HashMap<>();
-        labels.put(etTypeLabel, etTypeTSSLabelValue);
-        labels.put(etTJobTssTypeLabel, "aux");
+        labels.put(contextProperties.ET_TYPE_LABEL,
+                contextProperties.ET_TYPE_TSS_LABEL_VALUE);
+        labels.put(contextProperties.ET_TJOB_TSS_TYPE_LABEL, "aux");
 
         if (execData != null) {
-            labels.put(etTJobExecIdLabel, execData.gettJobExecId().toString());
-            labels.put(etTJobIdLabel, execData.gettJobId().toString());
+            labels.put(contextProperties.ET_TJOB_EXEC_ID_LABEL,
+                    execData.gettJobExecId().toString());
+            labels.put(contextProperties.ET_TJOB_ID_LABEL,
+                    execData.gettJobId().toString());
         }
 
         PlatformManager platformManager = getPlatformManager(
@@ -1518,11 +1460,13 @@ public class WebDriverService {
 
     public Optional<String> getCrossBrowserIdFromPath(String path) {
         Optional<String> out = Optional.empty();
-        int i = path.indexOf(webdriverCrossbrowserSessionMessage);
+        int i = path
+                .indexOf(contextProperties.WEBDRIVER_CROSSBROWSER_SESSION_MESSAGE);
 
         if (i != -1) {
             int j = path.indexOf('/',
-                    i + webdriverCrossbrowserSessionMessage.length());
+                    i + contextProperties.WEBDRIVER_CROSSBROWSER_SESSION_MESSAGE
+                            .length());
             if (j != -1) {
                 int k = path.indexOf('/', j + 1);
                 int cut = (k == -1) ? path.length() : k;
@@ -1552,13 +1496,11 @@ public class WebDriverService {
     public PlatformManager getPlatformManager(
             DesiredCapabilities capabilities) {
         PlatformManager platformManager = null;
-        EusContextProperties contextProperties = EusApplicationContextProvider
-                .getContextPropertiesObject();
         if (capabilities != null && capabilities.getAwsConfig() != null) {
             platformManager = new BrowserAWSManager(capabilities.getAwsConfig(),
                     eusFilesService, contextProperties);
         } else {
-            if (enableCloudMode) {
+            if (contextProperties.ENABLE_CLOUD_MODE) {
                 logger.debug("EUS over K8s");
                 platformManager = new BrowserK8sManager(k8sService,
                         eusFilesService, contextProperties);
