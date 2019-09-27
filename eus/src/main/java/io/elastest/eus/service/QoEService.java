@@ -12,8 +12,8 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusApplicationContextProvider;
@@ -21,21 +21,17 @@ import io.elastest.eus.config.EusContextProperties;
 import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
+@Service
 public class QoEService {
     final Logger log = getLogger(lookup().lookupClass());
     EusContextProperties contextProperties;
 
-    Map<String, WebRTCQoEMeter> webRTCQoEMeterMap;
+    Map<String, WebRTCQoEMeter> webRTCQoEMeterMap = new HashMap<>();
 
     @PostConstruct
     public void init() {
         contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
-    }
-
-    @Autowired
-    public QoEService() {
-        webRTCQoEMeterMap = new HashMap<>();
     }
 
     /* ************************************ */
