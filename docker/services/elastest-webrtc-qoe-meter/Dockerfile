@@ -18,6 +18,7 @@ RUN apt-get install -y build-essential git
 RUN apt-get install -y jq
 RUN apt install -y ffmpeg
 RUN apt-get install -y imagemagick
+RUN apt-get install -y wget
 
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
