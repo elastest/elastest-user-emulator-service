@@ -22,6 +22,7 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -58,7 +59,6 @@ import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
 import io.elastest.eus.service.DockerHubService;
-import io.elastest.eus.service.QoEService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
 import io.elastest.eus.service.VncService;
@@ -84,20 +84,18 @@ public class EusController implements EusApi {
     private DockerHubService dockerHubService;
     private JsonService jsonService;
     private SessionService sessionService;
-    private QoEService qoeService;
 
     @Autowired
     public EusController(WebDriverService webDriverService,
             VncService vncService, RecordingService recordingService,
             DockerHubService dockerHubService, JsonService jsonService,
-            SessionService sessionService, QoEService qoeService) {
+            SessionService sessionService) {
         this.webDriverService = webDriverService;
         this.vncService = vncService;
         this.recordingService = recordingService;
         this.dockerHubService = dockerHubService;
         this.jsonService = jsonService;
         this.sessionService = sessionService;
-        this.qoeService = qoeService;
     }
 
     public ResponseEntity<Void> deleteSubscription(
@@ -609,13 +607,15 @@ public class EusController implements EusApi {
             SessionManager sessionManager = sessionService.getSession(sessionId)
                     .get();
 
-            String identifier = qoeService.startService(sessionManager);
+            String identifier = webDriverService.qoeService
+                    .startService(sessionManager);
 
-            qoeService.downloadVideosFromBrowserAndUploadToQoE(sessionManager,
-                    identifier, presenterCompleteFilePath,
+            webDriverService.qoeService.downloadVideosFromBrowserAndUploadToQoE(
+                    sessionManager, identifier, presenterCompleteFilePath,
                     viewerCompleteFilePath);
             // Async
-            qoeService.calculateQoEMetricsAsync(sessionManager, identifier);
+            webDriverService.qoeService.calculateQoEMetricsAsync(sessionManager,
+                    identifier);
 
             return new ResponseEntity<String>(identifier, OK);
 
@@ -639,7 +639,8 @@ public class EusController implements EusApi {
     public ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
-        Boolean generated = qoeService.isCsvAlreadyGenerated(identifier);
+        Boolean generated = webDriverService.qoeService
+                .isCsvAlreadyGenerated(identifier);
         return new ResponseEntity<Boolean>(generated, OK);
     }
 
@@ -650,15 +651,22 @@ public class EusController implements EusApi {
                 identifier);
     }
 
-    public ResponseEntity<Boolean> getWebRTCQoEMeterCsv(
+    public ResponseEntity<List<InputStream>> getWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
-        return null;// TODO
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
+        SessionManager sessionManager = sessionService.getSession(sessionId)
+                .get();
+        List<InputStream> csvList = webDriverService.qoeService
+                .getQoEMetricsCSV(sessionManager, identifier);
+
+        return new ResponseEntity<List<InputStream>>(csvList, OK);
     }
 
-    public ResponseEntity<Boolean> executionGetWebRTCQoEMeterCsv(
+    public ResponseEntity<List<InputStream>> executionGetWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
         return this.getWebRTCQoEMeterCsv(sessionId, identifier);
     }
 }

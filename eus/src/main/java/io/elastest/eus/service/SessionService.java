@@ -332,7 +332,6 @@ public class SessionService extends TextWebSocketHandler implements Observer {
             }
 
         }
-
     }
 
     boolean isLive(String jsonMessage) {

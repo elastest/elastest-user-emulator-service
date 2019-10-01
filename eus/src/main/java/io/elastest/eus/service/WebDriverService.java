@@ -91,6 +91,8 @@ import io.elastest.eus.platform.manager.BrowserDockerManager;
 import io.elastest.eus.platform.manager.BrowserK8sManager;
 import io.elastest.eus.platform.manager.PlatformManager;
 import io.elastest.eus.services.model.BrowserSync;
+import io.elastest.eus.services.model.EusServiceModel;
+import io.elastest.eus.services.model.EusServiceModel.EusServiceName;
 import io.elastest.eus.session.SessionManager;
 
 /**
@@ -118,17 +120,18 @@ public class WebDriverService {
     private TimeoutService timeoutService;
     private DynamicDataService dynamicDataService;
     public EusFilesService eusFilesService;
+    public QoEService qoeService;
 
     private Map<String, ExecutionData> executionsMap = new HashMap<>();
     private Map<String, BrowserSync> crossBrowserRegistry = new ConcurrentHashMap<>();
 
     @Autowired
     public WebDriverService(DockerHubService dockerHubService,
-            K8sService k8sService, EusJsonService jsonService,
-            SessionService sessionService, RecordingService recordingService,
-            TimeoutService timeoutService,
+            K8sService k8sService, DockerService dockerService,
+            EusJsonService jsonService, SessionService sessionService,
+            RecordingService recordingService, TimeoutService timeoutService,
             DynamicDataService dynamicDataService,
-            EusFilesService eusFilesService, DockerService dockerService) {
+            EusFilesService eusFilesService, QoEService qoeService) {
         this.dockerService = dockerService;
         this.dockerHubService = dockerHubService;
         this.k8sService = k8sService;
@@ -138,6 +141,7 @@ public class WebDriverService {
         this.timeoutService = timeoutService;
         this.dynamicDataService = dynamicDataService;
         this.eusFilesService = eusFilesService;
+        this.qoeService = qoeService;
     }
 
     @PostConstruct
@@ -158,7 +162,11 @@ public class WebDriverService {
                         logger.debug("Error on stop browser with session Id {}",
                                 sessionId);
                     }
+                    // Stop all QoEServices
+                    qoeService.stopAndDestroy(sessionManager);
                 });
+
+        // Stop all crossbrowser sessions
         stopCrossBrowserSessions();
     }
 
@@ -388,12 +396,14 @@ public class WebDriverService {
                     numRetries++;
                     logger.debug(
                             "Problem in POST /session request ... retrying {}/{}",
-                            numRetries, contextProperties.CREATE_SESSION_RETRIES);
+                            numRetries,
+                            contextProperties.CREATE_SESSION_RETRIES);
                     continue;
                 }
                 throw new EusException(
                         "Exception creating session in remote browser (num retries "
-                                + contextProperties.CREATE_SESSION_RETRIES + ")");
+                                + contextProperties.CREATE_SESSION_RETRIES
+                                + ")");
             }
         } while (exchangeAgain);
 
@@ -602,8 +612,8 @@ public class WebDriverService {
 
     public String postScript(SessionManager sessionManager, String script,
             List<Object> args) throws JsonProcessingException, JSONException {
-        String requestContext = contextProperties.WEBDRIVER_SESSION_MESSAGE + "/"
-                + sessionManager.getSessionId()
+        String requestContext = contextProperties.WEBDRIVER_SESSION_MESSAGE
+                + "/" + sessionManager.getSessionId()
                 + contextProperties.WEBDRIVER_EXECUTE_SCRIPT_MESSAGE;
 
         HttpHeaders headers = new HttpHeaders();
@@ -884,6 +894,24 @@ public class WebDriverService {
                 logger.debug("Containers of session {} not removed: {}",
                         sessionManager.getSessionId(), e.getMessage());
             }
+
+            if (sessionManager.getEusServiceModelList() != null) {
+                for (EusServiceModel model : sessionManager
+                        .getEusServiceModelList()) {
+                    if (model != null && model.getServiceName()
+                            .equals(EusServiceName.WEBRTC_QOE_METER)) {
+                        try {
+                            qoeService.stopService(sessionManager,
+                                    model.getIdentifier());
+                        } catch (Exception e) {
+                            logger.error(
+                                    "QoEService with identifier {} not removed: {}",
+                                    model.getIdentifier(), e.getMessage());
+                        }
+                    }
+                }
+            }
+
             sessionService.removeSession(sessionManager.getSessionId());
 
             timeoutService.shutdownSessionTimer(sessionManager);
@@ -908,7 +936,8 @@ public class WebDriverService {
         // TODO remove
         logger.debug("Checking if request {} is post url request:", context);
         logger.debug("method == POST: {} | context.endsWith({}): {}",
-                method == POST, contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE,
+                method == POST,
+                contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE,
                 context.endsWith(
                         contextProperties.WEBDRIVER_NAVIGATION_GET_MESSAGE));
 
@@ -919,22 +948,24 @@ public class WebDriverService {
     private boolean isDeleteSessionRequest(HttpMethod method, String context) {
         int chars = countCharsInString(context, '/');
         return method == DELETE
-                && context.startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
+                && context
+                        .startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
                 && (chars == 2 || (chars == 3 && context.endsWith("window")));
     }
 
     private boolean isExecuteScript(HttpMethod method, String requestContext) {
         String context = new String(requestContext);
         // if double slash at start (//session/id//execute...) remove first
-        if (context
-                .startsWith("/" + contextProperties.WEBDRIVER_SESSION_MESSAGE)) {
+        if (context.startsWith(
+                "/" + contextProperties.WEBDRIVER_SESSION_MESSAGE)) {
             context = context.substring(1);
         }
 
         int chars = countCharsInString(context, '/');
 
         return method == POST
-                && context.startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
+                && context
+                        .startsWith(contextProperties.WEBDRIVER_SESSION_MESSAGE)
                 && (
                 // /session/id/execute || /session/id/execute_async
                 chars == 3 && (context.endsWith(
@@ -1460,8 +1491,8 @@ public class WebDriverService {
 
     public Optional<String> getCrossBrowserIdFromPath(String path) {
         Optional<String> out = Optional.empty();
-        int i = path
-                .indexOf(contextProperties.WEBDRIVER_CROSSBROWSER_SESSION_MESSAGE);
+        int i = path.indexOf(
+                contextProperties.WEBDRIVER_CROSSBROWSER_SESSION_MESSAGE);
 
         if (i != -1) {
             int j = path.indexOf('/',

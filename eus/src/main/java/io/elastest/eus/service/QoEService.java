@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusApplicationContextProvider;
 import io.elastest.eus.config.EusContextProperties;
+import io.elastest.eus.platform.manager.PlatformManager;
 import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
 
@@ -30,10 +31,28 @@ public class QoEService {
 
     Map<String, WebRTCQoEMeter> webRTCQoEMeterMap = new HashMap<>();
 
+    static boolean alreadyDestroyed = false;
+
     @PostConstruct
     public void init() {
         contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
+    }
+
+    public void stopAndDestroy(SessionManager sessionManager) {
+        if (!alreadyDestroyed && sessionManager != null
+                && webRTCQoEMeterMap != null) {
+            for (HashMap.Entry<String, WebRTCQoEMeter> webRTCQoEMeter : webRTCQoEMeterMap
+                    .entrySet()) {
+                try {
+                    stopService(sessionManager, webRTCQoEMeter.getKey());
+                } catch (Exception e) {
+                    log.error("Error on stop QoEService {}",
+                            webRTCQoEMeter.getKey());
+                }
+            }
+            alreadyDestroyed = true;
+        }
     }
 
     /* ************************************ */
@@ -60,8 +79,21 @@ public class QoEService {
                 .buildAndRunWebRTCQoEMeterService(execData, labels);
 
         addOrUpdateMap(webRTCQoEMeter);
+        sessionManager.addEusServiceModelToList(webRTCQoEMeter);
 
         return webRTCQoEMeter.getIdentifier();
+    }
+
+    public void stopService(SessionManager sessionManager, String identifier)
+            throws Exception {
+        PlatformManager platformManager = sessionManager.getPlatformManager();
+        int killTimeoutInSeconds = 10;
+        if (identifier != null
+                && platformManager.existServiceWithName(identifier)) {
+            platformManager.removeServiceWithTimeout(identifier,
+                    killTimeoutInSeconds);
+            removeWebRTCQoEMeter(identifier);
+        }
     }
 
     public void addOrUpdateMap(WebRTCQoEMeter webRTCQoEMeter) {
@@ -181,12 +213,12 @@ public class QoEService {
 
     // Step 5
     public List<InputStream> getQoEMetricsCSV(SessionManager sessionManager,
-            String serviceNameOrId) throws Exception {
+            String identifier) throws Exception {
         log.debug("Getting QoE Metrics CSV files for session {}",
                 sessionManager.getSessionId());
         List<InputStream> csvFiles = new ArrayList<InputStream>();
         List<String> csvFileNames = sessionManager.getPlatformManager()
-                .getFolderFilesList(serviceNameOrId,
+                .getFolderFilesList(identifier,
                         contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
                         ".csv");
 
@@ -198,7 +230,9 @@ public class QoEService {
                     InputStream currentCsv = sessionManager.getPlatformManager()
                             .getFileFromBrowser(sessionManager, currentCsvPath,
                                     false);
-                    csvFiles.add(currentCsv);
+                    if (currentCsv != null) {
+                        csvFiles.add(currentCsv);
+                    }
                 }
             }
         }

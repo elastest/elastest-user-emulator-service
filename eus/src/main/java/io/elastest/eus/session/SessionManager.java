@@ -19,6 +19,7 @@ package io.elastest.eus.session;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
@@ -31,6 +32,7 @@ import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.json.WebDriverCapabilities.DesiredCapabilities;
 import io.elastest.eus.platform.manager.DockerBrowserInfo;
 import io.elastest.eus.platform.manager.PlatformManager;
+import io.elastest.eus.services.model.EusServiceModel;
 
 /**
  * Session information.
@@ -55,6 +57,7 @@ public class SessionManager extends DockerBrowserInfo {
     private String folderPath;
     ExecutionData elastestExecutionData;
     DesiredCapabilities capabilities;
+    List<EusServiceModel> eusServiceModelList = new ArrayList<EusServiceModel>();
 
     private String awsInstanceId;
 
@@ -186,6 +189,23 @@ public class SessionManager extends DockerBrowserInfo {
         this.awsInstanceId = awsInstanceId;
     }
 
+    public List<EusServiceModel> getEusServiceModelList() {
+        return eusServiceModelList;
+    }
+
+    public void addEusServiceModelToList(EusServiceModel eusServiceModel) {
+        if (eusServiceModel != null) {
+            this.eusServiceModelList.add(eusServiceModel);
+        }
+    }
+
+    public void removeEusServiceModelFromList(EusServiceModel eusServiceModel) {
+        if (eusServiceModel != null) {
+            this.eusServiceModelList.removeIf(model -> model
+                    .getIdentifier() == eusServiceModel.getIdentifier());
+        }
+    }
+
     /* ********************************************* */
     /* *************** Other methods *************** */
     /* ********************************************* */
@@ -216,7 +236,7 @@ public class SessionManager extends DockerBrowserInfo {
 
     @Override
     public String toString() {
-        return "SessionInfo [log=" + log + ", sessionId=" + sessionId
+        return "SessionManager [log=" + log + ", sessionId=" + sessionId
                 + ", hubUrl=" + hubUrl + ", creationTime=" + creationTime
                 + ", browser=" + browser + ", version=" + version
                 + ", liveSession=" + liveSession + ", timeoutFutures="
@@ -224,7 +244,9 @@ public class SessionManager extends DockerBrowserInfo {
                 + testName + ", manualRecording=" + manualRecording
                 + ", folderPath=" + folderPath + ", elastestExecutionData="
                 + elastestExecutionData + ", capabilities=" + capabilities
-                + ", toString()=" + super.toString() + "]";
+                + ", eusServiceModelList=" + eusServiceModelList
+                + ", awsInstanceId=" + awsInstanceId + ", platformManager="
+                + platformManager + ", toString()=" + super.toString() + "]";
     }
 
     public String getBrowserServiceNameOrId() {
