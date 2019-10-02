@@ -77,8 +77,12 @@ public abstract class PlatformManager {
             SessionManager sessionManager) throws Exception;
 
     public abstract BrowserSync buildAndRunBrowsersyncService(
-            ExecutionData execData,
+            SessionManager sessionManager, ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception;
+
+    public abstract WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            SessionManager sessionManager, ExecutionData execData,
             Map<String, String> labels) throws Exception;
 
     public abstract void uploadFile(String serviceNameOrId,
@@ -87,10 +91,6 @@ public abstract class PlatformManager {
 
     public abstract List<String> getFolderFilesList(String containerId,
             String remotePath, String filter) throws Exception;
-
-    public abstract WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            ExecutionData execData, Map<String, String> labels)
-            throws Exception;
 
     /* *************************************** */
     /* ********* Implemented Methods ********* */

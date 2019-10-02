@@ -76,8 +76,11 @@ public class QoEService {
         }
 
         WebRTCQoEMeter webRTCQoEMeter = sessionManager.getPlatformManager()
-                .buildAndRunWebRTCQoEMeterService(execData, labels);
+                .buildAndRunWebRTCQoEMeterService(sessionManager, execData,
+                        labels);
 
+        log.debug("WebRTC QoE Meter service started! Id: {}",
+                webRTCQoEMeter.getIdentifier());
         addOrUpdateMap(webRTCQoEMeter);
         sessionManager.addEusServiceModelToList(webRTCQoEMeter);
 
@@ -123,24 +126,23 @@ public class QoEService {
     /* ***** WebRTC QoE meter methods ***** */
     /* ************************************ */
 
-    public void uploadVideos(SessionManager sessionManager,
+    public void uploadVideos(PlatformManager platformManager,
             String serviceNameOrId, InputStream presenterFile,
             InputStream viewerFile, String completePresenterPath,
             String completeViewerPath) throws Exception {
-        log.debug(
-                "Uploading QoE Video files of session {} to service with id {}",
-                sessionManager.getSessionId(), serviceNameOrId);
+        log.debug("Uploading QoE Video files to service with id {}",
+                serviceNameOrId);
 
         // Upload presenter
-        sessionManager.getPlatformManager().uploadFile(serviceNameOrId,
-                presenterFile, completePresenterPath);
+        platformManager.uploadFile(serviceNameOrId, presenterFile,
+                completePresenterPath);
 
         // Upload viewer
-        sessionManager.getPlatformManager().uploadFile(serviceNameOrId,
-                viewerFile, completeViewerPath);
+        platformManager.uploadFile(serviceNameOrId, viewerFile,
+                completeViewerPath);
     }
 
-    public void uploadVideos(SessionManager sessionManager,
+    public void uploadVideos(PlatformManager platformManager,
             String serviceNameOrId, InputStream presenterFile,
             InputStream viewerFile) throws Exception {
 
@@ -150,42 +152,44 @@ public class QoEService {
         String completeViewerPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
-        uploadVideos(sessionManager, serviceNameOrId, presenterFile, viewerFile,
-                completePresenterPath, completeViewerPath);
+        uploadVideos(platformManager, serviceNameOrId, presenterFile,
+                viewerFile, completePresenterPath, completeViewerPath);
     }
 
     // Step 2
     public void downloadVideosFromBrowserAndUploadToQoE(
-            SessionManager sessionManager, String serviceNameOrId,
+            SessionManager presenterSessionManager,
+            SessionManager viewerSessionManager, String serviceNameOrId,
             String presenterCompleteFilePath, String viewerCompleteFilePath)
             throws Exception {
         log.debug(
-                "Downloading QoE Video files from session {} to send to service with id {}",
-                sessionManager.getSessionId(), serviceNameOrId);
+                "Downloading QoE Presenter Video file from session {} to send to service with id {}",
+                viewerSessionManager.getSessionId(), serviceNameOrId);
+        InputStream presenterVideo = viewerSessionManager.getPlatformManager()
+                .getFileFromBrowser(viewerSessionManager,
+                        presenterCompleteFilePath, false);
 
-        InputStream presenterVideo = sessionManager.getPlatformManager()
-                .getFileFromBrowser(sessionManager, presenterCompleteFilePath,
-                        false);
+        log.debug(
+                "Downloading QoE Viewer Video file from session {} to send to service with id {}",
+                presenterSessionManager.getSessionId(), serviceNameOrId);
+        InputStream viewerVideo = presenterSessionManager.getPlatformManager()
+                .getFileFromBrowser(presenterSessionManager,
+                        viewerCompleteFilePath, false);
 
-        InputStream viewerVideo = sessionManager.getPlatformManager()
-                .getFileFromBrowser(sessionManager, viewerCompleteFilePath,
-                        false);
-
-        uploadVideos(sessionManager, serviceNameOrId, presenterVideo,
-                viewerVideo);
+        uploadVideos(presenterSessionManager.getPlatformManager(),
+                serviceNameOrId, presenterVideo, viewerVideo);
     }
 
-    public void calculateQoEMetrics(SessionManager sessionManager,
+    public void calculateQoEMetrics(PlatformManager platformManager,
             String serviceNameOrId) throws Exception {
         log.debug(
-                "Calculating QoE metrics for session {} in service with ID {} . This process could take a long time.",
-                sessionManager.getSessionId(), serviceNameOrId);
-        sessionManager.getPlatformManager().execCommand(serviceNameOrId, true,
-                "sh", "-c",
-                "'" + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                        + "/"
-                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
-                        + "'");
+                "Calculating QoE metrics in service with ID {} . This process could take a long time.",
+                serviceNameOrId);
+        platformManager.execCommand(serviceNameOrId, true, "sh", "-c", "'"
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                + "/"
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
+                + "'");
 
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(serviceNameOrId);
         if (webRTCQoEMeter != null) {
@@ -197,9 +201,9 @@ public class QoEService {
 
     // Step 3
     @Async
-    public void calculateQoEMetricsAsync(SessionManager sessionManager,
+    public void calculateQoEMetricsAsync(PlatformManager platformManager,
             String serviceNameOrId) throws Exception {
-        calculateQoEMetrics(sessionManager, serviceNameOrId);
+        calculateQoEMetrics(platformManager, serviceNameOrId);
     }
 
     // Step 4

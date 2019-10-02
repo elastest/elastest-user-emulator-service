@@ -102,7 +102,8 @@ public class BrowserDockerManager extends PlatformManager {
         // Recording
         Builder recordingsVolumeBuilder = Bind.builder();
         recordingsVolumeBuilder.from(folderPath);
-        recordingsVolumeBuilder.to(contextProperties.CONTAINER_RECORDING_FOLDER);
+        recordingsVolumeBuilder
+                .to(contextProperties.CONTAINER_RECORDING_FOLDER);
         volumes.add(recordingsVolumeBuilder.build());
 
         // Shared files
@@ -204,6 +205,131 @@ public class BrowserDockerManager extends PlatformManager {
         sessionManager.setHubIp(dockerService.getDockerServerIp());
         sessionManager.setHubPort(hubPort);
         sessionManager.setNoVncBindedPort(noVncBindedPort);
+    }
+
+    @Override
+    public BrowserSync buildAndRunBrowsersyncService(
+            SessionManager sessionManager, ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception {
+        String serviceContainerName = getBrowserSyncServiceName(execData);
+        BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
+
+        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
+                .getDesiredCapabilities();
+
+        String sutUrl = crossBrowserCapabilities.getSutUrl();
+
+        List<String> envs = new ArrayList<>();
+        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
+                + "' --open 'external'";
+        envs.add(optionsEnv);
+
+        /* **** Obtain networks **** */
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
+                execData);
+
+        List<String> networks = networksMap.get("networks");
+        String network = networksMap.get("network").get(0);
+
+        /* **** Docker Builder **** */
+        DockerBuilder dockerBuilder = new DockerBuilder(
+                contextProperties.EUS_SERVICE_BROWSERSYNC_IMAGE_NAME);
+        dockerBuilder.containerName(serviceContainerName);
+        dockerBuilder.envs(envs);
+        dockerBuilder.labels(labels);
+        dockerBuilder.network(network);
+
+        // ExtraHosts
+        if (desiredCapabilities.getExtraHosts() != null) {
+            dockerBuilder.extraHosts(desiredCapabilities.getExtraHosts());
+        }
+
+        /* **** Start **** */
+        String containerId = dockerService
+                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+
+        /* **** Additional Networks **** */
+        if (networks != null && networks.size() > 0) {
+            logger.debug(
+                    "Inserting Browsersync service container into additional networks");
+            for (String additionalNetwork : networks) {
+                if (additionalNetwork != null
+                        && !"".equals(additionalNetwork)) {
+                    logger.debug(
+                            "Inserting Browsersync service container into {} network",
+                            additionalNetwork);
+                    dockerService.insertIntoNetwork(additionalNetwork,
+                            containerId);
+                }
+            }
+        }
+
+        String ip = dockerService.getContainerIp(containerId, network);
+        String guiUrl = "http://" + ip + ":"
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
+
+        URL sutUrlObj = new URL(sutUrl);
+        String appProtocol = sutUrlObj.getProtocol();
+        String appUrl = appProtocol + "://" + ip + ":"
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_APP_PORT;
+
+        if (sutUrlObj.getFile() != null) {
+            appUrl += sutUrlObj.getFile();
+        }
+
+        browsersync.setIdentifier(serviceContainerName);
+        browsersync.setGuiUrl(guiUrl);
+        browsersync.setAppUrl(appUrl);
+
+        return browsersync;
+    }
+
+    @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            SessionManager sessionManager, ExecutionData execData,
+            Map<String, String> labels) throws Exception {
+
+        String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
+        WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
+
+        /* **** Obtain networks **** */
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
+                execData);
+
+        List<String> networks = networksMap.get("networks");
+        String network = networksMap.get("network").get(0);
+
+        /* **** Docker Builder **** */
+        DockerBuilder dockerBuilder = new DockerBuilder(
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
+        dockerBuilder.containerName(serviceContainerName);
+        dockerBuilder.labels(labels);
+        dockerBuilder.network(network);
+
+        /* **** Start **** */
+        String containerId = dockerService
+                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+
+        /* **** Additional Networks **** */
+        if (networks != null && networks.size() > 0) {
+            logger.debug(
+                    "Inserting WebRTCQoEMeter service container into additional networks");
+            for (String additionalNetwork : networks) {
+                if (additionalNetwork != null
+                        && !"".equals(additionalNetwork)) {
+                    logger.debug(
+                            "Inserting WebRTCQoEMeter service container into {} network",
+                            additionalNetwork);
+                    dockerService.insertIntoNetwork(additionalNetwork,
+                            containerId);
+                }
+            }
+        }
+
+        webRTCQoEMeter.setIdentifier(serviceContainerName);
+
+        return webRTCQoEMeter;
     }
 
     public Map<String, List<String>> getNetworksFromExecutionData(
@@ -312,130 +438,6 @@ public class BrowserDockerManager extends PlatformManager {
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) {
         // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
-            Map<String, String> labels) throws Exception {
-        String serviceContainerName = getBrowserSyncServiceName(execData);
-        BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
-
-        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
-                .getDesiredCapabilities();
-
-        String sutUrl = crossBrowserCapabilities.getSutUrl();
-
-        List<String> envs = new ArrayList<>();
-        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
-                + "' --open 'external'";
-        envs.add(optionsEnv);
-
-        /* **** Obtain networks **** */
-        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
-                execData);
-
-        List<String> networks = networksMap.get("networks");
-        String network = networksMap.get("network").get(0);
-
-        /* **** Docker Builder **** */
-        DockerBuilder dockerBuilder = new DockerBuilder(
-                contextProperties.EUS_SERVICE_BROWSERSYNC_IMAGE_NAME);
-        dockerBuilder.containerName(serviceContainerName);
-        dockerBuilder.envs(envs);
-        dockerBuilder.labels(labels);
-        dockerBuilder.network(network);
-
-        // ExtraHosts
-        if (desiredCapabilities.getExtraHosts() != null) {
-            dockerBuilder.extraHosts(desiredCapabilities.getExtraHosts());
-        }
-
-        /* **** Start **** */
-        String containerId = dockerService
-                .createAndStartContainerWithPull(dockerBuilder.build(), true);
-
-        /* **** Additional Networks **** */
-        if (networks != null && networks.size() > 0) {
-            logger.debug(
-                    "Inserting Browsersync service container into additional networks");
-            for (String additionalNetwork : networks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug(
-                            "Inserting Browsersync service container into {} network",
-                            additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
-                }
-            }
-        }
-
-        String ip = dockerService.getContainerIp(containerId, network);
-        String guiUrl = "http://" + ip + ":"
-                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
-
-        URL sutUrlObj = new URL(sutUrl);
-        String appProtocol = sutUrlObj.getProtocol();
-        String appUrl = appProtocol + "://" + ip + ":"
-                + contextProperties.EUS_SERVICE_BROWSERSYNC_APP_PORT;
-
-        if (sutUrlObj.getFile() != null) {
-            appUrl += sutUrlObj.getFile();
-        }
-
-        browsersync.setIdentifier(serviceContainerName);
-        browsersync.setGuiUrl(guiUrl);
-        browsersync.setAppUrl(appUrl);
-
-        return browsersync;
-    }
-
-     @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            ExecutionData execData, Map<String, String> labels)
-            throws Exception {
-
-        String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
-        WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
-
-        /* **** Obtain networks **** */
-        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
-                execData);
-
-        List<String> networks = networksMap.get("networks");
-        String network = networksMap.get("network").get(0);
-
-        /* **** Docker Builder **** */
-        DockerBuilder dockerBuilder = new DockerBuilder(
-                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
-        dockerBuilder.containerName(serviceContainerName);
-        dockerBuilder.labels(labels);
-        dockerBuilder.network(network);
-
-        /* **** Start **** */
-        String containerId = dockerService
-                .createAndStartContainerWithPull(dockerBuilder.build(), true);
-
-        /* **** Additional Networks **** */
-        if (networks != null && networks.size() > 0) {
-            logger.debug(
-                    "Inserting WebRTCQoEMeter service container into additional networks");
-            for (String additionalNetwork : networks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug(
-                            "Inserting WebRTCQoEMeter service container into {} network",
-                            additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
-                }
-            }
-        }
-
-        webRTCQoEMeter.setIdentifier(serviceContainerName);
-
-        return webRTCQoEMeter;
     }
 
     @Override

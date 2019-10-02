@@ -186,7 +186,8 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
+    public BrowserSync buildAndRunBrowsersyncService(
+            SessionManager sessionManager, ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         String serviceContainerName = getBrowserSyncServiceName(execData);
@@ -249,8 +250,8 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            ExecutionData execData, Map<String, String> labels)
-            throws Exception {
+            SessionManager sessionManager, ExecutionData execData,
+            Map<String, String> labels) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }

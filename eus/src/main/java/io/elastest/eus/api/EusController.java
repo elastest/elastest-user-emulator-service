@@ -602,20 +602,25 @@ public class EusController implements EusApi {
     public ResponseEntity<String> startWebRTCQoEMeter(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
-            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath) {
+            @RequestParam(value = "presenterSessionId", required = true) String presenterSessionId,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath,
+            @RequestParam(value = "viewerSessionId", required = true) String viewerSessionId) {
         try {
-            SessionManager sessionManager = sessionService.getSession(sessionId)
-                    .get();
+            SessionManager presenterSessionManager = sessionService
+                    .getSession(presenterSessionId).get();
+
+            SessionManager viewerSessionManager = sessionService
+                    .getSession(viewerSessionId).get();
 
             String identifier = webDriverService.qoeService
-                    .startService(sessionManager);
+                    .startService(presenterSessionManager);
 
             webDriverService.qoeService.downloadVideosFromBrowserAndUploadToQoE(
-                    sessionManager, identifier, presenterCompleteFilePath,
-                    viewerCompleteFilePath);
+                    presenterSessionManager, viewerSessionManager, identifier,
+                    presenterCompleteFilePath, viewerCompleteFilePath);
             // Async
-            webDriverService.qoeService.calculateQoEMetricsAsync(sessionManager,
-                    identifier);
+            webDriverService.qoeService.calculateQoEMetricsAsync(
+                    viewerSessionManager.getPlatformManager(), identifier);
 
             return new ResponseEntity<String>(identifier, OK);
 
@@ -631,9 +636,11 @@ public class EusController implements EusApi {
     public ResponseEntity<String> executionStartWebRTCQoEMeter(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
-            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath) {
+            @RequestParam(value = "presenterSessionId", required = true) String presenterSessionId,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath,
+            @RequestParam(value = "viewerSessionId", required = true) String viewerSessionId) {
         return this.startWebRTCQoEMeter(sessionId, presenterCompleteFilePath,
-                viewerCompleteFilePath);
+                presenterSessionId, viewerCompleteFilePath, viewerSessionId);
     }
 
     public ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
@@ -647,8 +654,7 @@ public class EusController implements EusApi {
     public ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) {
-        return this.executionIsWebRTCQoEMeterCsvGenerated(sessionId,
-                identifier);
+        return this.isWebRTCQoEMeterCsvGenerated(sessionId, identifier);
     }
 
     public ResponseEntity<List<InputStream>> getWebRTCQoEMeterCsv(

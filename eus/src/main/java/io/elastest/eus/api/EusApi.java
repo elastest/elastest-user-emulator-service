@@ -632,7 +632,9 @@ public interface EusApi {
     ResponseEntity<String> startWebRTCQoEMeter(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
-            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath);
+            @RequestParam(value = "presenterSessionId", required = true) String presenterSessionId,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath,
+            @RequestParam(value = "viewerSessionId", required = true) String viewerSessionId);
 
     /**
      * GET /execution/{key}/session/{sessionId}/webrtc/qoe/meter/start
@@ -650,7 +652,9 @@ public interface EusApi {
     ResponseEntity<String> executionStartWebRTCQoEMeter(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "presenterPath", required = true) String presenterCompleteFilePath,
-            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath);
+            @RequestParam(value = "presenterSessionId", required = true) String presenterSessionId,
+            @RequestParam(value = "viewerPath", required = true) String viewerCompleteFilePath,
+            @RequestParam(value = "viewerSessionId", required = true) String viewerSessionId);
 
     /**
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated

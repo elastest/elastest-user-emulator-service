@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.utils.UtilTools;
@@ -79,21 +80,10 @@ public class BrowserAWSManager extends PlatformManager {
         return null;
     }
 
-    @Override
-    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
-            String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData, List<String> envs,
-            Map<String, String> labels, DesiredCapabilities capabilities,
-            String imageId) throws Exception {
-        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
-        sessionManager.setStatusMsg("Initializing...");
-
-        String recordingsPath = createRecordingsPath(folderPath);
-        sessionManager.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionManager) sessionManager).setFolderPath(recordingsPath);
-
-        AWSInstancesConfig awsInstanceConfig = capabilities.getAwsConfig()
-                .getAwsInstancesConfig();
+    private Instance provideInstance(SessionManager sessionManager)
+            throws Exception {
+        AWSInstancesConfig awsInstanceConfig = sessionManager.getCapabilities()
+                .getAwsConfig().getAwsInstancesConfig();
 
         // IMAGE_ID
         String amiId = awsInstanceConfig.getAmiId();
@@ -108,12 +98,42 @@ public class BrowserAWSManager extends PlatformManager {
         Collection<TagSpecification> tagSpecifications = awsInstanceConfig
                 .getTagSpecifications();
 
-        sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
-        sessionManager.setStatusMsg("Starting...");
-
         // Call to AwsClient to create instances
         Instance instance = awsClient.provideInstance(amiId, instanceType,
                 keyName, securityGroups, tagSpecifications);
+        return instance;
+    }
+
+    private String provideAndWaitForInstance(SessionManager sessionManager)
+            throws Exception, TimeoutException {
+        // Call to AwsClient to create instances
+        Instance instance = provideInstance(sessionManager);
+        // Wait
+        awsClient.waitForInstance(instance, 600);
+        instance = awsClient.describeInstance(instance);
+
+        String instanceId = instance.instanceId();
+        return instanceId;
+    }
+
+    @Override
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody,
+            String folderPath, ExecutionData execData, List<String> envs,
+            Map<String, String> labels, DesiredCapabilities capabilities,
+            String imageId) throws Exception {
+        sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
+        sessionManager.setStatusMsg("Initializing...");
+
+        String recordingsPath = createRecordingsPath(folderPath);
+        sessionManager.setHostSharedFilesFolderPath(recordingsPath);
+        ((SessionManager) sessionManager).setFolderPath(recordingsPath);
+
+        sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
+        sessionManager.setStatusMsg("Starting...");
+
+        Instance instance = provideInstance(sessionManager);
+
         // Wait
         awsClient.waitForInstance(instance, 600);
         instance = awsClient.describeInstance(instance);
@@ -129,11 +149,37 @@ public class BrowserAWSManager extends PlatformManager {
 
         sessionManager.setHubIp(hubIp);
         sessionManager.setHubPort(contextProperties.HUB_EXPOSED_PORT);
-        sessionManager.setNoVncBindedPort(contextProperties.NO_VNC_EXPOSED_PORT);
+        sessionManager
+                .setNoVncBindedPort(contextProperties.NO_VNC_EXPOSED_PORT);
 
         String browserServiceName = getBrowserServiceName(instanceId);
         sessionManager.setHubContainerName(browserServiceName);
         sessionManager.setVncContainerName(browserServiceName);
+    }
+
+    @Override
+    public BrowserSync buildAndRunBrowsersyncService(
+            SessionManager sessionManager, ExecutionData execData,
+            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception {
+        BrowserSync browserSync = new BrowserSync(crossBrowserCapabilities);
+
+        String instanceId = provideAndWaitForInstance(sessionManager);
+        browserSync.setIdentifier(instanceId);
+
+        return browserSync;
+    }
+
+    @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            SessionManager sessionManager, ExecutionData execData,
+            Map<String, String> labels) throws Exception {
+        WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
+
+        String instanceId = provideAndWaitForInstance(sessionManager);
+        webRTCQoEMeter.setIdentifier(instanceId);
+
+        return webRTCQoEMeter;
     }
 
     @Override
@@ -189,14 +235,6 @@ public class BrowserAWSManager extends PlatformManager {
         Thread.sleep(5000);
     }
 
-    @Override
-    public BrowserSync buildAndRunBrowsersyncService(ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
-            Map<String, String> labels) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public String getBrowserServiceName(String instanceId) throws Exception {
         String command = "docker ps -a | grep elastestbrowser | awk '{print $1}' | tr -d '\\n'";
         return awsClient.executeCommand(instanceId, command);
@@ -213,14 +251,6 @@ public class BrowserAWSManager extends PlatformManager {
     public List<String> getFolderFilesList(String containerId,
             String remotePath, String filter) throws Exception {
         return awsClient.listFolderFiles(containerId, remotePath, filter);
-    }
-
-    @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            ExecutionData execData, Map<String, String> labels)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

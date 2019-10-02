@@ -1173,7 +1173,8 @@ public class WebDriverService {
 
     /* ********** Cross browser ********** */
 
-    public BrowserSync startBrowsersyncService(ExecutionData execData,
+    public BrowserSync startBrowsersyncService(SessionManager sessionManager,
+            ExecutionData execData,
             CrossBrowserWebDriverCapabilities crossBrowserCapabilities)
             throws Exception {
         Map<String, String> labels = new HashMap<>();
@@ -1192,7 +1193,7 @@ public class WebDriverService {
                 crossBrowserCapabilities);
 
         BrowserSync browserSync = platformManager.buildAndRunBrowsersyncService(
-                execData, crossBrowserCapabilities, labels);
+                sessionManager, execData, crossBrowserCapabilities, labels);
 
         return browserSync;
     }
@@ -1281,8 +1282,17 @@ public class WebDriverService {
         BrowserSync browserSync = null;
         // With browsersync
         if (crossBrowserCapabilities.getWithBrowserSync()) {
-            browserSync = startBrowsersyncService(execData,
-                    crossBrowserCapabilities);
+            Optional<String> sessionIdFromPath = getSessionIdFromPath(
+                    requestContext);
+            if (sessionIdFromPath.isPresent()) {
+                String sessionId = sessionIdFromPath.get();
+                Optional<SessionManager> optionalSession = sessionService
+                        .getSession(sessionId);
+                if (optionalSession.isPresent()) {
+                    browserSync = startBrowsersyncService(optionalSession.get(),
+                            execData, crossBrowserCapabilities);
+                }
+            }
         } else { // only browsers
             browserSync = new BrowserSync(crossBrowserCapabilities);
             PlatformManager platformManager = getPlatformManager(
