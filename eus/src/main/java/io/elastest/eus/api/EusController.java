@@ -619,8 +619,8 @@ public class EusController implements EusApi {
                     presenterSessionManager, viewerSessionManager, identifier,
                     presenterCompleteFilePath, viewerCompleteFilePath);
             // Async
-            webDriverService.qoeService.calculateQoEMetricsAsync(
-                    viewerSessionManager.getPlatformManager(), identifier);
+            webDriverService.qoeService
+                    .calculateQoEMetricsAsync(viewerSessionManager, identifier);
 
             return new ResponseEntity<String>(identifier, OK);
 

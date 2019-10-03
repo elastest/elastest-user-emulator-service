@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
@@ -43,7 +44,7 @@ import com.jcraft.jsch.Session;
  *
  * @author Pablo Fuente (pablofuenteperez@gmail.com)
  */
-public class ScpFileDownloader {
+public class ScpFileTransferer {
 
     final static Logger log = getLogger(lookup().lookupClass());
 
@@ -54,7 +55,7 @@ public class ScpFileDownloader {
     Thread downloadProgressThread;
     AtomicBoolean keepProgressThread = new AtomicBoolean(true);
 
-    public ScpFileDownloader(String username, String hostname,
+    public ScpFileTransferer(String username, String hostname,
             String privatekey) {
         JSch jsch = new JSch();
         Properties config = new Properties();
@@ -74,6 +75,46 @@ public class ScpFileDownloader {
         } catch (Exception e) {
             log.error("Couldn't connect to {} to download file", hostname);
         }
+    }
+
+    public void uploadFile(InputStream tarStreamFile, String completePath,
+            String fileName) throws Exception {
+        try {
+            log.info("Uploading file {} from {} to remote path {}", fileName,
+                    jschSession.getHost(), completePath);
+
+            java.util.Properties config = new java.util.Properties();
+            config.put("StrictHostKeyChecking", "no");
+
+            Channel channel = jschSession.openChannel("sftp");
+            channel.connect();
+            ChannelSftp channelSftp = (ChannelSftp) channel;
+            channelSftp.cd(completePath);
+
+            channelSftp.put(tarStreamFile, fileName);
+
+            channelSftp.disconnect();
+            jschSession.disconnect();
+        } catch (Exception e) {
+            jschSession.disconnect();
+            throw new Exception("Error on upload file: " + e.getMessage());
+        }
+    }
+
+    public InputStream getFileAsInputStream(String completeFilePathWithName)
+            throws Exception {
+        Channel channel = jschSession.openChannel("sftp");
+        channel.connect();
+        ChannelSftp sftpChannel = (ChannelSftp) channel;
+        InputStream is = sftpChannel.get(completeFilePathWithName);
+        try {
+            sftpChannel.disconnect();
+            channel.disconnect();
+            jschSession.disconnect();
+        } catch (Exception e) {
+
+        }
+        return is;
     }
 
     public void downloadFile(String remotePath, String filename,

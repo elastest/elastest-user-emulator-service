@@ -90,10 +90,12 @@ public class QoEService {
     public void stopService(SessionManager sessionManager, String identifier)
             throws Exception {
         PlatformManager platformManager = sessionManager.getPlatformManager();
+        String serviceName = getRealServiceName(sessionManager, identifier);
+
         int killTimeoutInSeconds = 10;
         if (identifier != null
-                && platformManager.existServiceWithName(identifier)) {
-            platformManager.removeServiceWithTimeout(identifier,
+                && platformManager.existServiceWithName(serviceName)) {
+            platformManager.removeServiceWithTimeout(serviceName,
                     killTimeoutInSeconds);
             removeWebRTCQoEMeter(identifier);
         }
@@ -126,25 +128,27 @@ public class QoEService {
     /* ***** WebRTC QoE meter methods ***** */
     /* ************************************ */
 
-    public void uploadVideos(PlatformManager platformManager,
-            String serviceNameOrId, InputStream presenterFile,
-            InputStream viewerFile, String completePresenterPath,
-            String completeViewerPath) throws Exception {
+    public void uploadVideos(SessionManager sessionManager, String identifier,
+            InputStream presenterFile, InputStream viewerFile,
+            String completePresenterPath, String completeViewerPath)
+            throws Exception {
         log.debug("Uploading QoE Video files to service with id {}",
-                serviceNameOrId);
+                identifier);
+        String serviceName = getRealServiceName(sessionManager, identifier);
+        PlatformManager platformManager = sessionManager.getPlatformManager();
 
         // Upload presenter
-        platformManager.uploadFile(serviceNameOrId, presenterFile,
+        platformManager.uploadFile(serviceName, presenterFile,
                 completePresenterPath);
 
         // Upload viewer
-        platformManager.uploadFile(serviceNameOrId, viewerFile,
-                completeViewerPath);
+        platformManager.uploadFile(serviceName, viewerFile, completeViewerPath);
+
     }
 
-    public void uploadVideos(PlatformManager platformManager,
-            String serviceNameOrId, InputStream presenterFile,
-            InputStream viewerFile) throws Exception {
+    public void uploadVideos(SessionManager sessionManager, String identifier,
+            InputStream presenterFile, InputStream viewerFile)
+            throws Exception {
 
         String completePresenterPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
@@ -152,46 +156,49 @@ public class QoEService {
         String completeViewerPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
-        uploadVideos(platformManager, serviceNameOrId, presenterFile,
-                viewerFile, completePresenterPath, completeViewerPath);
+        uploadVideos(sessionManager, identifier, presenterFile, viewerFile,
+                completePresenterPath, completeViewerPath);
     }
 
     // Step 2
     public void downloadVideosFromBrowserAndUploadToQoE(
             SessionManager presenterSessionManager,
-            SessionManager viewerSessionManager, String serviceNameOrId,
+            SessionManager viewerSessionManager, String identifier,
             String presenterCompleteFilePath, String viewerCompleteFilePath)
             throws Exception {
         log.debug(
                 "Downloading QoE Presenter Video file from session {} to send to service with id {}",
-                viewerSessionManager.getSessionId(), serviceNameOrId);
+                viewerSessionManager.getSessionId(), identifier);
         InputStream presenterVideo = viewerSessionManager.getPlatformManager()
                 .getFileFromBrowser(viewerSessionManager,
                         presenterCompleteFilePath, false);
 
         log.debug(
                 "Downloading QoE Viewer Video file from session {} to send to service with id {}",
-                presenterSessionManager.getSessionId(), serviceNameOrId);
+                presenterSessionManager.getSessionId(), identifier);
         InputStream viewerVideo = presenterSessionManager.getPlatformManager()
                 .getFileFromBrowser(presenterSessionManager,
                         viewerCompleteFilePath, false);
 
-        uploadVideos(presenterSessionManager.getPlatformManager(),
-                serviceNameOrId, presenterVideo, viewerVideo);
+        uploadVideos(presenterSessionManager, identifier, presenterVideo,
+                viewerVideo);
     }
 
-    public void calculateQoEMetrics(PlatformManager platformManager,
-            String serviceNameOrId) throws Exception {
+    public void calculateQoEMetrics(SessionManager sessionManager,
+            String identifier) throws Exception {
         log.debug(
                 "Calculating QoE metrics in service with ID {} . This process could take a long time.",
-                serviceNameOrId);
-        platformManager.execCommand(serviceNameOrId, true, "sh", "-c", "'"
+                identifier);
+        String serviceName = getRealServiceName(sessionManager, identifier);
+        PlatformManager platformManager = sessionManager.getPlatformManager();
+
+        platformManager.execCommand(serviceName, true, "sh", "-c", "'"
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                 + "/"
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
                 + "'");
 
-        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(serviceNameOrId);
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         if (webRTCQoEMeter != null) {
             webRTCQoEMeter.setCsvGenerated(true);
             addOrUpdateMap(webRTCQoEMeter);
@@ -201,9 +208,9 @@ public class QoEService {
 
     // Step 3
     @Async
-    public void calculateQoEMetricsAsync(PlatformManager platformManager,
+    public void calculateQoEMetricsAsync(SessionManager sessionManager,
             String serviceNameOrId) throws Exception {
-        calculateQoEMetrics(platformManager, serviceNameOrId);
+        calculateQoEMetrics(sessionManager, serviceNameOrId);
     }
 
     // Step 4
@@ -220,20 +227,23 @@ public class QoEService {
             String identifier) throws Exception {
         log.debug("Getting QoE Metrics CSV files for session {}",
                 sessionManager.getSessionId());
+
+        String serviceName = getRealServiceName(sessionManager, identifier);
+        PlatformManager platformManager = sessionManager.getPlatformManager();
+
         List<InputStream> csvFiles = new ArrayList<InputStream>();
-        List<String> csvFileNames = sessionManager.getPlatformManager()
-                .getFolderFilesList(identifier,
-                        contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
-                        ".csv");
+        List<String> csvFileNames = platformManager.getFolderFilesList(
+                serviceName,
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
+                ".csv");
 
         if (csvFileNames != null) {
             for (String csvName : csvFileNames) {
                 if (csvName != null && !"".equals(csvName)) {
                     String currentCsvPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                             + "/" + csvName;
-                    InputStream currentCsv = sessionManager.getPlatformManager()
-                            .getFileFromBrowser(sessionManager, currentCsvPath,
-                                    false);
+                    InputStream currentCsv = platformManager.getFileFromService(
+                            serviceName, currentCsvPath, false);
                     if (currentCsv != null) {
                         csvFiles.add(currentCsv);
                     }
@@ -244,4 +254,24 @@ public class QoEService {
         return csvFiles;
     }
 
+    private String getRealServiceName(SessionManager sessionManager,
+            String identifier) throws Exception {
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+
+        if (webRTCQoEMeter != null) {
+            // Default docker/k8s
+            String serviceName = identifier;
+
+            // If AWS session
+            if (sessionManager.isAWSSession()
+                    && webRTCQoEMeter.getAwsInstanceId() != null) {
+                serviceName = webRTCQoEMeter.getAwsInstanceId();
+            }
+            return serviceName;
+        } else {
+            throw new Exception(
+                    "Error on upload videos to QoE service: Identifier "
+                            + identifier + " not found");
+        }
+    }
 }

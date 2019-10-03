@@ -62,17 +62,16 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromBrowser(SessionManager sessionManager,
-            String path, Boolean isDirectory) throws Exception {
+    public InputStream getFileFromService(String serviceNameOrId, String path,
+            Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
-
         if (isDirectory) {
             return dockerService.getFilesFromContainerAsInputStreamTar(
-                    sessionManager.getVncContainerName(), path);
+                    serviceNameOrId, path);
         } else {
-            return dockerService.getSingleFileFromContainer(
-                    sessionManager.getVncContainerName(), path);
+            return dockerService.getSingleFileFromContainer(serviceNameOrId,
+                    path);
         }
     }
 

@@ -37,9 +37,8 @@ public abstract class PlatformManager {
         this.contextProperties = contextProperties;
     }
 
-    public abstract InputStream getFileFromBrowser(
-            SessionManager sessionManager, String path, Boolean isDirectory)
-            throws Exception;
+    public abstract InputStream getFileFromService(String serviceNameOrId,
+            String path, Boolean isDirectory) throws Exception;
 
     public abstract void copyFilesFromBrowserIfNecessary(
             SessionManager sessionManager) throws IOException;
@@ -95,6 +94,14 @@ public abstract class PlatformManager {
     /* *************************************** */
     /* ********* Implemented Methods ********* */
     /* *************************************** */
+
+    public InputStream getFileFromBrowser(SessionManager sessionManager,
+            String path, Boolean isDirectory) throws Exception {
+        // Note!!!: if file does not exists, spotify docker
+        // returns ContainernotFoundException (bug)
+        return getFileFromService(sessionManager.getVncContainerName(), path,
+                isDirectory);
+    }
 
     @SuppressWarnings("static-access")
     protected String createRecordingsPath(String hostPath) {

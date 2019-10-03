@@ -25,7 +25,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 import io.elastest.eus.json.AWSConfig;
-import io.elastest.eus.utils.ScpFileDownloader;
+import io.elastest.eus.utils.ScpFileTransferer;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -397,16 +397,39 @@ public class AWSClient {
     /* ********************* FILES ********************* */
     /* ************************************************* */
 
+    public InputStream getFileAsInputStream(String instanceId,
+            String completeFilePathWithName) throws Exception {
+        Instance instance = describeInstance(instanceId);
+
+        ScpFileTransferer fileDownloader = new ScpFileTransferer(
+                awsConfig.getSshUser(),
+                instance.publicDnsName() != null ? instance.publicDnsName()
+                        : instance.publicIpAddress(),
+                awsConfig.getSshPrivateKey());
+        return fileDownloader.getFileAsInputStream(completeFilePathWithName);
+    }
+
     public void downloadFile(String instanceId, String remotePath,
             String filename, String localPath) {
         Instance instance = describeInstance(instanceId);
 
-        ScpFileDownloader fileDownloader = new ScpFileDownloader(
+        ScpFileTransferer fileDownloader = new ScpFileTransferer(
                 awsConfig.getSshUser(),
                 instance.publicDnsName() != null ? instance.publicDnsName()
                         : instance.publicIpAddress(),
                 awsConfig.getSshPrivateKey());
         fileDownloader.downloadFile(remotePath, filename, localPath);
+    }
+
+    public void uploadFile(String instanceId, String remoteCompletePath,
+            String filename, InputStream file) throws Exception {
+        Instance instance = describeInstance(instanceId);
+
+        ScpFileTransferer scp = new ScpFileTransferer(awsConfig.getSshUser(),
+                instance.publicDnsName() != null ? instance.publicDnsName()
+                        : instance.publicIpAddress(),
+                awsConfig.getSshPrivateKey());
+        scp.uploadFile(file, remoteCompletePath, filename);
     }
 
     public List<String> listFolderFiles(String instanceId, String remotePath,

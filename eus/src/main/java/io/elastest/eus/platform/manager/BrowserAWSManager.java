@@ -52,10 +52,14 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromBrowser(SessionManager sessionManager,
-            String path, Boolean isDirectory) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public InputStream getFileFromService(String instanceId, String path,
+            Boolean isDirectory) throws Exception {
+        if (isDirectory) {
+            // TODO return files in folder
+            return null;
+        } else {
+            return awsClient.getFileAsInputStream(instanceId, path);
+        }
     }
 
     @Override
@@ -175,9 +179,17 @@ public class BrowserAWSManager extends PlatformManager {
             SessionManager sessionManager, ExecutionData execData,
             Map<String, String> labels) throws Exception {
         WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
+        String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
+        webRTCQoEMeter.setIdentifier(serviceContainerName);
 
         String instanceId = provideAndWaitForInstance(sessionManager);
-        webRTCQoEMeter.setIdentifier(instanceId);
+
+        awsClient.executeCommand(instanceId, "docker run -d --name "
+                + serviceContainerName + " "
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME
+                + " " + "tail -f /dev/null");
+
+        webRTCQoEMeter.setAwsInstanceId(instanceId);
 
         return webRTCQoEMeter;
     }
@@ -241,16 +253,17 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
-            String completePresenterPath) throws Exception {
-        // TODO Auto-generated method stub
-
+    public void uploadFile(String instanceId, InputStream tarStreamFile,
+            String completeFilePath) throws Exception {
+        String[] splittedFilePath = completeFilePath.split("/");
+        String fileName = splittedFilePath[splittedFilePath.length - 1];
+        awsClient.uploadFile(instanceId, completeFilePath, fileName,
+                tarStreamFile);
     }
 
     @Override
-    public List<String> getFolderFilesList(String containerId,
-            String remotePath, String filter) throws Exception {
-        return awsClient.listFolderFiles(containerId, remotePath, filter);
+    public List<String> getFolderFilesList(String instanceId, String remotePath,
+            String filter) throws Exception {
+        return awsClient.listFolderFiles(instanceId, remotePath, filter);
     }
-
 }

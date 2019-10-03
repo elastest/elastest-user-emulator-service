@@ -8,6 +8,8 @@ public class EusServiceModel {
     // Usually container name
     protected String identifier;
 
+    private String awsInstanceId;
+
     public EusServiceModel(EusServiceName serviceName) {
         this.serviceName = serviceName;
     }
@@ -32,9 +34,23 @@ public class EusServiceModel {
         this.identifier = identifier;
     }
 
+    public String getAwsInstanceId() {
+        return awsInstanceId;
+    }
+
+    public void setAwsInstanceId(String awsInstanceId) {
+        this.awsInstanceId = awsInstanceId;
+    }
+
     /* ***************************** */
     /* ******* Other methods ******* */
     /* ***************************** */
+
+    @Override
+    public String toString() {
+        return "EusServiceModel [serviceName=" + serviceName + ", identifier="
+                + identifier + ", awsInstanceId=" + awsInstanceId + "]";
+    }
 
     /* ***************************** */
     /* *********** Enums *********** */

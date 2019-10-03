@@ -159,8 +159,8 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromBrowser(SessionManager sessionManager,
-            String path, Boolean isDirectory) throws Exception {
+    public InputStream getFileFromService(String serviceNameOrId, String path,
+            Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
@@ -255,4 +255,5 @@ public class BrowserK8sManager extends PlatformManager {
         // TODO Auto-generated method stub
         return null;
     }
+
 }
