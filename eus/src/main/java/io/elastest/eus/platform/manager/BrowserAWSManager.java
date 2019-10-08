@@ -357,6 +357,12 @@ public class BrowserAWSManager extends PlatformManager {
         File fileInEus = new File(filePathInEus);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
         uploadFile(serviceNameOrId, fileISInEus, completeFilePath);
+        try {
+            logger.debug("Removing {} file from EUS after upload to service",
+                    filePathInEus);
+            fileInEus.delete();
+        } catch (Exception e) {
+        }
     }
 
     @Override
