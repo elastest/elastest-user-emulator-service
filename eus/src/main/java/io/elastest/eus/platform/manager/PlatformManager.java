@@ -37,11 +37,24 @@ public abstract class PlatformManager {
         this.contextProperties = contextProperties;
     }
 
+    public abstract void downloadFileOrFilesFromServiceToEus(String instanceId,
+            String remotePath, String localPath, String filename,
+            Boolean isDirectory) throws Exception;
+
+    public abstract void downloadFileOrFilesFromSubServiceToEus(
+            String instanceId, String subServiceID, String remotePath,
+            String localPath, String filename, Boolean isDirectory)
+            throws Exception;
+
     public abstract InputStream getFileFromService(String serviceNameOrId,
             String path, Boolean isDirectory) throws Exception;
 
+    public abstract InputStream getFileFromSubService(String instanceId,
+            String subServiceID, String path, Boolean isDirectory)
+            throws Exception;
+
     public abstract void copyFilesFromBrowserIfNecessary(
-            SessionManager sessionManager) throws IOException;
+            SessionManager sessionManager) throws Exception;
 
     public abstract String getSessionContextInfo(SessionManager sessionManager)
             throws Exception;
@@ -64,7 +77,7 @@ public abstract class PlatformManager {
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception;
 
-    public abstract void execCommand(String hubContainerName,
+    public abstract void execCommandInBrowser(String hubContainerName,
             boolean awaitCompletion, String... command) throws Exception;
 
     public abstract boolean existServiceWithName(String name) throws Exception;
@@ -85,12 +98,26 @@ public abstract class PlatformManager {
             Map<String, String> labels) throws Exception;
 
     public abstract void uploadFile(String serviceNameOrId,
-            InputStream tarStreamFile, String completePresenterPath)
+            InputStream tarStreamFile, String completeFilePath)
+            throws Exception;
+
+    public abstract void uploadFileToSubservice(String instanceId,
+            String subServiceID, InputStream tarStreamFile,
+            String completeFilePath) throws Exception;
+
+    public abstract void uploadFileFromEus(String serviceNameOrId,
+            String filePathInEus, String completeFilePath) throws Exception;
+
+    public abstract void uploadFileToSubserviceFromEus(String instanceId,
+            String subServiceID, String filePathInEus, String completeFilePath)
             throws Exception;
 
     public abstract List<String> getFolderFilesList(String containerId,
             String remotePath, String filter) throws Exception;
 
+    public abstract List<String> getSubserviceFolderFilesList(String instanceId,
+            String subServiceId, String remotePath, String filter)
+            throws Exception;
     /* *************************************** */
     /* ********* Implemented Methods ********* */
     /* *************************************** */
@@ -161,4 +188,33 @@ public abstract class PlatformManager {
         return "";
     }
 
+    public String getFileNameFromCompleteFilePath(String completeFilePath)
+            throws Exception {
+        String[] splittedFilePath = completeFilePath.split("/");
+        return splittedFilePath[splittedFilePath.length - 1];
+    }
+
+    public String getPathWithoutFileNameFromCompleteFilePath(
+            String completeFilePath) throws Exception {
+        String[] splittedFilePath = completeFilePath.split("/");
+        String finalPath = "";
+        int position = 0;
+        for (String pathPart : splittedFilePath) {
+            if (position < splittedFilePath.length - 1) {
+                if (position > 0) {
+                    finalPath += "/";
+                }
+                finalPath += pathPart;
+            }
+            position++;
+        }
+        return finalPath;
+    }
+
+    public abstract String execCommand(String instanceId, String command)
+            throws Exception;
+
+    public abstract String execCommandInSubService(String instanceId,
+            String subserviceId, boolean awaitCompletion, String command)
+            throws Exception;
 }

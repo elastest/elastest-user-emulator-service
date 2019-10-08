@@ -120,7 +120,22 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void execCommand(String podName, boolean awaitCompletion,
+    public String execCommand(String dockerContainerIdOrName, String command)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String execCommandInSubService(String instanceId,
+            String subserviceId, boolean awaitCompletion, String command)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void execCommandInBrowser(String podName, boolean awaitCompletion,
             String... command) throws Exception {
         k8sService.execCommand(k8sService.getPodByName(podName, null), podName,
                 awaitCompletion, command);
@@ -159,8 +174,32 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
+    public void downloadFileOrFilesFromServiceToEus(String instanceId,
+            String remotePath, String localPath, String filename,
+            Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
+            String subServiceID, String remotePath, String localPath,
+            String filename, Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
     public InputStream getFileFromService(String serviceNameOrId, String path,
             Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public InputStream getFileFromSubService(String instanceId,
+            String subServiceID, String path, Boolean isDirectory)
+            throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
@@ -235,8 +274,39 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
+            SessionManager sessionManager, ExecutionData execData,
+            Map<String, String> labels) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
             String completePresenterPath) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void uploadFileToSubservice(String instanceId, String subServiceID,
+            InputStream tarStreamFile, String completeFilePath)
+            throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
+            String completePresenterPath) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void uploadFileToSubserviceFromEus(String instanceId,
+            String subServiceID, String filePathInEus, String completeFilePath)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }
@@ -249,9 +319,9 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            SessionManager sessionManager, ExecutionData execData,
-            Map<String, String> labels) throws Exception {
+    public List<String> getSubserviceFolderFilesList(String instanceId,
+            String subServiceId, String remotePath, String filter)
+            throws Exception {
         // TODO Auto-generated method stub
         return null;
     }

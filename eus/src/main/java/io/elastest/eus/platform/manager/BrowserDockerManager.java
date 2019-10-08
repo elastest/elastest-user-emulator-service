@@ -6,6 +6,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,6 +64,22 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
+    public void downloadFileOrFilesFromServiceToEus(String instanceId,
+            String remotePath, String localPath, String filename,
+            Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
+            String subServiceID, String remotePath, String localPath,
+            String filename, Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
     public InputStream getFileFromService(String serviceNameOrId, String path,
             Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
@@ -73,6 +91,14 @@ public class BrowserDockerManager extends PlatformManager {
             return dockerService.getSingleFileFromContainer(serviceNameOrId,
                     path);
         }
+    }
+
+    @Override
+    public InputStream getFileFromSubService(String instanceId,
+            String subServiceID, String path, Boolean isDirectory)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -416,8 +442,24 @@ public class BrowserDockerManager extends PlatformManager {
 
     }
 
-    public void execCommand(String hubContainerName, boolean awaitCompletion,
-            String... command) throws Exception {
+    @Override
+    public String execCommand(String dockerContainerIdOrName, String command)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String execCommandInSubService(String instanceId,
+            String subserviceId, boolean awaitCompletion, String command)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    @Override
+    public void execCommandInBrowser(String hubContainerName,
+            boolean awaitCompletion, String... command) throws Exception {
         dockerService.execCommand(hubContainerName, awaitCompletion, command);
     }
 
@@ -441,10 +483,33 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
-            String completePresenterPath) throws Exception {
-        // dockerService.file
+            String completeFilePath) throws Exception {
+        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
+                completeFilePath);
         dockerService.copyFileToContainer(serviceNameOrId, tarStreamFile,
-                completePresenterPath);
+                completePathWithoutFileName);
+    }
+
+    @Override
+    public void uploadFileToSubservice(String instanceId, String subServiceID,
+            InputStream tarStreamFile, String completeFilePath)
+            throws Exception {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
+            String completeFilePath) throws Exception {
+        Path fromPath = Paths.get(filePathInEus);
+        dockerService.copyFileToContainer(serviceNameOrId, fromPath,
+                completeFilePath);
+    }
+
+    @Override
+    public void uploadFileToSubserviceFromEus(String instanceId,
+            String subServiceID, String filePathInEus, String completeFilePath)
+            throws Exception {
+        // TODO Auto-generated method stub (does not util for docker)
     }
 
     @Override
@@ -453,4 +518,13 @@ public class BrowserDockerManager extends PlatformManager {
         return dockerService.getFilesListFromContainerFolder(containerId,
                 remotePath, filter);
     }
+
+    @Override
+    public List<String> getSubserviceFolderFilesList(String instanceId,
+            String subServiceId, String remotePath, String filter)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

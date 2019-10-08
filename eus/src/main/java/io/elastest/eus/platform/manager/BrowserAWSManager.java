@@ -1,11 +1,15 @@
 package io.elastest.eus.platform.manager;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang.StringUtils;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.utils.UtilTools;
@@ -52,6 +56,40 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
+    public void downloadFileOrFilesFromServiceToEus(String instanceId,
+            String remotePath, String localPath, String filename,
+            Boolean isDirectory) throws Exception {
+        if (isDirectory) {
+            awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
+        } else {
+            awsClient.downloadFile(instanceId, remotePath, filename, localPath);
+        }
+    }
+
+    @Override
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
+            String subServiceID, String remotePath, String localPath,
+            String filename, Boolean isDirectory) throws Exception {
+        String instanceCompleteFilePath = "/tmp/";
+        if (isDirectory) {
+            awsClient.executeCommand(instanceId, "docker cp " + subServiceID
+                    + ":" + remotePath + " " + instanceCompleteFilePath);
+            awsClient.downloadFolderFiles(instanceId, instanceCompleteFilePath,
+                    localPath);
+        } else {
+            remotePath = remotePath.endsWith("/") ? remotePath
+                    : remotePath + "/";
+            // Copy from container to instance first
+            awsClient.executeCommand(instanceId,
+                    "docker cp " + subServiceID + ":" + remotePath + filename
+                            + " " + instanceCompleteFilePath + filename);
+
+            downloadFileOrFilesFromServiceToEus(instanceId,
+                    instanceCompleteFilePath, localPath, filename, false);
+        }
+    }
+
+    @Override
     public InputStream getFileFromService(String instanceId, String path,
             Boolean isDirectory) throws Exception {
         if (isDirectory) {
@@ -63,8 +101,30 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
+    public InputStream getFileFromSubService(String instanceId,
+            String subServiceID, String completeFilePath, Boolean isDirectory)
+            throws Exception {
+        if (isDirectory) {
+            // TODO return files in folder
+            return null;
+        } else {
+            String fileName = getFileNameFromCompleteFilePath(completeFilePath);
+            String instanceCompleteFilePath = "/tmp/" + fileName;
+            // Copy from container to instance first
+            awsClient.executeCommand(instanceId, "docker cp " + subServiceID
+                    + ":" + completeFilePath + " " + instanceCompleteFilePath);
+
+            String ls = awsClient.executeCommand(instanceId, "ls /tmp");
+            logger.debug("Ls result for instance {}: {}", instanceId, ls);
+
+            return awsClient.getFileAsInputStream(instanceId,
+                    instanceCompleteFilePath);
+        }
+    }
+
+    @Override
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
-            throws IOException {
+            throws Exception {
         String remotePath = contextProperties.CONTAINER_RECORDING_FOLDER;
         String localPath = eusFilesService.getEusFilesPath();
 
@@ -72,9 +132,8 @@ public class BrowserAWSManager extends PlatformManager {
             localPath = eusFilesService.getInternalSessionFolderFromExecution(
                     sessionManager.getElastestExecutionData());
         }
-
-        awsClient.downloadFolderFiles(sessionManager.getAwsInstanceId(),
-                remotePath, localPath);
+        downloadFileOrFilesFromServiceToEus(sessionManager.getAwsInstanceId(),
+                remotePath, localPath, null, true);
     }
 
     @Override
@@ -184,6 +243,9 @@ public class BrowserAWSManager extends PlatformManager {
 
         String instanceId = provideAndWaitForInstance(sessionManager);
 
+        awsClient.executeCommand(instanceId, "docker pull "
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
+
         awsClient.executeCommand(instanceId, "docker run -d --name "
                 + serviceContainerName + " "
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME
@@ -195,27 +257,40 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void execCommand(String instanceId, boolean awaitCompletion,
-            String... command) throws Exception {
+    public String execCommand(String instanceId, String command)
+            throws Exception {
+        return awsClient.executeCommand(instanceId, command);
+    }
+
+    @Override
+    public String execCommandInSubService(String instanceId,
+            String subserviceId, boolean awaitCompletion, String command)
+            throws Exception {
         if (command != null) {
             // Commands executed in browser container
             String mergedCommand = "docker exec -t ";
             if (!awaitCompletion) {
                 mergedCommand += "-d ";
             }
-            mergedCommand += getBrowserServiceName(instanceId) + " ";
+            mergedCommand += subserviceId + " sh -c '" + command + "'";
 
-            boolean firstIteration = true;
+            return execCommand(instanceId, mergedCommand);
+        }
+        return null;
+    }
 
-            for (String currentCommandPart : command) {
-                if (!firstIteration) {
-                    mergedCommand += " ";
-                }
-                mergedCommand += currentCommandPart;
-                firstIteration = false;
-            }
+    @Override
+    public void execCommandInBrowser(String instanceId, boolean awaitCompletion,
+            String... command) throws Exception {
+        if (command != null) {
+            String browserServiceName = getBrowserServiceName(instanceId) + " ";
 
-            awsClient.executeCommand(instanceId, mergedCommand);
+            List<String> commandListAux = Arrays.asList(command);
+
+            String mergedCommand = StringUtils.join(commandListAux, " ");
+
+            execCommandInSubService(instanceId, browserServiceName,
+                    awaitCompletion, mergedCommand);
         }
     }
 
@@ -253,17 +328,58 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String instanceId, InputStream tarStreamFile,
+    public void uploadFile(String instanceId, InputStream inputStreamFile,
             String completeFilePath) throws Exception {
-        String[] splittedFilePath = completeFilePath.split("/");
-        String fileName = splittedFilePath[splittedFilePath.length - 1];
-        awsClient.uploadFile(instanceId, completeFilePath, fileName,
-                tarStreamFile);
+        String fileName = getFileNameFromCompleteFilePath(completeFilePath);
+        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
+                completeFilePath);
+        awsClient.uploadFile(instanceId, completePathWithoutFileName, fileName,
+                inputStreamFile);
+    }
+
+    @Override
+    public void uploadFileToSubservice(String instanceId, String subServiceID,
+            InputStream inputStreamFile, String completeFilePath)
+            throws Exception {
+        String fileName = getFileNameFromCompleteFilePath(completeFilePath);
+        String instancePath = "/tmp/" + fileName;
+        // first upload to instance
+        uploadFile(instanceId, inputStreamFile, instancePath);
+
+        // After copy into subservice
+        awsClient.executeCommand(instanceId, "docker cp " + instancePath + " "
+                + subServiceID + ":" + completeFilePath);
+    }
+
+    @Override
+    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
+            String completeFilePath) throws Exception {
+        File fileInEus = new File(filePathInEus);
+        FileInputStream fileISInEus = new FileInputStream(fileInEus);
+        uploadFile(serviceNameOrId, fileISInEus, completeFilePath);
+    }
+
+    @Override
+    public void uploadFileToSubserviceFromEus(String instanceId,
+            String subServiceID, String filePathInEus, String completeFilePath)
+            throws Exception {
+        File fileInEus = new File(filePathInEus);
+        FileInputStream fileISInEus = new FileInputStream(fileInEus);
+        uploadFileToSubservice(instanceId, subServiceID, fileISInEus,
+                completeFilePath);
     }
 
     @Override
     public List<String> getFolderFilesList(String instanceId, String remotePath,
             String filter) throws Exception {
-        return awsClient.listFolderFiles(instanceId, remotePath, filter);
+        return awsClient.listFolderFiles(instanceId, remotePath, filter, null);
+    }
+
+    @Override
+    public List<String> getSubserviceFolderFilesList(String instanceId,
+            String subServiceId, String remotePath, String filter)
+            throws Exception {
+        return awsClient.listFolderFiles(instanceId, remotePath, filter,
+                subServiceId);
     }
 }

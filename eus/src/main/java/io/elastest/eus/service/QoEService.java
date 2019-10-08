@@ -89,6 +89,7 @@ public class QoEService {
 
     public void stopService(SessionManager sessionManager, String identifier)
             throws Exception {
+        log.debug("Stopping WebRtcQoE service with id {}", identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
         String serviceName = getRealServiceName(sessionManager, identifier);
 
@@ -129,7 +130,7 @@ public class QoEService {
     /* ************************************ */
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            InputStream presenterFile, InputStream viewerFile,
+            String presenterFilePathInEus, String viewerFilePathInEus,
             String completePresenterPath, String completeViewerPath)
             throws Exception {
         log.debug("Uploading QoE Video files to service with id {}",
@@ -137,17 +138,28 @@ public class QoEService {
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
-        // Upload presenter
-        platformManager.uploadFile(serviceName, presenterFile,
-                completePresenterPath);
+        if (sessionManager.isAWSSession()) {
+            // Upload presenter
+            platformManager.uploadFileToSubserviceFromEus(serviceName,
+                    identifier, presenterFilePathInEus, completePresenterPath);
 
-        // Upload viewer
-        platformManager.uploadFile(serviceName, viewerFile, completeViewerPath);
+            // Upload viewer
+            platformManager.uploadFileToSubserviceFromEus(serviceName,
+                    identifier, viewerFilePathInEus, completeViewerPath);
+        } else {
+            // Upload presenter
+            platformManager.uploadFileFromEus(serviceName,
+                    presenterFilePathInEus, completePresenterPath);
+
+            // Upload viewer
+            platformManager.uploadFileFromEus(serviceName, viewerFilePathInEus,
+                    completeViewerPath);
+        }
 
     }
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            InputStream presenterFile, InputStream viewerFile)
+            String presenterFilePathInEus, String viewerFilePathInEus)
             throws Exception {
 
         String completePresenterPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
@@ -156,32 +168,75 @@ public class QoEService {
         String completeViewerPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
-        uploadVideos(sessionManager, identifier, presenterFile, viewerFile,
-                completePresenterPath, completeViewerPath);
+        uploadVideos(sessionManager, identifier, presenterFilePathInEus,
+                viewerFilePathInEus, completePresenterPath, completeViewerPath);
     }
 
     // Step 2
     public void downloadVideosFromBrowserAndUploadToQoE(
+            SessionManager webRTCQoESessionManager,
             SessionManager presenterSessionManager,
             SessionManager viewerSessionManager, String identifier,
             String presenterCompleteFilePath, String viewerCompleteFilePath)
             throws Exception {
+
+        /* ************** Presenter ************** */
+
         log.debug(
                 "Downloading QoE Presenter Video file from session {} to send to service with id {}",
                 viewerSessionManager.getSessionId(), identifier);
-        InputStream presenterVideo = viewerSessionManager.getPlatformManager()
-                .getFileFromBrowser(viewerSessionManager,
-                        presenterCompleteFilePath, false);
 
+        final PlatformManager viewerPlatformManager = viewerSessionManager
+                .getPlatformManager();
+        String presenterFileName = viewerPlatformManager
+                .getFileNameFromCompleteFilePath(presenterCompleteFilePath);
+        String presenterPathWithoutFile = viewerPlatformManager
+                .getPathWithoutFileNameFromCompleteFilePath(
+                        presenterCompleteFilePath);
+        final String eusDownloadFolder = "/tmp/";
+        if (viewerSessionManager.isAWSSession()) {
+            viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
+                    viewerSessionManager.getAwsInstanceId(),
+                    viewerSessionManager.getVncContainerName(),
+                    presenterPathWithoutFile, eusDownloadFolder,
+                    presenterFileName, false);
+
+        } else {
+            viewerPlatformManager.downloadFileOrFilesFromServiceToEus(
+                    viewerSessionManager.getVncContainerName(),
+                    presenterPathWithoutFile, eusDownloadFolder,
+                    presenterFileName, false);
+
+        }
+
+        /* **************** Viewer **************** */
         log.debug(
                 "Downloading QoE Viewer Video file from session {} to send to service with id {}",
                 presenterSessionManager.getSessionId(), identifier);
-        InputStream viewerVideo = presenterSessionManager.getPlatformManager()
-                .getFileFromBrowser(presenterSessionManager,
-                        viewerCompleteFilePath, false);
+        final PlatformManager presenterPlatformManager = presenterSessionManager
+                .getPlatformManager();
+        String viewerFileName = presenterPlatformManager
+                .getFileNameFromCompleteFilePath(viewerCompleteFilePath);
+        String viewerPathWithoutFile = presenterPlatformManager
+                .getPathWithoutFileNameFromCompleteFilePath(
+                        viewerCompleteFilePath);
+        if (presenterSessionManager.isAWSSession()) {
+            viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
+                    presenterSessionManager.getAwsInstanceId(),
+                    presenterSessionManager.getVncContainerName(),
+                    viewerPathWithoutFile, eusDownloadFolder, viewerFileName,
+                    false);
+        } else {
+            presenterPlatformManager.downloadFileOrFilesFromServiceToEus(
+                    presenterSessionManager.getVncContainerName(),
+                    viewerPathWithoutFile, eusDownloadFolder, viewerFileName,
+                    false);
+        }
 
-        uploadVideos(presenterSessionManager, identifier, presenterVideo,
-                viewerVideo);
+        /* **************** UPLOAD **************** */
+        uploadVideos(webRTCQoESessionManager, identifier,
+                eusDownloadFolder + presenterFileName,
+                eusDownloadFolder + viewerFileName);
     }
 
     public void calculateQoEMetrics(SessionManager sessionManager,
@@ -192,13 +247,22 @@ public class QoEService {
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
-        platformManager.execCommand(serviceName, true, "sh", "-c", "'"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
-                + "'");
-
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+        try {
+            String result = platformManager.execCommandInSubService(serviceName,
+                    identifier, true,
+                    contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                            + "/"
+                            + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME);
+            log.info("CSV generated for service with id {}. Response: {}",
+                    identifier, result);
+        } catch (Exception e) {
+            log.error("Error on generate QoE CSV for instance {}: {}",
+                    identifier, e.getMessage());
+            webRTCQoEMeter.setErrorOnCsvGeneration(true);
+            throw e;
+        }
+
         if (webRTCQoEMeter != null) {
             webRTCQoEMeter.setCsvGenerated(true);
             addOrUpdateMap(webRTCQoEMeter);
@@ -214,9 +278,12 @@ public class QoEService {
     }
 
     // Step 4
-    public boolean isCsvAlreadyGenerated(String identifier) {
+    public boolean isCsvAlreadyGenerated(String identifier) throws Exception {
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         if (webRTCQoEMeter != null) {
+            if (webRTCQoEMeter.isErrorOnCsvGeneration()) {
+                throw new Exception("there was an error generating the CSV");
+            }
             return webRTCQoEMeter.isCsvGenerated();
         }
         return false;
@@ -232,18 +299,26 @@ public class QoEService {
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         List<InputStream> csvFiles = new ArrayList<InputStream>();
-        List<String> csvFileNames = platformManager.getFolderFilesList(
-                serviceName,
-                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
-                ".csv");
+        List<String> csvFileNames = platformManager
+                .getSubserviceFolderFilesList(serviceName, identifier,
+                        contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
+                        ".csv");
 
         if (csvFileNames != null) {
             for (String csvName : csvFileNames) {
                 if (csvName != null && !"".equals(csvName)) {
                     String currentCsvPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                             + "/" + csvName;
-                    InputStream currentCsv = platformManager.getFileFromService(
-                            serviceName, currentCsvPath, false);
+
+                    InputStream currentCsv = null;
+                    if (sessionManager.isAWSSession()) {
+                        currentCsv = platformManager.getFileFromSubService(
+                                serviceName, identifier, currentCsvPath, false);
+                    } else {
+                        currentCsv = platformManager.getFileFromService(
+                                serviceName, currentCsvPath, false);
+                    }
+
                     if (currentCsv != null) {
                         csvFiles.add(currentCsv);
                     }

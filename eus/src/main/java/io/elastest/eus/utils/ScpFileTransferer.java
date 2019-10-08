@@ -80,8 +80,8 @@ public class ScpFileTransferer {
     public void uploadFile(InputStream tarStreamFile, String completePath,
             String fileName) throws Exception {
         try {
-            log.info("Uploading file {} from {} to remote path {}", fileName,
-                    jschSession.getHost(), completePath);
+            log.info("Uploading file {} to remote path {} of instance {}",
+                    fileName, completePath, jschSession.getHost());
 
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");
@@ -97,7 +97,8 @@ public class ScpFileTransferer {
             jschSession.disconnect();
         } catch (Exception e) {
             jschSession.disconnect();
-            throw new Exception("Error on upload file: " + e.getMessage());
+            log.error("Error on upload file");
+            throw e;
         }
     }
 
@@ -120,13 +121,13 @@ public class ScpFileTransferer {
     public void downloadFile(String remotePath, String filename,
             String localPath) {
         try {
-
+            remotePath = remotePath.endsWith("/") ? remotePath
+                    : remotePath + "/";
             log.info("Downloading file {} from {} to local path {}",
-                    remotePath + "/" + filename, jschSession.getHost(),
-                    localPath);
+                    remotePath + filename, jschSession.getHost(), localPath);
 
             // Exec 'scp -f FILE_PATH'
-            String command = "scp -f " + remotePath + "/" + filename;
+            String command = "scp -f " + remotePath + filename;
             Channel channel = jschSession.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
 

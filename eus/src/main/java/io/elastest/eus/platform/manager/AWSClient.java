@@ -118,7 +118,7 @@ public class AWSClient {
                 break;
             } else {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(4000);
                 } catch (InterruptedException e) {
                 }
             }
@@ -433,7 +433,7 @@ public class AWSClient {
     }
 
     public List<String> listFolderFiles(String instanceId, String remotePath,
-            String filter) throws Exception {
+            String filter, String subserviceId) throws Exception {
         String grepFilter = "";
         if (filter != null && !"".equals(filter)) {
             grepFilter = " | grep " + filter;
@@ -441,6 +441,12 @@ public class AWSClient {
 
         String command = "ls -p " + remotePath + grepFilter
                 + " | grep -v / | tr '\\n' ','";
+
+        if (subserviceId != null) {
+            command = "docker exec -it " + subserviceId + " sh -c '" + command
+                    + "'";
+        }
+
         List<String> filesNames = null;
         String response = executeCommand(instanceId, command);
 
@@ -460,7 +466,7 @@ public class AWSClient {
 
     public List<String> listFolderFiles(String instanceId, String remotePath)
             throws Exception {
-        return listFolderFiles(instanceId, remotePath, "");
+        return listFolderFiles(instanceId, remotePath, "", null);
     }
 
     public void downloadFolderFiles(String instanceId, String remotePath,

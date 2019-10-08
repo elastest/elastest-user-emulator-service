@@ -108,7 +108,7 @@ public class RecordingService {
         log.debug("Recording session {} in container {} with file name {}",
                 sessionManager.getSessionId(), browserServiceNameOrId,
                 recordingFileName);
-        sessionManager.getPlatformManager().execCommand(browserServiceNameOrId,
+        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId,
                 false, startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
@@ -129,7 +129,7 @@ public class RecordingService {
             String browserServiceNameOrId) throws Exception {
         log.debug("Stopping recording session {} of container {}",
                 sessionManager.getSessionId(), browserServiceNameOrId);
-        sessionManager.getPlatformManager().execCommand(browserServiceNameOrId,
+        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId,
                 true, stopRecordingScript);
         try {
             Thread.sleep(1200);

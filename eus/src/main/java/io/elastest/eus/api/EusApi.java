@@ -660,6 +660,7 @@ public interface EusApi {
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
      *
      * Checks if WebRTC QoE Meter CSV is already generated
+     * @throws Exception 
      */
     @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
             "Session Files" })
@@ -671,13 +672,14 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception;
 
     /**
      * GET
      * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
      *
      * Checks if WebRTC QoE Meter CSV is already generated
+     * @throws Exception 
      */
     @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
             "Session Files" })
@@ -689,7 +691,7 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier);
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception;
 
     /**
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
