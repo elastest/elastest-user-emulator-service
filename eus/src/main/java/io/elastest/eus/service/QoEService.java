@@ -253,7 +253,8 @@ public class QoEService {
                     identifier, true,
                     contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                             + "/"
-                            + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME);
+                            + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
+                            + " >> /calculate.log");
             log.info("CSV generated for service with id {}. Response: {}",
                     identifier, result);
         } catch (Exception e) {

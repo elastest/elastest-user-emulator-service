@@ -9,11 +9,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
@@ -31,12 +37,15 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeImagesRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeImagesResponse;
 import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusRequest;
 import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusResponse;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest.Builder;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse;
 import software.amazon.awssdk.services.ec2.model.Filter;
+import software.amazon.awssdk.services.ec2.model.Image;
 import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceStateName;
 import software.amazon.awssdk.services.ec2.model.InstanceStatus;
@@ -77,6 +86,45 @@ public class AWSClient {
             String sshUser, String sshPrivateKey) {
         this(new AWSConfig(region, secretAccessKey, accessKeyId, sshUser,
                 sshPrivateKey));
+    }
+
+    @SuppressWarnings("deprecation")
+    public String getUbuntu16Image() {
+        List<Filter> filters = new ArrayList<>();
+        filters.add(Filter.builder().name("name").values(Arrays.asList(
+                "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-????????"))
+                .build());
+
+        filters.add(Filter.builder().name("state")
+                .values(Arrays.asList("available")).build());
+
+        DescribeImagesRequest describeImagesRequest = DescribeImagesRequest
+                .builder().owners("099720109477").filters(filters).build();
+        DescribeImagesResponse response = ec2
+                .describeImages(describeImagesRequest);
+
+        ArrayList<Image> sortedImages = new ArrayList<Image>(response.images());
+
+        Collections.sort(sortedImages, new Comparator<Image>() {
+            @Override
+            public int compare(Image image1, Image image2) {
+                try {
+                    DateFormat df = new SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                    df.setTimeZone(TimeZone.getTimeZone("GMT-0"));
+
+                    Date date1 = df.parse(image1.creationDate());
+                    Date date2 = df.parse(image2.creationDate());
+
+                    return date1.getTime() > date2.getTime() ? -1 : 1;
+                } catch (Exception e) {
+                }
+                return 0;
+            }
+        });
+
+        Image image = sortedImages.get(0);
+        return image.imageId();
     }
 
     public List<Instance> provideInstances(String amiId,
