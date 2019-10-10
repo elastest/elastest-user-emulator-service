@@ -696,12 +696,13 @@ public class WebDriverService {
                     jqOperaBinary);
         }
 
-        // JSON processing to remove banner if chrome
+        // JSON processing to remove banner if chrome and disable cors
         if (browserName.equalsIgnoreCase("chrome")) {
             // <76
-            String jqChromeBanner = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities.chromeOptions.args += .desiredCapabilities.chromeOptions.args + [\"disable-infobars\"] else . end)";
+            String jqChromeBannerAndDisableCors = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities.chromeOptions.args += .desiredCapabilities.chromeOptions.args + "
+                    + "[\"disable-infobars\",\"disable-web-security\",\"user-data-dir=/tmp/temp_chrome_user_data_dir\"] else . end)";
             newRequestBody = jsonService.processJsonWithJq(newRequestBody,
-                    jqChromeBanner);
+                    jqChromeBannerAndDisableCors);
 
             // >76 TODO
             // "chromeOptions": {
