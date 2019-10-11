@@ -319,7 +319,7 @@ public class WebDriverService {
                     .getVersion();
 
             newRequestBody = processStartSessionRequest(requestBody,
-                    browserName);
+                    browserName, version);
             httpEntity = new HttpEntity<>(newRequestBody);
 
             // If live, no timeout
@@ -551,16 +551,21 @@ public class WebDriverService {
             boolean activated, String monitoringIndex) {
         boolean manageSuccessful = false;
         if (activated) {
-            logger.debug("WebRtc monitoring activated");
+            logger.debug("WebRtc monitoring activated for session {}",
+                    sessionManager.getSessionId());
             try {
                 String configLocalStorageStr = this
                         .getWebRtcMonitoringLocalStorageStr(
                                 sessionManager.getSessionId(), monitoringIndex);
+                logger.debug(
+                        "Configuration for send to session {} to activate WebRTC: {}",
+                        sessionManager.getSessionId(), configLocalStorageStr);
                 String postResponse = this.postScript(sessionManager,
                         configLocalStorageStr, new ArrayList<>());
                 manageSuccessful = postResponse != null;
 
-                logger.debug("WebRtc Monitoring Response: {}", postResponse);
+                logger.debug("WebRtc Monitoring Response for session {}: {}",
+                        sessionManager.getSessionId(), postResponse);
 
             } catch (JsonProcessingException e) {
                 logger.error(
@@ -682,7 +687,7 @@ public class WebDriverService {
     }
 
     private String processStartSessionRequest(String requestBody,
-            String browserName) throws IOException {
+            String browserName, String version) throws IOException {
         String newRequestBody;
         // JSON processing to activate always the browser logging
         String jqActivateBrowserLogging = "walk(if type == \"object\" and .desiredCapabilities then .desiredCapabilities += { \"loggingPrefs\": { \"browser\" : \"ALL\" } }  else . end)";
