@@ -249,12 +249,14 @@ public class QoEService {
 
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         try {
+            String command = "cd "
+                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                    + "; " + "./"
+                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
+                    + " >> /calculate.log";
+
             String result = platformManager.execCommandInSubService(serviceName,
-                    identifier, true,
-                    contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                            + "/"
-                            + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
-                            + " >> /calculate.log");
+                    identifier, true, command);
             log.info("CSV generated for service with id {}. Response: {}",
                     identifier, result);
         } catch (Exception e) {

@@ -88,8 +88,7 @@ public class AWSClient {
                 sshPrivateKey));
     }
 
-    @SuppressWarnings("deprecation")
-    public String getUbuntu16Image() {
+    public String getUbuntu16AmiImageId() {
         List<Filter> filters = new ArrayList<>();
         filters.add(Filter.builder().name("name").values(Arrays.asList(
                 "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-????????"))

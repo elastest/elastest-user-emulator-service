@@ -143,13 +143,15 @@ public class BrowserAWSManager extends PlatformManager {
         return null;
     }
 
-    private Instance provideInstance(SessionManager sessionManager)
-            throws Exception {
+    private Instance provideInstance(SessionManager sessionManager,
+            String amiId) throws Exception {
         AWSInstancesConfig awsInstanceConfig = sessionManager.getCapabilities()
                 .getAwsConfig().getAwsInstancesConfig();
 
         // IMAGE_ID
-        String amiId = awsInstanceConfig.getAmiId();
+        if (amiId == null || "".equals(amiId)) {
+            amiId = awsInstanceConfig.getAmiId();
+        }
         // INSTANCE_TYPE
         InstanceType instanceType = awsInstanceConfig.getInstanceType();
         // KEY_NAME
@@ -167,16 +169,26 @@ public class BrowserAWSManager extends PlatformManager {
         return instance;
     }
 
-    private String provideAndWaitForInstance(SessionManager sessionManager)
-            throws Exception, TimeoutException {
+    private Instance provideInstance(SessionManager sessionManager)
+            throws Exception {
+        return provideInstance(sessionManager, null);
+    }
+
+    private String provideAndWaitForInstance(SessionManager sessionManager,
+            String amiId) throws Exception, TimeoutException {
         // Call to AwsClient to create instances
-        Instance instance = provideInstance(sessionManager);
+        Instance instance = provideInstance(sessionManager, amiId);
         // Wait
         awsClient.waitForInstance(instance, 600);
         instance = awsClient.describeInstance(instance);
 
         String instanceId = instance.instanceId();
         return instanceId;
+    }
+
+    private String provideAndWaitForInstance(SessionManager sessionManager)
+            throws Exception, TimeoutException {
+        return provideAndWaitForInstance(sessionManager, null);
     }
 
     @Override
@@ -240,6 +252,10 @@ public class BrowserAWSManager extends PlatformManager {
         WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
         String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
         webRTCQoEMeter.setIdentifier(serviceContainerName);
+
+        // TODO use ubuntu base image WITH DOCKER
+        // String instanceId = provideAndWaitForInstance(sessionManager,
+        // awsClient.getUbuntu16AmiImageId());
 
         String instanceId = provideAndWaitForInstance(sessionManager);
 
