@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Async;
@@ -293,7 +294,7 @@ public class QoEService {
     }
 
     // Step 5
-    public List<InputStream> getQoEMetricsCSV(SessionManager sessionManager,
+    public List<byte[]> getQoEMetricsCSV(SessionManager sessionManager,
             String identifier) throws Exception {
         log.debug("Getting QoE Metrics CSV files for session {}",
                 sessionManager.getSessionId());
@@ -301,7 +302,7 @@ public class QoEService {
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
-        List<InputStream> csvFiles = new ArrayList<InputStream>();
+        List<byte[]> csvFiles = new ArrayList<byte[]>();
         List<String> csvFileNames = platformManager
                 .getSubserviceFolderFilesList(serviceName, identifier,
                         contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
@@ -323,7 +324,7 @@ public class QoEService {
                     }
 
                     if (currentCsv != null) {
-                        csvFiles.add(currentCsv);
+                        csvFiles.add(IOUtils.toByteArray(currentCsv));
                     }
                 }
             }

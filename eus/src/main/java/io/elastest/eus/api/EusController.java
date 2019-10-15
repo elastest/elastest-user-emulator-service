@@ -22,7 +22,6 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -662,20 +661,20 @@ public class EusController implements EusApi {
         return this.isWebRTCQoEMeterCsvGenerated(sessionId, identifier);
     }
 
-    public ResponseEntity<List<InputStream>> getWebRTCQoEMeterCsv(
+    public ResponseEntity<List<byte[]>> getWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
         SessionManager webRTCQoESessionManager = sessionService
                 .getSession(sessionId).get();
 
-        List<InputStream> csvList = webDriverService.qoeService
+        List<byte[]> csvList = webDriverService.qoeService
                 .getQoEMetricsCSV(webRTCQoESessionManager, identifier);
 
-        return new ResponseEntity<List<InputStream>>(csvList, OK);
+        return new ResponseEntity<List<byte[]>>(csvList, OK);
     }
 
-    public ResponseEntity<List<InputStream>> executionGetWebRTCQoEMeterCsv(
+    public ResponseEntity<List<byte[]>> executionGetWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
