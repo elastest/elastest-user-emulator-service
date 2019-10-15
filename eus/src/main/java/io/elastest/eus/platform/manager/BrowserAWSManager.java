@@ -110,12 +110,10 @@ public class BrowserAWSManager extends PlatformManager {
         } else {
             String fileName = getFileNameFromCompleteFilePath(completeFilePath);
             String instanceCompleteFilePath = "/tmp/" + fileName;
+            
             // Copy from container to instance first
             awsClient.executeCommand(instanceId, "docker cp " + subServiceID
                     + ":" + completeFilePath + " " + instanceCompleteFilePath);
-
-            String ls = awsClient.executeCommand(instanceId, "ls /tmp");
-            logger.debug("Ls result for instance {}: {}", instanceId, ls);
 
             return awsClient.getFileAsInputStream(instanceId,
                     instanceCompleteFilePath);

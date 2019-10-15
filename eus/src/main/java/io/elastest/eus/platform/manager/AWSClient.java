@@ -490,8 +490,8 @@ public class AWSClient {
                 + " | grep -v / | tr '\\n' ','";
 
         if (subserviceId != null) {
-            command = "docker exec -it " + subserviceId + " sh -c '" + command
-                    + "'";
+            command = "docker exec -t " + subserviceId + " sh -c \"" + command
+                    + "\"";
         }
 
         List<String> filesNames = null;

@@ -22,6 +22,8 @@ import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -104,10 +106,28 @@ public class ScpFileTransferer {
 
     public InputStream getFileAsInputStream(String completeFilePathWithName)
             throws Exception {
+        log.info("Getting file {} from {} as InputStream",
+                completeFilePathWithName, jschSession.getHost());
+
         Channel channel = jschSession.openChannel("sftp");
         channel.connect();
         ChannelSftp sftpChannel = (ChannelSftp) channel;
         InputStream is = sftpChannel.get(completeFilePathWithName);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+
+        byte[] buff = new byte[8000];
+        int bytesRead = 0;
+
+        while ((bytesRead = is.read(buff)) != -1) {
+            bao.write(buff, 0, bytesRead);
+        }
+
+        byte[] data = bao.toByteArray();
+        log.debug("Obtained file {}", new String(data));
+
+        ByteArrayInputStream bin = new ByteArrayInputStream(data);
+
         try {
             sftpChannel.disconnect();
             channel.disconnect();
@@ -115,7 +135,7 @@ public class ScpFileTransferer {
         } catch (Exception e) {
 
         }
-        return is;
+        return bin;
     }
 
     public void downloadFile(String remotePath, String filename,
