@@ -16,6 +16,7 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.eus.api.model.ExecutionData;
+import io.elastest.eus.session.SessionManager;
 
 @Service
 public class EusFilesService {
@@ -54,6 +55,18 @@ public class EusFilesService {
 
     public String getInternalSessionFolderFromExecution(ExecutionData data) {
         return getEtSharedFolder() + data.getFolderPath();
+    }
+
+    // If live session, eus path, if execution, exec/eus path
+    public String getSessionFilesFolderBySessionManager(
+            SessionManager sessionManager) {
+        String filesFolder = this.getEusFilesPath();
+
+        if (sessionManager.isSessionFromExecution()) {
+            filesFolder = this.getInternalSessionFolderFromExecution(
+                    sessionManager.getElastestExecutionData());
+        }
+        return filesFolder;
     }
 
     public String getFilesPathInHostPath() {
@@ -128,14 +141,14 @@ public class EusFilesService {
         return uploadFileToSessionExecution(data, sessionId,
                 file.getOriginalFilename(), file);
     }
-    
+
     public File createFileFromString(String string, String targetPath)
             throws IOException {
         File file = new File(targetPath);
         FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
         return ResourceUtils.getFile(targetPath);
     }
-    
+
     public File createFileFromInputStream(InputStream iStream,
             String targetPath) throws IOException {
         File file = new File(targetPath);

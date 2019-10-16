@@ -3,7 +3,11 @@ package io.elastest.eus.service;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +17,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,10 +34,17 @@ import io.elastest.eus.session.SessionManager;
 public class QoEService {
     final Logger log = getLogger(lookup().lookupClass());
     EusContextProperties contextProperties;
+    EusFilesService eusFilesService;
 
     Map<String, WebRTCQoEMeter> webRTCQoEMeterMap = new HashMap<>();
 
     static boolean alreadyDestroyed = false;
+
+    @Autowired
+    public QoEService(EusFilesService eusFilesService) {
+        super();
+        this.eusFilesService = eusFilesService;
+    }
 
     @PostConstruct
     public void init() {
@@ -180,33 +192,36 @@ public class QoEService {
             SessionManager viewerSessionManager, String identifier,
             String presenterCompleteFilePath, String viewerCompleteFilePath)
             throws Exception {
+        final String eusDownloadFolder = eusFilesService
+                .getSessionFilesFolderBySessionManager(webRTCQoESessionManager);
 
         /* ************** Presenter ************** */
-
         log.debug(
                 "Downloading QoE Presenter Video file from session {} to send to service with id {}",
                 viewerSessionManager.getSessionId(), identifier);
 
         final PlatformManager viewerPlatformManager = viewerSessionManager
                 .getPlatformManager();
-        String presenterFileName = viewerPlatformManager
+        String originalPresenterFileName = viewerPlatformManager
                 .getFileNameFromCompleteFilePath(presenterCompleteFilePath);
+        String newPresenterFileName = viewerSessionManager.getIdForFiles() + "_"
+                + originalPresenterFileName;
+
         String presenterPathWithoutFile = viewerPlatformManager
                 .getPathWithoutFileNameFromCompleteFilePath(
                         presenterCompleteFilePath);
-        final String eusDownloadFolder = "/tmp/";
         if (viewerSessionManager.isAWSSession()) {
             viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
                     viewerSessionManager.getAwsInstanceId(),
                     viewerSessionManager.getVncContainerName(),
                     presenterPathWithoutFile, eusDownloadFolder,
-                    presenterFileName, false);
+                    originalPresenterFileName, newPresenterFileName, false);
 
         } else {
             viewerPlatformManager.downloadFileOrFilesFromServiceToEus(
                     viewerSessionManager.getVncContainerName(),
                     presenterPathWithoutFile, eusDownloadFolder,
-                    presenterFileName, false);
+                    originalPresenterFileName, false);
 
         }
 
@@ -214,10 +229,14 @@ public class QoEService {
         log.debug(
                 "Downloading QoE Viewer Video file from session {} to send to service with id {}",
                 presenterSessionManager.getSessionId(), identifier);
+
         final PlatformManager presenterPlatformManager = presenterSessionManager
                 .getPlatformManager();
-        String viewerFileName = presenterPlatformManager
+        String originalViewerFileName = presenterPlatformManager
                 .getFileNameFromCompleteFilePath(viewerCompleteFilePath);
+        String newViewerFileName = presenterSessionManager.getIdForFiles() + "_"
+                + originalViewerFileName;
+
         String viewerPathWithoutFile = presenterPlatformManager
                 .getPathWithoutFileNameFromCompleteFilePath(
                         viewerCompleteFilePath);
@@ -225,19 +244,19 @@ public class QoEService {
             viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
                     presenterSessionManager.getAwsInstanceId(),
                     presenterSessionManager.getVncContainerName(),
-                    viewerPathWithoutFile, eusDownloadFolder, viewerFileName,
-                    false);
+                    viewerPathWithoutFile, eusDownloadFolder,
+                    originalViewerFileName, newViewerFileName, false);
         } else {
             presenterPlatformManager.downloadFileOrFilesFromServiceToEus(
                     presenterSessionManager.getVncContainerName(),
-                    viewerPathWithoutFile, eusDownloadFolder, viewerFileName,
-                    false);
+                    viewerPathWithoutFile, eusDownloadFolder,
+                    originalViewerFileName, false);
         }
 
         /* **************** UPLOAD **************** */
         uploadVideos(webRTCQoESessionManager, identifier,
-                eusDownloadFolder + presenterFileName,
-                eusDownloadFolder + viewerFileName);
+                eusDownloadFolder + newPresenterFileName,
+                eusDownloadFolder + newViewerFileName);
     }
 
     public void calculateQoEMetrics(SessionManager sessionManager,
@@ -331,6 +350,43 @@ public class QoEService {
         }
 
         return csvFiles;
+    }
+
+    public List<Double> getQoEMetricsMetric(SessionManager sessionManager,
+            String identifier) throws Exception {
+        List<Double> metrics = new ArrayList<>();
+        List<byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
+
+        if (csvs != null) {
+            for (byte[] csv : csvs) {
+                Double average = 0.0;
+                int total = 0;
+
+                InputStream is = null;
+                BufferedReader bfReader = null;
+
+                is = new ByteArrayInputStream(csv);
+                bfReader = new BufferedReader(new InputStreamReader(is));
+                String line = null;
+                while ((line = bfReader.readLine()) != null) {
+                    try {
+                        Double lineAsNum = Double.valueOf(line);
+                        average = average + lineAsNum;
+                        total++;
+                    } catch (Exception e) {
+                    }
+                }
+
+                average = average / total;
+                if (is != null) {
+                    is.close();
+                }
+                metrics.add(average);
+
+            }
+        }
+
+        return metrics;
     }
 
     private String getRealServiceName(SessionManager sessionManager,

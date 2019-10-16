@@ -43,8 +43,8 @@ public abstract class PlatformManager {
 
     public abstract void downloadFileOrFilesFromSubServiceToEus(
             String instanceId, String subServiceID, String remotePath,
-            String localPath, String filename, Boolean isDirectory)
-            throws Exception;
+            String localPath, String originalFilename, String newFilename,
+            Boolean isDirectory) throws Exception;
 
     public abstract InputStream getFileFromService(String serviceNameOrId,
             String path, Boolean isDirectory) throws Exception;

@@ -184,7 +184,8 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
             String subServiceID, String remotePath, String localPath,
-            String filename, Boolean isDirectory) throws Exception {
+            String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }

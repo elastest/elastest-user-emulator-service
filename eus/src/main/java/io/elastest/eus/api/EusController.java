@@ -649,7 +649,8 @@ public class EusController implements EusApi {
 
     public ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception {
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
         Boolean generated = webDriverService.qoeService
                 .isCsvAlreadyGenerated(identifier);
         return new ResponseEntity<Boolean>(generated, OK);
@@ -657,7 +658,8 @@ public class EusController implements EusApi {
 
     public ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception {
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
         return this.isWebRTCQoEMeterCsvGenerated(sessionId, identifier);
     }
 
@@ -679,5 +681,23 @@ public class EusController implements EusApi {
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
         return this.getWebRTCQoEMeterCsv(sessionId, identifier);
+    }
+
+    public ResponseEntity<List<Double>> getWebRTCQoEMeterMetric(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
+        SessionManager sessionManager = sessionService
+                .getSession(sessionId).get();
+
+        return new ResponseEntity<List<Double>>(webDriverService.qoeService
+                .getQoEMetricsMetric(sessionManager, identifier), OK);
+    }
+
+    public ResponseEntity<List<Double>> executionGetWebRTCQoEMeterMetric(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception {
+        return getWebRTCQoEMeterMetric(sessionId, identifier);
     }
 }

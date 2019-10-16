@@ -69,7 +69,7 @@ public class BrowserAWSManager extends PlatformManager {
     @Override
     public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
             String subServiceID, String remotePath, String localPath,
-            String filename, Boolean isDirectory) throws Exception {
+            String originalFilename, String newFilename, Boolean isDirectory) throws Exception {
         String instanceCompleteFilePath = "/tmp/";
         if (isDirectory) {
             awsClient.executeCommand(instanceId, "docker cp " + subServiceID
@@ -81,11 +81,11 @@ public class BrowserAWSManager extends PlatformManager {
                     : remotePath + "/";
             // Copy from container to instance first
             awsClient.executeCommand(instanceId,
-                    "docker cp " + subServiceID + ":" + remotePath + filename
-                            + " " + instanceCompleteFilePath + filename);
+                    "docker cp " + subServiceID + ":" + remotePath + originalFilename
+                            + " " + instanceCompleteFilePath + newFilename);
 
             downloadFileOrFilesFromServiceToEus(instanceId,
-                    instanceCompleteFilePath, localPath, filename, false);
+                    instanceCompleteFilePath, localPath, newFilename, false);
         }
     }
 
@@ -110,7 +110,7 @@ public class BrowserAWSManager extends PlatformManager {
         } else {
             String fileName = getFileNameFromCompleteFilePath(completeFilePath);
             String instanceCompleteFilePath = "/tmp/" + fileName;
-            
+
             // Copy from container to instance first
             awsClient.executeCommand(instanceId, "docker cp " + subServiceID
                     + ":" + completeFilePath + " " + instanceCompleteFilePath);
@@ -124,12 +124,8 @@ public class BrowserAWSManager extends PlatformManager {
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
             throws Exception {
         String remotePath = contextProperties.CONTAINER_RECORDING_FOLDER;
-        String localPath = eusFilesService.getEusFilesPath();
-
-        if (sessionManager.isSessionFromExecution()) {
-            localPath = eusFilesService.getInternalSessionFolderFromExecution(
-                    sessionManager.getElastestExecutionData());
-        }
+        String localPath = eusFilesService
+                .getSessionFilesFolderBySessionManager(sessionManager);
         downloadFileOrFilesFromServiceToEus(sessionManager.getAwsInstanceId(),
                 remotePath, localPath, null, true);
     }

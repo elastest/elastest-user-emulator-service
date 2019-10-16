@@ -74,7 +74,8 @@ public class BrowserDockerManager extends PlatformManager {
     @Override
     public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
             String subServiceID, String remotePath, String localPath,
-            String filename, Boolean isDirectory) throws Exception {
+            String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }
@@ -456,7 +457,7 @@ public class BrowserDockerManager extends PlatformManager {
         // TODO Auto-generated method stub
         return null;
     }
-    
+
     @Override
     public void execCommandInBrowser(String hubContainerName,
             boolean awaitCompletion, String... command) throws Exception {
