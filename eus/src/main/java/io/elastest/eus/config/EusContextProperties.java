@@ -56,12 +56,12 @@ public class EusContextProperties {
     public String WEBDRIVER_EXECUTE_SYNC_SCRIPT_MESSAGE;
     @Value("${webdriver.execute.async.script.message}")
     public String WEBDRIVER_EXECUTE_ASYNC_SCRIPT_MESSAGE;
-    
+
     @Value("${et.intercept.script.prefix}")
     public String ET_INTERCEPT_SCRIPT_PREFIX;
     @Value("${et.intercept.script.escaped.prefix}")
     public String ET_INTERCEPT_SCRIPT_ESCAPED_PREFIX;
-    
+
     @Value("${create.session.timeout.sec}")
     public int CREATE_SESSION_TIMEOUT_SEC;
     @Value("${create.session.retries}")
@@ -122,6 +122,9 @@ public class EusContextProperties {
 
     @Value("${container.recording.folder}")
     public String CONTAINER_RECORDING_FOLDER;
+
+    @Value("${container.main.folder}")
+    public String CONTAINER_MAIN_FOLDER;
 
     @Value("${container.shared.files.folder}")
     public String CONTAINER_SHARED_FILES_FOLDER;

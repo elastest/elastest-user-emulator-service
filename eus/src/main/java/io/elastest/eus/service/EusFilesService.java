@@ -37,6 +37,9 @@ public class EusFilesService {
     @Value("${et.data.in.host}")
     private String etDataInHost;
 
+    @Value("${container.main.folder}")
+    public String CONTAINER_MAIN_FOLDER;
+
     @Value("${host.shared.files.relative.folder}")
     private String hostSharedFilesRelativeFolder;
 
@@ -74,6 +77,11 @@ public class EusFilesService {
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
                 + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
         return path;
+    }
+
+    public String getInternalSharedFilesPath(SessionManager sessionManager) {
+        return CONTAINER_MAIN_FOLDER + FILE_SEPARATOR
+                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
     }
 
     public String getFilesPathInHostPath() {
