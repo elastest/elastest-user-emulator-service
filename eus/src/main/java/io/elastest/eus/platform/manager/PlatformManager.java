@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusContextProperties;
@@ -110,6 +111,10 @@ public abstract class PlatformManager {
 
     public abstract void uploadFileToSubserviceFromEus(String instanceId,
             String subServiceID, String filePathInEus, String completeFilePath)
+            throws Exception;
+
+    public abstract Boolean uploadFileToBrowser(SessionManager sessionManager,
+            ExecutionData execData, MultipartFile file, String completeFilePath)
             throws Exception;
 
     public abstract List<String> getFolderFilesList(String containerId,

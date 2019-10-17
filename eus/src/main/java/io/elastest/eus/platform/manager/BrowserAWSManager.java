@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
 import io.elastest.epm.client.utils.UtilTools;
@@ -69,7 +70,8 @@ public class BrowserAWSManager extends PlatformManager {
     @Override
     public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
             String subServiceID, String remotePath, String localPath,
-            String originalFilename, String newFilename, Boolean isDirectory) throws Exception {
+            String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
         String instanceCompleteFilePath = "/tmp/";
         if (isDirectory) {
             awsClient.executeCommand(instanceId, "docker cp " + subServiceID
@@ -81,8 +83,9 @@ public class BrowserAWSManager extends PlatformManager {
                     : remotePath + "/";
             // Copy from container to instance first
             awsClient.executeCommand(instanceId,
-                    "docker cp " + subServiceID + ":" + remotePath + originalFilename
-                            + " " + instanceCompleteFilePath + newFilename);
+                    "docker cp " + subServiceID + ":" + remotePath
+                            + originalFilename + " " + instanceCompleteFilePath
+                            + newFilename);
 
             downloadFileOrFilesFromServiceToEus(instanceId,
                     instanceCompleteFilePath, localPath, newFilename, false);
@@ -383,6 +386,25 @@ public class BrowserAWSManager extends PlatformManager {
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
         uploadFileToSubservice(instanceId, subServiceID, fileISInEus,
                 completeFilePath);
+    }
+
+    @Override
+    public Boolean uploadFileToBrowser(SessionManager sessionManager,
+            ExecutionData execData, MultipartFile file, String completeFilePath)
+            throws Exception {
+        // If not path, upload file to et shared files folder (copying directly
+        // to instance volume folder shared with browser container)
+        if (completeFilePath == null || "".equals(completeFilePath)) {
+            completeFilePath = eusFilesService
+                    .getEusSharedFilesPath(sessionManager);
+            uploadFile(sessionManager.getAwsInstanceId(), file.getInputStream(),
+                    completeFilePath);
+        } else {
+            uploadFileToSubservice(sessionManager.getAwsInstanceId(),
+                    sessionManager.getVncContainerName(), file.getInputStream(),
+                    completeFilePath);
+        }
+        return true;
     }
 
     @Override

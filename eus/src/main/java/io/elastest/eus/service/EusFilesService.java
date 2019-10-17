@@ -69,6 +69,13 @@ public class EusFilesService {
         return filesFolder;
     }
 
+    public String getEusSharedFilesPath(SessionManager sessionManager) {
+        String path = getSessionFilesFolderBySessionManager(sessionManager);
+        path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
+                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
+        return path;
+    }
+
     public String getFilesPathInHostPath() {
         return filesPathInHost;
     }
@@ -98,7 +105,7 @@ public class EusFilesService {
     }
 
     // Generic
-    public Boolean uploadFileToPath(String path, String fileName,
+    public Boolean saveFileToPathInEUS(String path, String fileName,
             MultipartFile multipartFile)
             throws IllegalStateException, IOException {
         // Create folder if not exist
@@ -110,36 +117,6 @@ public class EusFilesService {
         }
         multipartFile.transferTo(file);
         return true;
-    }
-
-    public Boolean uploadFileToSession(String sessionId, String fileName,
-            MultipartFile multipartFile)
-            throws IllegalStateException, IOException {
-        String path = getEusFilesPath();
-        path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
-                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
-        return uploadFileToPath(path, fileName, multipartFile);
-    }
-
-    public Boolean uploadFileToSession(String sessionId, MultipartFile file)
-            throws IllegalStateException, IOException {
-        return uploadFileToSession(sessionId, file.getOriginalFilename(), file);
-    }
-
-    public Boolean uploadFileToSessionExecution(ExecutionData data,
-            String sessionId, String fileName, MultipartFile multipartFile)
-            throws IllegalStateException, IOException {
-        String path = getInternalSessionFolderFromExecution(data);
-        path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
-                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
-        return uploadFileToPath(path, fileName, multipartFile);
-    }
-
-    public Boolean uploadFileToSessionExecution(ExecutionData data,
-            String sessionId, MultipartFile file)
-            throws IllegalStateException, IOException {
-        return uploadFileToSessionExecution(data, sessionId,
-                file.getOriginalFilename(), file);
     }
 
     public File createFileFromString(String string, String targetPath)

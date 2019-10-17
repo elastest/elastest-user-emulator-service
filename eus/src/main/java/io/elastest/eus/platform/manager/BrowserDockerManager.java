@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spotify.docker.client.ProgressHandler;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -483,11 +484,11 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
+    public void uploadFile(String serviceNameOrId, InputStream streamFile,
             String completeFilePath) throws Exception {
         String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
                 completeFilePath);
-        dockerService.copyFileToContainer(serviceNameOrId, tarStreamFile,
+        dockerService.copyFileToContainer(serviceNameOrId, streamFile,
                 completePathWithoutFileName);
     }
 
@@ -507,10 +508,28 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
+    // instanceId and subServiceID are the same in this case
     public void uploadFileToSubserviceFromEus(String instanceId,
             String subServiceID, String filePathInEus, String completeFilePath)
             throws Exception {
-        // TODO Auto-generated method stub (does not util for docker)
+        uploadFileFromEus(subServiceID, filePathInEus, completeFilePath);
+    }
+
+    @Override
+    public Boolean uploadFileToBrowser(SessionManager sessionManager,
+            ExecutionData execData, MultipartFile file, String path)
+            throws Exception {
+        // If not path, upload file to et shared files folder (copying directly
+        // to eus volume folder)
+        if (path == null || "".equals(path)) {
+            path = eusFilesService.getEusSharedFilesPath(sessionManager);
+            return eusFilesService.saveFileToPathInEUS(path,
+                    file.getOriginalFilename(), file);
+        } else {
+            uploadFile(sessionManager.getVncContainerName(),
+                    file.getInputStream(), path);
+            return true;
+        }
     }
 
     @Override

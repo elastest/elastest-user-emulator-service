@@ -534,27 +534,21 @@ public class EusController implements EusApi {
     @Override
     public ResponseEntity<String> uploadFileToSession(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @RequestParam(value = "file") MultipartFile file) {
-        ResponseEntity<String> response;
-        try {
-            response = webDriverService.uploadFileToSession(sessionId, file);
-        } catch (Exception e) {
-            log.error("Exception on upload file to session {}", sessionId, e);
-            response = webDriverService
-                    .getErrorResponse("Exception on upload file to session", e);
-        }
-        return response;
+            @RequestParam(value = "file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String path) {
+        return uploadFileToSessionExecution(sessionId, null, file, path);
     }
 
     @Override
     public ResponseEntity<String> uploadFileToSessionExecution(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
-            @RequestParam(value = "file") MultipartFile file) {
+            @RequestParam(value = "file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String path) {
         ResponseEntity<String> response;
         try {
-            response = webDriverService.uploadFileToSessionExecution(key,
-                    sessionId, file);
+            response = webDriverService.uploadFileToSession(key,
+                    sessionId, path, file);
         } catch (Exception e) {
             log.error("Exception on upload file to session {}", sessionId, e);
             response = webDriverService
@@ -687,8 +681,8 @@ public class EusController implements EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
-        SessionManager sessionManager = sessionService
-                .getSession(sessionId).get();
+        SessionManager sessionManager = sessionService.getSession(sessionId)
+                .get();
 
         return new ResponseEntity<List<Double>>(webDriverService.qoeService
                 .getQoEMetricsMetric(sessionManager, identifier), OK);

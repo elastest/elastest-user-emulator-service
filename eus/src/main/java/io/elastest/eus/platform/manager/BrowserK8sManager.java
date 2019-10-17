@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.elastest.epm.client.DockerContainer.DockerBuilder;
 import io.elastest.epm.client.model.DockerServiceStatus.DockerServiceStatusEnum;
@@ -310,6 +311,14 @@ public class BrowserK8sManager extends PlatformManager {
             throws Exception {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public Boolean uploadFileToBrowser(SessionManager sessionManager,
+            ExecutionData execData, MultipartFile file, String completeFilePath)
+            throws Exception {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override

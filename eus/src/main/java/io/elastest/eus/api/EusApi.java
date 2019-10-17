@@ -555,7 +555,8 @@ public interface EusApi {
                     "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSession(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @RequestParam(value = "file") MultipartFile file);
+            @RequestParam(value = "file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String path);
 
     @ApiOperation(value = "Upload a file to Execution session", notes = "Upload a file to Execution session.", response = String.class, tags = {
             "TJob Execution", })
@@ -571,7 +572,8 @@ public interface EusApi {
     ResponseEntity<String> uploadFileToSessionExecution(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
-            @RequestParam(value = "file") MultipartFile file);
+            @RequestParam(value = "file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String path);
 
     /* ************************************** */
     /* ************ CrossBrowser ************ */
@@ -659,7 +661,8 @@ public interface EusApi {
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
      *
      * Checks if WebRTC QoE Meter CSV is already generated
-     * @throws Exception 
+     * 
+     * @throws Exception
      */
     @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
             "Session Files" })
@@ -671,14 +674,16 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<Boolean> isWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception;
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception;
 
     /**
      * GET
      * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv/isgenerated
      *
      * Checks if WebRTC QoE Meter CSV is already generated
-     * @throws Exception 
+     * 
+     * @throws Exception
      */
     @ApiOperation(value = "Checks if WebRTC QoE Meter CSV is already generated", notes = "", response = Boolean.class, tags = {
             "Session Files" })
@@ -690,7 +695,8 @@ public interface EusApi {
             "application/json" }, method = { GET })
     ResponseEntity<Boolean> executionIsWebRTCQoEMeterCsvGenerated(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
-            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier) throws Exception;
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
+            throws Exception;
 
     /**
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
@@ -732,10 +738,7 @@ public interface EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;
-    
-    
-    
-    
+
     /**
      * GET /session/{sessionId}/webrtc/qoe/meter/{identifier}/metric
      *

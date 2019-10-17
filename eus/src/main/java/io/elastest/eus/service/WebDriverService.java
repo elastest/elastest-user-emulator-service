@@ -1015,30 +1015,18 @@ public class WebDriverService {
         return count;
     }
 
-    public ResponseEntity<String> uploadFileToSession(String sessionId,
-            MultipartFile file) throws IllegalStateException, IOException {
-        Boolean saved = eusFilesService.uploadFileToSession(sessionId, file);
-
-        if (saved) {
-            return new ResponseEntity<>(file.getOriginalFilename(), OK);
-        } else {
-
-            return new ResponseEntity<>("Error on upload file: Already exists",
-                    HttpStatus.CONFLICT);
-        }
-    }
-
-    public ResponseEntity<String> uploadFileToSessionExecution(
-            String executionKey, String sessionId, MultipartFile file)
-            throws IllegalStateException, IOException {
+    public ResponseEntity<String> uploadFileToSession(String executionKey,
+            String sessionId, String path, MultipartFile file)
+            throws Exception {
         ExecutionData data = executionsMap.get(executionKey);
-        Boolean saved = eusFilesService.uploadFileToSessionExecution(data,
-                sessionId, file);
+        SessionManager sessionManager = sessionService.getSession(sessionId)
+                .get();
+        Boolean saved = sessionManager.getPlatformManager()
+                .uploadFileToBrowser(sessionManager, data, file, path);
 
         if (saved) {
             return new ResponseEntity<>(file.getOriginalFilename(), OK);
         } else {
-
             return new ResponseEntity<>("Error on upload file: Already exists",
                     HttpStatus.CONFLICT);
         }
