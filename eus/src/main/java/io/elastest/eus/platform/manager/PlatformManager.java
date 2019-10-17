@@ -126,8 +126,13 @@ public abstract class PlatformManager {
             String path, Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
-        return getFileFromService(sessionManager.getVncContainerName(), path,
-                isDirectory);
+        if (sessionManager.isAWSSession()) {
+            return getFileFromSubService(sessionManager.getAwsInstanceId(),
+                    sessionManager.getVncContainerName(), path, isDirectory);
+        } else {
+            return getFileFromService(sessionManager.getVncContainerName(),
+                    path, isDirectory);
+        }
     }
 
     @SuppressWarnings("static-access")
