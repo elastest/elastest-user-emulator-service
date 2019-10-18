@@ -285,7 +285,7 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
-            String completePresenterPath) throws Exception {
+            String completePresenterPath, String fileName) throws Exception {
         // TODO Auto-generated method stub
 
     }

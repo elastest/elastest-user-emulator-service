@@ -342,11 +342,8 @@ public class BrowserAWSManager extends PlatformManager {
 
     @Override
     public void uploadFile(String instanceId, InputStream inputStreamFile,
-            String completeFilePath) throws Exception {
-        String fileName = getFileNameFromCompleteFilePath(completeFilePath);
-        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
-                completeFilePath);
-        awsClient.uploadFile(instanceId, completePathWithoutFileName, fileName,
+            String completeFilePath, String fileName) throws Exception {
+        awsClient.uploadFile(instanceId, completeFilePath, fileName,
                 inputStreamFile);
     }
 
@@ -357,7 +354,7 @@ public class BrowserAWSManager extends PlatformManager {
         String fileName = getFileNameFromCompleteFilePath(completeFilePath);
         String instancePath = "/tmp/" + fileName;
         // first upload to instance
-        uploadFile(instanceId, inputStreamFile, instancePath);
+        uploadFile(instanceId, inputStreamFile, instancePath, fileName);
 
         // After copy into subservice
         awsClient.executeCommand(instanceId, "docker cp " + instancePath + " "
@@ -366,10 +363,17 @@ public class BrowserAWSManager extends PlatformManager {
 
     @Override
     public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
-            String completeFilePath) throws Exception {
+            String completeFilePathWithName) throws Exception {
         File fileInEus = new File(filePathInEus);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
-        uploadFile(serviceNameOrId, fileISInEus, completeFilePath);
+
+        String fileName = getFileNameFromCompleteFilePath(
+                completeFilePathWithName);
+        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
+                completeFilePathWithName);
+
+        uploadFile(serviceNameOrId, fileISInEus, completePathWithoutFileName,
+                fileName);
         try {
             logger.debug("Removing {} file from EUS after upload to service",
                     filePathInEus);
@@ -398,7 +402,7 @@ public class BrowserAWSManager extends PlatformManager {
             completeFilePath = eusFilesService
                     .getEusSharedFilesPath(sessionManager);
             uploadFile(sessionManager.getAwsInstanceId(), file.getInputStream(),
-                    completeFilePath);
+                    completeFilePath, file.getOriginalFilename());
         } else {
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), file.getInputStream(),
@@ -421,10 +425,15 @@ public class BrowserAWSManager extends PlatformManager {
             FileInputStream fileIS = new FileInputStream(file);
 
             uploadFile(sessionManager.getAwsInstanceId(), fileIS,
-                    completeFilePath);
+                    completeFilePath, fileName);
         } else {
-            File file = eusFilesService.saveFileFromUrlToPathInEUS(
-                    completeFilePath, fileName, fileUrl);
+
+            String pathInEus = completeFilePath.endsWith("/") ? completeFilePath
+                    : completeFilePath + "/";
+            pathInEus += sessionManager.getSessionId() + "/";
+
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus,
+                    fileName, fileUrl);
             FileInputStream fileIS = new FileInputStream(file);
 
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),

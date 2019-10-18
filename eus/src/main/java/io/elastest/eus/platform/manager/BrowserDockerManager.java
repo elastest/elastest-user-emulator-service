@@ -487,11 +487,9 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public void uploadFile(String serviceNameOrId, InputStream streamFile,
-            String completeFilePath) throws Exception {
-        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
-                completeFilePath);
+            String completeFilePath, String fileName) throws Exception {
         dockerService.copyFileToContainer(serviceNameOrId, streamFile,
-                completePathWithoutFileName);
+                completeFilePath);
     }
 
     @Override
@@ -529,7 +527,7 @@ public class BrowserDockerManager extends PlatformManager {
                     file.getOriginalFilename(), file);
         } else {
             uploadFile(sessionManager.getVncContainerName(),
-                    file.getInputStream(), path);
+                    file.getInputStream(), path, file.getOriginalFilename());
             return true;
         }
     }
@@ -552,7 +550,7 @@ public class BrowserDockerManager extends PlatformManager {
             FileInputStream fileIS = new FileInputStream(file);
 
             uploadFile(sessionManager.getVncContainerName(), fileIS,
-                    completeFilePath);
+                    completeFilePath, fileName);
             return true;
         }
     }

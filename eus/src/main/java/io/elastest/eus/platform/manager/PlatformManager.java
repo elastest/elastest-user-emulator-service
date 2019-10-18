@@ -99,7 +99,7 @@ public abstract class PlatformManager {
             Map<String, String> labels) throws Exception;
 
     public abstract void uploadFile(String serviceNameOrId,
-            InputStream tarStreamFile, String completeFilePath)
+            InputStream tarStreamFile, String completeFilePath, String fileName)
             throws Exception;
 
     public abstract void uploadFileToSubservice(String instanceId,
