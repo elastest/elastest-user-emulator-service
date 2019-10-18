@@ -547,12 +547,42 @@ public class EusController implements EusApi {
             @RequestParam(value = "path", required = false) String path) {
         ResponseEntity<String> response;
         try {
-            response = webDriverService.uploadFileToSession(key,
-                    sessionId, path, file);
+            response = webDriverService.uploadFileToSession(key, sessionId,
+                    path, file);
         } catch (Exception e) {
             log.error("Exception on upload file to session {}", sessionId, e);
             response = webDriverService
                     .getErrorResponse("Exception on upload file to session", e);
+        }
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<String> uploadFileToSessionFromUrl(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName,
+            @RequestParam(value = "path", required = false) String path) {
+        return uploadFileToSessionExecutionFromUrl(sessionId, null, fileUrl,
+                fileName, path);
+    }
+
+    @Override
+    public ResponseEntity<String> uploadFileToSessionExecutionFromUrl(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName,
+            @RequestParam(value = "path", required = false) String path) {
+        ResponseEntity<String> response;
+        try {
+            response = webDriverService.uploadFileToSessionFromUrl(key,
+                    sessionId, path, fileUrl, fileName);
+        } catch (Exception e) {
+            log.error("Exception on upload file to session {} from url {}",
+                    sessionId, fileUrl, e);
+            response = webDriverService.getErrorResponse(
+                    "Exception on upload file from url to session", e);
         }
         return response;
     }

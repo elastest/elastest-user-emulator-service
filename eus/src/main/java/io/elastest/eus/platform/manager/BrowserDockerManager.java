@@ -4,6 +4,8 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
@@ -528,6 +530,29 @@ public class BrowserDockerManager extends PlatformManager {
         } else {
             uploadFile(sessionManager.getVncContainerName(),
                     file.getInputStream(), path);
+            return true;
+        }
+    }
+
+    @Override
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
+            ExecutionData execData, String fileUrl, String completeFilePath,
+            String fileName) throws Exception {
+        // If not path, upload file to et shared files folder (copying directly
+        // to eus volume folder)
+        if (completeFilePath == null || "".equals(completeFilePath)) {
+            completeFilePath = eusFilesService
+                    .getEusSharedFilesPath(sessionManager);
+            eusFilesService.saveFileFromUrlToPathInEUS(completeFilePath,
+                    fileName, fileUrl);
+            return true;
+        } else {
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(
+                    completeFilePath, fileName, fileUrl);
+            FileInputStream fileIS = new FileInputStream(file);
+
+            uploadFile(sessionManager.getVncContainerName(), fileIS,
+                    completeFilePath);
             return true;
         }
     }

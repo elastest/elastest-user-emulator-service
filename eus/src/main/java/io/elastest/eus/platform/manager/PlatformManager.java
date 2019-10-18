@@ -117,6 +117,11 @@ public abstract class PlatformManager {
             ExecutionData execData, MultipartFile file, String completeFilePath)
             throws Exception;
 
+    public abstract Boolean uploadFileFromUrlToBrowser(
+            SessionManager sessionManager, ExecutionData execData,
+            String fileUrl, String completeFilePath, String fileName)
+            throws Exception;
+
     public abstract List<String> getFolderFilesList(String containerId,
             String remotePath, String filter) throws Exception;
 

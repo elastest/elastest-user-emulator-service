@@ -408,6 +408,33 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
+            ExecutionData execData, String fileUrl, String completeFilePath,
+            String fileName) throws Exception {
+        // If not path, upload file to et shared files folder (copying directly
+        // to instance volume folder shared with browser container)
+        if (completeFilePath == null || "".equals(completeFilePath)) {
+            completeFilePath = eusFilesService
+                    .getEusSharedFilesPath(sessionManager);
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(
+                    completeFilePath, fileName, fileUrl);
+            FileInputStream fileIS = new FileInputStream(file);
+
+            uploadFile(sessionManager.getAwsInstanceId(), fileIS,
+                    completeFilePath);
+        } else {
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(
+                    completeFilePath, fileName, fileUrl);
+            FileInputStream fileIS = new FileInputStream(file);
+
+            uploadFileToSubservice(sessionManager.getAwsInstanceId(),
+                    sessionManager.getVncContainerName(), fileIS,
+                    completeFilePath);
+        }
+        return true;
+    }
+
+    @Override
     public List<String> getFolderFilesList(String instanceId, String remotePath,
             String filter) throws Exception {
         return awsClient.listFolderFiles(instanceId, remotePath, filter, null);

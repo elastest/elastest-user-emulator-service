@@ -322,6 +322,14 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
+            ExecutionData execData, String fileUrl, String completeFilePath,
+            String fileName) throws Exception {
+        // TODO
+        return null;
+    }
+
+    @Override
     public List<String> getFolderFilesList(String containerId,
             String remotePath, String filter) throws Exception {
         // TODO Auto-generated method stub

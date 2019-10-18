@@ -575,6 +575,41 @@ public interface EusApi {
             @RequestParam(value = "file") MultipartFile file,
             @RequestParam(value = "path", required = false) String path);
 
+    @ApiOperation(value = "Upload a file from url to session", notes = "Upload a file from url to session.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/browserfile/session/{sessionId}", consumes = {
+            "application/json" }, produces = {
+                    "text/plain" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadFileToSessionFromUrl(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName,
+            @RequestParam(value = "path", required = false) String path);
+
+    @ApiOperation(value = "Upload a file to Execution session", notes = "Upload a file to Execution session.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/execution/{key}/browserfile/session/{sessionId}", consumes = {
+            "application/json" }, produces = {
+                    "text/plain" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadFileToSessionExecutionFromUrl(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName,
+            @RequestParam(value = "path", required = false) String path);
+
     /* ************************************** */
     /* ************ CrossBrowser ************ */
     /* ************************************** */

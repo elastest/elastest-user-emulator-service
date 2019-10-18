@@ -79,7 +79,7 @@ public class ScpFileTransferer {
         }
     }
 
-    public void uploadFile(InputStream tarStreamFile, String completePath,
+    public void uploadFile(InputStream streamFile, String completePath,
             String fileName) throws Exception {
         try {
             log.info("Uploading file {} to remote path {} of instance {}",
@@ -93,7 +93,7 @@ public class ScpFileTransferer {
             ChannelSftp channelSftp = (ChannelSftp) channel;
             channelSftp.cd(completePath);
 
-            channelSftp.put(tarStreamFile, fileName);
+            channelSftp.put(streamFile, fileName);
 
             channelSftp.disconnect();
             jschSession.disconnect();

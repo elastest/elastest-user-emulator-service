@@ -4,8 +4,13 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
@@ -119,12 +124,31 @@ public class EusFilesService {
         // Create folder if not exist
         createFolderIfNotExists(path);
 
+        path = path.endsWith("/") ? path : path + "/";
+
         File file = new File(path + fileName);
         if (file.exists()) {
             return false;
         }
         multipartFile.transferTo(file);
         return true;
+    }
+
+    public File saveFileFromUrlToPathInEUS(String path, String fileName,
+            String fileUrl) throws IllegalStateException, IOException {
+        // Create folder if not exist
+        createFolderIfNotExists(path);
+        URL url = new URL(fileUrl);
+
+        path = path.endsWith("/") ? path : path + "/";
+
+        ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+        FileOutputStream fileOS = new FileOutputStream(path + fileName);
+        FileChannel writeChannel = fileOS.getChannel();
+        writeChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+        File targetFile = new File(path + fileName);
+
+        return targetFile;
     }
 
     public File createFileFromString(String string, String targetPath)

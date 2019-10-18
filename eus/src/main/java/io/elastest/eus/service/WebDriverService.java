@@ -1032,6 +1032,25 @@ public class WebDriverService {
         }
     }
 
+    public ResponseEntity<String> uploadFileToSessionFromUrl(
+            String executionKey, String sessionId, String path, String fileUrl,
+            String fileName) throws Exception {
+        ExecutionData data = executionsMap.get(executionKey);
+        SessionManager sessionManager = sessionService.getSession(sessionId)
+                .get();
+
+        Boolean saved = sessionManager.getPlatformManager()
+                .uploadFileFromUrlToBrowser(sessionManager, data, fileUrl, path,
+                        fileName);
+
+        if (saved) {
+            return new ResponseEntity<>(fileName, OK);
+        } else {
+            return new ResponseEntity<>("Error on upload file: Already exists",
+                    HttpStatus.CONFLICT);
+        }
+    }
+
     public InputStreamResource getFileFromBrowser(String sessionId,
             String filePath, Boolean isDirectory) throws Exception {
         Optional<SessionManager> optionalSession = sessionService
