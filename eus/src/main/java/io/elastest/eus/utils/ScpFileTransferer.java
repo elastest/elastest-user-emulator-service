@@ -99,7 +99,7 @@ public class ScpFileTransferer {
             jschSession.disconnect();
         } catch (Exception e) {
             jschSession.disconnect();
-            log.error("Error on upload file");
+            log.error("Error on upload file {} to {}", fileName, completePath);
             throw e;
         }
     }

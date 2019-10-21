@@ -326,6 +326,9 @@ public class QoEService {
                         contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
                         ".csv");
 
+        log.debug("Obtained CSV files names for service {}: {}", serviceName,
+                csvFileNames);
+
         if (csvFileNames != null) {
             for (String csvName : csvFileNames) {
                 if (csvName != null && !"".equals(csvName)) {

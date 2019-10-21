@@ -292,7 +292,7 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream tarStreamFile, String completeFilePath)
+            InputStream tarStreamFile, String completeFilePath, String fileName)
             throws Exception {
         // TODO Auto-generated method stub
 

@@ -104,7 +104,7 @@ public abstract class PlatformManager {
 
     public abstract void uploadFileToSubservice(String instanceId,
             String subServiceID, InputStream tarStreamFile,
-            String completeFilePath) throws Exception;
+            String completeFilePath, String fileName) throws Exception;
 
     public abstract void uploadFileFromEus(String serviceNameOrId,
             String filePathInEus, String completeFilePath) throws Exception;

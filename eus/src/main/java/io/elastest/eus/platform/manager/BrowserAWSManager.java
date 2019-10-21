@@ -349,16 +349,23 @@ public class BrowserAWSManager extends PlatformManager {
 
     @Override
     public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream inputStreamFile, String completeFilePath)
-            throws Exception {
-        String fileName = getFileNameFromCompleteFilePath(completeFilePath);
-        String instancePath = "/tmp/" + fileName;
+            InputStream inputStreamFile, String completeFilePath,
+            String fileName) throws Exception {
+        String instancePath = "/tmp/";
         // first upload to instance
         uploadFile(instanceId, inputStreamFile, instancePath, fileName);
 
+        logger.debug(
+                "File {} uploaded to instance {} at {}. Copying to subservice {}",
+                fileName, instanceId, instancePath, subServiceID);
+
+        completeFilePath = completeFilePath.endsWith("/") ? completeFilePath
+                : completeFilePath + "/";
+
         // After copy into subservice
-        awsClient.executeCommand(instanceId, "docker cp " + instancePath + " "
-                + subServiceID + ":" + completeFilePath);
+        awsClient.executeCommand(instanceId,
+                "docker cp " + instancePath + fileName + " " + subServiceID
+                        + ":" + completeFilePath + fileName);
     }
 
     @Override
@@ -384,12 +391,17 @@ public class BrowserAWSManager extends PlatformManager {
 
     @Override
     public void uploadFileToSubserviceFromEus(String instanceId,
-            String subServiceID, String filePathInEus, String completeFilePath)
-            throws Exception {
+            String subServiceID, String filePathInEus,
+            String completeFilePathWithName) throws Exception {
+        String fileName = getFileNameFromCompleteFilePath(
+                completeFilePathWithName);
+        String completeFilePathWithoutName = getPathWithoutFileNameFromCompleteFilePath(
+                completeFilePathWithName);
+
         File fileInEus = new File(filePathInEus);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
         uploadFileToSubservice(instanceId, subServiceID, fileISInEus,
-                completeFilePath);
+                completeFilePathWithoutName, fileName);
     }
 
     @Override
@@ -406,7 +418,7 @@ public class BrowserAWSManager extends PlatformManager {
         } else {
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), file.getInputStream(),
-                    completeFilePath);
+                    completeFilePath, file.getOriginalFilename());
         }
         return true;
     }
@@ -434,11 +446,11 @@ public class BrowserAWSManager extends PlatformManager {
 
             File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus,
                     fileName, fileUrl);
-            FileInputStream fileIS = new FileInputStream(file);
+            InputStream fileIS = new FileInputStream(file);
 
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), fileIS,
-                    completeFilePath);
+                    completeFilePath, fileName);
         }
         return true;
     }
