@@ -74,6 +74,12 @@ public class ScpFileTransferer {
             jschSession = jsch.getSession(username, hostname, 22);
             jschSession.setConfig(config);
             jschSession.connect();
+
+            try {
+                temp.delete();
+            } catch (Exception e) {
+            }
+
         } catch (Exception e) {
             log.error("Couldn't connect to {} to download file", hostname);
         }

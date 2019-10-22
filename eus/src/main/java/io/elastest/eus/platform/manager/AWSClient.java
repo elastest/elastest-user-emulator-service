@@ -37,6 +37,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.BlockDeviceMapping;
 import software.amazon.awssdk.services.ec2.model.DescribeImagesRequest;
 import software.amazon.awssdk.services.ec2.model.DescribeImagesResponse;
 import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusRequest;
@@ -44,6 +45,7 @@ import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusResponse;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest.Builder;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse;
+import software.amazon.awssdk.services.ec2.model.EbsBlockDevice;
 import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.Image;
 import software.amazon.awssdk.services.ec2.model.Instance;
@@ -130,22 +132,36 @@ public class AWSClient {
             InstanceType instanceType, String keyName,
             Collection<String> securityGroups,
             Collection<TagSpecification> tagSpecifications, Integer maxCount,
-            Integer minCount) throws Exception {
-        RunInstancesRequest run_request = RunInstancesRequest.builder()
-                .imageId(amiId).instanceType(instanceType).keyName(keyName)
-                .securityGroups(securityGroups)
-                .tagSpecifications(tagSpecifications).maxCount(maxCount)
-                .minCount(minCount).build();
+            Integer minCount, Integer volumeSizeInGiB) throws Exception {
 
-        RunInstancesResponse response = ec2.runInstances(run_request);
+        software.amazon.awssdk.services.ec2.model.RunInstancesRequest.Builder requestBuilder = RunInstancesRequest
+                .builder().imageId(amiId).instanceType(instanceType)
+                .keyName(keyName).securityGroups(securityGroups)
+                .tagSpecifications(tagSpecifications).maxCount(maxCount)
+                .minCount(minCount);
+
+        if (volumeSizeInGiB != null) {
+            EbsBlockDevice ebs = EbsBlockDevice.builder()
+                    .deleteOnTermination(true).volumeSize(volumeSizeInGiB)
+                    .build();
+
+            BlockDeviceMapping blockDeviceMapping = BlockDeviceMapping.builder()
+                    .deviceName("/dev/sda1").ebs(ebs).build();
+            requestBuilder = requestBuilder
+                    .blockDeviceMappings(blockDeviceMapping);
+        }
+
+        RunInstancesResponse response = ec2
+                .runInstances(requestBuilder.build());
         return response.instances();
     }
 
     public Instance provideInstance(String amiId, InstanceType instanceType,
             String keyName, Collection<String> securityGroups,
-            Collection<TagSpecification> tagSpecifications) throws Exception {
+            Collection<TagSpecification> tagSpecifications,
+            Integer volumeSizeInGiB) throws Exception {
         return provideInstances(amiId, instanceType, keyName, securityGroups,
-                tagSpecifications, 1, 1).get(0);
+                tagSpecifications, 1, 1, volumeSizeInGiB).get(0);
     }
 
     public void waitForInstance(Instance instance, int timeoutSeconds)

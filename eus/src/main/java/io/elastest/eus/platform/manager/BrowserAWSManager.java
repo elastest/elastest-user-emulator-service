@@ -141,7 +141,7 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     private Instance provideInstance(SessionManager sessionManager,
-            String amiId) throws Exception {
+            String amiId, Integer volumeSizeInGiB) throws Exception {
         AWSInstancesConfig awsInstanceConfig = sessionManager.getCapabilities()
                 .getAwsConfig().getAwsInstancesConfig();
 
@@ -162,8 +162,13 @@ public class BrowserAWSManager extends PlatformManager {
 
         // Call to AwsClient to create instances
         Instance instance = awsClient.provideInstance(amiId, instanceType,
-                keyName, securityGroups, tagSpecifications);
+                keyName, securityGroups, tagSpecifications, volumeSizeInGiB);
         return instance;
+    }
+
+    private Instance provideInstance(SessionManager sessionManager,
+            Integer volumeSizeInGiB) throws Exception {
+        return provideInstance(sessionManager, null, volumeSizeInGiB);
     }
 
     private Instance provideInstance(SessionManager sessionManager)
@@ -172,9 +177,11 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     private String provideAndWaitForInstance(SessionManager sessionManager,
-            String amiId) throws Exception, TimeoutException {
+            String amiId, Integer volumeSizeInGiB)
+            throws Exception, TimeoutException {
         // Call to AwsClient to create instances
-        Instance instance = provideInstance(sessionManager, amiId);
+        Instance instance = provideInstance(sessionManager, amiId,
+                volumeSizeInGiB);
         // Wait
         awsClient.waitForInstance(instance, 600);
         instance = awsClient.describeInstance(instance);
@@ -183,9 +190,9 @@ public class BrowserAWSManager extends PlatformManager {
         return instanceId;
     }
 
-    private String provideAndWaitForInstance(SessionManager sessionManager)
-            throws Exception, TimeoutException {
-        return provideAndWaitForInstance(sessionManager, null);
+    private String provideAndWaitForInstance(SessionManager sessionManager,
+            Integer volumeSizeInGiB) throws Exception, TimeoutException {
+        return provideAndWaitForInstance(sessionManager, null, volumeSizeInGiB);
     }
 
     @Override
@@ -236,7 +243,7 @@ public class BrowserAWSManager extends PlatformManager {
             Map<String, String> labels) throws Exception {
         BrowserSync browserSync = new BrowserSync(crossBrowserCapabilities);
 
-        String instanceId = provideAndWaitForInstance(sessionManager);
+        String instanceId = provideAndWaitForInstance(sessionManager, null);
         browserSync.setIdentifier(instanceId);
 
         return browserSync;
@@ -254,7 +261,8 @@ public class BrowserAWSManager extends PlatformManager {
         // String instanceId = provideAndWaitForInstance(sessionManager,
         // awsClient.getUbuntu16AmiImageId());
 
-        String instanceId = provideAndWaitForInstance(sessionManager);
+        String instanceId = provideAndWaitForInstance(sessionManager,
+                new Integer(20));
 
         awsClient.executeCommand(instanceId, "docker pull "
                 + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
@@ -366,6 +374,9 @@ public class BrowserAWSManager extends PlatformManager {
         awsClient.executeCommand(instanceId,
                 "docker cp " + instancePath + fileName + " " + subServiceID
                         + ":" + completeFilePath + fileName);
+
+        // last remove from instance
+        awsClient.executeCommand(instanceId, "rm " + instancePath + fileName);
     }
 
     @Override

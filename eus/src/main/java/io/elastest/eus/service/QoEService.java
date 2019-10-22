@@ -142,9 +142,10 @@ public class QoEService {
     /* ************************************ */
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String presenterFilePathInEus, String viewerFilePathInEus,
-            String completePresenterPath, String completeViewerPath)
-            throws Exception {
+            String presenterFilePathWithNameInEus,
+            String viewerFilePathWithNameInEus,
+            String destinyCompletePresenterPathWithName,
+            String destinyCompleteViewerPathWithName) throws Exception {
         log.debug("Uploading QoE Video files to service with id {}",
                 identifier);
         String serviceName = getRealServiceName(sessionManager, identifier);
@@ -153,35 +154,43 @@ public class QoEService {
         if (sessionManager.isAWSSession()) {
             // Upload presenter
             platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, presenterFilePathInEus, completePresenterPath);
+                    identifier, presenterFilePathWithNameInEus,
+                    destinyCompletePresenterPathWithName);
 
             // Upload viewer
             platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, viewerFilePathInEus, completeViewerPath);
+                    identifier, viewerFilePathWithNameInEus,
+                    destinyCompleteViewerPathWithName);
         } else {
             // Upload presenter
             platformManager.uploadFileFromEus(serviceName,
-                    presenterFilePathInEus, completePresenterPath);
+                    presenterFilePathWithNameInEus,
+                    destinyCompletePresenterPathWithName);
 
             // Upload viewer
-            platformManager.uploadFileFromEus(serviceName, viewerFilePathInEus,
-                    completeViewerPath);
+            platformManager.uploadFileFromEus(serviceName,
+                    viewerFilePathWithNameInEus,
+                    destinyCompleteViewerPathWithName);
         }
 
     }
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String presenterFilePathInEus, String viewerFilePathInEus)
-            throws Exception {
+            String presenterFilePathWithNameInEus,
+            String viewerFilePathWithNameInEus) throws Exception {
 
-        String completePresenterPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
+        String destinyCompletePresenterPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
-        String completeViewerPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PRESENTER_VIDEO_NAME;
+
+        String destinyCompleteViewerPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
-        uploadVideos(sessionManager, identifier, presenterFilePathInEus,
-                viewerFilePathInEus, completePresenterPath, completeViewerPath);
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_VIEWER_VIDEO_NAME;
+
+        uploadVideos(sessionManager, identifier, presenterFilePathWithNameInEus,
+                viewerFilePathWithNameInEus,
+                destinyCompletePresenterPathWithName,
+                destinyCompleteViewerPathWithName);
     }
 
     // Step 2
@@ -271,13 +280,20 @@ public class QoEService {
             String command = "cd "
                     + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                     + "; " + "./"
-                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME
-                    + " >> /calculate.log";
+                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
 
             String result = platformManager.execCommandInSubService(serviceName,
                     identifier, true, command);
             log.info("CSV generated for service with id {}. Response: {}",
                     identifier, result);
+
+            result = platformManager.execCommandInSubService(serviceName,
+                    identifier, true,
+                    "ls " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH);
+            log.debug(
+                    "ls command response for service with id {}. Response: {}",
+                    identifier, result);
+
         } catch (Exception e) {
             log.error("Error on generate QoE CSV for instance {}: {}",
                     identifier, e.getMessage());
