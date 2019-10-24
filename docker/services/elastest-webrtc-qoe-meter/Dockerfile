@@ -19,6 +19,7 @@ RUN apt-get install -y jq
 RUN apt install -y ffmpeg
 RUN apt-get install -y imagemagick
 RUN apt-get install -y wget
+RUN apt-get install -y cmake
 
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -32,8 +33,21 @@ ENV ELASTEST_WEBRTC_QOE_METER_PATH=/elastest-webrtc-qoe-meter
 ENV ELASTEST_WEBRTC_QOE_METER_SCRIPTS_PATH=/elastest-webrtc-qoe-meter/scripts
 
 # VQMT Repo
-RUN git clone https://github.com/Rolinh/VQMT
-ENV VQMT_PATH=/VQMT
+RUN git clone https://github.com/opencv/opencv.git \
+  && git clone https://github.com/opencv/opencv_contrib.git \
+  && cd /opencv \
+  && mkdir build \
+  && cd build \
+  && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
+  && make \
+  && make install
+
+RUN cd / \
+  && git clone https://github.com/Rolinh/VQMT \
+  && cd /VQMT \
+  && make
+
+ENV VQMT_PATH=/VQMT/build/bin/Release
 
 # Netflix VMAF repo
 RUN git clone --depth 1 https://github.com/Netflix/vmaf.git vmaf
