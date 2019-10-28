@@ -142,35 +142,35 @@ public class QoEService {
     /* ************************************ */
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String presenterFilePathWithNameInEus,
-            String viewerFilePathWithNameInEus,
-            String destinyCompletePresenterPathWithName,
-            String destinyCompleteViewerPathWithName) throws Exception {
+            String originalFilePathWithNameInEus,
+            String receivedFilePathWithNameInEus,
+            String destinyCompleteOriginalVideoPathWithName,
+            String destinyCompleteReceivedVideoPathWithName) throws Exception {
         log.debug("Uploading QoE Video files to service with id {}",
                 identifier);
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         if (sessionManager.isAWSSession()) {
-            // Upload presenter
+            // Upload original video (from presenter)
             platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, presenterFilePathWithNameInEus,
-                    destinyCompletePresenterPathWithName);
+                    identifier, originalFilePathWithNameInEus,
+                    destinyCompleteOriginalVideoPathWithName);
 
-            // Upload viewer
+            // Upload received video (from viewer)
             platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, viewerFilePathWithNameInEus,
-                    destinyCompleteViewerPathWithName);
+                    identifier, receivedFilePathWithNameInEus,
+                    destinyCompleteReceivedVideoPathWithName);
         } else {
-            // Upload presenter
+            // Upload original video (from presenter)
             platformManager.uploadFileFromEus(serviceName,
-                    presenterFilePathWithNameInEus,
-                    destinyCompletePresenterPathWithName);
+                    originalFilePathWithNameInEus,
+                    destinyCompleteOriginalVideoPathWithName);
 
-            // Upload viewer
+            // Upload received video (from viewer)
             platformManager.uploadFileFromEus(serviceName,
-                    viewerFilePathWithNameInEus,
-                    destinyCompleteViewerPathWithName);
+                    receivedFilePathWithNameInEus,
+                    destinyCompleteReceivedVideoPathWithName);
         }
 
     }
@@ -179,18 +179,18 @@ public class QoEService {
             String presenterFilePathWithNameInEus,
             String viewerFilePathWithNameInEus) throws Exception {
 
-        String destinyCompletePresenterPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
+        String destinyCompleteOriginalVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PRESENTER_VIDEO_NAME;
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
 
-        String destinyCompleteViewerPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
+        String destinyCompleteReceivedVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
                 + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_VIEWER_VIDEO_NAME;
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
 
         uploadVideos(sessionManager, identifier, presenterFilePathWithNameInEus,
                 viewerFilePathWithNameInEus,
-                destinyCompletePresenterPathWithName,
-                destinyCompleteViewerPathWithName);
+                destinyCompleteOriginalVideoPathWithName,
+                destinyCompleteReceivedVideoPathWithName);
     }
 
     // Step 2

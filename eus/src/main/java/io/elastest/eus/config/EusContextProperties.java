@@ -151,10 +151,9 @@ public class EusContextProperties {
     @Value("${eus.service.webrtc.qoe.meter.script.calculate.filename}")
     public String EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
 
-    @Value("${eus.service.webrtc.qoe.meter.presenter.video.name}")
-    public String EUS_SERVICE_WEBRTC_QOE_METER_PRESENTER_VIDEO_NAME;
+    @Value("${eus.service.webrtc.qoe.meter.original.video.name}")
+    public String EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
 
-    @Value("${eus.service.webrtc.qoe.meter.viewer.video.name}")
-    public String EUS_SERVICE_WEBRTC_QOE_METER_VIEWER_VIDEO_NAME;
-
+    @Value("${eus.service.webrtc.qoe.meter.received.video.name}")
+    public String EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
 }
