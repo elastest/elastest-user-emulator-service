@@ -21,6 +21,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -748,7 +749,7 @@ public interface EusApi {
             @ApiResponse(code = 500, message = "Internal server error", response = byte[].class) })
     @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
             "application/json" }, method = { GET })
-    ResponseEntity<List<byte[]>> getWebRTCQoEMeterCsv(
+    ResponseEntity<Map<String, byte[]>> getWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;
@@ -769,7 +770,7 @@ public interface EusApi {
             @ApiResponse(code = 500, message = "Internal server error", response = byte[].class) })
     @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
             "application/json" }, method = { GET })
-    ResponseEntity<List<byte[]>> executionGetWebRTCQoEMeterCsv(
+    ResponseEntity<Map<String, byte[]>> executionGetWebRTCQoEMeterCsv(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;

@@ -328,7 +328,7 @@ public class QoEService {
     }
 
     // Step 5
-    public List<byte[]> getQoEMetricsCSV(SessionManager sessionManager,
+    public Map<String, byte[]> getQoEMetricsCSV(SessionManager sessionManager,
             String identifier) throws Exception {
         log.debug("Getting QoE Metrics CSV files for session {}",
                 sessionManager.getSessionId());
@@ -336,7 +336,7 @@ public class QoEService {
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
-        List<byte[]> csvFiles = new ArrayList<byte[]>();
+        Map<String, byte[]> csvFiles = new HashMap<String, byte[]>();
         List<String> csvFileNames = platformManager
                 .getSubserviceFolderFilesList(serviceName, identifier,
                         contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
@@ -361,7 +361,7 @@ public class QoEService {
                     }
 
                     if (currentCsv != null) {
-                        csvFiles.add(IOUtils.toByteArray(currentCsv));
+                        csvFiles.put(csvName, IOUtils.toByteArray(currentCsv));
                     }
                 }
             }
@@ -373,17 +373,17 @@ public class QoEService {
     public List<Double> getQoEMetricsMetric(SessionManager sessionManager,
             String identifier) throws Exception {
         List<Double> metrics = new ArrayList<>();
-        List<byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
+        Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
 
         if (csvs != null) {
-            for (byte[] csv : csvs) {
+            for (HashMap.Entry<String, byte[]> csv : csvs.entrySet()) {
                 Double average = 0.0;
                 int total = 0;
 
                 InputStream is = null;
                 BufferedReader bfReader = null;
 
-                is = new ByteArrayInputStream(csv);
+                is = new ByteArrayInputStream(csv.getValue());
                 bfReader = new BufferedReader(new InputStreamReader(is));
                 String line = null;
                 while ((line = bfReader.readLine()) != null) {
