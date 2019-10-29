@@ -5,9 +5,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -302,6 +302,16 @@ public class QoEService {
         }
 
         if (webRTCQoEMeter != null) {
+
+            try {
+                Map<String, byte[]> csvs = obtainQoEMetricsCSV(sessionManager,
+                        identifier);
+                webRTCQoEMeter.setCsvs(csvs);
+            } catch (Exception e) {
+                log.error("Error on getting qoe csvs in {}: {}", identifier,
+                        e.getMessage());
+            }
+
             webRTCQoEMeter.setCsvGenerated(true);
             addOrUpdateMap(webRTCQoEMeter);
         }
@@ -315,21 +325,8 @@ public class QoEService {
         calculateQoEMetrics(sessionManager, serviceNameOrId);
     }
 
-    // Step 4
-    public boolean isCsvAlreadyGenerated(String identifier) throws Exception {
-        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
-        if (webRTCQoEMeter != null) {
-            if (webRTCQoEMeter.isErrorOnCsvGeneration()) {
-                throw new Exception("there was an error generating the CSV");
-            }
-            return webRTCQoEMeter.isCsvGenerated();
-        }
-        return false;
-    }
-
-    // Step 5
-    public Map<String, byte[]> getQoEMetricsCSV(SessionManager sessionManager,
-            String identifier) throws Exception {
+    private Map<String, byte[]> obtainQoEMetricsCSV(
+            SessionManager sessionManager, String identifier) throws Exception {
         log.debug("Getting QoE Metrics CSV files for session {}",
                 sessionManager.getSessionId());
 
@@ -370,37 +367,43 @@ public class QoEService {
         return csvFiles;
     }
 
-    public List<Double> getQoEMetricsMetric(SessionManager sessionManager,
-            String identifier) throws Exception {
-        List<Double> metrics = new ArrayList<>();
+    // Step 4
+    public boolean isCsvAlreadyGenerated(String identifier) throws Exception {
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+        if (webRTCQoEMeter != null) {
+            if (webRTCQoEMeter.isErrorOnCsvGeneration()) {
+                throw new Exception("there was an error generating the CSV");
+            }
+            return webRTCQoEMeter.isCsvGenerated();
+        }
+        return false;
+    }
+
+    // Step 5.1
+    public Map<String, byte[]> getQoEMetricsCSV(SessionManager sessionManager,
+            String identifier) {
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+        return webRTCQoEMeter.getCsvs();
+    }
+
+    // Step 5.2
+    public Map<String, Double> getQoEMetricsMetric(
+            SessionManager sessionManager, String identifier) throws Exception {
+        Map<String, Double> metrics = new HashMap<String, Double>();
         Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
 
         if (csvs != null) {
             for (HashMap.Entry<String, byte[]> csv : csvs.entrySet()) {
-                Double average = 0.0;
-                int total = 0;
+                Double average = null;
 
-                InputStream is = null;
-                BufferedReader bfReader = null;
-
-                is = new ByteArrayInputStream(csv.getValue());
-                bfReader = new BufferedReader(new InputStreamReader(is));
-                String line = null;
-                while ((line = bfReader.readLine()) != null) {
-                    try {
-                        Double lineAsNum = Double.valueOf(line);
-                        average = average + lineAsNum;
-                        total++;
-                    } catch (Exception e) {
-                    }
+                if (csv.getKey().toLowerCase().contains("vmaf")) {
+                    average = this.getVMAFAverageMetricByCsv(csv.getValue());
+                } else {
+                    average = this.getNonVMAFAverageMetricByCsv(csv.getValue());
                 }
 
-                average = average / total;
-                if (is != null) {
-                    is.close();
-                }
-                metrics.add(average);
-
+                String name = csv.getKey().split("\\.")[0] + "-average.txt";
+                metrics.put(name, average);
             }
         }
 
@@ -427,4 +430,59 @@ public class QoEService {
                             + identifier + " not found");
         }
     }
+
+    private Double getVMAFAverageMetricByCsv(byte[] csv) throws IOException {
+        Double average = 0.0;
+        int total = 0;
+
+        InputStream is = null;
+        BufferedReader bfReader = null;
+
+        is = new ByteArrayInputStream(csv);
+        bfReader = new BufferedReader(new InputStreamReader(is));
+        String line = null;
+        while ((line = bfReader.readLine()) != null) {
+            try {
+                Double lineAsNum = Double.valueOf(line);
+                average = average + lineAsNum;
+                total++;
+            } catch (Exception e) {
+            }
+        }
+
+        average = average / total;
+        if (is != null) {
+            is.close();
+        }
+        return average;
+    }
+
+    private Double getNonVMAFAverageMetricByCsv(byte[] csv) throws IOException {
+        Double average = 0.0;
+        int total = 0;
+
+        InputStream is = null;
+        BufferedReader bfReader = null;
+
+        is = new ByteArrayInputStream(csv);
+        bfReader = new BufferedReader(new InputStreamReader(is));
+        String line = null;
+        // two columns: frame and value
+        while ((line = bfReader.readLine()) != null) {
+            try {
+                String[] lineColumns = line.split(",");
+                Double valueAsNum = Double.valueOf(lineColumns[1]);
+                average = average + valueAsNum;
+                total++;
+            } catch (Exception e) {
+            }
+        }
+
+        average = average / total;
+        if (is != null) {
+            is.close();
+        }
+        return average;
+    }
+
 }

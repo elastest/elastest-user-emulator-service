@@ -741,12 +741,12 @@ public interface EusApi {
      * 
      * @throws Exception
      */
-    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = byte[].class, responseContainer = "List", tags = {
+    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = Map.class, responseContainer = "List", tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = byte[].class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = byte[].class),
-            @ApiResponse(code = 500, message = "Internal server error", response = byte[].class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = Map.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Map.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Map.class) })
     @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
             "application/json" }, method = { GET })
     ResponseEntity<Map<String, byte[]>> getWebRTCQoEMeterCsv(
@@ -762,12 +762,12 @@ public interface EusApi {
      * 
      * @throws Exception
      */
-    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = byte[].class, responseContainer = "List", tags = {
+    @ApiOperation(value = "Get WebRTC QoE Meter CSV", notes = "", response = Map.class, tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = byte[].class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = byte[].class),
-            @ApiResponse(code = 500, message = "Internal server error", response = byte[].class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = Map.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Map.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Map.class) })
     @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", produces = {
             "application/json" }, method = { GET })
     ResponseEntity<Map<String, byte[]>> executionGetWebRTCQoEMeterCsv(
@@ -782,15 +782,15 @@ public interface EusApi {
      * 
      * @throws Exception
      */
-    @ApiOperation(value = "Get WebRTC QoE Meter metric", notes = "", response = Double.class, responseContainer = "List", tags = {
+    @ApiOperation(value = "Get WebRTC QoE Meter metric", notes = "", response = Map.class, tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = Double.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = Double.class),
-            @ApiResponse(code = 500, message = "Internal server error", response = Double.class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = Map.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Map.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Map.class) })
     @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/metric", produces = {
             "application/json" }, method = { GET })
-    ResponseEntity<List<Double>> getWebRTCQoEMeterMetric(
+    ResponseEntity<Map<String, Double>> getWebRTCQoEMeterMetric(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;
@@ -803,15 +803,15 @@ public interface EusApi {
      * 
      * @throws Exception
      */
-    @ApiOperation(value = "Get WebRTC QoE Meter metric", notes = "", response = Double.class, responseContainer = "List", tags = {
+    @ApiOperation(value = "Get WebRTC QoE Meter metric", notes = "", response = Map.class, tags = {
             "Session Files" })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation", response = Double.class),
-            @ApiResponse(code = 400, message = "Invalid session identifier", response = Double.class),
-            @ApiResponse(code = 500, message = "Internal server error", response = Double.class) })
+            @ApiResponse(code = 200, message = "Successful operation", response = Map.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = Map.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = Map.class) })
     @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/metric", produces = {
             "application/json" }, method = { GET })
-    ResponseEntity<List<Double>> executionGetWebRTCQoEMeterMetric(
+    ResponseEntity<Map<String, Double>> executionGetWebRTCQoEMeterMetric(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;

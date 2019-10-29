@@ -708,18 +708,20 @@ public class EusController implements EusApi {
         return this.getWebRTCQoEMeterCsv(sessionId, identifier);
     }
 
-    public ResponseEntity<List<Double>> getWebRTCQoEMeterMetric(
+    public ResponseEntity<Map<String, Double>> getWebRTCQoEMeterMetric(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
         SessionManager sessionManager = sessionService.getSession(sessionId)
                 .get();
 
-        return new ResponseEntity<List<Double>>(webDriverService.qoeService
-                .getQoEMetricsMetric(sessionManager, identifier), OK);
+        return new ResponseEntity<Map<String, Double>>(
+                webDriverService.qoeService.getQoEMetricsMetric(sessionManager,
+                        identifier),
+                OK);
     }
 
-    public ResponseEntity<List<Double>> executionGetWebRTCQoEMeterMetric(
+    public ResponseEntity<Map<String, Double>> executionGetWebRTCQoEMeterMetric(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception {
