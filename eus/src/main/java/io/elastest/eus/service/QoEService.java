@@ -321,7 +321,9 @@ public class QoEService {
 
                         // Save in folder
                         String path = eusFilesService.getEusQoeFilesPath(sessionManager);
-                        eusFilesService.saveByteArrayFileToPathInEUS(path, csvName, csvByteArray);
+                        String newFileName = sessionManager.getIdForFiles() + "-" + csvName;
+                        eusFilesService.saveByteArrayFileToPathInEUS(path, newFileName,
+                                csvByteArray);
                         currentCsv.close();
                     }
                 }
@@ -362,7 +364,8 @@ public class QoEService {
                     average = this.getNonVMAFAverageMetricByCsv(csv.getValue());
                 }
 
-                String name = csv.getKey().split("\\.")[0] + "-average.txt";
+                String name = sessionManager.getIdForFiles() + "-" + csv.getKey().split("\\.")[0]
+                        + "-average.txt";
                 metrics.put(name, average);
 
                 if (storeInFolder) {
