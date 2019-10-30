@@ -33,33 +33,29 @@ public class BrowserAWSManager extends PlatformManager {
 
     AWSClient awsClient;
 
-    public BrowserAWSManager(AWSClient awsClient,
-            EusFilesService eusFilesService,
+    public BrowserAWSManager(AWSClient awsClient, EusFilesService eusFilesService,
             EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.awsClient = awsClient;
     }
 
-    public BrowserAWSManager(Region region, String secretAccessKey,
-            String accessKeyId, String sshUser, String sshPrivateKey,
-            EusFilesService eusFilesService,
+    public BrowserAWSManager(Region region, String secretAccessKey, String accessKeyId,
+            String sshUser, String sshPrivateKey, EusFilesService eusFilesService,
             EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
-        this.awsClient = new AWSClient(region, secretAccessKey, accessKeyId,
-                sshUser, sshPrivateKey);
+        this.awsClient = new AWSClient(region, secretAccessKey, accessKeyId, sshUser,
+                sshPrivateKey);
     }
 
-    public BrowserAWSManager(AWSConfig awsConfig,
-            EusFilesService eusFilesService,
+    public BrowserAWSManager(AWSConfig awsConfig, EusFilesService eusFilesService,
             EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.awsClient = new AWSClient(awsConfig);
     }
 
     @Override
-    public void downloadFileOrFilesFromServiceToEus(String instanceId,
-            String remotePath, String localPath, String filename,
-            Boolean isDirectory) throws Exception {
+    public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
+            String localPath, String filename, Boolean isDirectory) throws Exception {
         if (isDirectory) {
             awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
         } else {
@@ -68,33 +64,28 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
-            String subServiceID, String remotePath, String localPath,
-            String originalFilename, String newFilename, Boolean isDirectory)
-            throws Exception {
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId, String subServiceID,
+            String remotePath, String localPath, String originalFilename, String newFilename,
+            Boolean isDirectory) throws Exception {
         String instanceCompleteFilePath = "/tmp/";
         if (isDirectory) {
-            awsClient.executeCommand(instanceId, "docker cp " + subServiceID
-                    + ":" + remotePath + " " + instanceCompleteFilePath);
-            awsClient.downloadFolderFiles(instanceId, instanceCompleteFilePath,
-                    localPath);
+            awsClient.executeCommand(instanceId, "docker cp " + subServiceID + ":" + remotePath
+                    + " " + instanceCompleteFilePath);
+            awsClient.downloadFolderFiles(instanceId, instanceCompleteFilePath, localPath);
         } else {
-            remotePath = remotePath.endsWith("/") ? remotePath
-                    : remotePath + "/";
+            remotePath = remotePath.endsWith("/") ? remotePath : remotePath + "/";
             // Copy from container to instance first
-            awsClient.executeCommand(instanceId,
-                    "docker cp " + subServiceID + ":" + remotePath
-                            + originalFilename + " " + instanceCompleteFilePath
-                            + newFilename);
+            awsClient.executeCommand(instanceId, "docker cp " + subServiceID + ":" + remotePath
+                    + originalFilename + " " + instanceCompleteFilePath + newFilename);
 
-            downloadFileOrFilesFromServiceToEus(instanceId,
-                    instanceCompleteFilePath, localPath, newFilename, false);
+            downloadFileOrFilesFromServiceToEus(instanceId, instanceCompleteFilePath, localPath,
+                    newFilename, false);
         }
     }
 
     @Override
-    public InputStream getFileFromService(String instanceId, String path,
-            Boolean isDirectory) throws Exception {
+    public InputStream getFileFromService(String instanceId, String path, Boolean isDirectory)
+            throws Exception {
         if (isDirectory) {
             // TODO return files in folder
             return null;
@@ -104,9 +95,8 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromSubService(String instanceId,
-            String subServiceID, String completeFilePath, Boolean isDirectory)
-            throws Exception {
+    public InputStream getFileFromSubService(String instanceId, String subServiceID,
+            String completeFilePath, Boolean isDirectory) throws Exception {
         if (isDirectory) {
             // TODO return files in folder
             return null;
@@ -115,35 +105,31 @@ public class BrowserAWSManager extends PlatformManager {
             String instanceCompleteFilePath = "/tmp/" + fileName;
 
             // Copy from container to instance first
-            awsClient.executeCommand(instanceId, "docker cp " + subServiceID
-                    + ":" + completeFilePath + " " + instanceCompleteFilePath);
+            awsClient.executeCommand(instanceId, "docker cp " + subServiceID + ":"
+                    + completeFilePath + " " + instanceCompleteFilePath);
 
-            return awsClient.getFileAsInputStream(instanceId,
-                    instanceCompleteFilePath);
+            return awsClient.getFileAsInputStream(instanceId, instanceCompleteFilePath);
         }
     }
 
     @Override
-    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
-            throws Exception {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) throws Exception {
         String remotePath = contextProperties.CONTAINER_RECORDING_FOLDER;
-        String localPath = eusFilesService
-                .getSessionFilesFolderBySessionManager(sessionManager);
-        downloadFileOrFilesFromServiceToEus(sessionManager.getAwsInstanceId(),
-                remotePath, localPath, null, true);
+        String localPath = eusFilesService.getSessionFilesFolderBySessionManager(sessionManager);
+        downloadFileOrFilesFromServiceToEus(sessionManager.getAwsInstanceId(), remotePath,
+                localPath, null, true);
     }
 
     @Override
-    public String getSessionContextInfo(SessionManager sessionManager)
-            throws Exception {
+    public String getSessionContextInfo(SessionManager sessionManager) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
-    private Instance provideInstance(SessionManager sessionManager,
-            String amiId, Integer volumeSizeInGiB) throws Exception {
-        AWSInstancesConfig awsInstanceConfig = sessionManager.getCapabilities()
-                .getAwsConfig().getAwsInstancesConfig();
+    private Instance provideInstance(SessionManager sessionManager, String amiId,
+            Integer volumeSizeInGiB) throws Exception {
+        AWSInstancesConfig awsInstanceConfig = sessionManager.getCapabilities().getAwsConfig()
+                .getAwsInstancesConfig();
 
         // IMAGE_ID
         if (amiId == null || "".equals(amiId)) {
@@ -154,34 +140,29 @@ public class BrowserAWSManager extends PlatformManager {
         // KEY_NAME
         String keyName = awsInstanceConfig.getKeyName();
         // SECURITY_GROUP
-        Collection<String> securityGroups = awsInstanceConfig
-                .getSecurityGroups();
+        Collection<String> securityGroups = awsInstanceConfig.getSecurityGroups();
         // 'ResourceType=instance,Tags=[{Key=Type,Value=OpenViduLoadTest}]'
-        Collection<TagSpecification> tagSpecifications = awsInstanceConfig
-                .getTagSpecifications();
+        Collection<TagSpecification> tagSpecifications = awsInstanceConfig.getTagSpecifications();
 
         // Call to AwsClient to create instances
-        Instance instance = awsClient.provideInstance(amiId, instanceType,
-                keyName, securityGroups, tagSpecifications, volumeSizeInGiB);
+        Instance instance = awsClient.provideInstance(amiId, instanceType, keyName, securityGroups,
+                tagSpecifications, volumeSizeInGiB);
         return instance;
     }
 
-    private Instance provideInstance(SessionManager sessionManager,
-            Integer volumeSizeInGiB) throws Exception {
+    private Instance provideInstance(SessionManager sessionManager, Integer volumeSizeInGiB)
+            throws Exception {
         return provideInstance(sessionManager, null, volumeSizeInGiB);
     }
 
-    private Instance provideInstance(SessionManager sessionManager)
-            throws Exception {
+    private Instance provideInstance(SessionManager sessionManager) throws Exception {
         return provideInstance(sessionManager, null);
     }
 
-    private String provideAndWaitForInstance(SessionManager sessionManager,
-            String amiId, Integer volumeSizeInGiB)
-            throws Exception, TimeoutException {
+    private String provideAndWaitForInstance(SessionManager sessionManager, String amiId,
+            Integer volumeSizeInGiB) throws Exception, TimeoutException {
         // Call to AwsClient to create instances
-        Instance instance = provideInstance(sessionManager, amiId,
-                volumeSizeInGiB);
+        Instance instance = provideInstance(sessionManager, amiId, volumeSizeInGiB);
         // Wait
         awsClient.waitForInstance(instance, 600);
         instance = awsClient.describeInstance(instance);
@@ -190,16 +171,15 @@ public class BrowserAWSManager extends PlatformManager {
         return instanceId;
     }
 
-    private String provideAndWaitForInstance(SessionManager sessionManager,
-            Integer volumeSizeInGiB) throws Exception, TimeoutException {
+    private String provideAndWaitForInstance(SessionManager sessionManager, Integer volumeSizeInGiB)
+            throws Exception, TimeoutException {
         return provideAndWaitForInstance(sessionManager, null, volumeSizeInGiB);
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
-            String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData, List<String> envs,
-            Map<String, String> labels, DesiredCapabilities capabilities,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager, String containerPrefix,
+            String originalRequestBody, String folderPath, ExecutionData execData,
+            List<String> envs, Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
         sessionManager.setStatus(DockerServiceStatusEnum.INITIALIZING);
         sessionManager.setStatusMsg("Initializing...");
@@ -228,8 +208,7 @@ public class BrowserAWSManager extends PlatformManager {
 
         sessionManager.setHubIp(hubIp);
         sessionManager.setHubPort(contextProperties.HUB_EXPOSED_PORT);
-        sessionManager
-                .setNoVncBindedPort(contextProperties.NO_VNC_EXPOSED_PORT);
+        sessionManager.setNoVncBindedPort(contextProperties.NO_VNC_EXPOSED_PORT);
 
         String browserServiceName = getBrowserServiceName(instanceId);
         sessionManager.setHubContainerName(browserServiceName);
@@ -237,9 +216,8 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public BrowserSync buildAndRunBrowsersyncService(
-            SessionManager sessionManager, ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+    public BrowserSync buildAndRunBrowsersyncService(SessionManager sessionManager,
+            ExecutionData execData, CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         BrowserSync browserSync = new BrowserSync(crossBrowserCapabilities);
 
@@ -250,9 +228,8 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            SessionManager sessionManager, ExecutionData execData,
-            Map<String, String> labels) throws Exception {
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(SessionManager sessionManager,
+            ExecutionData execData, Map<String, String> labels) throws Exception {
         WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
         String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
         webRTCQoEMeter.setIdentifier(serviceContainerName);
@@ -261,16 +238,15 @@ public class BrowserAWSManager extends PlatformManager {
         // String instanceId = provideAndWaitForInstance(sessionManager,
         // awsClient.getUbuntu16AmiImageId());
 
-        String instanceId = provideAndWaitForInstance(sessionManager,
-                new Integer(20));
+        String instanceId = provideAndWaitForInstance(sessionManager, new Integer(20));
 
-        awsClient.executeCommand(instanceId, "docker pull "
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
+        awsClient.executeCommand(instanceId,
+                "docker pull " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
 
-        awsClient.executeCommand(instanceId, "docker run -d --name "
-                + serviceContainerName + " "
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME
-                + " " + "tail -f /dev/null");
+        awsClient.executeCommand(instanceId,
+                "docker run -d --name " + serviceContainerName + " "
+                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME + " "
+                        + "tail -f /dev/null");
 
         webRTCQoEMeter.setAwsInstanceId(instanceId);
 
@@ -278,15 +254,13 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public String execCommand(String instanceId, String command)
-            throws Exception {
+    public String execCommand(String instanceId, String command) throws Exception {
         return awsClient.executeCommand(instanceId, command);
     }
 
     @Override
-    public String execCommandInSubService(String instanceId,
-            String subserviceId, boolean awaitCompletion, String command)
-            throws Exception {
+    public String execCommandInSubService(String instanceId, String subserviceId,
+            boolean awaitCompletion, String command) throws Exception {
         if (command != null) {
             // Commands executed in browser container
             String mergedCommand = "docker exec -t ";
@@ -301,8 +275,8 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void execCommandInBrowser(String instanceId, boolean awaitCompletion,
-            String... command) throws Exception {
+    public void execCommandInBrowser(String instanceId, boolean awaitCompletion, String... command)
+            throws Exception {
         if (command != null) {
             String browserServiceName = getBrowserServiceName(instanceId) + " ";
 
@@ -310,8 +284,7 @@ public class BrowserAWSManager extends PlatformManager {
 
             String mergedCommand = StringUtils.join(commandListAux, " ");
 
-            execCommandInSubService(instanceId, browserServiceName,
-                    awaitCompletion, mergedCommand);
+            execCommandInSubService(instanceId, browserServiceName, awaitCompletion, mergedCommand);
         }
     }
 
@@ -321,21 +294,19 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void removeServiceWithTimeout(String instanceId,
-            int killAfterSeconds) throws Exception {
+    public void removeServiceWithTimeout(String instanceId, int killAfterSeconds) throws Exception {
         awsClient.terminateInstance(instanceId);
     }
 
     @Override
-    public void waitForBrowserReady(String internalVncUrl,
-            SessionManager sessionManager) throws Exception {
+    public void waitForBrowserReady(String internalVncUrl, SessionManager sessionManager)
+            throws Exception {
         try {
             UtilTools.waitForHostIsReachable(internalVncUrl, 45);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
-            logger.error("Error on wait for host reachable: {}",
-                    e.getMessage());
+            logger.error("Error on wait for host reachable: {}", e.getMessage());
             removeServiceWithTimeout(sessionManager.getAwsInstanceId(), 60);
             throw e;
         }
@@ -349,31 +320,28 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String instanceId, InputStream inputStreamFile,
-            String completeFilePath, String fileName) throws Exception {
-        awsClient.uploadFile(instanceId, completeFilePath, fileName,
-                inputStreamFile);
+    public void uploadFile(String instanceId, InputStream inputStreamFile, String completeFilePath,
+            String fileName) throws Exception {
+        awsClient.uploadFile(instanceId, completeFilePath, fileName, inputStreamFile);
     }
 
     @Override
     public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream inputStreamFile, String completeFilePath,
-            String fileName) throws Exception {
+            InputStream inputStreamFile, String completeFilePath, String fileName)
+            throws Exception {
         String instancePath = "/tmp/";
         // first upload to instance
         uploadFile(instanceId, inputStreamFile, instancePath, fileName);
 
-        logger.debug(
-                "File {} uploaded to instance {} at {}. Copying to subservice {}",
-                fileName, instanceId, instancePath, subServiceID);
+        logger.debug("File {} uploaded to instance {} at {}. Copying to subservice {}", fileName,
+                instanceId, instancePath, subServiceID);
 
         completeFilePath = completeFilePath.endsWith("/") ? completeFilePath
                 : completeFilePath + "/";
 
         // After copy into subservice
-        awsClient.executeCommand(instanceId,
-                "docker cp " + instancePath + fileName + " " + subServiceID
-                        + ":" + completeFilePath + fileName);
+        awsClient.executeCommand(instanceId, "docker cp " + instancePath + fileName + " "
+                + subServiceID + ":" + completeFilePath + fileName);
 
         // last remove from instance
         awsClient.executeCommand(instanceId, "rm " + instancePath + fileName);
@@ -385,98 +353,104 @@ public class BrowserAWSManager extends PlatformManager {
         File fileInEus = new File(filePathInEus);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
 
-        String fileName = getFileNameFromCompleteFilePath(
-                completeFilePathWithName);
+        String fileName = getFileNameFromCompleteFilePath(completeFilePathWithName);
         String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
                 completeFilePathWithName);
 
-        uploadFile(serviceNameOrId, fileISInEus, completePathWithoutFileName,
-                fileName);
+        uploadFile(serviceNameOrId, fileISInEus, completePathWithoutFileName, fileName);
         try {
-            logger.debug("Removing {} file from EUS after upload to service",
-                    filePathInEus);
+            logger.debug("Removing {} file from EUS after upload to service", filePathInEus);
             fileInEus.delete();
+
+            File folder = new File(completePathWithoutFileName);
+            if (folder.isDirectory() && folder.list().length == 0) {
+                logger.debug(
+                        "Removing {} folder (because is empty) from EUS after upload to service",
+                        completePathWithoutFileName);
+                fileInEus.delete();
+            }
         } catch (Exception e) {
         }
     }
 
     @Override
-    public void uploadFileToSubserviceFromEus(String instanceId,
-            String subServiceID, String filePathInEus,
-            String completeFilePathWithName) throws Exception {
-        String fileName = getFileNameFromCompleteFilePath(
-                completeFilePathWithName);
+    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
+            String filePathInEus, String completeFilePathWithName) throws Exception {
+        String fileName = getFileNameFromCompleteFilePath(completeFilePathWithName);
         String completeFilePathWithoutName = getPathWithoutFileNameFromCompleteFilePath(
                 completeFilePathWithName);
 
         File fileInEus = new File(filePathInEus);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
-        uploadFileToSubservice(instanceId, subServiceID, fileISInEus,
-                completeFilePathWithoutName, fileName);
+        uploadFileToSubservice(instanceId, subServiceID, fileISInEus, completeFilePathWithoutName,
+                fileName);
     }
 
     @Override
-    public Boolean uploadFileToBrowser(SessionManager sessionManager,
-            ExecutionData execData, MultipartFile file, String completeFilePath)
-            throws Exception {
+    public Boolean uploadFileToBrowser(SessionManager sessionManager, ExecutionData execData,
+            MultipartFile file, String completeFilePath) throws Exception {
         // If not path, upload file to et shared files folder (copying directly
         // to instance volume folder shared with browser container)
         if (completeFilePath == null || "".equals(completeFilePath)) {
-            completeFilePath = eusFilesService
-                    .getEusSharedFilesPath(sessionManager);
-            uploadFile(sessionManager.getAwsInstanceId(), file.getInputStream(),
-                    completeFilePath, file.getOriginalFilename());
+            completeFilePath = eusFilesService.getEusSharedFilesPath(sessionManager);
+            uploadFile(sessionManager.getAwsInstanceId(), file.getInputStream(), completeFilePath,
+                    file.getOriginalFilename());
         } else {
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),
-                    sessionManager.getVncContainerName(), file.getInputStream(),
-                    completeFilePath, file.getOriginalFilename());
+                    sessionManager.getVncContainerName(), file.getInputStream(), completeFilePath,
+                    file.getOriginalFilename());
         }
         return true;
     }
 
     @Override
-    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
-            ExecutionData execData, String fileUrl, String completeFilePath,
-            String fileName) throws Exception {
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager, ExecutionData execData,
+            String fileUrl, String completeFilePath, String fileName) throws Exception {
         // If not path, upload file to et shared files folder (copying directly
         // to instance volume folder shared with browser container)
         if (completeFilePath == null || "".equals(completeFilePath)) {
-            completeFilePath = eusFilesService
-                    .getEusSharedFilesPath(sessionManager);
-            File file = eusFilesService.saveFileFromUrlToPathInEUS(
-                    completeFilePath, fileName, fileUrl);
+            completeFilePath = eusFilesService.getEusSharedFilesPath(sessionManager);
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(completeFilePath, fileName,
+                    fileUrl);
             FileInputStream fileIS = new FileInputStream(file);
 
-            uploadFile(sessionManager.getAwsInstanceId(), fileIS,
-                    completeFilePath, fileName);
+            uploadFile(sessionManager.getAwsInstanceId(), fileIS, completeFilePath, fileName);
+
+            // Remove temporal file from EUS
+            try {
+                file.delete();
+            } catch (Exception e) {
+            }
         } else {
 
             String pathInEus = completeFilePath.endsWith("/") ? completeFilePath
                     : completeFilePath + "/";
             pathInEus += sessionManager.getSessionId() + "/";
 
-            File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus,
-                    fileName, fileUrl);
+            File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus, fileName, fileUrl);
             InputStream fileIS = new FileInputStream(file);
 
             uploadFileToSubservice(sessionManager.getAwsInstanceId(),
-                    sessionManager.getVncContainerName(), fileIS,
-                    completeFilePath, fileName);
+                    sessionManager.getVncContainerName(), fileIS, completeFilePath, fileName);
+
+            // Remove temporal file from EUS
+            try {
+                file.delete();
+            } catch (Exception e) {
+            }
         }
         return true;
     }
 
     @Override
-    public List<String> getFolderFilesList(String instanceId, String remotePath,
-            String filter) throws Exception {
+    public List<String> getFolderFilesList(String instanceId, String remotePath, String filter)
+            throws Exception {
         return awsClient.listFolderFiles(instanceId, remotePath, filter, null);
     }
 
     @Override
-    public List<String> getSubserviceFolderFilesList(String instanceId,
-            String subServiceId, String remotePath, String filter)
-            throws Exception {
-        return awsClient.listFolderFiles(instanceId, remotePath, filter,
-                subServiceId);
+    public List<String> getSubserviceFolderFilesList(String instanceId, String subServiceId,
+            String remotePath, String filter) throws Exception {
+        return awsClient.listFolderFiles(instanceId, remotePath, filter, subServiceId);
     }
 }

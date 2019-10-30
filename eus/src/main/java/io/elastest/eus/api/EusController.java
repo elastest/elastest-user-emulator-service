@@ -716,8 +716,8 @@ public class EusController implements EusApi {
                 .get();
 
         return new ResponseEntity<Map<String, Double>>(
-                webDriverService.qoeService.getQoEMetricsMetric(sessionManager,
-                        identifier),
+                webDriverService.qoeService.getQoEAverageMetrics(sessionManager,
+                        identifier, false),
                 OK);
     }
 

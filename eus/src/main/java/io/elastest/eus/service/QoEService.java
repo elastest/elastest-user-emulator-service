@@ -47,20 +47,17 @@ public class QoEService {
 
     @PostConstruct
     public void init() {
-        contextProperties = EusApplicationContextProvider
-                .getContextPropertiesObject();
+        contextProperties = EusApplicationContextProvider.getContextPropertiesObject();
     }
 
     public void stopAndDestroy(SessionManager sessionManager) {
-        if (!alreadyDestroyed && sessionManager != null
-                && webRTCQoEMeterMap != null) {
+        if (!alreadyDestroyed && sessionManager != null && webRTCQoEMeterMap != null) {
             for (HashMap.Entry<String, WebRTCQoEMeter> webRTCQoEMeter : webRTCQoEMeterMap
                     .entrySet()) {
                 try {
                     stopService(sessionManager, webRTCQoEMeter.getKey());
                 } catch (Exception e) {
-                    log.error("Error on stop QoEService {}",
-                            webRTCQoEMeter.getKey());
+                    log.error("Error on stop QoEService {}", webRTCQoEMeter.getKey());
                 }
             }
             alreadyDestroyed = true;
@@ -74,42 +71,34 @@ public class QoEService {
     // Step 1
     public String startService(SessionManager sessionManager) throws Exception {
         Map<String, String> labels = new HashMap<>();
-        labels.put(contextProperties.ET_TYPE_LABEL,
-                contextProperties.ET_TYPE_TSS_LABEL_VALUE);
+        labels.put(contextProperties.ET_TYPE_LABEL, contextProperties.ET_TYPE_TSS_LABEL_VALUE);
         labels.put(contextProperties.ET_TJOB_TSS_TYPE_LABEL, "aux");
 
-        final ExecutionData execData = sessionManager
-                .getElastestExecutionData();
+        final ExecutionData execData = sessionManager.getElastestExecutionData();
         if (execData != null) {
             labels.put(contextProperties.ET_TJOB_EXEC_ID_LABEL,
                     execData.gettJobExecId().toString());
-            labels.put(contextProperties.ET_TJOB_ID_LABEL,
-                    execData.gettJobId().toString());
+            labels.put(contextProperties.ET_TJOB_ID_LABEL, execData.gettJobId().toString());
         }
 
         WebRTCQoEMeter webRTCQoEMeter = sessionManager.getPlatformManager()
-                .buildAndRunWebRTCQoEMeterService(sessionManager, execData,
-                        labels);
+                .buildAndRunWebRTCQoEMeterService(sessionManager, execData, labels);
 
-        log.debug("WebRTC QoE Meter service started! Id: {}",
-                webRTCQoEMeter.getIdentifier());
+        log.debug("WebRTC QoE Meter service started! Id: {}", webRTCQoEMeter.getIdentifier());
         addOrUpdateMap(webRTCQoEMeter);
         sessionManager.addEusServiceModelToList(webRTCQoEMeter);
 
         return webRTCQoEMeter.getIdentifier();
     }
 
-    public void stopService(SessionManager sessionManager, String identifier)
-            throws Exception {
+    public void stopService(SessionManager sessionManager, String identifier) throws Exception {
         log.debug("Stopping WebRtcQoE service with id {}", identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
         String serviceName = getRealServiceName(sessionManager, identifier);
 
         int killTimeoutInSeconds = 10;
-        if (identifier != null
-                && platformManager.existServiceWithName(serviceName)) {
-            platformManager.removeServiceWithTimeout(serviceName,
-                    killTimeoutInSeconds);
+        if (identifier != null && platformManager.existServiceWithName(serviceName)) {
+            platformManager.removeServiceWithTimeout(serviceName, killTimeoutInSeconds);
             removeWebRTCQoEMeter(identifier);
         }
     }
@@ -117,22 +106,19 @@ public class QoEService {
     public void addOrUpdateMap(WebRTCQoEMeter webRTCQoEMeter) {
         if (webRTCQoEMeterMap != null && webRTCQoEMeter != null
                 && !"".equals(webRTCQoEMeter.getIdentifier())) {
-            webRTCQoEMeterMap.put(webRTCQoEMeter.getIdentifier(),
-                    webRTCQoEMeter);
+            webRTCQoEMeterMap.put(webRTCQoEMeter.getIdentifier(), webRTCQoEMeter);
         }
     }
 
     public WebRTCQoEMeter getWebRTCQoEMeter(String identifier) {
-        if (webRTCQoEMeterMap != null
-                && webRTCQoEMeterMap.containsKey(identifier)) {
+        if (webRTCQoEMeterMap != null && webRTCQoEMeterMap.containsKey(identifier)) {
             return webRTCQoEMeterMap.get(identifier);
         }
         return null;
     }
 
     public void removeWebRTCQoEMeter(String identifier) {
-        if (webRTCQoEMeterMap != null
-                && webRTCQoEMeterMap.containsKey(identifier)) {
+        if (webRTCQoEMeterMap != null && webRTCQoEMeterMap.containsKey(identifier)) {
             webRTCQoEMeterMap.remove(identifier);
         }
     }
@@ -142,63 +128,52 @@ public class QoEService {
     /* ************************************ */
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String originalFilePathWithNameInEus,
-            String receivedFilePathWithNameInEus,
+            String originalFilePathWithNameInEus, String receivedFilePathWithNameInEus,
             String destinyCompleteOriginalVideoPathWithName,
             String destinyCompleteReceivedVideoPathWithName) throws Exception {
-        log.debug("Uploading QoE Video files to service with id {}",
-                identifier);
+        log.debug("Uploading QoE Video files to service with id {}", identifier);
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         if (sessionManager.isAWSSession()) {
             // Upload original video (from presenter)
-            platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, originalFilePathWithNameInEus,
-                    destinyCompleteOriginalVideoPathWithName);
+            platformManager.uploadFileToSubserviceFromEus(serviceName, identifier,
+                    originalFilePathWithNameInEus, destinyCompleteOriginalVideoPathWithName);
 
             // Upload received video (from viewer)
-            platformManager.uploadFileToSubserviceFromEus(serviceName,
-                    identifier, receivedFilePathWithNameInEus,
-                    destinyCompleteReceivedVideoPathWithName);
+            platformManager.uploadFileToSubserviceFromEus(serviceName, identifier,
+                    receivedFilePathWithNameInEus, destinyCompleteReceivedVideoPathWithName);
         } else {
             // Upload original video (from presenter)
-            platformManager.uploadFileFromEus(serviceName,
-                    originalFilePathWithNameInEus,
+            platformManager.uploadFileFromEus(serviceName, originalFilePathWithNameInEus,
                     destinyCompleteOriginalVideoPathWithName);
 
             // Upload received video (from viewer)
-            platformManager.uploadFileFromEus(serviceName,
-                    receivedFilePathWithNameInEus,
+            platformManager.uploadFileFromEus(serviceName, receivedFilePathWithNameInEus,
                     destinyCompleteReceivedVideoPathWithName);
         }
 
     }
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String presenterFilePathWithNameInEus,
-            String viewerFilePathWithNameInEus) throws Exception {
+            String presenterFilePathWithNameInEus, String viewerFilePathWithNameInEus)
+            throws Exception {
 
         String destinyCompleteOriginalVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
-                + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
+                + "/" + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
 
         String destinyCompleteReceivedVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
-                + "/"
-                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
+                + "/" + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
 
         uploadVideos(sessionManager, identifier, presenterFilePathWithNameInEus,
-                viewerFilePathWithNameInEus,
-                destinyCompleteOriginalVideoPathWithName,
+                viewerFilePathWithNameInEus, destinyCompleteOriginalVideoPathWithName,
                 destinyCompleteReceivedVideoPathWithName);
     }
 
     // Step 2
-    public void downloadVideosFromBrowserAndUploadToQoE(
-            SessionManager webRTCQoESessionManager,
-            SessionManager presenterSessionManager,
-            SessionManager viewerSessionManager, String identifier,
-            String presenterCompleteFilePath, String viewerCompleteFilePath)
+    public void downloadVideosFromBrowserAndUploadToQoE(SessionManager webRTCQoESessionManager,
+            SessionManager presenterSessionManager, SessionManager viewerSessionManager,
+            String identifier, String presenterCompleteFilePath, String viewerCompleteFilePath)
             throws Exception {
         final String eusDownloadFolder = eusFilesService
                 .getSessionFilesFolderBySessionManager(webRTCQoESessionManager);
@@ -208,34 +183,29 @@ public class QoEService {
                 "Downloading QoE Presenter Video file from session {} to send to service with id {}",
                 viewerSessionManager.getSessionId(), identifier);
 
-        final PlatformManager viewerPlatformManager = viewerSessionManager
-                .getPlatformManager();
+        final PlatformManager viewerPlatformManager = viewerSessionManager.getPlatformManager();
         String originalPresenterFileName = viewerPlatformManager
                 .getFileNameFromCompleteFilePath(presenterCompleteFilePath);
         String newPresenterFileName = viewerSessionManager.getIdForFiles() + "_"
                 + originalPresenterFileName;
 
         String presenterPathWithoutFile = viewerPlatformManager
-                .getPathWithoutFileNameFromCompleteFilePath(
-                        presenterCompleteFilePath);
+                .getPathWithoutFileNameFromCompleteFilePath(presenterCompleteFilePath);
         if (viewerSessionManager.isAWSSession()) {
             viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
                     viewerSessionManager.getAwsInstanceId(),
-                    viewerSessionManager.getVncContainerName(),
-                    presenterPathWithoutFile, eusDownloadFolder,
-                    originalPresenterFileName, newPresenterFileName, false);
+                    viewerSessionManager.getVncContainerName(), presenterPathWithoutFile,
+                    eusDownloadFolder, originalPresenterFileName, newPresenterFileName, false);
 
         } else {
             viewerPlatformManager.downloadFileOrFilesFromServiceToEus(
-                    viewerSessionManager.getVncContainerName(),
-                    presenterPathWithoutFile, eusDownloadFolder,
-                    originalPresenterFileName, false);
+                    viewerSessionManager.getVncContainerName(), presenterPathWithoutFile,
+                    eusDownloadFolder, originalPresenterFileName, false);
 
         }
 
         /* **************** Viewer **************** */
-        log.debug(
-                "Downloading QoE Viewer Video file from session {} to send to service with id {}",
+        log.debug("Downloading QoE Viewer Video file from session {} to send to service with id {}",
                 presenterSessionManager.getSessionId(), identifier);
 
         final PlatformManager presenterPlatformManager = presenterSessionManager
@@ -246,29 +216,25 @@ public class QoEService {
                 + originalViewerFileName;
 
         String viewerPathWithoutFile = presenterPlatformManager
-                .getPathWithoutFileNameFromCompleteFilePath(
-                        viewerCompleteFilePath);
+                .getPathWithoutFileNameFromCompleteFilePath(viewerCompleteFilePath);
         if (presenterSessionManager.isAWSSession()) {
             viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
                     presenterSessionManager.getAwsInstanceId(),
-                    presenterSessionManager.getVncContainerName(),
-                    viewerPathWithoutFile, eusDownloadFolder,
-                    originalViewerFileName, newViewerFileName, false);
+                    presenterSessionManager.getVncContainerName(), viewerPathWithoutFile,
+                    eusDownloadFolder, originalViewerFileName, newViewerFileName, false);
         } else {
             presenterPlatformManager.downloadFileOrFilesFromServiceToEus(
-                    presenterSessionManager.getVncContainerName(),
-                    viewerPathWithoutFile, eusDownloadFolder,
-                    originalViewerFileName, false);
+                    presenterSessionManager.getVncContainerName(), viewerPathWithoutFile,
+                    eusDownloadFolder, originalViewerFileName, false);
         }
 
         /* **************** UPLOAD **************** */
-        uploadVideos(webRTCQoESessionManager, identifier,
-                eusDownloadFolder + newPresenterFileName,
+        uploadVideos(webRTCQoESessionManager, identifier, eusDownloadFolder + newPresenterFileName,
                 eusDownloadFolder + newViewerFileName);
     }
 
-    public void calculateQoEMetrics(SessionManager sessionManager,
-            String identifier) throws Exception {
+    public void calculateQoEMetrics(SessionManager sessionManager, String identifier)
+            throws Exception {
         log.debug(
                 "Calculating QoE metrics in service with ID {} . This process could take a long time.",
                 identifier);
@@ -277,26 +243,21 @@ public class QoEService {
 
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         try {
-            String command = "cd "
-                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+            String command = "cd " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
                     + "; " + "./"
                     + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
 
-            String result = platformManager.execCommandInSubService(serviceName,
-                    identifier, true, command);
-            log.info("CSV generated for service with id {}. Response: {}",
-                    identifier, result);
+            String result = platformManager.execCommandInSubService(serviceName, identifier, true,
+                    command);
+            log.info("CSV generated for service with id {}. Response: {}", identifier, result);
 
-            result = platformManager.execCommandInSubService(serviceName,
-                    identifier, true,
+            result = platformManager.execCommandInSubService(serviceName, identifier, true,
                     "ls " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH);
-            log.debug(
-                    "ls command response for service with id {}. Response: {}",
-                    identifier, result);
+            log.debug("ls command response for service with id {}. Response: {}", identifier,
+                    result);
 
         } catch (Exception e) {
-            log.error("Error on generate QoE CSV for instance {}: {}",
-                    identifier, e.getMessage());
+            log.error("Error on generate QoE CSV for instance {}: {}", identifier, e.getMessage());
             webRTCQoEMeter.setErrorOnCsvGeneration(true);
             throw e;
         }
@@ -304,43 +265,40 @@ public class QoEService {
         if (webRTCQoEMeter != null) {
 
             try {
-                Map<String, byte[]> csvs = obtainQoEMetricsCSV(sessionManager,
-                        identifier);
+                Map<String, byte[]> csvs = obtainQoEMetricsCSV(sessionManager, identifier);
                 webRTCQoEMeter.setCsvs(csvs);
             } catch (Exception e) {
-                log.error("Error on getting qoe csvs in {}: {}", identifier,
-                        e.getMessage());
+                log.error("Error on getting qoe csvs in {}: {}", identifier, e.getMessage());
             }
 
             webRTCQoEMeter.setCsvGenerated(true);
             addOrUpdateMap(webRTCQoEMeter);
+
+            getQoEAverageMetrics(sessionManager, identifier, true);
         }
 
     }
 
     // Step 3
     @Async
-    public void calculateQoEMetricsAsync(SessionManager sessionManager,
-            String serviceNameOrId) throws Exception {
+    public void calculateQoEMetricsAsync(SessionManager sessionManager, String serviceNameOrId)
+            throws Exception {
         calculateQoEMetrics(sessionManager, serviceNameOrId);
     }
 
-    private Map<String, byte[]> obtainQoEMetricsCSV(
-            SessionManager sessionManager, String identifier) throws Exception {
-        log.debug("Getting QoE Metrics CSV files for session {}",
-                sessionManager.getSessionId());
+    // Obtain csvs from docker/k8s/aws and save in memory
+    private Map<String, byte[]> obtainQoEMetricsCSV(SessionManager sessionManager,
+            String identifier) throws Exception {
+        log.debug("Getting QoE Metrics CSV files for session {}", sessionManager.getSessionId());
 
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         Map<String, byte[]> csvFiles = new HashMap<String, byte[]>();
-        List<String> csvFileNames = platformManager
-                .getSubserviceFolderFilesList(serviceName, identifier,
-                        contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH,
-                        ".csv");
+        List<String> csvFileNames = platformManager.getSubserviceFolderFilesList(serviceName,
+                identifier, contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH, ".csv");
 
-        log.debug("Obtained CSV files names for service {}: {}", serviceName,
-                csvFileNames);
+        log.debug("Obtained CSV files names for service {}: {}", serviceName, csvFileNames);
 
         if (csvFileNames != null) {
             for (String csvName : csvFileNames) {
@@ -350,15 +308,21 @@ public class QoEService {
 
                     InputStream currentCsv = null;
                     if (sessionManager.isAWSSession()) {
-                        currentCsv = platformManager.getFileFromSubService(
-                                serviceName, identifier, currentCsvPath, false);
+                        currentCsv = platformManager.getFileFromSubService(serviceName, identifier,
+                                currentCsvPath, false);
                     } else {
-                        currentCsv = platformManager.getFileFromService(
-                                serviceName, currentCsvPath, false);
+                        currentCsv = platformManager.getFileFromService(serviceName, currentCsvPath,
+                                false);
                     }
 
                     if (currentCsv != null) {
-                        csvFiles.put(csvName, IOUtils.toByteArray(currentCsv));
+                        final byte[] csvByteArray = IOUtils.toByteArray(currentCsv);
+                        csvFiles.put(csvName, csvByteArray);
+
+                        // Save in folder
+                        String path = eusFilesService.getEusQoeFilesPath(sessionManager);
+                        eusFilesService.saveByteArrayFileToPathInEUS(path, csvName, csvByteArray);
+                        currentCsv.close();
                     }
                 }
             }
@@ -367,7 +331,6 @@ public class QoEService {
         return csvFiles;
     }
 
-    // Step 4
     public boolean isCsvAlreadyGenerated(String identifier) throws Exception {
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         if (webRTCQoEMeter != null) {
@@ -379,16 +342,13 @@ public class QoEService {
         return false;
     }
 
-    // Step 5.1
-    public Map<String, byte[]> getQoEMetricsCSV(SessionManager sessionManager,
-            String identifier) {
+    public Map<String, byte[]> getQoEMetricsCSV(SessionManager sessionManager, String identifier) {
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         return webRTCQoEMeter.getCsvs();
     }
 
-    // Step 5.2
-    public Map<String, Double> getQoEMetricsMetric(
-            SessionManager sessionManager, String identifier) throws Exception {
+    public Map<String, Double> getQoEAverageMetrics(SessionManager sessionManager,
+            String identifier, boolean storeInFolder) throws Exception {
         Map<String, Double> metrics = new HashMap<String, Double>();
         Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
 
@@ -404,14 +364,21 @@ public class QoEService {
 
                 String name = csv.getKey().split("\\.")[0] + "-average.txt";
                 metrics.put(name, average);
+
+                if (storeInFolder) {
+                    // Save in folder
+                    String path = eusFilesService.getEusQoeFilesPath(sessionManager);
+                    eusFilesService.saveStringContentToPathInEUS(path, name,
+                            String.valueOf(average));
+                }
             }
         }
 
         return metrics;
     }
 
-    private String getRealServiceName(SessionManager sessionManager,
-            String identifier) throws Exception {
+    private String getRealServiceName(SessionManager sessionManager, String identifier)
+            throws Exception {
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
 
         if (webRTCQoEMeter != null) {
@@ -419,15 +386,13 @@ public class QoEService {
             String serviceName = identifier;
 
             // If AWS session
-            if (sessionManager.isAWSSession()
-                    && webRTCQoEMeter.getAwsInstanceId() != null) {
+            if (sessionManager.isAWSSession() && webRTCQoEMeter.getAwsInstanceId() != null) {
                 serviceName = webRTCQoEMeter.getAwsInstanceId();
             }
             return serviceName;
         } else {
-            throw new Exception(
-                    "Error on upload videos to QoE service: Identifier "
-                            + identifier + " not found");
+            throw new Exception("Error on upload videos to QoE service: Identifier " + identifier
+                    + " not found");
         }
     }
 

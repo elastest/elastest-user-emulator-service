@@ -12,8 +12,10 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,9 @@ public class EusFilesService {
     @Value("${host.shared.files.relative.folder}")
     private String hostSharedFilesRelativeFolder;
 
+    @Value("${qoe.files.relative.folder}")
+    private String qoeFilesRelativeFolder;
+
     public static final String FILE_SEPARATOR = "/";
 
     public EusFilesService() {
@@ -66,8 +71,7 @@ public class EusFilesService {
     }
 
     // If live session, eus path, if execution, exec/eus path
-    public String getSessionFilesFolderBySessionManager(
-            SessionManager sessionManager) {
+    public String getSessionFilesFolderBySessionManager(SessionManager sessionManager) {
         String filesFolder = this.getEusFilesPath();
 
         if (sessionManager.isSessionFromExecution()) {
@@ -75,6 +79,13 @@ public class EusFilesService {
                     sessionManager.getElastestExecutionData());
         }
         return filesFolder;
+    }
+
+    public String getEusQoeFilesPath(SessionManager sessionManager) {
+        String path = getSessionFilesFolderBySessionManager(sessionManager);
+        path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR) + qoeFilesRelativeFolder
+                + FILE_SEPARATOR;
+        return path;
     }
 
     public String getEusSharedFilesPath(SessionManager sessionManager) {
@@ -85,8 +96,8 @@ public class EusFilesService {
     }
 
     public String getInternalSharedFilesPath(SessionManager sessionManager) {
-        return CONTAINER_MAIN_FOLDER + FILE_SEPARATOR
-                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
+        return CONTAINER_MAIN_FOLDER + FILE_SEPARATOR + hostSharedFilesRelativeFolder
+                + FILE_SEPARATOR;
     }
 
     public String getFilesPathInHostPath() {
@@ -106,8 +117,7 @@ public class EusFilesService {
 
         if (!folderStructure.exists()) {
             logger.debug("Try to create folder structure: {}", path);
-            logger.info("Creating folder at {}.",
-                    folderStructure.getAbsolutePath());
+            logger.info("Creating folder at {}.", folderStructure.getAbsolutePath());
             boolean created = folderStructure.mkdirs();
             if (!created) {
                 logger.error("Folder does not created at {}.", path);
@@ -118,8 +128,7 @@ public class EusFilesService {
     }
 
     // Generic
-    public Boolean saveFileToPathInEUS(String path, String fileName,
-            MultipartFile multipartFile)
+    public Boolean saveFileToPathInEUS(String path, String fileName, MultipartFile multipartFile)
             throws IllegalStateException, IOException {
         // Create folder if not exist
         createFolderIfNotExists(path);
@@ -134,8 +143,59 @@ public class EusFilesService {
         return true;
     }
 
-    public File saveFileFromUrlToPathInEUS(String path, String fileName,
-            String fileUrl) throws IllegalStateException, IOException {
+    public Boolean saveInputStreamFileToPathInEUS(String path, String fileName,
+            InputStream inpuStreamFile) throws IllegalStateException, IOException {
+        // Create folder if not exist
+        createFolderIfNotExists(path);
+
+        path = path.endsWith("/") ? path : path + "/";
+
+        File file = new File(path + fileName);
+        if (file.exists()) {
+            return false;
+        }
+        Files.copy(inpuStreamFile, file.toPath());
+
+        IOUtils.closeQuietly(inpuStreamFile);
+        return true;
+    }
+
+    public Boolean saveByteArrayFileToPathInEUS(String path, String fileName, byte[] byteArrayFile)
+            throws IllegalStateException, IOException {
+        // Create folder if not exist
+        createFolderIfNotExists(path);
+
+        path = path.endsWith("/") ? path : path + "/";
+
+        File file = new File(path + fileName);
+        if (file.exists()) {
+            return false;
+        }
+
+        FileOutputStream os = new FileOutputStream(file);
+        os.write(byteArrayFile);
+        os.close();
+
+        return true;
+    }
+
+    public Boolean saveStringContentToPathInEUS(String path, String fileName, String content)
+            throws IllegalStateException, IOException {
+        // Create folder if not exist
+        createFolderIfNotExists(path);
+
+        path = path.endsWith("/") ? path : path + "/";
+
+        File file = new File(path + fileName);
+        if (file.exists()) {
+            return false;
+        }
+        FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
+        return true;
+    }
+
+    public File saveFileFromUrlToPathInEUS(String path, String fileName, String fileUrl)
+            throws IllegalStateException, IOException {
         // Create folder if not exist
         createFolderIfNotExists(path);
         URL url = new URL(fileUrl);
@@ -151,15 +211,14 @@ public class EusFilesService {
         return targetFile;
     }
 
-    public File createFileFromString(String string, String targetPath)
-            throws IOException {
+    public File createFileFromString(String string, String targetPath) throws IOException {
         File file = new File(targetPath);
         FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
         return ResourceUtils.getFile(targetPath);
     }
 
-    public File createFileFromInputStream(InputStream iStream,
-            String targetPath) throws IOException {
+    public File createFileFromInputStream(InputStream iStream, String targetPath)
+            throws IOException {
         File file = new File(targetPath);
         FileUtils.copyInputStreamToFile(iStream, file);
         return ResourceUtils.getFile(targetPath);
