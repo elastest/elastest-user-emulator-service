@@ -35,8 +35,7 @@ public class BrowserK8sManager extends PlatformManager {
 
     private K8sService k8sService;
 
-    public BrowserK8sManager(K8sService k8sService,
-            EusFilesService eusFilesService,
+    public BrowserK8sManager(K8sService k8sService, EusFilesService eusFilesService,
             EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.k8sService = k8sService;
@@ -44,20 +43,15 @@ public class BrowserK8sManager extends PlatformManager {
 
     @SuppressWarnings("static-access")
     @Override
-    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
-            String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData, List<String> envs,
-            Map<String, String> labels, DesiredCapabilities capabilities,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager, String containerPrefix,
+            String originalRequestBody, String folderPath, ExecutionData execData,
+            List<String> envs, Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
-        String hubContainerName = generateRandomContainerNameWithPrefix(
-                containerPrefix, execData);
+        String hubContainerName = generateRandomContainerNameWithPrefix(containerPrefix, execData);
 
-        String exposedHubPort = Integer
-                .toString(contextProperties.HUB_EXPOSED_PORT);
-        String exposedVncPort = Integer
-                .toString(contextProperties.HUB_VNC_EXPOSED_PORT);
-        String exposedNoVncPort = Integer
-                .toString(contextProperties.NO_VNC_EXPOSED_PORT);
+        String exposedHubPort = Integer.toString(contextProperties.HUB_EXPOSED_PORT);
+        String exposedVncPort = Integer.toString(contextProperties.HUB_VNC_EXPOSED_PORT);
+        String exposedNoVncPort = Integer.toString(contextProperties.NO_VNC_EXPOSED_PORT);
 
         String recordingsPath = createRecordingsPath(folderPath);
         sessionManager.setHostSharedFilesFolderPath(recordingsPath);
@@ -67,12 +61,10 @@ public class BrowserK8sManager extends PlatformManager {
 
         logger.debug("**** Paths for recordings ****");
         logger.debug("Host path: {}", recordingsPath);
-        logger.debug("Path in container: {}",
-                contextProperties.CONTAINER_SHARED_FILES_FOLDER);
+        logger.debug("Path in container: {}", contextProperties.CONTAINER_SHARED_FILES_FOLDER);
 
         /* **** Exposed ports **** */
-        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
-                exposedNoVncPort);
+        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort, exposedNoVncPort);
 
         // Add extra labels
         labels.put(k8sService.LABEL_POD_NAME, hubContainerName);
@@ -103,44 +95,39 @@ public class BrowserK8sManager extends PlatformManager {
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(
-                hubContainerName + "-" + contextProperties.HUB_EXPOSED_PORT,
-                hubContainerName, null, contextProperties.HUB_EXPOSED_PORT,
-                "http", null, k8sService.LABEL_POD_NAME);
+                hubContainerName + "-" + contextProperties.HUB_EXPOSED_PORT, hubContainerName, null,
+                contextProperties.HUB_EXPOSED_PORT, "http", null, k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
-                hubContainerName + "-" + contextProperties.NO_VNC_EXPOSED_PORT,
-                hubContainerName, null, contextProperties.NO_VNC_EXPOSED_PORT,
-                "http", null, k8sService.LABEL_POD_NAME);
+                hubContainerName + "-" + contextProperties.NO_VNC_EXPOSED_PORT, hubContainerName,
+                null, contextProperties.NO_VNC_EXPOSED_PORT, "http", null,
+                k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
         sessionManager.setHubIp(hubServiceInfo.getServiceURL().getHost());
-        sessionManager
-                .setHubPort(Integer.parseInt(hubServiceInfo.getServicePort()));
-        sessionManager.setNoVncBindedPort(
-                Integer.parseInt(noVncServiceInfo.getServicePort()));
+        sessionManager.setHubPort(Integer.parseInt(hubServiceInfo.getServicePort()));
+        sessionManager.setNoVncBindedPort(Integer.parseInt(noVncServiceInfo.getServicePort()));
 
     }
 
     @Override
-    public String execCommand(String dockerContainerIdOrName, String command)
-            throws Exception {
+    public String execCommand(String dockerContainerIdOrName, String command) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public String execCommandInSubService(String instanceId,
-            String subserviceId, boolean awaitCompletion, String command)
-            throws Exception {
+    public String execCommandInSubService(String instanceId, String subserviceId,
+            boolean awaitCompletion, String command) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void execCommandInBrowser(String podName, boolean awaitCompletion,
-            String... command) throws Exception {
-        k8sService.execCommand(k8sService.getPodByName(podName, null), podName,
-                awaitCompletion, command);
-
+    public String execCommandInBrowser(String podName, boolean awaitCompletion, String... command)
+            throws Exception {
+        k8sService.execCommand(k8sService.getPodByName(podName, null), podName, awaitCompletion,
+                command);
+        return null;
     }
 
     @Override
@@ -149,23 +136,21 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void removeServiceWithTimeout(String podName, int killAfterSeconds)
-            throws Exception {
+    public void removeServiceWithTimeout(String podName, int killAfterSeconds) throws Exception {
         k8sService.deleteServiceAssociatedWithAPOD(podName, null);
         k8sService.deletePod(podName);
 
     }
 
     @Override
-    public void waitForBrowserReady(String internalVncUrl,
-            SessionManager sessionManager) throws Exception {
+    public void waitForBrowserReady(String internalVncUrl, SessionManager sessionManager)
+            throws Exception {
         try {
             UtilTools.waitForHostIsReachable(internalVncUrl, 20);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
-            logger.error("Error on wait for host reachable: {}",
-                    e.getMessage());
+            logger.error("Error on wait for host reachable: {}", e.getMessage());
             removeServiceWithTimeout(sessionManager.getHubContainerName(), 60);
             throw e;
         }
@@ -175,73 +160,63 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void downloadFileOrFilesFromServiceToEus(String instanceId,
-            String remotePath, String localPath, String filename,
+    public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
+            String localPath, String filename, Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId, String subServiceID,
+            String remotePath, String localPath, String originalFilename, String newFilename,
             Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
-            String subServiceID, String remotePath, String localPath,
-            String originalFilename, String newFilename, Boolean isDirectory)
+    public InputStream getFileFromService(String serviceNameOrId, String path, Boolean isDirectory)
             throws Exception {
         // TODO Auto-generated method stub
-
+        return null;
     }
 
     @Override
-    public InputStream getFileFromService(String serviceNameOrId, String path,
+    public InputStream getFileFromSubService(String instanceId, String subServiceID, String path,
             Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public InputStream getFileFromSubService(String instanceId,
-            String subServiceID, String path, Boolean isDirectory)
-            throws Exception {
+    public String getSessionContextInfo(SessionManager sessionManager) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public String getSessionContextInfo(SessionManager sessionManager)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
-            throws IOException {
+    public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) throws IOException {
         k8sService.copyFileFromContainer(sessionManager.getBrowserPod(),
                 contextProperties.CONTAINER_RECORDING_FOLDER,
                 sessionManager.getHostSharedFilesFolderPath(), null);
-        File recordingsDirectory = new File(
-                sessionManager.getHostSharedFilesFolderPath()
-                        + contextProperties.CONTAINER_RECORDING_FOLDER);
-        moveFiles(recordingsDirectory,
-                sessionManager.getHostSharedFilesFolderPath());
+        File recordingsDirectory = new File(sessionManager.getHostSharedFilesFolderPath()
+                + contextProperties.CONTAINER_RECORDING_FOLDER);
+        moveFiles(recordingsDirectory, sessionManager.getHostSharedFilesFolderPath());
     }
 
     @Override
-    public BrowserSync buildAndRunBrowsersyncService(
-            SessionManager sessionManager, ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+    public BrowserSync buildAndRunBrowsersyncService(SessionManager sessionManager,
+            ExecutionData execData, CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         String serviceContainerName = getBrowserSyncServiceName(execData);
         BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
-        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
-                .getDesiredCapabilities();
+        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities.getDesiredCapabilities();
 
         String sutUrl = crossBrowserCapabilities.getSutUrl();
 
         List<String> envs = new ArrayList<>();
-        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
-                + "' --open 'external'";
+        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl + "' --open 'external'";
         envs.add(optionsEnv);
 
         /* **** Docker Builder **** */
@@ -260,8 +235,7 @@ public class BrowserK8sManager extends PlatformManager {
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
 
         String ip = podInfo.getPodIp();
-        String guiUrl = "http://" + ip + ":"
-                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
+        String guiUrl = "http://" + ip + ":" + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
@@ -276,9 +250,8 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            SessionManager sessionManager, ExecutionData execData,
-            Map<String, String> labels) throws Exception {
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(SessionManager sessionManager,
+            ExecutionData execData, Map<String, String> labels) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
@@ -292,8 +265,7 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream tarStreamFile, String completeFilePath, String fileName)
-            throws Exception {
+            InputStream tarStreamFile, String completeFilePath, String fileName) throws Exception {
         // TODO Auto-generated method stub
 
     }
@@ -306,40 +278,36 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFileToSubserviceFromEus(String instanceId,
-            String subServiceID, String filePathInEus, String completeFilePath)
-            throws Exception {
+    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
+            String filePathInEus, String completeFilePath) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public Boolean uploadFileToBrowser(SessionManager sessionManager,
-            ExecutionData execData, MultipartFile file, String completeFilePath)
-            throws Exception {
+    public Boolean uploadFileToBrowser(SessionManager sessionManager, ExecutionData execData,
+            MultipartFile file, String completeFilePath) throws Exception {
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override
-    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
-            ExecutionData execData, String fileUrl, String completeFilePath,
-            String fileName) throws Exception {
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager, ExecutionData execData,
+            String fileUrl, String completeFilePath, String fileName) throws Exception {
         // TODO
         return null;
     }
 
     @Override
-    public List<String> getFolderFilesList(String containerId,
-            String remotePath, String filter) throws Exception {
+    public List<String> getFolderFilesList(String containerId, String remotePath, String filter)
+            throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public List<String> getSubserviceFolderFilesList(String instanceId,
-            String subServiceId, String remotePath, String filter)
-            throws Exception {
+    public List<String> getSubserviceFolderFilesList(String instanceId, String subServiceId,
+            String remotePath, String filter) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }

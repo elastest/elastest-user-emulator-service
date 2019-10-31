@@ -50,6 +50,9 @@ public class EusFilesService {
     @Value("${host.shared.files.relative.folder}")
     private String hostSharedFilesRelativeFolder;
 
+    @Value("${container.shared.files.folder}")
+    public String CONTAINER_SHARED_FILES_FOLDER;
+
     @Value("${qoe.files.relative.folder}")
     private String qoeFilesRelativeFolder;
 
@@ -96,8 +99,7 @@ public class EusFilesService {
     }
 
     public String getInternalSharedFilesPath(SessionManager sessionManager) {
-        return CONTAINER_MAIN_FOLDER + FILE_SEPARATOR + hostSharedFilesRelativeFolder
-                + FILE_SEPARATOR;
+        return CONTAINER_SHARED_FILES_FOLDER + FILE_SEPARATOR;
     }
 
     public String getFilesPathInHostPath() {

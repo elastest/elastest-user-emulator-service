@@ -78,7 +78,7 @@ public abstract class PlatformManager {
             Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception;
 
-    public abstract void execCommandInBrowser(String hubContainerName,
+    public abstract String execCommandInBrowser(String hubContainerName,
             boolean awaitCompletion, String... command) throws Exception;
 
     public abstract boolean existServiceWithName(String name) throws Exception;

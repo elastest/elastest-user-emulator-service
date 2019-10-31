@@ -4,8 +4,6 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
@@ -47,67 +45,57 @@ public class BrowserDockerManager extends PlatformManager {
 
     private DockerService dockerService;
 
-    public BrowserDockerManager(DockerService dockerService,
-            EusFilesService eusFilesService,
+    public BrowserDockerManager(DockerService dockerService, EusFilesService eusFilesService,
             EusContextProperties contextProperties) {
         super(eusFilesService, contextProperties);
         this.dockerService = dockerService;
     }
 
-    public List<String> getContainerNetworksByContainerPrefix(String prefix)
-            throws Exception {
+    public List<String> getContainerNetworksByContainerPrefix(String prefix) throws Exception {
         List<String> networks = new ArrayList<>();
-        List<Container> containers = dockerService
-                .getContainersByNamePrefix(prefix);
+        List<Container> containers = dockerService.getContainersByNamePrefix(prefix);
         if (containers != null && containers.size() > 0) {
-            networks = dockerService
-                    .getContainerNetworks(containers.get(0).id());
+            networks = dockerService.getContainerNetworks(containers.get(0).id());
         }
         return networks;
     }
 
     @Override
-    public void downloadFileOrFilesFromServiceToEus(String instanceId,
-            String remotePath, String localPath, String filename,
+    public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
+            String localPath, String filename, Boolean isDirectory) throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void downloadFileOrFilesFromSubServiceToEus(String instanceId, String subServiceID,
+            String remotePath, String localPath, String originalFilename, String newFilename,
             Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void downloadFileOrFilesFromSubServiceToEus(String instanceId,
-            String subServiceID, String remotePath, String localPath,
-            String originalFilename, String newFilename, Boolean isDirectory)
+    public InputStream getFileFromService(String serviceNameOrId, String path, Boolean isDirectory)
             throws Exception {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public InputStream getFileFromService(String serviceNameOrId, String path,
-            Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
         if (isDirectory) {
-            return dockerService.getFilesFromContainerAsInputStreamTar(
-                    serviceNameOrId, path);
+            return dockerService.getFilesFromContainerAsInputStreamTar(serviceNameOrId, path);
         } else {
-            return dockerService.getSingleFileFromContainer(serviceNameOrId,
-                    path);
+            return dockerService.getSingleFileFromContainer(serviceNameOrId, path);
         }
     }
 
     @Override
-    public InputStream getFileFromSubService(String instanceId,
-            String subServiceID, String path, Boolean isDirectory)
-            throws Exception {
+    public InputStream getFileFromSubService(String instanceId, String subServiceID, String path,
+            Boolean isDirectory) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public String getSessionContextInfo(SessionManager sessionManager)
-            throws Exception {
+    public String getSessionContextInfo(SessionManager sessionManager) throws Exception {
         String vncContainerName = sessionManager.getVncContainerName();
         if (vncContainerName != null) {
             return dockerService.getContainerInfoStringByName(vncContainerName);
@@ -116,13 +104,11 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void buildAndRunBrowserInContainer(SessionManager sessionManager,
-            String containerPrefix, String originalRequestBody,
-            String folderPath, ExecutionData execData, List<String> envs,
-            Map<String, String> labels, DesiredCapabilities capabilities,
+    public void buildAndRunBrowserInContainer(SessionManager sessionManager, String containerPrefix,
+            String originalRequestBody, String folderPath, ExecutionData execData,
+            List<String> envs, Map<String, String> labels, DesiredCapabilities capabilities,
             String imageId) throws Exception {
-        String hubContainerName = generateRandomContainerNameWithPrefix(
-                containerPrefix, execData);
+        String hubContainerName = generateRandomContainerNameWithPrefix(containerPrefix, execData);
 
         /* **** Volumes **** */
         logger.info("Folder path in host: {}", folderPath);
@@ -131,8 +117,7 @@ public class BrowserDockerManager extends PlatformManager {
         // Recording
         Builder recordingsVolumeBuilder = Bind.builder();
         recordingsVolumeBuilder.from(folderPath);
-        recordingsVolumeBuilder
-                .to(contextProperties.CONTAINER_RECORDING_FOLDER);
+        recordingsVolumeBuilder.to(contextProperties.CONTAINER_RECORDING_FOLDER);
         volumes.add(recordingsVolumeBuilder.build());
 
         // Shared files
@@ -145,34 +130,27 @@ public class BrowserDockerManager extends PlatformManager {
         eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
 
         sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
-        sharedfilesVolumeBuilder
-                .to(contextProperties.CONTAINER_SHARED_FILES_FOLDER);
+        sharedfilesVolumeBuilder.to(contextProperties.CONTAINER_SHARED_FILES_FOLDER);
         volumes.add(sharedfilesVolumeBuilder.build());
 
         /* **** Port binding **** */
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
 
         int hubPort = dockerService.findRandomOpenPort();
-        String exposedHubPort = Integer
-                .toString(contextProperties.HUB_EXPOSED_PORT);
-        portBindings.put(exposedHubPort,
-                Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
+        String exposedHubPort = Integer.toString(contextProperties.HUB_EXPOSED_PORT);
+        portBindings.put(exposedHubPort, Arrays.asList(PortBinding.of("0.0.0.0", hubPort)));
 
         int vncPort = dockerService.findRandomOpenPort();
-        String exposedVncPort = Integer
-                .toString(contextProperties.HUB_VNC_EXPOSED_PORT);
-        portBindings.put(exposedVncPort,
-                Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
+        String exposedVncPort = Integer.toString(contextProperties.HUB_VNC_EXPOSED_PORT);
+        portBindings.put(exposedVncPort, Arrays.asList(PortBinding.of("0.0.0.0", vncPort)));
 
         int noVncBindedPort = dockerService.findRandomOpenPort();
-        String exposedNoVncPort = Integer
-                .toString(contextProperties.NO_VNC_EXPOSED_PORT);
+        String exposedNoVncPort = Integer.toString(contextProperties.NO_VNC_EXPOSED_PORT);
         portBindings.put(exposedNoVncPort,
                 Arrays.asList(PortBinding.of("0.0.0.0", noVncBindedPort)));
 
         /* **** Exposed ports **** */
-        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort,
-                exposedNoVncPort);
+        List<String> exposedPorts = asList(exposedHubPort, exposedVncPort, exposedNoVncPort);
 
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(imageId);
@@ -190,8 +168,7 @@ public class BrowserDockerManager extends PlatformManager {
         }
 
         /* **** Obtain networks for the browser **** */
-        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
-                execData);
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(execData);
 
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
@@ -212,20 +189,16 @@ public class BrowserDockerManager extends PlatformManager {
         sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
-        String containerId = dockerService
-                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+        String containerId = dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
+                true);
 
         /* **** Additional Networks **** */
         if (networks != null && networks.size() > 0) {
-            logger.debug(
-                    "Inserting browser container into additional networks");
+            logger.debug("Inserting browser container into additional networks");
             for (String additionalNetwork : networks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug("Inserting browser container into {} network",
-                            additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
+                if (additionalNetwork != null && !"".equals(additionalNetwork)) {
+                    logger.debug("Inserting browser container into {} network", additionalNetwork);
+                    dockerService.insertIntoNetwork(additionalNetwork, containerId);
                 }
             }
         }
@@ -237,26 +210,22 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public BrowserSync buildAndRunBrowsersyncService(
-            SessionManager sessionManager, ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+    public BrowserSync buildAndRunBrowsersyncService(SessionManager sessionManager,
+            ExecutionData execData, CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
             Map<String, String> labels) throws Exception {
         String serviceContainerName = getBrowserSyncServiceName(execData);
         BrowserSync browsersync = new BrowserSync(crossBrowserCapabilities);
 
-        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities
-                .getDesiredCapabilities();
+        DesiredCapabilities desiredCapabilities = crossBrowserCapabilities.getDesiredCapabilities();
 
         String sutUrl = crossBrowserCapabilities.getSutUrl();
 
         List<String> envs = new ArrayList<>();
-        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl
-                + "' --open 'external'";
+        String optionsEnv = "BROWSER_SYNC_OPTIONS=--proxy '" + sutUrl + "' --open 'external'";
         envs.add(optionsEnv);
 
         /* **** Obtain networks **** */
-        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
-                execData);
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(execData);
 
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
@@ -275,28 +244,23 @@ public class BrowserDockerManager extends PlatformManager {
         }
 
         /* **** Start **** */
-        String containerId = dockerService
-                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+        String containerId = dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
+                true);
 
         /* **** Additional Networks **** */
         if (networks != null && networks.size() > 0) {
-            logger.debug(
-                    "Inserting Browsersync service container into additional networks");
+            logger.debug("Inserting Browsersync service container into additional networks");
             for (String additionalNetwork : networks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug(
-                            "Inserting Browsersync service container into {} network",
+                if (additionalNetwork != null && !"".equals(additionalNetwork)) {
+                    logger.debug("Inserting Browsersync service container into {} network",
                             additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
+                    dockerService.insertIntoNetwork(additionalNetwork, containerId);
                 }
             }
         }
 
         String ip = dockerService.getContainerIp(containerId, network);
-        String guiUrl = "http://" + ip + ":"
-                + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
+        String guiUrl = "http://" + ip + ":" + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
 
         URL sutUrlObj = new URL(sutUrl);
         String appProtocol = sutUrlObj.getProtocol();
@@ -315,16 +279,14 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            SessionManager sessionManager, ExecutionData execData,
-            Map<String, String> labels) throws Exception {
+    public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(SessionManager sessionManager,
+            ExecutionData execData, Map<String, String> labels) throws Exception {
 
         String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
         WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
 
         /* **** Obtain networks **** */
-        Map<String, List<String>> networksMap = getNetworksFromExecutionData(
-                execData);
+        Map<String, List<String>> networksMap = getNetworksFromExecutionData(execData);
 
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
@@ -337,21 +299,17 @@ public class BrowserDockerManager extends PlatformManager {
         dockerBuilder.network(network);
 
         /* **** Start **** */
-        String containerId = dockerService
-                .createAndStartContainerWithPull(dockerBuilder.build(), true);
+        String containerId = dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
+                true);
 
         /* **** Additional Networks **** */
         if (networks != null && networks.size() > 0) {
-            logger.debug(
-                    "Inserting WebRTCQoEMeter service container into additional networks");
+            logger.debug("Inserting WebRTCQoEMeter service container into additional networks");
             for (String additionalNetwork : networks) {
-                if (additionalNetwork != null
-                        && !"".equals(additionalNetwork)) {
-                    logger.debug(
-                            "Inserting WebRTCQoEMeter service container into {} network",
+                if (additionalNetwork != null && !"".equals(additionalNetwork)) {
+                    logger.debug("Inserting WebRTCQoEMeter service container into {} network",
                             additionalNetwork);
-                    dockerService.insertIntoNetwork(additionalNetwork,
-                            containerId);
+                    dockerService.insertIntoNetwork(additionalNetwork, containerId);
                 }
             }
         }
@@ -361,8 +319,8 @@ public class BrowserDockerManager extends PlatformManager {
         return webRTCQoEMeter;
     }
 
-    public Map<String, List<String>> getNetworksFromExecutionData(
-            ExecutionData execData) throws Exception {
+    public Map<String, List<String>> getNetworksFromExecutionData(ExecutionData execData)
+            throws Exception {
         Map<String, List<String>> networksMap = new HashMap<>();
         String network = contextProperties.DOCKER_NETWORK;
         List<String> networks = new ArrayList<>();
@@ -371,12 +329,10 @@ public class BrowserDockerManager extends PlatformManager {
             String sutPrefix = execData.getSutContainerPrefix();
 
             List<String> additionalNetworks = new ArrayList<>();
-            if (execData.isUseSutNetwork() && sutPrefix != null
-                    && !"".equals(sutPrefix)) {
+            if (execData.isUseSutNetwork() && sutPrefix != null && !"".equals(sutPrefix)) {
                 logger.debug("Sut prefix: {}", sutPrefix);
 
-                additionalNetworks = getContainerNetworksByContainerPrefix(
-                        sutPrefix);
+                additionalNetworks = getContainerNetworksByContainerPrefix(sutPrefix);
                 if (additionalNetworks.size() > 0) {
                     logger.debug("Sut networks: {}", additionalNetworks);
 
@@ -390,9 +346,8 @@ public class BrowserDockerManager extends PlatformManager {
                             first = false;
                         }
                     }
-                    if (additionalNetworks == null
-                            || additionalNetworks.size() == 0 || network == null
-                            || "".equals(network)) {
+                    if (additionalNetworks == null || additionalNetworks.size() == 0
+                            || network == null || "".equals(network)) {
                         network = contextProperties.DOCKER_NETWORK;
                         logger.error(
                                 "Error on get Sut network to use with External TJob. Using default ElasTest network  {}",
@@ -409,15 +364,14 @@ public class BrowserDockerManager extends PlatformManager {
         return networksMap;
     }
 
-    public void waitForBrowserReady(String internalVncUrl,
-            SessionManager sessionManager) throws Exception {
+    public void waitForBrowserReady(String internalVncUrl, SessionManager sessionManager)
+            throws Exception {
         try {
             UtilTools.waitForHostIsReachable(internalVncUrl, 20);
             sessionManager.setStatusMsg("Ready");
             sessionManager.setStatus(DockerServiceStatusEnum.READY);
         } catch (Exception e) {
-            logger.error("Error on wait for host reachable: {}",
-                    e.getMessage());
+            logger.error("Error on wait for host reachable: {}", e.getMessage());
             removeServiceWithTimeout(sessionManager.getHubContainerName(), 60);
             throw e;
         }
@@ -433,8 +387,7 @@ public class BrowserDockerManager extends PlatformManager {
         dockerServiceStatus.setStatusMsg("Pulling " + image + " image");
         return new ProgressHandler() {
             @Override
-            public void progress(ProgressMessage message)
-                    throws DockerException {
+            public void progress(ProgressMessage message) throws DockerException {
                 dockerPullImageProgress.processNewMessage(message);
                 String msg = "Pulling image " + image + ": "
                         + dockerPullImageProgress.getCurrentPercentage() + "%";
@@ -447,24 +400,20 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public String execCommand(String dockerContainerIdOrName, String command)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public String execCommandInBrowser(String hubContainerName, boolean awaitCompletion,
+            String... command) throws Exception {
+        return dockerService.execCommand(hubContainerName, awaitCompletion, command);
     }
 
     @Override
-    public String execCommandInSubService(String instanceId,
-            String subserviceId, boolean awaitCompletion, String command)
-            throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public String execCommand(String dockerContainerIdOrName, String command) throws Exception {
+        return execCommandInBrowser(dockerContainerIdOrName, true, "sh", "-c", "'" + command + "'");
     }
 
     @Override
-    public void execCommandInBrowser(String hubContainerName,
-            boolean awaitCompletion, String... command) throws Exception {
-        dockerService.execCommand(hubContainerName, awaitCompletion, command);
+    public String execCommandInSubService(String instanceId, String subserviceId,
+            boolean awaitCompletion, String command) throws Exception {
+        return execCommand(subserviceId, command);
     }
 
     @Override
@@ -473,10 +422,9 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void removeServiceWithTimeout(String containerId,
-            int killAfterSeconds) throws Exception {
-        dockerService.stopAndRemoveContainerWithKillTimeout(containerId,
-                killAfterSeconds);
+    public void removeServiceWithTimeout(String containerId, int killAfterSeconds)
+            throws Exception {
+        dockerService.stopAndRemoveContainerWithKillTimeout(containerId, killAfterSeconds);
     }
 
     @Override
@@ -486,86 +434,94 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String serviceNameOrId, InputStream streamFile,
-            String completeFilePath, String fileName) throws Exception {
-        dockerService.copyFileToContainer(serviceNameOrId, streamFile,
-                completeFilePath);
+    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
+            String completeFilePathWithoutName, String fileName) throws Exception {
+        execCommandInBrowser(serviceNameOrId, true, "sudo", "mkdir", "-p",
+                completeFilePathWithoutName);
+
+        dockerService.copyFileToContainer(serviceNameOrId, tarStreamFile,
+                completeFilePathWithoutName);
     }
 
     @Override
     public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream tarStreamFile, String completeFilePath, String fileName)
+            InputStream tarStreamFile, String completeFilePathWithoutName, String fileName)
             throws Exception {
-        // TODO Auto-generated method stub
+        uploadFile(subServiceID, tarStreamFile, completeFilePathWithoutName, fileName);
     }
 
     @Override
-    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
-            String completeFilePath) throws Exception {
-        Path fromPath = Paths.get(filePathInEus);
-        dockerService.copyFileToContainer(serviceNameOrId, fromPath,
-                completeFilePath);
+    public void uploadFileFromEus(String serviceNameOrId, String completeFilePathInEus,
+            String completeTargetFilePath) throws Exception {
+        Path fromPath = Paths.get(completeFilePathInEus);
+        dockerService.copyFileToContainer(serviceNameOrId, fromPath, completeTargetFilePath);
     }
 
     @Override
     // instanceId and subServiceID are the same in this case
-    public void uploadFileToSubserviceFromEus(String instanceId,
-            String subServiceID, String filePathInEus, String completeFilePath)
-            throws Exception {
+    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
+            String filePathInEus, String completeFilePath) throws Exception {
         uploadFileFromEus(subServiceID, filePathInEus, completeFilePath);
     }
 
     @Override
-    public Boolean uploadFileToBrowser(SessionManager sessionManager,
-            ExecutionData execData, MultipartFile file, String path)
-            throws Exception {
+    public Boolean uploadFileToBrowser(SessionManager sessionManager, ExecutionData execData,
+            MultipartFile file, String path) throws Exception {
         // If not path, upload file to et shared files folder (copying directly
         // to eus volume folder)
         if (path == null || "".equals(path)) {
             path = eusFilesService.getEusSharedFilesPath(sessionManager);
-            return eusFilesService.saveFileToPathInEUS(path,
-                    file.getOriginalFilename(), file);
+            return eusFilesService.saveFileToPathInEUS(path, file.getOriginalFilename(), file);
         } else {
-            uploadFile(sessionManager.getVncContainerName(),
-                    file.getInputStream(), path, file.getOriginalFilename());
+            String targetPath = path.endsWith(file.getOriginalFilename())
+                    ? getPathWithoutFileNameFromCompleteFilePath(path)
+                    : path;
+
+            uploadFile(sessionManager.getVncContainerName(), file.getInputStream(), targetPath,
+                    file.getOriginalFilename());
             return true;
         }
     }
 
     @Override
-    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
-            ExecutionData execData, String fileUrl, String completeFilePath,
-            String fileName) throws Exception {
-        // If not path, upload file to et shared files folder (copying directly
-        // to eus volume folder)
-        if (completeFilePath == null || "".equals(completeFilePath)) {
-            completeFilePath = eusFilesService
-                    .getEusSharedFilesPath(sessionManager);
-            eusFilesService.saveFileFromUrlToPathInEUS(completeFilePath,
-                    fileName, fileUrl);
-            return true;
-        } else {
-            File file = eusFilesService.saveFileFromUrlToPathInEUS(
-                    completeFilePath, fileName, fileUrl);
-            FileInputStream fileIS = new FileInputStream(file);
+    public Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager, ExecutionData execData,
+            String fileUrl, String completeFilePath, String fileName) throws Exception {
+        // Upload file to et shared files folder (copying directly to eus volume
+        // folder)
+        String eusSharedFilesPath = eusFilesService.getEusSharedFilesPath(sessionManager);
+        // ~/.elastest/eus/sessionId/ || ~/.elastest/tjobs/.../eus/sessionId/
+        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId() + "/";
+        // shared with volume
+        eusFilesService.saveFileFromUrlToPathInEUS(sessionEusSharedFilesPath, fileName, fileUrl);
 
-            uploadFile(sessionManager.getVncContainerName(), fileIS,
-                    completeFilePath, fileName);
-            return true;
+        // if completeFilePath is not empty, move file to folder in container
+        if (completeFilePath != null && !"".equals(completeFilePath)) {
+            completeFilePath = completeFilePath.endsWith("/") ? completeFilePath
+                    : completeFilePath + "/";
+
+            // Create path in container first
+            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "mkdir", "-p",
+                    completeFilePath);
+
+            String internalSharedFilesPath = eusFilesService
+                    .getInternalSharedFilesPath(sessionManager);
+
+            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp",
+                    internalSharedFilesPath + sessionManager.getSessionId() + "/" + fileName,
+                    completeFilePath + fileName);
         }
+        return true;
     }
 
     @Override
-    public List<String> getFolderFilesList(String containerId,
-            String remotePath, String filter) throws Exception {
-        return dockerService.getFilesListFromContainerFolder(containerId,
-                remotePath, filter);
-    }
-
-    @Override
-    public List<String> getSubserviceFolderFilesList(String instanceId,
-            String subServiceId, String remotePath, String filter)
+    public List<String> getFolderFilesList(String containerId, String remotePath, String filter)
             throws Exception {
+        return dockerService.getFilesListFromContainerFolder(containerId, remotePath, filter);
+    }
+
+    @Override
+    public List<String> getSubserviceFolderFilesList(String instanceId, String subServiceId,
+            String remotePath, String filter) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }

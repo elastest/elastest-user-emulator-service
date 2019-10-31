@@ -275,8 +275,8 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void execCommandInBrowser(String instanceId, boolean awaitCompletion, String... command)
-            throws Exception {
+    public String execCommandInBrowser(String instanceId, boolean awaitCompletion,
+            String... command) throws Exception {
         if (command != null) {
             String browserServiceName = getBrowserServiceName(instanceId) + " ";
 
@@ -284,8 +284,10 @@ public class BrowserAWSManager extends PlatformManager {
 
             String mergedCommand = StringUtils.join(commandListAux, " ");
 
-            execCommandInSubService(instanceId, browserServiceName, awaitCompletion, mergedCommand);
+            return execCommandInSubService(instanceId, browserServiceName, awaitCompletion,
+                    mergedCommand);
         }
+        return null;
     }
 
     @Override
