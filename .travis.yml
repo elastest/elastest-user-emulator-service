@@ -13,11 +13,11 @@ addons:
 script:
     - git clone https://github.com/mpauls/epm-client-java.git
     - cd epm-client-java
-    - mvn –q clean install -Dmaven.test.skip=true
+    - mvn clean install -Dmaven.test.skip=true > /dev/null
     - cd ..
     - git clone https://github.com/elastest/elastest-torm
     - cd elastest-torm/epm-client
-    - mvn –q install -DskipTests -Dgpg.skip -Djenkins=true
+    - mvn install -DskipTests -Dgpg.skip -Djenkins=true
     - cd ..
     - cd ..
     - cd eus
