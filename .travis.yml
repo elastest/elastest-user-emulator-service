@@ -13,7 +13,7 @@ addons:
 script:
     - git clone https://github.com/elastest/elastest-torm
     - cd elastest-torm/epm-client
-    - mvn install -DskipTests -Dgpg.skip -Djenkins=true -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+    - mvn install -DskipTests -Dgpg.skip -Dmaven.javadoc.skip=true -Djenkins=true -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
     - cd ..
     - cd ..
     - cd eus
