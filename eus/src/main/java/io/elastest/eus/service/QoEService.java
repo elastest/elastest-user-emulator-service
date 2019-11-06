@@ -128,29 +128,35 @@ public class QoEService {
     /* ************************************ */
 
     public void uploadVideos(SessionManager sessionManager, String identifier,
-            String originalFilePathWithNameInEus, String receivedFilePathWithNameInEus,
-            String destinyCompleteOriginalVideoPathWithName,
-            String destinyCompleteReceivedVideoPathWithName) throws Exception {
+            String originalFilePathInEus, String originalFileNameInEus,
+            String receivedFilePathInEus, String receivedFileNameInEus,
+            String targetCompleteOriginalVideoPath, String targetCompleteOriginalVideoName,
+            String targetCompleteReceivedVideoPath, String targetCompleteReceivedVideoName)
+            throws Exception {
         log.debug("Uploading QoE Video files to service with id {}", identifier);
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
 
         if (sessionManager.isAWSSession()) {
             // Upload original video (from presenter)
-            platformManager.uploadFileToSubserviceFromEus(serviceName, identifier,
-                    originalFilePathWithNameInEus, destinyCompleteOriginalVideoPathWithName);
+            platformManager.uploadFileToSubserviceFromEus(sessionManager, serviceName, identifier,
+                    originalFilePathInEus, originalFileNameInEus, targetCompleteOriginalVideoPath,
+                    targetCompleteOriginalVideoName);
 
             // Upload received video (from viewer)
-            platformManager.uploadFileToSubserviceFromEus(serviceName, identifier,
-                    receivedFilePathWithNameInEus, destinyCompleteReceivedVideoPathWithName);
+            platformManager.uploadFileToSubserviceFromEus(sessionManager, serviceName, identifier,
+                    receivedFilePathInEus, receivedFileNameInEus, targetCompleteReceivedVideoPath,
+                    targetCompleteReceivedVideoName);
         } else {
             // Upload original video (from presenter)
-            platformManager.uploadFileFromEus(serviceName, originalFilePathWithNameInEus,
-                    destinyCompleteOriginalVideoPathWithName);
+            platformManager.uploadFileFromEus(sessionManager, serviceName, originalFilePathInEus,
+                    originalFileNameInEus, targetCompleteOriginalVideoPath,
+                    targetCompleteOriginalVideoName);
 
             // Upload received video (from viewer)
-            platformManager.uploadFileFromEus(serviceName, receivedFilePathWithNameInEus,
-                    destinyCompleteReceivedVideoPathWithName);
+            platformManager.uploadFileFromEus(sessionManager, serviceName, receivedFilePathInEus,
+                    receivedFileNameInEus, targetCompleteReceivedVideoPath,
+                    targetCompleteReceivedVideoName);
         }
 
     }
@@ -159,15 +165,22 @@ public class QoEService {
             String presenterFilePathWithNameInEus, String viewerFilePathWithNameInEus)
             throws Exception {
 
-        String destinyCompleteOriginalVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
-                + "/" + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME;
+        String presenterFilePathInEus = eusFilesService
+                .getPathWithoutFileNameFromCompleteFilePath(presenterFilePathWithNameInEus);
+        String presenterFileNameInEus = eusFilesService
+                .getFileNameFromCompleteFilePath(presenterFilePathWithNameInEus);
 
-        String destinyCompleteReceivedVideoPathWithName = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH
-                + "/" + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME;
+        String viewerFilePathInEus = eusFilesService
+                .getPathWithoutFileNameFromCompleteFilePath(viewerFilePathWithNameInEus);
+        String viewerFileNameInEus = eusFilesService
+                .getFileNameFromCompleteFilePath(viewerFilePathWithNameInEus);
 
-        uploadVideos(sessionManager, identifier, presenterFilePathWithNameInEus,
-                viewerFilePathWithNameInEus, destinyCompleteOriginalVideoPathWithName,
-                destinyCompleteReceivedVideoPathWithName);
+        uploadVideos(sessionManager, identifier, presenterFilePathInEus, presenterFileNameInEus,
+                viewerFilePathInEus, viewerFileNameInEus,
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH,
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_ORIGINAL_VIDEO_NAME,
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PATH,
+                contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_RECEIVED_VIDEO_NAME);
     }
 
     // Step 2
@@ -184,49 +197,53 @@ public class QoEService {
                 viewerSessionManager.getSessionId(), identifier);
 
         final PlatformManager viewerPlatformManager = viewerSessionManager.getPlatformManager();
-        String originalPresenterFileName = viewerPlatformManager
+        String originalPresenterFileName = eusFilesService
                 .getFileNameFromCompleteFilePath(presenterCompleteFilePath);
         String newPresenterFileName = viewerSessionManager.getIdForFiles() + "_"
                 + originalPresenterFileName;
 
-        String presenterPathWithoutFile = viewerPlatformManager
+        String presenterPathWithoutFile = eusFilesService
                 .getPathWithoutFileNameFromCompleteFilePath(presenterCompleteFilePath);
+
+        String viewerInstanceId = null;
+        String viewerServiceName = null;
         if (viewerSessionManager.isAWSSession()) {
-            viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
-                    viewerSessionManager.getAwsInstanceId(),
-                    viewerSessionManager.getVncContainerName(), presenterPathWithoutFile,
-                    eusDownloadFolder, originalPresenterFileName, newPresenterFileName, false);
-
+            viewerInstanceId = viewerSessionManager.getAwsInstanceId();
+            viewerServiceName = viewerSessionManager.getVncContainerName();
         } else {
-            viewerPlatformManager.downloadFileOrFilesFromServiceToEus(
-                    viewerSessionManager.getVncContainerName(), presenterPathWithoutFile,
-                    eusDownloadFolder, originalPresenterFileName, false);
-
+            viewerInstanceId = viewerSessionManager.getVncContainerName();
+            viewerServiceName = viewerSessionManager.getVncContainerName();
         }
+        viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(viewerInstanceId,
+                viewerServiceName, presenterPathWithoutFile, eusDownloadFolder,
+                originalPresenterFileName, newPresenterFileName, false);
 
         /* **************** Viewer **************** */
         log.debug("Downloading QoE Viewer Video file from session {} to send to service with id {}",
                 presenterSessionManager.getSessionId(), identifier);
 
-        final PlatformManager presenterPlatformManager = presenterSessionManager
-                .getPlatformManager();
-        String originalViewerFileName = presenterPlatformManager
+        String originalViewerFileName = eusFilesService
                 .getFileNameFromCompleteFilePath(viewerCompleteFilePath);
         String newViewerFileName = presenterSessionManager.getIdForFiles() + "_"
                 + originalViewerFileName;
 
-        String viewerPathWithoutFile = presenterPlatformManager
+        String viewerPathWithoutFile = eusFilesService
                 .getPathWithoutFileNameFromCompleteFilePath(viewerCompleteFilePath);
+
+        String presenterInstanceId = null;
+        String presenterServiceName = null;
+
         if (presenterSessionManager.isAWSSession()) {
-            viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(
-                    presenterSessionManager.getAwsInstanceId(),
-                    presenterSessionManager.getVncContainerName(), viewerPathWithoutFile,
-                    eusDownloadFolder, originalViewerFileName, newViewerFileName, false);
+            presenterInstanceId = presenterSessionManager.getAwsInstanceId();
+            presenterServiceName = presenterSessionManager.getVncContainerName();
         } else {
-            presenterPlatformManager.downloadFileOrFilesFromServiceToEus(
-                    presenterSessionManager.getVncContainerName(), viewerPathWithoutFile,
-                    eusDownloadFolder, originalViewerFileName, false);
+            presenterInstanceId = presenterSessionManager.getVncContainerName();
+            presenterServiceName = presenterSessionManager.getVncContainerName();
         }
+
+        viewerPlatformManager.downloadFileOrFilesFromSubServiceToEus(presenterInstanceId,
+                presenterServiceName, viewerPathWithoutFile, eusDownloadFolder,
+                originalViewerFileName, newViewerFileName, false);
 
         /* **************** UPLOAD **************** */
         uploadVideos(webRTCQoESessionManager, identifier, eusDownloadFolder + newPresenterFileName,

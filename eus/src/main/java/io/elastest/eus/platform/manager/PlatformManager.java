@@ -38,30 +38,26 @@ public abstract class PlatformManager {
         this.contextProperties = contextProperties;
     }
 
-    public abstract void downloadFileOrFilesFromServiceToEus(String instanceId,
-            String remotePath, String localPath, String filename,
+    public abstract void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
+            String localPath, String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception;
+
+    public abstract void downloadFileOrFilesFromSubServiceToEus(String instanceId,
+            String subServiceID, String remotePath, String localPath, String originalFilename,
+            String newFilename, Boolean isDirectory) throws Exception;
+
+    public abstract InputStream getFileFromService(String serviceNameOrId, String path,
             Boolean isDirectory) throws Exception;
 
-    public abstract void downloadFileOrFilesFromSubServiceToEus(
-            String instanceId, String subServiceID, String remotePath,
-            String localPath, String originalFilename, String newFilename,
-            Boolean isDirectory) throws Exception;
-
-    public abstract InputStream getFileFromService(String serviceNameOrId,
+    public abstract InputStream getFileFromSubService(String instanceId, String subServiceID,
             String path, Boolean isDirectory) throws Exception;
 
-    public abstract InputStream getFileFromSubService(String instanceId,
-            String subServiceID, String path, Boolean isDirectory)
+    public abstract void copyFilesFromBrowserIfNecessary(SessionManager sessionManager)
             throws Exception;
 
-    public abstract void copyFilesFromBrowserIfNecessary(
-            SessionManager sessionManager) throws Exception;
+    public abstract String getSessionContextInfo(SessionManager sessionManager) throws Exception;
 
-    public abstract String getSessionContextInfo(SessionManager sessionManager)
-            throws Exception;
-
-    public String generateRandomContainerNameWithPrefix(String prefix,
-            ExecutionData execData) {
+    public String generateRandomContainerNameWithPrefix(String prefix, ExecutionData execData) {
         String name = prefix + randomUUID().toString();
 
         if (execData != null && execData.gettJobExecId() != null) {
@@ -71,77 +67,69 @@ public abstract class PlatformManager {
         return name;
     }
 
-    public abstract void buildAndRunBrowserInContainer(
-            SessionManager sessionManager, String containerPrefix,
-            String originalRequestBody, String folderPath,
-            ExecutionData execData, List<String> envs,
-            Map<String, String> labels, DesiredCapabilities capabilities,
-            String imageId) throws Exception;
+    public abstract void buildAndRunBrowserInContainer(SessionManager sessionManager,
+            String containerPrefix, String originalRequestBody, String folderPath,
+            ExecutionData execData, List<String> envs, Map<String, String> labels,
+            DesiredCapabilities capabilities, String imageId) throws Exception;
 
-    public abstract String execCommandInBrowser(String hubContainerName,
-            boolean awaitCompletion, String... command) throws Exception;
+    public abstract String execCommandInBrowser(String hubContainerName, boolean awaitCompletion,
+            String... command) throws Exception;
 
     public abstract boolean existServiceWithName(String name) throws Exception;
 
-    public abstract void removeServiceWithTimeout(String containerId,
-            int killAfterSeconds) throws Exception;
-
-    public abstract void waitForBrowserReady(String internalVncUrl,
-            SessionManager sessionManager) throws Exception;
-
-    public abstract BrowserSync buildAndRunBrowsersyncService(
-            SessionManager sessionManager, ExecutionData execData,
-            CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
-            Map<String, String> labels) throws Exception;
-
-    public abstract WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(
-            SessionManager sessionManager, ExecutionData execData,
-            Map<String, String> labels) throws Exception;
-
-    public abstract void uploadFile(String serviceNameOrId,
-            InputStream tarStreamFile, String completeFilePath, String fileName)
+    public abstract void removeServiceWithTimeout(String containerId, int killAfterSeconds)
             throws Exception;
 
-    public abstract void uploadFileToSubservice(String instanceId,
-            String subServiceID, InputStream tarStreamFile,
-            String completeFilePath, String fileName) throws Exception;
-
-    public abstract void uploadFileFromEus(String serviceNameOrId,
-            String filePathInEus, String completeFilePath) throws Exception;
-
-    public abstract void uploadFileToSubserviceFromEus(String instanceId,
-            String subServiceID, String filePathInEus, String completeFilePath)
+    public abstract void waitForBrowserReady(String internalVncUrl, SessionManager sessionManager)
             throws Exception;
+
+    public abstract BrowserSync buildAndRunBrowsersyncService(SessionManager sessionManager,
+            ExecutionData execData, CrossBrowserWebDriverCapabilities crossBrowserCapabilities,
+            Map<String, String> labels) throws Exception;
+
+    public abstract WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(SessionManager sessionManager,
+            ExecutionData execData, Map<String, String> labels) throws Exception;
+
+    public abstract void uploadFile(SessionManager sessionManager, String serviceNameOrId,
+            InputStream tarStreamFile, String completeFilePath, String fileName) throws Exception;
+
+    public abstract void uploadFileToSubservice(SessionManager sessionManager, String instanceId,
+            String subServiceID, InputStream tarStreamFile, String completeFilePath,
+            String fileName) throws Exception;
+
+    public abstract void uploadFileFromEus(SessionManager sessionManager, String serviceNameOrId,
+            String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception;
+
+    public abstract void uploadFileToSubserviceFromEus(SessionManager sessionManager,
+            String instanceId, String subServiceID, String filePathInEus, String fileNameInEus,
+            String targetFilePath, String targetFileName) throws Exception;
 
     public abstract Boolean uploadFileToBrowser(SessionManager sessionManager,
-            ExecutionData execData, MultipartFile file, String completeFilePath)
+            ExecutionData execData, MultipartFile file, String completeFilePath) throws Exception;
+
+    public abstract Boolean uploadFileFromUrlToBrowser(SessionManager sessionManager,
+            ExecutionData execData, String fileUrl, String completeFilePath, String fileName)
             throws Exception;
 
-    public abstract Boolean uploadFileFromUrlToBrowser(
-            SessionManager sessionManager, ExecutionData execData,
-            String fileUrl, String completeFilePath, String fileName)
-            throws Exception;
-
-    public abstract List<String> getFolderFilesList(String containerId,
-            String remotePath, String filter) throws Exception;
+    public abstract List<String> getFolderFilesList(String containerId, String remotePath,
+            String filter) throws Exception;
 
     public abstract List<String> getSubserviceFolderFilesList(String instanceId,
-            String subServiceId, String remotePath, String filter)
-            throws Exception;
+            String subServiceId, String remotePath, String filter) throws Exception;
     /* *************************************** */
     /* ********* Implemented Methods ********* */
     /* *************************************** */
 
-    public InputStream getFileFromBrowser(SessionManager sessionManager,
-            String path, Boolean isDirectory) throws Exception {
+    public InputStream getFileFromBrowser(SessionManager sessionManager, String path,
+            Boolean isDirectory) throws Exception {
         // Note!!!: if file does not exists, spotify docker
         // returns ContainernotFoundException (bug)
         if (sessionManager.isAWSSession()) {
             return getFileFromSubService(sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), path, isDirectory);
         } else {
-            return getFileFromService(sessionManager.getVncContainerName(),
-                    path, isDirectory);
+            return getFileFromService(sessionManager.getVncContainerName(), path, isDirectory);
         }
     }
 
@@ -153,28 +141,21 @@ public abstract class PlatformManager {
                 + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
                         : EusFilesService.FILE_SEPARATOR);
         String recordingsRelativePath = pathRecordingsInHost
-                .substring(
-                        pathRecordingsInHost
-                                .indexOf(eusFilesService.FILE_SEPARATOR,
-                                        pathRecordingsInHost.indexOf(
-                                                eusFilesService.FILE_SEPARATOR)
-                                                + 1));
-        recordingsPath = eusFilesService.getEtSharedFolder()
-                + recordingsRelativePath;
+                .substring(pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR,
+                        pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR) + 1));
+        recordingsPath = eusFilesService.getEtSharedFolder() + recordingsRelativePath;
 
         return recordingsPath;
     }
 
-    protected void moveFiles(File fileToMove, String targetPath)
-            throws IOException {
+    protected void moveFiles(File fileToMove, String targetPath) throws IOException {
         if (fileToMove.isDirectory()) {
             for (File file : fileToMove.listFiles()) {
                 moveFiles(file, targetPath + "/" + file.getName());
             }
         } else {
             try {
-                Files.move(Paths.get(fileToMove.getPath()),
-                        Paths.get(targetPath),
+                Files.move(Paths.get(fileToMove.getPath()), Paths.get(targetPath),
                         StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 logger.error("Error moving files to other directory.");
@@ -185,17 +166,13 @@ public abstract class PlatformManager {
     }
 
     public String getBrowserSyncServiceName(ExecutionData execData) {
-        return generateRandomContainerNameWithPrefix(
-                contextProperties.EUS_CONTAINER_PREFIX
-                        + contextProperties.EUS_SERVICE_BROWSERSYNC_PREFIX,
-                execData);
+        return generateRandomContainerNameWithPrefix(contextProperties.EUS_CONTAINER_PREFIX
+                + contextProperties.EUS_SERVICE_BROWSERSYNC_PREFIX, execData);
     }
 
     public String getWebRTCQoEMeterServiceName(ExecutionData execData) {
-        return generateRandomContainerNameWithPrefix(
-                contextProperties.EUS_CONTAINER_PREFIX
-                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PREFIX,
-                execData);
+        return generateRandomContainerNameWithPrefix(contextProperties.EUS_CONTAINER_PREFIX
+                + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_PREFIX, execData);
     }
 
     @Override
@@ -203,33 +180,8 @@ public abstract class PlatformManager {
         return "";
     }
 
-    public String getFileNameFromCompleteFilePath(String completeFilePath)
-            throws Exception {
-        String[] splittedFilePath = completeFilePath.split("/");
-        return splittedFilePath[splittedFilePath.length - 1];
-    }
+    public abstract String execCommand(String instanceId, String command) throws Exception;
 
-    public String getPathWithoutFileNameFromCompleteFilePath(
-            String completeFilePath) throws Exception {
-        String[] splittedFilePath = completeFilePath.split("/");
-        String finalPath = "";
-        int position = 0;
-        for (String pathPart : splittedFilePath) {
-            if (position < splittedFilePath.length - 1) {
-                if (position > 0) {
-                    finalPath += "/";
-                }
-                finalPath += pathPart;
-            }
-            position++;
-        }
-        return finalPath;
-    }
-
-    public abstract String execCommand(String instanceId, String command)
-            throws Exception;
-
-    public abstract String execCommandInSubService(String instanceId,
-            String subserviceId, boolean awaitCompletion, String command)
-            throws Exception;
+    public abstract String execCommandInSubService(String instanceId, String subserviceId,
+            boolean awaitCompletion, String command) throws Exception;
 }

@@ -55,11 +55,12 @@ public class BrowserAWSManager extends PlatformManager {
 
     @Override
     public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
-            String localPath, String filename, Boolean isDirectory) throws Exception {
+            String localPath, String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
         if (isDirectory) {
             awsClient.downloadFolderFiles(instanceId, remotePath, localPath);
         } else {
-            awsClient.downloadFile(instanceId, remotePath, filename, localPath);
+            awsClient.downloadFile(instanceId, remotePath, originalFilename, localPath);
         }
     }
 
@@ -79,7 +80,7 @@ public class BrowserAWSManager extends PlatformManager {
                     + originalFilename + " " + instanceCompleteFilePath + newFilename);
 
             downloadFileOrFilesFromServiceToEus(instanceId, instanceCompleteFilePath, localPath,
-                    newFilename, false);
+                    newFilename, newFilename, false);
         }
     }
 
@@ -101,7 +102,7 @@ public class BrowserAWSManager extends PlatformManager {
             // TODO return files in folder
             return null;
         } else {
-            String fileName = getFileNameFromCompleteFilePath(completeFilePath);
+            String fileName = eusFilesService.getFileNameFromCompleteFilePath(completeFilePath);
             String instanceCompleteFilePath = "/tmp/" + fileName;
 
             // Copy from container to instance first
@@ -117,7 +118,7 @@ public class BrowserAWSManager extends PlatformManager {
         String remotePath = contextProperties.CONTAINER_RECORDING_FOLDER;
         String localPath = eusFilesService.getSessionFilesFolderBySessionManager(sessionManager);
         downloadFileOrFilesFromServiceToEus(sessionManager.getAwsInstanceId(), remotePath,
-                localPath, null, true);
+                localPath, null, null, true);
     }
 
     @Override
@@ -246,7 +247,7 @@ public class BrowserAWSManager extends PlatformManager {
         awsClient.executeCommand(instanceId,
                 "docker run -d --name " + serviceContainerName + " "
                         + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME + " "
-                        + "tail -f /dev/null");
+                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_COMMAND);
 
         webRTCQoEMeter.setAwsInstanceId(instanceId);
 
@@ -322,18 +323,19 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String instanceId, InputStream inputStreamFile, String completeFilePath,
-            String fileName) throws Exception {
+    public void uploadFile(SessionManager sessionManager, String instanceId,
+            InputStream inputStreamFile, String completeFilePath, String fileName)
+            throws Exception {
         awsClient.uploadFile(instanceId, completeFilePath, fileName, inputStreamFile);
     }
 
     @Override
-    public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream inputStreamFile, String completeFilePath, String fileName)
-            throws Exception {
+    public void uploadFileToSubservice(SessionManager sessionManager, String instanceId,
+            String subServiceID, InputStream inputStreamFile, String completeFilePath,
+            String fileName) throws Exception {
         String instancePath = "/tmp/";
         // first upload to instance
-        uploadFile(instanceId, inputStreamFile, instancePath, fileName);
+        uploadFile(sessionManager, instanceId, inputStreamFile, instancePath, fileName);
 
         logger.debug("File {} uploaded to instance {} at {}. Copying to subservice {}", fileName,
                 instanceId, instancePath, subServiceID);
@@ -350,25 +352,25 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
-            String completeFilePathWithName) throws Exception {
-        File fileInEus = new File(filePathInEus);
+    public void uploadFileFromEus(SessionManager sessionManager, String serviceNameOrId,
+            String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
+        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
+                : filePathInEus + "/") + fileNameInEus;
+
+        File fileInEus = new File(completeFilePathInEUS);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
 
-        String fileName = getFileNameFromCompleteFilePath(completeFilePathWithName);
-        String completePathWithoutFileName = getPathWithoutFileNameFromCompleteFilePath(
-                completeFilePathWithName);
-
-        uploadFile(serviceNameOrId, fileISInEus, completePathWithoutFileName, fileName);
+        uploadFile(sessionManager, serviceNameOrId, fileISInEus, targetFilePath, targetFileName);
         try {
             logger.debug("Removing {} file from EUS after upload to service", filePathInEus);
             fileInEus.delete();
 
-            File folder = new File(completePathWithoutFileName);
+            File folder = new File(targetFilePath);
             if (folder.isDirectory() && folder.list().length == 0) {
                 logger.debug(
                         "Removing {} folder (because is empty) from EUS after upload to service",
-                        completePathWithoutFileName);
+                        targetFilePath);
                 fileInEus.delete();
             }
         } catch (Exception e) {
@@ -376,16 +378,16 @@ public class BrowserAWSManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
-            String filePathInEus, String completeFilePathWithName) throws Exception {
-        String fileName = getFileNameFromCompleteFilePath(completeFilePathWithName);
-        String completeFilePathWithoutName = getPathWithoutFileNameFromCompleteFilePath(
-                completeFilePathWithName);
+    public void uploadFileToSubserviceFromEus(SessionManager sessionManager, String instanceId,
+            String subServiceID, String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
+        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
+                : filePathInEus + "/") + fileNameInEus;
 
-        File fileInEus = new File(filePathInEus);
+        File fileInEus = new File(completeFilePathInEUS);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
-        uploadFileToSubservice(instanceId, subServiceID, fileISInEus, completeFilePathWithoutName,
-                fileName);
+        uploadFileToSubservice(sessionManager, instanceId, subServiceID, fileISInEus,
+                targetFilePath, targetFileName);
     }
 
     @Override
@@ -395,10 +397,10 @@ public class BrowserAWSManager extends PlatformManager {
         // to instance volume folder shared with browser container)
         if (completeFilePath == null || "".equals(completeFilePath)) {
             completeFilePath = eusFilesService.getEusSharedFilesPath(sessionManager);
-            uploadFile(sessionManager.getAwsInstanceId(), file.getInputStream(), completeFilePath,
-                    file.getOriginalFilename());
+            uploadFile(sessionManager, sessionManager.getAwsInstanceId(), file.getInputStream(),
+                    completeFilePath, file.getOriginalFilename());
         } else {
-            uploadFileToSubservice(sessionManager.getAwsInstanceId(),
+            uploadFileToSubservice(sessionManager, sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), file.getInputStream(), completeFilePath,
                     file.getOriginalFilename());
         }
@@ -416,7 +418,8 @@ public class BrowserAWSManager extends PlatformManager {
                     fileUrl);
             FileInputStream fileIS = new FileInputStream(file);
 
-            uploadFile(sessionManager.getAwsInstanceId(), fileIS, completeFilePath, fileName);
+            uploadFile(sessionManager, sessionManager.getAwsInstanceId(), fileIS, completeFilePath,
+                    fileName);
 
             // Remove temporal file from EUS
             try {
@@ -432,7 +435,7 @@ public class BrowserAWSManager extends PlatformManager {
             File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus, fileName, fileUrl);
             InputStream fileIS = new FileInputStream(file);
 
-            uploadFileToSubservice(sessionManager.getAwsInstanceId(),
+            uploadFileToSubservice(sessionManager, sessionManager.getAwsInstanceId(),
                     sessionManager.getVncContainerName(), fileIS, completeFilePath, fileName);
 
             // Remove temporal file from EUS

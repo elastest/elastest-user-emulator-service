@@ -161,7 +161,8 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
-            String localPath, String filename, Boolean isDirectory) throws Exception {
+            String localPath, String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }
@@ -257,29 +258,33 @@ public class BrowserK8sManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
-            String completePresenterPath, String fileName) throws Exception {
+    public void uploadFile(SessionManager sessionManager, String serviceNameOrId,
+            InputStream tarStreamFile, String completePresenterPath, String fileName)
+            throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream tarStreamFile, String completeFilePath, String fileName) throws Exception {
+    public void uploadFileToSubservice(SessionManager sessionManager, String instanceId,
+            String subServiceID, InputStream tarStreamFile, String completeFilePath,
+            String fileName) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void uploadFileFromEus(String serviceNameOrId, String filePathInEus,
-            String completePresenterPath) throws Exception {
+    public void uploadFileFromEus(SessionManager sessionManager, String serviceNameOrId,
+            String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
-            String filePathInEus, String completeFilePath) throws Exception {
+    public void uploadFileToSubserviceFromEus(SessionManager sessionManager, String instanceId,
+            String subServiceID, String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
         // TODO Auto-generated method stub
 
     }

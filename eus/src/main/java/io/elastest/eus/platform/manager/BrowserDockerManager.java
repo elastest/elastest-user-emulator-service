@@ -4,16 +4,18 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,16 +64,29 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public void downloadFileOrFilesFromServiceToEus(String instanceId, String remotePath,
-            String localPath, String filename, Boolean isDirectory) throws Exception {
-        // TODO Auto-generated method stub
-
+            String localPath, String originalFilename, String newFilename, Boolean isDirectory)
+            throws Exception {
+        downloadFileOrFilesFromSubServiceToEus(instanceId, instanceId, remotePath, localPath,
+                originalFilename, newFilename, isDirectory);
     }
 
     @Override
     public void downloadFileOrFilesFromSubServiceToEus(String instanceId, String subServiceID,
             String remotePath, String localPath, String originalFilename, String newFilename,
             Boolean isDirectory) throws Exception {
-        // TODO Auto-generated method stub
+        if (isDirectory) {
+            InputStream fileInputStream = getFileFromService(instanceId, remotePath, isDirectory);
+            // TODO
+        } else {
+            String completeFilePath = remotePath.endsWith("/") ? remotePath : remotePath + "/";
+            completeFilePath += originalFilename;
+            InputStream fileInputStream = getFileFromService(instanceId, completeFilePath,
+                    isDirectory);
+
+            final byte[] fileByteArray = IOUtils.toByteArray(fileInputStream);
+
+            eusFilesService.saveByteArrayFileToPathInEUS(localPath, newFilename, fileByteArray);
+        }
 
     }
 
@@ -297,6 +312,8 @@ public class BrowserDockerManager extends PlatformManager {
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.labels(labels);
         dockerBuilder.network(network);
+        dockerBuilder.cmd(Arrays
+                .asList(contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_COMMAND.split("\\s")));
 
         /* **** Start **** */
         String containerId = dockerService.createAndStartContainerWithPull(dockerBuilder.build(),
@@ -434,8 +451,9 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFile(String serviceNameOrId, InputStream tarStreamFile,
-            String completeFilePathWithoutName, String fileName) throws Exception {
+    public void uploadFile(SessionManager sessionManager, String serviceNameOrId,
+            InputStream tarStreamFile, String completeFilePathWithoutName, String fileName)
+            throws Exception {
         execCommandInBrowser(serviceNameOrId, true, "sudo", "mkdir", "-p",
                 completeFilePathWithoutName);
 
@@ -444,24 +462,77 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public void uploadFileToSubservice(String instanceId, String subServiceID,
-            InputStream tarStreamFile, String completeFilePathWithoutName, String fileName)
-            throws Exception {
-        uploadFile(subServiceID, tarStreamFile, completeFilePathWithoutName, fileName);
+    public void uploadFileToSubservice(SessionManager sessionManager, String instanceId,
+            String subServiceID, InputStream tarStreamFile, String completeFilePathWithoutName,
+            String fileName) throws Exception {
+        uploadFile(sessionManager, subServiceID, tarStreamFile, completeFilePathWithoutName,
+                fileName);
     }
 
     @Override
-    public void uploadFileFromEus(String serviceNameOrId, String completeFilePathInEus,
-            String completeTargetFilePath) throws Exception {
-        Path fromPath = Paths.get(completeFilePathInEus);
-        dockerService.copyFileToContainer(serviceNameOrId, fromPath, completeTargetFilePath);
+    public void uploadFileFromEus(SessionManager sessionManager, String serviceNameOrId,
+            String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
+        boolean isDirectory = true;
+
+        // Create path in container first
+        execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "mkdir", "-p",
+                targetFilePath);
+
+        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
+                : filePathInEus + "/");
+
+        if (fileNameInEus != null) {
+            completeFilePathInEUS += fileNameInEus;
+            isDirectory = false;
+
+            if (targetFileName != null) {
+                targetFileName = fileNameInEus;
+            }
+        }
+
+        // Upload file to et shared files folder (copying directly to eus volume
+        // folder)
+        String eusSharedFilesPath = eusFilesService.getEusSharedFilesPath(sessionManager);
+
+        // ~/.elastest/eus/sessionId/ || ~/.elastest/tjobs/.../eus/sessionId/
+        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId() + "/";
+
+        String sessionInternalSharedFilesPath = eusFilesService
+                .getInternalSharedFilesPath(sessionManager) + sessionManager.getSessionId() + "/";
+
+        if (isDirectory) {
+            File tmpFolderInEus = new File(completeFilePathInEUS);
+
+            Files.move(tmpFolderInEus.toPath(),
+                    new File(sessionEusSharedFilesPath + tmpFolderInEus.getName()).toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+
+            // Copy from shared folder to target folder into container
+            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp", "-R",
+                    sessionInternalSharedFilesPath + tmpFolderInEus.getName(),
+                    targetFilePath + tmpFolderInEus.getName());
+
+        } else {
+            // Move to shared folder with volume first
+            File tmpFileInEus = new File(completeFilePathInEUS);
+            tmpFileInEus.renameTo(new File(sessionEusSharedFilesPath + targetFileName));
+
+            // Copy from shared folder to target folder into container
+            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp",
+                    sessionInternalSharedFilesPath + targetFileName,
+                    targetFilePath + targetFileName);
+        }
+
     }
 
     @Override
     // instanceId and subServiceID are the same in this case
-    public void uploadFileToSubserviceFromEus(String instanceId, String subServiceID,
-            String filePathInEus, String completeFilePath) throws Exception {
-        uploadFileFromEus(subServiceID, filePathInEus, completeFilePath);
+    public void uploadFileToSubserviceFromEus(SessionManager sessionManager, String instanceId,
+            String subServiceID, String filePathInEus, String fileNameInEus, String targetFilePath,
+            String targetFileName) throws Exception {
+        uploadFileFromEus(sessionManager, subServiceID, filePathInEus, fileNameInEus,
+                targetFilePath, targetFileName);
     }
 
     @Override
@@ -474,11 +545,11 @@ public class BrowserDockerManager extends PlatformManager {
             return eusFilesService.saveFileToPathInEUS(path, file.getOriginalFilename(), file);
         } else {
             String targetPath = path.endsWith(file.getOriginalFilename())
-                    ? getPathWithoutFileNameFromCompleteFilePath(path)
+                    ? eusFilesService.getPathWithoutFileNameFromCompleteFilePath(path)
                     : path;
 
-            uploadFile(sessionManager.getVncContainerName(), file.getInputStream(), targetPath,
-                    file.getOriginalFilename());
+            uploadFile(sessionManager, sessionManager.getVncContainerName(), file.getInputStream(),
+                    targetPath, file.getOriginalFilename());
             return true;
         }
     }

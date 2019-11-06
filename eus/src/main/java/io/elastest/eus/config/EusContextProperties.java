@@ -142,6 +142,9 @@ public class EusContextProperties {
     @Value("${eus.service.webrtc.qoe.meter.image.name}")
     public String EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME;
 
+    @Value("${eus.service.webrtc.qoe.meter.image.command}")
+    public String EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_COMMAND;
+
     @Value("${eus.service.webrtc.qoe.meter.path}")
     public String EUS_SERVICE_WEBRTC_QOE_METER_PATH;
 

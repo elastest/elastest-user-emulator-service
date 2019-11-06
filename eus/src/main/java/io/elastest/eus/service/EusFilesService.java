@@ -225,4 +225,27 @@ public class EusFilesService {
         FileUtils.copyInputStreamToFile(iStream, file);
         return ResourceUtils.getFile(targetPath);
     }
+
+    public String getFileNameFromCompleteFilePath(String completeFilePath) throws Exception {
+        String[] splittedFilePath = completeFilePath.split("/");
+        return splittedFilePath[splittedFilePath.length - 1];
+    }
+
+    public String getPathWithoutFileNameFromCompleteFilePath(String completeFilePath)
+            throws Exception {
+        String[] splittedFilePath = completeFilePath.split("/");
+        String finalPath = "";
+        int position = 0;
+        for (String pathPart : splittedFilePath) {
+            if (position < splittedFilePath.length - 1) {
+                if (position > 0) {
+                    finalPath += "/";
+                }
+                finalPath += pathPart;
+            }
+            position++;
+        }
+        return finalPath;
+    }
+
 }
