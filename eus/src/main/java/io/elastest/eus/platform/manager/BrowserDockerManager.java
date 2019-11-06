@@ -78,7 +78,9 @@ public class BrowserDockerManager extends PlatformManager {
             InputStream fileInputStream = getFileFromService(instanceId, remotePath, isDirectory);
             // TODO
         } else {
-            String completeFilePath = remotePath.endsWith("/") ? remotePath : remotePath + "/";
+            String completeFilePath = remotePath.endsWith(EusFilesService.FILE_SEPARATOR)
+                    ? remotePath
+                    : remotePath + EusFilesService.FILE_SEPARATOR;
             completeFilePath += originalFilename;
             InputStream fileInputStream = getFileFromService(instanceId, completeFilePath,
                     isDirectory);
@@ -479,14 +481,19 @@ public class BrowserDockerManager extends PlatformManager {
         execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "mkdir", "-p",
                 targetFilePath);
 
-        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
-                : filePathInEus + "/");
+        String completeFilePathInEUS = (filePathInEus.endsWith(EusFilesService.FILE_SEPARATOR)
+                ? filePathInEus
+                : filePathInEus + EusFilesService.FILE_SEPARATOR);
+
+        String completeTargetPath = (targetFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
+                ? targetFilePath
+                : targetFilePath + EusFilesService.FILE_SEPARATOR);
 
         if (fileNameInEus != null) {
             completeFilePathInEUS += fileNameInEus;
             isDirectory = false;
 
-            if (targetFileName != null) {
+            if (targetFileName == null) {
                 targetFileName = fileNameInEus;
             }
         }
@@ -496,32 +503,33 @@ public class BrowserDockerManager extends PlatformManager {
         String eusSharedFilesPath = eusFilesService.getEusSharedFilesPath(sessionManager);
 
         // ~/.elastest/eus/sessionId/ || ~/.elastest/tjobs/.../eus/sessionId/
-        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId() + "/";
+        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId()
+                + EusFilesService.FILE_SEPARATOR;
 
-        String sessionInternalSharedFilesPath = eusFilesService
-                .getInternalSharedFilesPath(sessionManager) + sessionManager.getSessionId() + "/";
+        String sessionInternalSharedFilesPath = eusFilesService.getInternalSharedFilesPath(
+                sessionManager) + sessionManager.getSessionId() + EusFilesService.FILE_SEPARATOR;
 
         if (isDirectory) {
             File tmpFolderInEus = new File(completeFilePathInEUS);
 
             Files.move(tmpFolderInEus.toPath(),
-                    new File(sessionEusSharedFilesPath + tmpFolderInEus.getName()).toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
+                    new File(sessionEusSharedFilesPath + tmpFolderInEus.getName()).toPath());
 
             // Copy from shared folder to target folder into container
             execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp", "-R",
                     sessionInternalSharedFilesPath + tmpFolderInEus.getName(),
-                    targetFilePath + tmpFolderInEus.getName());
+                    completeTargetPath + tmpFolderInEus.getName());
 
         } else {
             // Move to shared folder with volume first
             File tmpFileInEus = new File(completeFilePathInEUS);
-            tmpFileInEus.renameTo(new File(sessionEusSharedFilesPath + targetFileName));
+            Files.move(tmpFileInEus.toPath(),
+                    new File(sessionEusSharedFilesPath + targetFileName).toPath());
 
             // Copy from shared folder to target folder into container
             execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp",
                     sessionInternalSharedFilesPath + targetFileName,
-                    targetFilePath + targetFileName);
+                    completeTargetPath + targetFileName);
         }
 
     }
@@ -561,14 +569,16 @@ public class BrowserDockerManager extends PlatformManager {
         // folder)
         String eusSharedFilesPath = eusFilesService.getEusSharedFilesPath(sessionManager);
         // ~/.elastest/eus/sessionId/ || ~/.elastest/tjobs/.../eus/sessionId/
-        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId() + "/";
+        String sessionEusSharedFilesPath = eusSharedFilesPath + sessionManager.getSessionId()
+                + EusFilesService.FILE_SEPARATOR;
         // shared with volume
         eusFilesService.saveFileFromUrlToPathInEUS(sessionEusSharedFilesPath, fileName, fileUrl);
 
         // if completeFilePath is not empty, move file to folder in container
         if (completeFilePath != null && !"".equals(completeFilePath)) {
-            completeFilePath = completeFilePath.endsWith("/") ? completeFilePath
-                    : completeFilePath + "/";
+            completeFilePath = completeFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
+                    ? completeFilePath
+                    : completeFilePath + EusFilesService.FILE_SEPARATOR;
 
             // Create path in container first
             execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "mkdir", "-p",
@@ -578,7 +588,8 @@ public class BrowserDockerManager extends PlatformManager {
                     .getInternalSharedFilesPath(sessionManager);
 
             execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp",
-                    internalSharedFilesPath + sessionManager.getSessionId() + "/" + fileName,
+                    internalSharedFilesPath + sessionManager.getSessionId()
+                            + EusFilesService.FILE_SEPARATOR + fileName,
                     completeFilePath + fileName);
         }
         return true;

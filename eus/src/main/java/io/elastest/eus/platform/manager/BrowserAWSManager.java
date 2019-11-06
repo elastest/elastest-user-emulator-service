@@ -74,7 +74,8 @@ public class BrowserAWSManager extends PlatformManager {
                     + " " + instanceCompleteFilePath);
             awsClient.downloadFolderFiles(instanceId, instanceCompleteFilePath, localPath);
         } else {
-            remotePath = remotePath.endsWith("/") ? remotePath : remotePath + "/";
+            remotePath = remotePath.endsWith(EusFilesService.FILE_SEPARATOR) ? remotePath
+                    : remotePath + EusFilesService.FILE_SEPARATOR;
             // Copy from container to instance first
             awsClient.executeCommand(instanceId, "docker cp " + subServiceID + ":" + remotePath
                     + originalFilename + " " + instanceCompleteFilePath + newFilename);
@@ -340,8 +341,9 @@ public class BrowserAWSManager extends PlatformManager {
         logger.debug("File {} uploaded to instance {} at {}. Copying to subservice {}", fileName,
                 instanceId, instancePath, subServiceID);
 
-        completeFilePath = completeFilePath.endsWith("/") ? completeFilePath
-                : completeFilePath + "/";
+        completeFilePath = completeFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
+                ? completeFilePath
+                : completeFilePath + EusFilesService.FILE_SEPARATOR;
 
         // After copy into subservice
         awsClient.executeCommand(instanceId, "docker cp " + instancePath + fileName + " "
@@ -355,8 +357,9 @@ public class BrowserAWSManager extends PlatformManager {
     public void uploadFileFromEus(SessionManager sessionManager, String serviceNameOrId,
             String filePathInEus, String fileNameInEus, String targetFilePath,
             String targetFileName) throws Exception {
-        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
-                : filePathInEus + "/") + fileNameInEus;
+        String completeFilePathInEUS = (filePathInEus.endsWith(EusFilesService.FILE_SEPARATOR)
+                ? filePathInEus
+                : filePathInEus + EusFilesService.FILE_SEPARATOR) + fileNameInEus;
 
         File fileInEus = new File(completeFilePathInEUS);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
@@ -381,8 +384,9 @@ public class BrowserAWSManager extends PlatformManager {
     public void uploadFileToSubserviceFromEus(SessionManager sessionManager, String instanceId,
             String subServiceID, String filePathInEus, String fileNameInEus, String targetFilePath,
             String targetFileName) throws Exception {
-        String completeFilePathInEUS = (filePathInEus.endsWith("/") ? filePathInEus
-                : filePathInEus + "/") + fileNameInEus;
+        String completeFilePathInEUS = (filePathInEus.endsWith(EusFilesService.FILE_SEPARATOR)
+                ? filePathInEus
+                : filePathInEus + EusFilesService.FILE_SEPARATOR) + fileNameInEus;
 
         File fileInEus = new File(completeFilePathInEUS);
         FileInputStream fileISInEus = new FileInputStream(fileInEus);
@@ -428,9 +432,10 @@ public class BrowserAWSManager extends PlatformManager {
             }
         } else {
 
-            String pathInEus = completeFilePath.endsWith("/") ? completeFilePath
-                    : completeFilePath + "/";
-            pathInEus += sessionManager.getSessionId() + "/";
+            String pathInEus = completeFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
+                    ? completeFilePath
+                    : completeFilePath + EusFilesService.FILE_SEPARATOR;
+            pathInEus += sessionManager.getSessionId() + EusFilesService.FILE_SEPARATOR;
 
             File file = eusFilesService.saveFileFromUrlToPathInEUS(pathInEus, fileName, fileUrl);
             InputStream fileIS = new FileInputStream(file);
