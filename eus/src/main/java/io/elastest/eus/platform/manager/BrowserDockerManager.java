@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -298,7 +297,6 @@ public class BrowserDockerManager extends PlatformManager {
     @Override
     public WebRTCQoEMeter buildAndRunWebRTCQoEMeterService(SessionManager sessionManager,
             ExecutionData execData, Map<String, String> labels) throws Exception {
-
         String serviceContainerName = getWebRTCQoEMeterServiceName(execData);
         WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
 
@@ -308,12 +306,31 @@ public class BrowserDockerManager extends PlatformManager {
         List<String> networks = networksMap.get("networks");
         String network = networksMap.get("network").get(0);
 
+        /* **** Volumes **** */
+        List<Bind> volumes = new ArrayList<>();
+
+        // Shared files
+        String folderPath = eusFilesService.getSessionFilesFolderBySessionManager(sessionManager);
+
+        Builder sharedfilesVolumeBuilder = Bind.builder();
+        String hostSharedFilesFolderPath = folderPath
+                + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
+                        : EusFilesService.FILE_SEPARATOR)
+                + contextProperties.HOST_SHARED_FILES_RELATIVE_FOLDER;
+
+        eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
+
+        sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
+        sharedfilesVolumeBuilder.to(contextProperties.CONTAINER_SHARED_FILES_FOLDER);
+        volumes.add(sharedfilesVolumeBuilder.build());
+
         /* **** Docker Builder **** */
         DockerBuilder dockerBuilder = new DockerBuilder(
                 contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_NAME);
         dockerBuilder.containerName(serviceContainerName);
         dockerBuilder.labels(labels);
         dockerBuilder.network(network);
+        dockerBuilder.volumeBindList(volumes);
         dockerBuilder.cmd(Arrays
                 .asList(contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_IMAGE_COMMAND.split("\\s")));
 
@@ -426,7 +443,7 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public String execCommand(String dockerContainerIdOrName, String command) throws Exception {
-        return execCommandInBrowser(dockerContainerIdOrName, true, "sh", "-c", "'" + command + "'");
+        return execCommandInBrowser(dockerContainerIdOrName, true, "sh", "-c", command);
     }
 
     @Override
@@ -478,16 +495,15 @@ public class BrowserDockerManager extends PlatformManager {
         boolean isDirectory = true;
 
         // Create path in container first
-        execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "mkdir", "-p",
-                targetFilePath);
+        execCommandInBrowser(serviceNameOrId, true, "sudo", "mkdir", "-p", targetFilePath);
 
         String completeFilePathInEUS = (filePathInEus.endsWith(EusFilesService.FILE_SEPARATOR)
                 ? filePathInEus
                 : filePathInEus + EusFilesService.FILE_SEPARATOR);
 
-        String completeTargetPath = (targetFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
+        String completeTargetPath = targetFilePath.endsWith(EusFilesService.FILE_SEPARATOR)
                 ? targetFilePath
-                : targetFilePath + EusFilesService.FILE_SEPARATOR);
+                : targetFilePath + EusFilesService.FILE_SEPARATOR;
 
         if (fileNameInEus != null) {
             completeFilePathInEUS += fileNameInEus;
@@ -496,10 +512,15 @@ public class BrowserDockerManager extends PlatformManager {
             if (targetFileName == null) {
                 targetFileName = fileNameInEus;
             }
+            // completeTargetPath += targetFileName;
         }
+        //
+        // Path fromPath = Paths.get(completeFilePathInEUS);
+        // dockerService.copyFileToContainer(serviceNameOrId, fromPath,
+        // completeTargetPath);
 
-        // Upload file to et shared files folder (copying directly to eus volume
-        // folder)
+        // Upload file to et shared files folder (copying directly to eus
+        // volume folder)
         String eusSharedFilesPath = eusFilesService.getEusSharedFilesPath(sessionManager);
 
         // ~/.elastest/eus/sessionId/ || ~/.elastest/tjobs/.../eus/sessionId/
@@ -516,7 +537,7 @@ public class BrowserDockerManager extends PlatformManager {
                     new File(sessionEusSharedFilesPath + tmpFolderInEus.getName()).toPath());
 
             // Copy from shared folder to target folder into container
-            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp", "-R",
+            execCommandInBrowser(serviceNameOrId, true, "sudo", "cp", "-R",
                     sessionInternalSharedFilesPath + tmpFolderInEus.getName(),
                     completeTargetPath + tmpFolderInEus.getName());
 
@@ -527,7 +548,7 @@ public class BrowserDockerManager extends PlatformManager {
                     new File(sessionEusSharedFilesPath + targetFileName).toPath());
 
             // Copy from shared folder to target folder into container
-            execCommandInBrowser(sessionManager.getVncContainerName(), true, "sudo", "cp",
+            execCommandInBrowser(serviceNameOrId, true, "sudo", "cp",
                     sessionInternalSharedFilesPath + targetFileName,
                     completeTargetPath + targetFileName);
         }

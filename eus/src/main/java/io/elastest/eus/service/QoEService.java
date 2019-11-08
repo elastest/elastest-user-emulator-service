@@ -260,12 +260,22 @@ public class QoEService {
 
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
         try {
-            String command = "cd " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                    + "; " + "./"
-                    + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
 
-            String result = platformManager.execCommandInSubService(serviceName, identifier, true,
-                    command);
+            String result = "";
+            if (sessionManager.isAWSSession()) {
+                String command = "cd " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                        + "; " + "./"
+                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
+
+                result = platformManager.execCommandInSubService(serviceName, identifier, true,
+                        command);
+            } else {
+                String command = "cd " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                        + "; " + "./"
+                        + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
+
+                result = platformManager.execCommand(serviceName, command);
+            }
             log.info("CSV generated for service with id {}. Response: {}", identifier, result);
 
             result = platformManager.execCommandInSubService(serviceName, identifier, true,

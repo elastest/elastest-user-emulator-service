@@ -20,6 +20,7 @@ RUN apt install -y ffmpeg
 RUN apt-get install -y imagemagick
 RUN apt-get install -y wget
 RUN apt-get install -y cmake
+RUN apt-get install -y sudo
 
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
