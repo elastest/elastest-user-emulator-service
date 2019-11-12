@@ -32,7 +32,7 @@ public class EusFilesService {
     @Value("${et.shared.folder}")
     private String etSharedFolder;
 
-    // Internal (/data/eus)
+    // Internal for eus (/data/eus)
     @Value("${et.files.path}")
     private String eusFilesPath;
 
@@ -69,11 +69,16 @@ public class EusFilesService {
         return eusFilesPath;
     }
 
+    public String getEtDataInHostPath() {
+        return etDataInHost;
+    }
+
     public String getInternalSessionFolderFromExecution(ExecutionData data) {
         return getEtSharedFolder() + data.getFolderPath();
     }
 
     // If live session, eus path, if execution, exec/eus path
+    // path into EUS container (like /data/..., not ~/.elastest)
     public String getSessionFilesFolderBySessionManager(SessionManager sessionManager) {
         String filesFolder = this.getEusFilesPath();
 
@@ -103,16 +108,33 @@ public class EusFilesService {
         return CONTAINER_SHARED_FILES_FOLDER + FILE_SEPARATOR;
     }
 
+    // in host (~/.elastest/eus)
     public String getFilesPathInHostPath() {
         return filesPathInHost;
     }
 
-    public String getEtDataInHostPath() {
-        return etDataInHost;
-    }
-
+    // in host (~/.elastest/tjob.../eus)
     public String getHostSessionFolderFromExecution(ExecutionData data) {
         return getEtDataInHostPath() + data.getFolderPath();
+    }
+
+    // in host (~/.elastest/...)
+    public String getHostSessionFolderFromSession(SessionManager sessionManager) {
+        String folder = this.getFilesPathInHostPath();
+
+        if (sessionManager.isSessionFromExecution()) {
+            folder = this
+                    .getHostSessionFolderFromExecution(sessionManager.getElastestExecutionData());
+        }
+        return folder;
+    }
+
+    // path in host (like ~/.elastest/eus or ~/.elastest/tjob.../eus)
+    public String getHostSharedFilesPath(SessionManager sessionManager) {
+        String path = getHostSessionFolderFromSession(sessionManager);
+        path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
+                + hostSharedFilesRelativeFolder + FILE_SEPARATOR;
+        return path;
     }
 
     public void createFolderIfNotExists(String path) {

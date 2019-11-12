@@ -311,8 +311,8 @@ public class BrowserDockerManager extends PlatformManager {
 
         // Shared files
 
-        String hostSharedFilesFolderPath = eusFilesService.getEusSharedFilesPath(sessionManager);
-        hostSharedFilesFolderPath += hostSharedFilesFolderPath
+        String hostSharedFilesFolderPath = eusFilesService.getHostSharedFilesPath(sessionManager);
+        hostSharedFilesFolderPath = hostSharedFilesFolderPath
                 .endsWith(EusFilesService.FILE_SEPARATOR) ? "" : EusFilesService.FILE_SEPARATOR;
 
         eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
