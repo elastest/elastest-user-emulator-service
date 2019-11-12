@@ -129,7 +129,7 @@ public class EusFilesService {
         return folder;
     }
 
-    // path in host (like ~/.elastest/eus or ~/.elastest/tjob.../eus)
+    // path in host (like ~/.elastest/eus/shared_files or ~/.elastest/tjob.../eus/shared_files)
     public String getHostSharedFilesPath(SessionManager sessionManager) {
         String path = getHostSessionFolderFromSession(sessionManager);
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
