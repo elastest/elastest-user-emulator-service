@@ -310,16 +310,14 @@ public class BrowserDockerManager extends PlatformManager {
         List<Bind> volumes = new ArrayList<>();
 
         // Shared files
-        String folderPath = eusFilesService.getSessionFilesFolderBySessionManager(sessionManager);
 
-        Builder sharedfilesVolumeBuilder = Bind.builder();
-        String hostSharedFilesFolderPath = folderPath
-                + (folderPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
-                        : EusFilesService.FILE_SEPARATOR)
-                + contextProperties.HOST_SHARED_FILES_RELATIVE_FOLDER;
+        String hostSharedFilesFolderPath = eusFilesService.getEusSharedFilesPath(sessionManager);
+        hostSharedFilesFolderPath += hostSharedFilesFolderPath
+                .endsWith(EusFilesService.FILE_SEPARATOR) ? "" : EusFilesService.FILE_SEPARATOR;
 
         eusFilesService.createFolderIfNotExists(hostSharedFilesFolderPath);
 
+        Builder sharedfilesVolumeBuilder = Bind.builder();
         sharedfilesVolumeBuilder.from(hostSharedFilesFolderPath);
         sharedfilesVolumeBuilder.to(contextProperties.CONTAINER_SHARED_FILES_FOLDER);
         volumes.add(sharedfilesVolumeBuilder.build());

@@ -91,6 +91,7 @@ public class EusFilesService {
         return path;
     }
 
+    // path into EUS container (like /data/..., not ~/.elastest)
     public String getEusSharedFilesPath(SessionManager sessionManager) {
         String path = getSessionFilesFolderBySessionManager(sessionManager);
         path = path + (path.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR)
