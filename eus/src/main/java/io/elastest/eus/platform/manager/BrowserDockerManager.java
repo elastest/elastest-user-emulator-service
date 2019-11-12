@@ -512,12 +512,7 @@ public class BrowserDockerManager extends PlatformManager {
             if (targetFileName == null) {
                 targetFileName = fileNameInEus;
             }
-            // completeTargetPath += targetFileName;
         }
-        //
-        // Path fromPath = Paths.get(completeFilePathInEUS);
-        // dockerService.copyFileToContainer(serviceNameOrId, fromPath,
-        // completeTargetPath);
 
         // Upload file to et shared files folder (copying directly to eus
         // volume folder)
@@ -546,6 +541,9 @@ public class BrowserDockerManager extends PlatformManager {
             File tmpFileInEus = new File(completeFilePathInEUS);
             Files.move(tmpFileInEus.toPath(),
                     new File(sessionEusSharedFilesPath + targetFileName).toPath());
+
+            // Debug, remove
+            execCommandInBrowser(serviceNameOrId, true, "ls", sessionInternalSharedFilesPath);
 
             // Copy from shared folder to target folder into container
             execCommandInBrowser(serviceNameOrId, true, "sudo", "cp",
