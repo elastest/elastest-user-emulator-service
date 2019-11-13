@@ -540,9 +540,6 @@ public class BrowserDockerManager extends PlatformManager {
             Files.move(tmpFileInEus.toPath(),
                     new File(sessionEusSharedFilesPath + targetFileName).toPath());
 
-            // Debug, remove
-            execCommandInBrowser(serviceNameOrId, true, "ls", sessionInternalSharedFilesPath);
-
             // Copy from shared folder to target folder into container
             execCommandInBrowser(serviceNameOrId, true, "sudo", "cp",
                     sessionInternalSharedFilesPath + targetFileName,

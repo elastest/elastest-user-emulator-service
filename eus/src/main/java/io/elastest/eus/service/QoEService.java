@@ -271,7 +271,7 @@ public class QoEService {
                         command);
             } else {
                 String command = "cd " + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                        + "; " + "./"
+                        + "; " + "sudo ./"
                         + contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPT_CALCULATE_FILENAME;
 
                 result = platformManager.execCommand(serviceName, command);
