@@ -104,10 +104,9 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public InputStream getFileFromSubService(String instanceId, String subServiceID, String path,
-            Boolean isDirectory) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public InputStream getFileFromSubService(String serviceNameOrId, String subServiceID,
+            String path, Boolean isDirectory) throws Exception {
+        return getFileFromService(serviceNameOrId, path, isDirectory);
     }
 
     @Override
@@ -463,8 +462,7 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) {
-        // TODO Auto-generated method stub
-
+        // do not implement. used for k8s and aws.
     }
 
     @Override
@@ -616,10 +614,9 @@ public class BrowserDockerManager extends PlatformManager {
     }
 
     @Override
-    public List<String> getSubserviceFolderFilesList(String instanceId, String subServiceId,
+    public List<String> getSubserviceFolderFilesList(String containerId, String subServiceId,
             String remotePath, String filter) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return getFolderFilesList(containerId, remotePath, filter);
     }
 
 }
