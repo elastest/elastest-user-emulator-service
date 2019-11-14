@@ -290,7 +290,6 @@ public class QoEService {
         }
 
         if (webRTCQoEMeter != null) {
-
             try {
                 Map<String, byte[]> csvs = obtainQoEMetricsCSV(sessionManager, identifier);
                 webRTCQoEMeter.setCsvs(csvs);
@@ -329,30 +328,37 @@ public class QoEService {
 
         if (csvFileNames != null) {
             for (String csvName : csvFileNames) {
-                if (csvName != null && !"".equals(csvName)) {
-                    String currentCsvPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
-                            + "/" + csvName;
+                try {
+                    if (csvName != null && !"".equals(csvName)) {
+                        log.debug("Processing CSV file with name {} for service {}", csvName,
+                                serviceName);
+                        String currentCsvPath = contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH
+                                + "/" + csvName;
 
-                    InputStream currentCsv = null;
-                    if (sessionManager.isAWSSession()) {
-                        currentCsv = platformManager.getFileFromSubService(serviceName, identifier,
-                                currentCsvPath, false);
-                    } else {
-                        currentCsv = platformManager.getFileFromService(serviceName, currentCsvPath,
-                                false);
+                        InputStream currentCsv = null;
+                        if (sessionManager.isAWSSession()) {
+                            currentCsv = platformManager.getFileFromSubService(serviceName,
+                                    identifier, currentCsvPath, false);
+                        } else {
+                            currentCsv = platformManager.getFileFromService(serviceName,
+                                    currentCsvPath, false);
+                        }
+
+                        if (currentCsv != null) {
+                            final byte[] csvByteArray = IOUtils.toByteArray(currentCsv);
+                            csvFiles.put(csvName, csvByteArray);
+
+                            // Save in folder
+                            String path = eusFilesService.getEusQoeFilesPath(sessionManager);
+                            String newFileName = sessionManager.getIdForFiles() + "-" + csvName;
+                            eusFilesService.saveByteArrayFileToPathInEUS(path, newFileName,
+                                    csvByteArray);
+                            currentCsv.close();
+                        }
                     }
-
-                    if (currentCsv != null) {
-                        final byte[] csvByteArray = IOUtils.toByteArray(currentCsv);
-                        csvFiles.put(csvName, csvByteArray);
-
-                        // Save in folder
-                        String path = eusFilesService.getEusQoeFilesPath(sessionManager);
-                        String newFileName = sessionManager.getIdForFiles() + "-" + csvName;
-                        eusFilesService.saveByteArrayFileToPathInEUS(path, newFileName,
-                                csvByteArray);
-                        currentCsv.close();
-                    }
+                } catch (Exception e) {
+                    log.debug("Error on processing CSV file with name {} for service {}: {}",
+                            csvName, serviceName, e.getMessage());
                 }
             }
         }
