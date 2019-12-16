@@ -18,8 +18,8 @@ Elastest user emulator service (EUS) is integrated in ElasTest TORM. To execute 
 ### Architecture
 
 EUS is implemented in two parts:
-* EUS Web client Application
-* EUS Server Application
+- EUS Web client Application
+- EUS Server Application
 
 EUS is executed in production integrated in ElasTest TORM. ElasTest is a platform built with services executed as docker containers. Take a look to [Elastest TORM Architecture](https://github.com/elastest/elastest-torm/blob/master/docs/index.md#arquitecture) to know the kind of services available in ElasTest TORM.
 
@@ -55,11 +55,18 @@ git clone https://github.com/elastest/elastest-torm
 
 You can develop EUS Server Application using and editor and the command line or using Eclipse IDE:
 
-* Using *Eclipse IDE*:
-  * Load project in the IDE:
-    * Import *eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `elastest-user-emulator-service/eus` folder.
-  * Compile and execute the project:
-    * Right click over the project and select `Run as..> Java Application` and select `EusSpringBootApp` class.
+- Using *Eclipse IDE*:
+  - Load project in the IDE:
+    - Import *eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `elastest-user-emulator-service/eus` folder.
+  - Compile and execute the project:
+    - As dependency (for ElasTest mini develop)
+      - Right click over the project and select `Run as..> Maven build`.
+      - In `Goals` type `clean install -Pdependency -DskipTests -Dgpg.skip`
+      - Click `Run` button
+    - Normal
+      - Right click over the project and select `Run as..> Maven build`.
+      - In `Goals` type `clean package install -Pnormal -Dgpg.skip -DskipTests`
+      - Click `Run` button
 
 ---
 **_Note_**
@@ -74,10 +81,10 @@ mvn clean package -DskipTests
 ```
 ---
 
-* Using editor and console:
-    * Compile and execute the project:
-      * Go to the root directory of the project with `cd elastest-user-emulator-service/eus`
-      * Execute command `mvn spring-boot:run`
+- Using editor and console:
+    - Compile and execute the project:
+      - Go to the root directory of the project with `cd elastest-user-emulator-service/eus`
+      - Execute command `mvn spring-boot:run`
 
 The server application can be used from the web interface (see next section). The remote webdriver endpoint is located in URL http://localhost:8040/eus/v1.
 
@@ -87,20 +94,20 @@ If you change any source file, you need to stop the service and start it again.
 
 You can develop EUS Web Client Application using and editor and the command line or using Visual Studio Code:
 
-* Using *Visual Studio Code*:
-  * Load project in the IDE:
-    * Open the project folder using `File > Open folder` option and select the `elastest-torm/elastest-torm-gui`.
-    * Open the integrated terminal with `View > Integrated Terminal`
-    * Execute `npm install` to download the libraries
-  * Compile and execute the project:
-    * Execute `npm start`
+- Using *Visual Studio Code*:
+  - Load project in the IDE:
+    - Open the project folder using `File > Open folder` option and select the `elastest-torm/elastest-torm-gui`.
+    - Open the integrated terminal with `View > Integrated Terminal`
+    - Execute `npm install` to download the libraries
+  - Compile and execute the project:
+    - Execute `npm start`
 
-* Using editor and console:
-  * Prepare the project:
-    * Go to the project folder with `cd elastest-torm/elastest-torm-gui`
-    * Execute `npm install` to download the libraries
-  * Compile and execute the project:
-    * Execute `npm start`
+- Using editor and console:
+  - Prepare the project:
+    - Go to the project folder with `cd elastest-torm/elastest-torm-gui`
+    - Execute `npm install` to download the libraries
+  - Compile and execute the project:
+    - Execute `npm start`
 
 The client application can be used loading the URL http://localhost:4200 in a browser.
 
