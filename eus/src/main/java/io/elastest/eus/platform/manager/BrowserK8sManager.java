@@ -126,8 +126,8 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public String execCommandInBrowser(String podName, boolean awaitCompletion, String... command)
             throws Exception {
-        k8sService.execCommand(k8sService.getPodByName(podName, null), podName, awaitCompletion,
-                command);
+        k8sService.execCommand(k8sService.getPodByName(podName, getEusNamespace()), podName,
+                awaitCompletion, command);
         return null;
     }
 
@@ -201,7 +201,7 @@ public class BrowserK8sManager extends PlatformManager {
     public void copyFilesFromBrowserIfNecessary(SessionManager sessionManager) throws IOException {
         k8sService.copyFileFromContainer(sessionManager.getBrowserPod(),
                 contextProperties.CONTAINER_RECORDING_FOLDER,
-                sessionManager.getHostSharedFilesFolderPath(), null);
+                sessionManager.getHostSharedFilesFolderPath(), getEusNamespace());
         File recordingsDirectory = new File(sessionManager.getHostSharedFilesFolderPath()
                 + contextProperties.CONTAINER_RECORDING_FOLDER);
         moveFiles(recordingsDirectory, sessionManager.getHostSharedFilesFolderPath());
