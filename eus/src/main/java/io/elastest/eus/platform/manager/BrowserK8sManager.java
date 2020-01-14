@@ -323,4 +323,16 @@ public class BrowserK8sManager extends PlatformManager {
         return contextProperties.ET_TSS_INSTANCE_ID;
     }
 
+    public void createClusterRoleBindingAdmin() {
+        try {
+            String instanceID = contextProperties.ET_TSS_INSTANCE_ID;
+            if (instanceID != null) {
+                k8sService.createClusterRoleBindingAdmin(instanceID, instanceID);
+            }
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
 }
