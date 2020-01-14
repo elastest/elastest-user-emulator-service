@@ -90,8 +90,8 @@ public class BrowserK8sManager extends PlatformManager {
         sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
-        String namespace = contextProperties.ET_TSS_INSTANCE_ID;
-        
+        String namespace = getEusNamespace();
+
         PodInfo podInfo = k8sService.deployPod(dockerBuilder.build(), namespace);
         sessionManager.setBrowserPod(podInfo.getPodName());
 
@@ -138,8 +138,9 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public void removeServiceWithTimeout(String podName, int killAfterSeconds) throws Exception {
-        k8sService.deleteServiceAssociatedWithAPOD(podName, null);
-        k8sService.deletePod(podName);
+        String namespace = getEusNamespace();
+        k8sService.deleteServiceAssociatedWithAPOD(podName, namespace);
+        k8sService.deletePod(podName, namespace);
 
     }
 
@@ -316,6 +317,10 @@ public class BrowserK8sManager extends PlatformManager {
             String remotePath, String filter) throws Exception {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public String getEusNamespace() {
+        return contextProperties.ET_TSS_INSTANCE_ID;
     }
 
 }
