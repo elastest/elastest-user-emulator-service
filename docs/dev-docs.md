@@ -59,11 +59,11 @@ You can develop EUS Server Application using and editor and the command line or 
   - Load project in the IDE:
     - Import *eus* project from local Git Repository using `File > Import... > Maven > Import existing project` option option and select the `elastest-user-emulator-service/eus` folder.
   - Compile and execute the project:
-    - As dependency (for ElasTest mini develop)
+    - **As dependency** (for ElasTest mini develop)
       - Right click over the project and select `Run as..> Maven build`.
       - In `Goals` type `clean install -Pdependency -DskipTests -Dgpg.skip`
       - Click `Run` button
-    - Normal
+    - **Normal**
       - Right click over the project and select `Run as..> Maven build`.
       - In `Goals` type `clean package install -Pnormal -Dgpg.skip -DskipTests`
       - Click `Run` button
