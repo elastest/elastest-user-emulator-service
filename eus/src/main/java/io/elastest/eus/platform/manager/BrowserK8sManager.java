@@ -90,23 +90,24 @@ public class BrowserK8sManager extends PlatformManager {
         sessionManager.setStatusMsg("Starting...");
 
         /* **** Start **** */
-        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
+        String namespace = contextProperties.ET_TSS_INSTANCE_ID;
+        
+        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build(), namespace);
         sessionManager.setBrowserPod(podInfo.getPodName());
 
         // Binding ports
         ServiceInfo hubServiceInfo = k8sService.createService(
                 hubContainerName + "-" + contextProperties.HUB_EXPOSED_PORT, hubContainerName, null,
-                contextProperties.HUB_EXPOSED_PORT, "http", null, k8sService.LABEL_POD_NAME);
+                contextProperties.HUB_EXPOSED_PORT, "http", namespace, k8sService.LABEL_POD_NAME);
         ServiceInfo noVncServiceInfo = k8sService.createService(
                 hubContainerName + "-" + contextProperties.NO_VNC_EXPOSED_PORT, hubContainerName,
-                null, contextProperties.NO_VNC_EXPOSED_PORT, "http", null,
+                null, contextProperties.NO_VNC_EXPOSED_PORT, "http", namespace,
                 k8sService.LABEL_POD_NAME);
 
         /* **** Set IPs and ports **** */
         sessionManager.setHubIp(hubServiceInfo.getServiceURL().getHost());
         sessionManager.setHubPort(Integer.parseInt(hubServiceInfo.getServicePort()));
         sessionManager.setNoVncBindedPort(Integer.parseInt(noVncServiceInfo.getServicePort()));
-
     }
 
     @Override

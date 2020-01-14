@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class EusContextProperties {
 
+    @Value("${et.tss.instance.id:#{null}}")
+    public String ET_TSS_INSTANCE_ID;
+
     @Value("${api.context.path}")
     public String API_CONTEXT_PATH;
     @Value("${eus.container.prefix}")
