@@ -1430,10 +1430,8 @@ public class WebDriverService {
         } else {
             if (contextProperties.ENABLE_CLOUD_MODE) {
                 logger.debug("EUS over K8s");
-                BrowserK8sManager k8sManager = new BrowserK8sManager(k8sService, eusFilesService,
+                platformManager = new BrowserK8sManager(k8sService, eusFilesService,
                         contextProperties);
-                platformManager = k8sManager;
-                k8sManager.createClusterRoleBindingAdmin();
             } else {
                 platformManager = new BrowserDockerManager(dockerService, eusFilesService,
                         contextProperties);
