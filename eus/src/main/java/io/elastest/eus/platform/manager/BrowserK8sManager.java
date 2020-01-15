@@ -134,7 +134,7 @@ public class BrowserK8sManager extends PlatformManager {
     @Override
     public boolean existServiceWithName(String name) throws Exception {
         logger.debug("Checking if exists pod with name {}", name);
-        boolean exists = k8sService.existPodByName(name);
+        boolean exists = k8sService.existPodByName(name, getEusNamespace());
         logger.debug("Exists pod with name {}: {}", name, exists);
         return exists;
     }
@@ -238,7 +238,7 @@ public class BrowserK8sManager extends PlatformManager {
         }
 
         /* **** Start **** */
-        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build());
+        PodInfo podInfo = k8sService.deployPod(dockerBuilder.build(), getEusNamespace());
 
         String ip = podInfo.getPodIp();
         String guiUrl = "http://" + ip + ":" + contextProperties.EUS_SERVICE_BROWSERSYNC_GUI_PORT;
