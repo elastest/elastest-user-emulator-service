@@ -451,12 +451,16 @@ public class BrowserDockerManager extends PlatformManager {
 
     @Override
     public boolean existServiceWithName(String name) throws Exception {
-        return dockerService.existsContainer(name);
+        logger.debug("Checking if exists container with name {}", name);
+        boolean exists = dockerService.existsContainer(name);
+        logger.debug("Exists container with name {}: {}", name, exists);
+        return exists;
     }
 
     @Override
     public void removeServiceWithTimeout(String containerId, int killAfterSeconds)
             throws Exception {
+        logger.debug("Removing cpntainer {}", containerId);
         dockerService.stopAndRemoveContainerWithKillTimeout(containerId, killAfterSeconds);
     }
 

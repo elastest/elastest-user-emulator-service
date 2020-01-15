@@ -133,15 +133,18 @@ public class BrowserK8sManager extends PlatformManager {
 
     @Override
     public boolean existServiceWithName(String name) throws Exception {
-        return k8sService.existPodByName(name);
+        logger.debug("Checking if exists pod with name {}", name);
+        boolean exists = k8sService.existPodByName(name);
+        logger.debug("Exists pod with name {}: {}", name, exists);
+        return exists;
     }
 
     @Override
     public void removeServiceWithTimeout(String podName, int killAfterSeconds) throws Exception {
         String namespace = getEusNamespace();
+        logger.debug("Removing pod {} in namespace {}", podName, namespace);
         k8sService.deleteServiceAssociatedWithAPOD(podName, namespace);
         k8sService.deletePod(podName, namespace);
-
     }
 
     @Override

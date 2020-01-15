@@ -853,9 +853,9 @@ public class WebDriverService {
             throw new EusException(e);
         } finally {
             try {
-                sessionService.stopAllContainerOfSession(sessionManager);
+                sessionService.stopBrowserServiceOfSession(sessionManager);
             } catch (Exception e) {
-                logger.debug("Containers of session {} not removed: {}",
+                logger.error("Containers of session {} not removed: {}",
                         sessionManager.getSessionId(), e.getMessage());
             }
 
