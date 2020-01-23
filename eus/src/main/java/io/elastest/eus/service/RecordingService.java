@@ -96,20 +96,17 @@ public class RecordingService {
     }
 
     @Autowired
-    public RecordingService(EusJsonService jsonService,
-            AlluxioService alluxioService) {
+    public RecordingService(EusJsonService jsonService, AlluxioService alluxioService) {
         this.jsonService = jsonService;
         this.alluxioService = alluxioService;
     }
 
-    public void startRecording(SessionManager sessionManager,
-            String browserServiceNameOrId, String recordingFileName)
-            throws Exception {
+    public void startRecording(SessionManager sessionManager, String browserServiceNameOrId,
+            String recordingFileName) throws Exception {
         log.debug("Recording session {} in container {} with file name {}",
-                sessionManager.getSessionId(), browserServiceNameOrId,
-                recordingFileName);
-        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId,
-                false, startRecordingScript, "-n", recordingFileName);
+                sessionManager.getSessionId(), browserServiceNameOrId, recordingFileName);
+        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId, false,
+                startRecordingScript, "-n", recordingFileName);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
@@ -117,20 +114,18 @@ public class RecordingService {
     }
 
     public void startRecording(SessionManager sessionManager) throws Exception {
-        String browserServiceNameOrId = sessionManager
-                .getBrowserServiceNameOrId();
+        String browserServiceNameOrId = sessionManager.getBrowserServiceNameOrId();
         String recordingFileName = sessionManager.getIdForFiles();
 
-        this.startRecording(sessionManager, browserServiceNameOrId,
-                recordingFileName);
+        this.startRecording(sessionManager, browserServiceNameOrId, recordingFileName);
     }
 
-    public void stopRecording(SessionManager sessionManager,
-            String browserServiceNameOrId) throws Exception {
-        log.debug("Stopping recording session {} of container {}",
-                sessionManager.getSessionId(), browserServiceNameOrId);
-        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId,
-                true, stopRecordingScript);
+    public void stopRecording(SessionManager sessionManager, String browserServiceNameOrId)
+            throws Exception {
+        log.debug("Stopping recording session {} of container {}", sessionManager.getSessionId(),
+                browserServiceNameOrId);
+        sessionManager.getPlatformManager().execCommandInBrowser(browserServiceNameOrId, true,
+                stopRecordingScript);
         try {
             Thread.sleep(1200);
         } catch (Exception e) {
@@ -140,43 +135,34 @@ public class RecordingService {
     }
 
     public void stopRecording(SessionManager sessionManager) throws Exception {
-        String browserServiceNameOrId = sessionManager
-                .getBrowserServiceNameOrId();
+        String browserServiceNameOrId = sessionManager.getBrowserServiceNameOrId();
         this.stopRecording(sessionManager, browserServiceNameOrId);
     }
 
-    public void storeMetadata(SessionManager sessionManager)
-            throws IOException {
+    public void storeMetadata(SessionManager sessionManager) throws IOException {
         String idForFiles = sessionManager.getIdForFiles();
         String metadataFileName = idForFiles + registryMetadataExtension;
-        WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(
-                sessionManager);
+        WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(sessionManager);
         log.debug("Storing metadata {}", recordedSession);
         String sessionManagerToJson = jsonService.objectToJson(recordedSession);
-        String folderPath = sessionManager.getFolderPath() != null
-                ? sessionManager.getFolderPath()
+        String folderPath = sessionManager.getFolderPath() != null ? sessionManager.getFolderPath()
                 : etFilesPath;
-        log.debug("Storing metadata file in {}", folderPath);
+        log.debug("Storing metadata file with name {} in {}", metadataFileName, folderPath);
 
+        // If EDM Alluxio is not available, metadata is stored locally
         if (edmAlluxioUrl.isEmpty()) {
-            // If EDM Alluxio is not available, metadata is stored locally
-
             File dir = new File(folderPath);
             if (!dir.exists()) {
                 if (!dir.mkdirs()) {
-                    throw new IOException("The " + folderPath
-                            + " directory could not be created");
+                    throw new IOException("The " + folderPath + " directory could not be created");
                 }
             }
 
-            FileUtils.writeStringToFile(
-                    new File(folderPath + File.separator + metadataFileName),
+            FileUtils.writeStringToFile(new File(folderPath + File.separator + metadataFileName),
                     sessionManagerToJson, defaultCharset());
-
         } else {
             // If EDM Alluxio is available, recording is stored in Alluxio
-            alluxioService.writeFile(metadataFileName,
-                    sessionManagerToJson.getBytes());
+            alluxioService.writeFile(metadataFileName, sessionManagerToJson.getBytes());
         }
     }
 
@@ -188,13 +174,12 @@ public class RecordingService {
         return sessionId + registryMetadataExtension;
     }
 
-    public ResponseEntity<String> getRecording(String sessionId)
-            throws IOException {
+    public ResponseEntity<String> getRecording(String sessionId) throws IOException {
         return this.getRecording(sessionId, etFilesPath);
     }
 
-    public ResponseEntity<String> getRecording(String sessionId,
-            String folderPath) throws IOException {
+    public ResponseEntity<String> getRecording(String sessionId, String folderPath)
+            throws IOException {
         HttpStatus status = OK;
         String recordingFileName;
         String urlResponse;
@@ -215,21 +200,18 @@ public class RecordingService {
         // By default the response is the local path for the recording (this
         // applies to the case of locally stored, and also to the case that
         // the recording has been previously downloaded from Alluxio)
-        urlResponse = apiContextPath + registryContextPath + "/"
-                + recordingFileName;
+        urlResponse = apiContextPath + registryContextPath + "/" + recordingFileName;
 
         return new ResponseEntity<>(urlResponse, status);
     }
 
-    public ResponseEntity<String> deleteRecording(String sessionId)
-            throws IOException {
+    public ResponseEntity<String> deleteRecording(String sessionId) throws IOException {
         return this.deleteRecording(sessionId, etFilesPath);
     }
 
-    public ResponseEntity<String> deleteRecording(String sessionId,
-            String folderPath) throws IOException {
-        log.debug("Deleting recording of session {} at {}", sessionId,
-                folderPath);
+    public ResponseEntity<String> deleteRecording(String sessionId, String folderPath)
+            throws IOException {
+        log.debug("Deleting recording of session {} at {}", sessionId, folderPath);
         String recordingFileName = getRecordingFileNameBySessionId(sessionId);
         String metadataFileName = getMetadataFileNameBySessionId(sessionId);
 
@@ -239,15 +221,11 @@ public class RecordingService {
         boolean deleteMetadata;
         if (edmAlluxioUrl.isEmpty()) {
             // If EDM Alluxio is not available, delete is done locally
-            existsRecording = Files
-                    .exists(Paths.get(folderPath + recordingFileName));
-            existsMetadata = Files
-                    .exists(Paths.get(folderPath + metadataFileName));
+            existsRecording = Files.exists(Paths.get(folderPath + recordingFileName));
+            existsMetadata = Files.exists(Paths.get(folderPath + metadataFileName));
 
-            deleteRecording = Files
-                    .deleteIfExists(Paths.get(folderPath + recordingFileName));
-            deleteMetadata = Files
-                    .deleteIfExists(Paths.get(folderPath + metadataFileName));
+            deleteRecording = Files.deleteIfExists(Paths.get(folderPath + recordingFileName));
+            deleteMetadata = Files.deleteIfExists(Paths.get(folderPath + metadataFileName));
 
         } else {
             // If EDM Alluxio is available, deleting is done in Alluxio
@@ -293,21 +271,19 @@ public class RecordingService {
             // If EDM Alluxio is not available, recordings and metadata are
             // stored locally
             log.debug("Static content folder: {}", etFilesPath);
-            File[] metadataFiles = new File(etFilesPath)
-                    .listFiles((dir, name) -> name.toLowerCase()
-                            .endsWith(registryMetadataExtension));
+            File[] metadataFiles = new File(etFilesPath).listFiles(
+                    (dir, name) -> name.toLowerCase().endsWith(registryMetadataExtension));
             if (metadataFiles != null) {
-                metadataContent = stream(metadataFiles)
-                        .map(this::getLocalFileContent).collect(toList());
+                metadataContent = stream(metadataFiles).map(this::getLocalFileContent)
+                        .collect(toList());
             }
 
         } else {
             // If EDM Alluxio is available, recordings and metadata are stored
             // in Alluxio
-            List<String> metadataFileList = alluxioService
-                    .getMetadataFileList();
-            metadataContent = metadataFileList.stream()
-                    .map(alluxioService::getFileAsString).collect(toList());
+            List<String> metadataFileList = alluxioService.getMetadataFileList();
+            metadataContent = metadataFileList.stream().map(alluxioService::getFileAsString)
+                    .collect(toList());
 
         }
 
@@ -319,8 +295,7 @@ public class RecordingService {
         try {
             content = new String(readAllBytes(get(file.getAbsolutePath())));
         } catch (IOException e) {
-            String errorMessage = "Exception reading content of " + file
-                    + " from Alluxio";
+            String errorMessage = "Exception reading content of " + file + " from Alluxio";
             // Not propagating IOException to improve readability
             throw new EusException(errorMessage, e);
         }

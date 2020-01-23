@@ -188,7 +188,7 @@ public class BrowserAWSManager extends PlatformManager {
 
         String recordingsPath = createRecordingsPath(folderPath);
         sessionManager.setHostSharedFilesFolderPath(recordingsPath);
-        ((SessionManager) sessionManager).setFolderPath(recordingsPath);
+        sessionManager.setFolderPath(recordingsPath);
 
         sessionManager.setStatus(DockerServiceStatusEnum.STARTING);
         sessionManager.setStatusMsg("Starting...");

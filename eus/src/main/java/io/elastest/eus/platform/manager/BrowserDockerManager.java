@@ -460,7 +460,7 @@ public class BrowserDockerManager extends PlatformManager {
     @Override
     public void removeServiceWithTimeout(String containerId, int killAfterSeconds)
             throws Exception {
-        logger.debug("Removing cpntainer {}", containerId);
+        logger.debug("Removing container {}", containerId);
         dockerService.stopAndRemoveContainerWithKillTimeout(containerId, killAfterSeconds);
     }
 
