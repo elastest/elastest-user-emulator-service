@@ -1,4 +1,4 @@
-node {
+node('dev-docker-64-slave-4') {
     stage "Container Prep"
         try {
             echo("The node is up")
