@@ -8,6 +8,9 @@ public class EusContextProperties {
 
     @Value("${et.tss.instance.id:#{null}}")
     public String ET_TSS_INSTANCE_ID;
+    
+    @Value("${et.data.in.host}")
+    public String ET_DATA_IN_HOST;
 
     @Value("${api.context.path}")
     public String API_CONTEXT_PATH;

@@ -137,13 +137,35 @@ public abstract class PlatformManager {
     protected String createRecordingsPath(String hostPath) {
         logger.debug("Creating recordings path from: {}", hostPath);
         String recordingsPath = "";
+
+        // Complete Path in host
         String pathRecordingsInHost = hostPath
                 + (hostPath.endsWith(EusFilesService.FILE_SEPARATOR) ? ""
                         : EusFilesService.FILE_SEPARATOR);
-        String recordingsRelativePath = pathRecordingsInHost
-                .substring(pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR,
-                        pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR) + 1));
-        recordingsPath = eusFilesService.getEtSharedFolder() + recordingsRelativePath;
+
+        // Base path in host
+        String etDataInHostPath = eusFilesService.getEtDataInHostPath();
+
+        String recordingsRelativePath = "";
+        if (etDataInHostPath != null && pathRecordingsInHost.startsWith(etDataInHostPath)) {
+            recordingsRelativePath = pathRecordingsInHost.replace(etDataInHostPath, "");
+        } else {
+            // Search second FILE_SEPARATOR and gets substring from its position to the end
+            recordingsRelativePath = pathRecordingsInHost
+                    .substring(pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR,
+                            pathRecordingsInHost.indexOf(eusFilesService.FILE_SEPARATOR) + 1));
+        }
+
+        logger.debug("Relative path for recordings: {}", recordingsRelativePath);
+
+        recordingsPath = eusFilesService.getEtSharedFolder();
+
+        recordingsPath += recordingsPath.endsWith(eusFilesService.FILE_SEPARATOR)
+                && recordingsRelativePath.startsWith(eusFilesService.FILE_SEPARATOR)
+                        ? recordingsRelativePath.replaceFirst(eusFilesService.FILE_SEPARATOR, "")
+                        : recordingsRelativePath;
+
+        logger.debug("Final recordings path: {}", recordingsPath);
 
         return recordingsPath;
     }
