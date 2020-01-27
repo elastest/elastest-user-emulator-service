@@ -1,4 +1,4 @@
-node('TESTDOCKER') {
+node('elastest') {
     stage "Container Prep"
         try {
             echo("The node is up")
