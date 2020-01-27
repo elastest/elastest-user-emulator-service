@@ -11,27 +11,6 @@ node('dev-docker-64-slave-4') {
 
                 git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
-                stage "Install Kubernetes-client as library"
-                    def k8sClientDirectoryExists = fileExists k8sClientJavaDirectory
-                    if (k8sClientDirectoryExists) {
-                    	echo 'Kubernetes client directory exists'
-                    } else {
-                    	echo 'There isn not Kubernetes-client directory'
-                    	sh 'mkdir ' + k8sClientJavaDirectory
-                    }
-                
-                    dir(k8sClientJavaDirectory) {
-                    	echo 'Existing files before cloning the git repository'
-		    	git(
-              		  url: 'https://github.com/franciscoRdiaz/kubernetes-client.git',
-              		  branch: "iss_1507"
-                      	  )
-                    }
-            
-                    echo ("Install Kubernetes-client as library")
-                    sh "cd $k8sClientJavaDirectory/kubernetes-client; mvn clean install -DskipTests"
-
-
                 stage "Install et-epm-client-java"
                     def epmClientDirectoryExists = fileExists epmClientJavaDirectory
                     if (epmClientDirectoryExists) {
