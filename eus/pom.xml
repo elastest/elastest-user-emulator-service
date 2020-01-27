@@ -49,7 +49,7 @@
 		<docker.spotify.version>8.11.6</docker.spotify.version>
 		<jersey.version>2.26</jersey.version>
 		<guava.version>24.0-jre</guava.version>
-		<retrofit.version>2.3.0</retrofit.version>
+		<retrofit.version>2.7.1</retrofit.version>
 		<jackson-jq.version>0.0.8</jackson-jq.version>
 
 		<!-- Test dependencies version -->
