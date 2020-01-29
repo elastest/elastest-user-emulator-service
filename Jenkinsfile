@@ -4,10 +4,9 @@ node('dev-docker-64-slave-4') {
             echo("The node is up")
             def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
             mycontainer.pull()
-            mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
+            mycontainer.inside("-u 0 -v /var/run/docker.sock:/var/run/docker.sock:rw -v /var/lib/jenkins/caches/durable-task:/var/lib/jenkins/caches/durable-task:rw") {
 
                 def epmClientJavaDirectory = 'epm-client-java'
-                def k8sClientJavaDirectory = 'k8s-client-java'
 
                 git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
@@ -16,9 +15,10 @@ node('dev-docker-64-slave-4') {
                     if (epmClientDirectoryExists) {
                         echo 'EPM client directory exists'
                     } else {
-                        echo 'There isn not EPM client directory'
+                        echo 'There is not EPM client directory. Creating...'
                         sh 'mkdir ' + epmClientJavaDirectory
                     }
+                    sh 'chmod 777 ' + epmClientJavaDirectory
                         
                     dir(epmClientJavaDirectory) {
                         echo 'Existing files before cloning the git repository'
@@ -34,9 +34,10 @@ node('dev-docker-64-slave-4') {
                     if (etmDirectoryExists) {
                          echo 'EPM client directory exists'
                     } else {
-                         echo 'There isn not EPM directory'
+                         echo 'There is not ETM directory. Creating...'
                          sh 'mkdir ' + etmJavaDirectory
                     }
+                    sh 'chmod 777 ' + etmJavaDirectory
                       
                     dir(etmJavaDirectory) {
                          echo 'Existing files before cloning the git repository'
