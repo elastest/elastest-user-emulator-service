@@ -1,9 +1,9 @@
-node('docker') {
+node('dev-docker-64-slave-4') {
   try {
     stage "Container Prep"
       def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
       mycontainer.pull()
-      mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw") {
+      mycontainer.inside("-u jenkins -v /var/run/docker.sock:/var/run/docker.sock:rw -v /var/lib/jenkins/caches/durable-task:/var/lib/jenkins/caches/durable-task:rw") {
         git 'https://github.com/elastest/elastest-user-emulator-service.git'
 
         stage "Build Docker image"
