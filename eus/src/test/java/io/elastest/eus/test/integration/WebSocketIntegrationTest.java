@@ -77,8 +77,8 @@ public class WebSocketIntegrationTest extends BaseTest {
     void testSessions() throws Exception {
         EusContextProperties contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
-        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
-                dockerService, eusFilesService, contextProperties);
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(dockerService,
+                eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
         sessionManager.setVersion("59");
@@ -95,8 +95,7 @@ public class WebSocketIntegrationTest extends BaseTest {
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override
             public void handleMessage(String message) {
-                log.debug("Sent message: {} -- received message: {}",
-                        sentMessage, message);
+                log.debug("Sent message: {} -- received message: {}", sentMessage, message);
                 receivedMessage[0] = message;
                 latch.countDown();
             }
@@ -115,8 +114,8 @@ public class WebSocketIntegrationTest extends BaseTest {
     void testRecordings() throws Exception {
         EusContextProperties contextProperties = EusApplicationContextProvider
                 .getContextPropertiesObject();
-        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(
-                dockerService, eusFilesService, contextProperties);
+        BrowserDockerManager dockerServiceImpl = new BrowserDockerManager(dockerService,
+                eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
         sessionManager.setVersion("65");
@@ -131,8 +130,8 @@ public class WebSocketIntegrationTest extends BaseTest {
             File dir = new File(registryFolder);
             if (!dir.exists()) {
                 if (!dir.mkdirs()) {
-                    throw new Exception("The " + registryFolder
-                            + " directory could not be created");
+                    throw new Exception(
+                            "The " + registryFolder + " directory could not be created");
                 }
             }
         } catch (Exception e) {
@@ -140,13 +139,11 @@ public class WebSocketIntegrationTest extends BaseTest {
         }
 
         File file = new File(registryFolder + jsonFileName);
-        log.debug("Saving {} file into {} folder", jsonFileName,
-                registryFolder);
+        log.debug("Saving {} file into {} folder", jsonFileName, registryFolder);
 
         writeStringToFile(file, sessionManagerToJson, Charset.defaultCharset());
 
-        String jsonMessage = jsonService
-                .objectToJson(new WebSocketNewSession(sessionManager));
+        String jsonMessage = jsonService.objectToJson(new WebSocketNewSession(sessionManager));
         assertNotNull(jsonMessage);
 
         final String sentMessage = wsProtocolGetRecordings;
@@ -157,8 +154,7 @@ public class WebSocketIntegrationTest extends BaseTest {
         webSocketClient.addMessageHandler(new MessageHandler() {
             @Override
             public void handleMessage(String message) {
-                log.debug("Sent message: {} -- received message: {}",
-                        sentMessage, message);
+                log.debug("Sent message: {} -- received message: {}", sentMessage, message);
                 receivedMessage[0] = message;
                 latch.countDown();
             }
@@ -167,6 +163,9 @@ public class WebSocketIntegrationTest extends BaseTest {
         webSocketClient.sendMessage(sentMessage);
 
         latch.await(5, SECONDS);
+
+        log.info("Asserting that Received message '{}' contains  {}", receivedMessage[0],
+                wsProtocolRecordedSesssion);
 
         assertTrue(receivedMessage[0].contains(wsProtocolRecordedSesssion));
 
