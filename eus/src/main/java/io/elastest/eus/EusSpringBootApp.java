@@ -33,6 +33,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 import io.elastest.eus.config.EusApplicationContextProvider;
 import io.elastest.eus.service.AlluxioService;
+import io.elastest.eus.service.EusFilesService;
 import io.elastest.eus.service.EusJsonService;
 import io.elastest.eus.service.RecordingService;
 import io.elastest.eus.service.SessionService;
@@ -59,6 +60,8 @@ public class EusSpringBootApp implements WebSocketConfigurer {
     private EusJsonService eusJsonService;
     @Autowired
     AlluxioService alluxioService;
+    @Autowired
+    EusFilesService eusFilesService;
 
     @Bean("eusContext")
     @Primary
@@ -68,7 +71,7 @@ public class EusSpringBootApp implements WebSocketConfigurer {
 
     @Bean
     public RecordingService getRecordingService() {
-        return new RecordingService(eusJsonService, alluxioService);
+        return new RecordingService(eusJsonService, alluxioService, eusFilesService);
     }
 
     @Bean

@@ -83,6 +83,7 @@ public class RecordingService {
 
     private EusJsonService jsonService;
     private AlluxioService alluxioService;
+    private EusFilesService eusFilesService;
 
     @PostConstruct
     private void postConstruct() {
@@ -96,9 +97,11 @@ public class RecordingService {
     }
 
     @Autowired
-    public RecordingService(EusJsonService jsonService, AlluxioService alluxioService) {
+    public RecordingService(EusJsonService jsonService, AlluxioService alluxioService,
+            EusFilesService eusFilesService) {
         this.jsonService = jsonService;
         this.alluxioService = alluxioService;
+        this.eusFilesService = eusFilesService;
     }
 
     public void startRecording(SessionManager sessionManager, String browserServiceNameOrId,
@@ -145,8 +148,8 @@ public class RecordingService {
         WebSocketRecordedSession recordedSession = new WebSocketRecordedSession(sessionManager);
         log.debug("Storing metadata {}", recordedSession);
         String sessionManagerToJson = jsonService.objectToJson(recordedSession);
-        String folderPath = sessionManager.getFolderPath() != null ? sessionManager.getFolderPath()
-                : etFilesPath;
+
+        String folderPath = eusFilesService.getSessionFilesFolderBySessionManager(sessionManager);
         log.debug("Storing metadata file with name {} in {}", metadataFileName, folderPath);
 
         // If EDM Alluxio is not available, metadata is stored locally
