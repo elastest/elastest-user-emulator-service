@@ -52,6 +52,7 @@ node('dev-docker-64-slave-4') {
                 stage "Tests"
                     echo ("Starting tests")
                     try {
+                        sh 'cd eus; mvn clean package install -Pnormal -DskipTests -Dgpg.skip -Det.files.path=/tmp/'
                         sh 'cd eus; mvn clean -Dspring.profiles.active=required,notdependency -Djenkins=true -Det.files.path.in.host=/tmp/eus/ -Det.data.in.host=/tmp/ -Det.shared.folder=/tmp/ test' 
                     } catch (err) {
 			sh 'ls /tmp/eus/shared_files'
