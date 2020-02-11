@@ -72,6 +72,8 @@ public class WebSocketIntegrationTest extends BaseTest {
         log.debug("App started on port {}", serverPort);
     }
 
+    public final static String SESSION_ID = "my-session-id";
+
     @Test
     @DisplayName("Tests messages about a session through WebSocket")
     void testSessions() throws Exception {
@@ -81,8 +83,8 @@ public class WebSocketIntegrationTest extends BaseTest {
                 eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
-        sessionManager.setVersion("59");
-        sessionService.putSession("my-session-id", sessionManager);
+        sessionManager.setVersion("74");
+        sessionService.putSession(SESSION_ID, sessionManager);
 
         String jsonMessage = jsonService.objectToJson(sessionManager);
         assertNotNull(jsonMessage);
@@ -118,11 +120,10 @@ public class WebSocketIntegrationTest extends BaseTest {
                 eusFilesService, contextProperties);
         SessionManager sessionManager = new SessionManager(dockerServiceImpl);
         sessionManager.setBrowser("chrome");
-        sessionManager.setVersion("65");
-        String sessionId = "my-session-id";
-        sessionService.putSession(sessionId, sessionManager);
+        sessionManager.setVersion("74");
+        sessionService.putSession(SESSION_ID, sessionManager);
 
-        String jsonFileName = sessionId + registryMetadataExtension;
+        String jsonFileName = SESSION_ID + registryMetadataExtension;
 
         String sessionManagerToJson = jsonService
                 .objectToJson(new WebSocketRecordedSession(sessionManager));
@@ -162,7 +163,7 @@ public class WebSocketIntegrationTest extends BaseTest {
 
         webSocketClient.sendMessage(sentMessage);
 
-        latch.await(5, SECONDS);
+        latch.await(10, SECONDS);
 
         log.info("Asserting that Received message '{}' contains  {}", receivedMessage[0],
                 wsProtocolRecordedSesssion);
