@@ -139,7 +139,10 @@ public class WebSocketIntegrationTest extends BaseTest {
             log.debug("Error on create {} file", jsonFileName, e);
         }
 
-        File file = new File(registryFolder + jsonFileName);
+        String fileFullPath = (registryFolder.endsWith("/") ? registryFolder : registryFolder + "/")
+                + jsonFileName;
+        log.debug("File full path: {}", fileFullPath);
+        File file = new File(fileFullPath);
         log.debug("Saving {} file into {} folder", jsonFileName, registryFolder);
 
         writeStringToFile(file, sessionManagerToJson, Charset.defaultCharset());
