@@ -3,10 +3,14 @@ package io.elastest.eus.services.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.elastest.eus.json.VideoTimeInfo;
+
 public class WebRTCQoEMeter extends EusServiceModel {
     boolean csvGenerated;
     boolean errorOnCsvGeneration;
     Map<String, byte[]> csvs;
+    VideoTimeInfo videoTimeInfo;
+    long numberOfFrames;
 
     public WebRTCQoEMeter() {
         super(EusServiceName.WEBRTC_QOE_METER);
@@ -39,11 +43,26 @@ public class WebRTCQoEMeter extends EusServiceModel {
         this.csvs = csvs;
     }
 
+    public VideoTimeInfo getVideoTimeInfo() {
+        return videoTimeInfo;
+    }
+
+    public void setVideoTimeInfo(VideoTimeInfo videoTimeInfo) {
+        this.videoTimeInfo = videoTimeInfo;
+    }
+
+    public long getNumberOfFrames() {
+        return numberOfFrames;
+    }
+
+    public void setNumberOfFrames(long numberOfFrames) {
+        this.numberOfFrames = numberOfFrames;
+    }
+
     @Override
     public String toString() {
-        return "WebRTCQoEMeter [csvGenerated=" + csvGenerated
-                + ", errorOnCsvGeneration=" + errorOnCsvGeneration + ", csvs="
-                + csvs + "]";
+        return "WebRTCQoEMeter [csvGenerated=" + csvGenerated + ", errorOnCsvGeneration="
+                + errorOnCsvGeneration + ", csvs=" + csvs + "]";
     }
 
 }

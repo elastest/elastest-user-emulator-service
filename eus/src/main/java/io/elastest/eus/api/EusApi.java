@@ -46,6 +46,7 @@ import io.elastest.eus.api.model.Latency;
 import io.elastest.eus.api.model.Quality;
 import io.elastest.eus.api.model.StatsValue;
 import io.elastest.eus.api.model.UserMedia;
+import io.elastest.eus.json.VideoTimeInfo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -163,8 +164,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventSubscription.class),
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/latency", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = POST)
+            "application/json" }, consumes = { "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToEvent(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -180,8 +180,7 @@ public interface EusApi {
             @ApiResponse(code = 400, message = "Invalid session identifier", response = EventSubscription.class),
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/quality", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = POST)
+            "application/json" }, consumes = { "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToLatency(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -198,8 +197,7 @@ public interface EusApi {
             @ApiResponse(code = 403, message = "Forbidden", response = EventSubscription.class),
             @ApiResponse(code = 404, message = "No such element", response = EventSubscription.class) })
     @RequestMapping(value = "/session/{sessionId}/element/{elementId}/event", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = POST)
+            "application/json" }, consumes = { "application/json" }, method = POST)
     ResponseEntity<EventSubscription> subscribeToQuality(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "Element identifier (previously located)", required = true) @PathVariable("elementId") String elementId,
@@ -216,14 +214,12 @@ public interface EusApi {
      */
     @ApiOperation(value = "W3C WebDriver standard sessions operations", notes = "", response = String.class, tags = {
             "W3C WebDriver" })
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation"),
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful operation"),
             @ApiResponse(code = 404, message = "No such element"),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/**", produces = {
-            "application/json" }, method = { GET, POST, DELETE })
-    ResponseEntity<String> session(HttpEntity<String> httpEntity,
-            HttpServletRequest request);
+    @RequestMapping(value = "/session/**", produces = { "application/json" }, method = { GET, POST,
+            DELETE })
+    ResponseEntity<String> session(HttpEntity<String> httpEntity, HttpServletRequest request);
 
     /**
      * GET/POST/DELETE /execution/{key}/session/**
@@ -232,8 +228,7 @@ public interface EusApi {
      */
     @ApiOperation(value = "Start session by given Execution", notes = "", response = String.class, tags = {
             "W3C WebDriver" })
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful operation"),
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful operation"),
             @ApiResponse(code = 404, message = "No such element"),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
     @RequestMapping(value = "/execution/{key}/session/**", produces = {
@@ -257,9 +252,8 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid execution data or not registered", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/execution/register", produces = {
-            "application/json" }, consumes = {
-                    "application/json" }, method = { POST })
+    @RequestMapping(value = "/execution/register", produces = { "application/json" }, consumes = {
+            "application/json" }, method = { POST })
     ResponseEntity<String> registerExecution(
             @ApiParam(value = "The Execution Data", required = true) @Valid @RequestBody ExecutionData executionData);
 
@@ -293,8 +287,7 @@ public interface EusApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/status", produces = {
-            "application/json" }, method = { GET })
+    @RequestMapping(value = "/status", produces = { "application/json" }, method = { GET })
     ResponseEntity<String> getStatus();
 
     /**
@@ -307,8 +300,8 @@ public interface EusApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/execution/{key}/status", produces = {
-            "application/json" }, method = { GET })
+    @RequestMapping(value = "/execution/{key}/status", produces = { "application/json" }, method = {
+            GET })
     ResponseEntity<String> getStatusExecution(
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key);
 
@@ -326,8 +319,7 @@ public interface EusApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/browsers", produces = {
-            "application/json" }, method = { GET })
+    @RequestMapping(value = "/browsers", produces = { "application/json" }, method = { GET })
     ResponseEntity<String> getBrowsers();
 
     /**
@@ -340,8 +332,7 @@ public interface EusApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/browsers/cached", produces = {
-            "application/json" }, method = { GET })
+    @RequestMapping(value = "/browsers/cached", produces = { "application/json" }, method = { GET })
     ResponseEntity<String> getCachedBrowsers();
 
     /* ************************* */
@@ -359,8 +350,8 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
-    @RequestMapping(value = "/session/{sessionId}/vnc", produces = {
-            "text/plain" }, method = { GET })
+    @RequestMapping(value = "/session/{sessionId}/vnc", produces = { "text/plain" }, method = {
+            GET })
     ResponseEntity<String> vnc(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
 
@@ -442,8 +433,7 @@ public interface EusApi {
             @ApiParam(value = "The Video Name", required = true) @Valid @RequestBody String videoName);
 
     /**
-     * POST
-     * /execution/{key}/session/{sessionId}/recording/{hubContainerName}/start
+     * POST /execution/{key}/session/{sessionId}/recording/{hubContainerName}/start
      *
      * Start MP4 recording
      */
@@ -483,8 +473,7 @@ public interface EusApi {
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName);
 
     /**
-     * DELETE
-     * /execution/{key}/session/{sessionId}/recording/{hubContainerName}/stop
+     * DELETE /execution/{key}/session/{sessionId}/recording/{hubContainerName}/stop
      *
      * Stop MP4 recording
      */
@@ -499,6 +488,40 @@ public interface EusApi {
     ResponseEntity<String> stopExecutionRecording(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Hub Container Name", required = true) @PathVariable("hubContainerName") String hubContainerName,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            HttpServletRequest request);
+
+    /**
+     * DELETE /session/{sessionId}/recording/stop
+     *
+     * Stop MP4 recording
+     */
+    @ApiOperation(value = "Stop recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/recording/stop", produces = {
+            "text/plain" }, method = { DELETE })
+    ResponseEntity<String> stopRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId);
+
+    /**
+     * DELETE /execution/{key}/session/{sessionId}/recording/stop
+     *
+     * Stop MP4 recording
+     */
+    @ApiOperation(value = "Stop recording", notes = "", response = String.class, tags = {
+            "Remote control" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/recording/stop", produces = {
+            "text/plain" }, method = { DELETE })
+    ResponseEntity<String> stopExecutionRecording(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
             HttpServletRequest request);
 
@@ -552,8 +575,7 @@ public interface EusApi {
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/browserfile/session/{sessionId}", consumes = {
-            "multipart/form-data" }, produces = {
-                    "text/plain" }, method = RequestMethod.POST)
+            "multipart/form-data" }, produces = { "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSession(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "file") MultipartFile file,
@@ -568,8 +590,7 @@ public interface EusApi {
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/execution/{key}/browserfile/session/{sessionId}", consumes = {
-            "multipart/form-data" }, produces = {
-                    "text/plain" }, method = RequestMethod.POST)
+            "multipart/form-data" }, produces = { "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionExecution(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
@@ -585,8 +606,7 @@ public interface EusApi {
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/browserfile/session/{sessionId}", consumes = {
-            "application/json" }, produces = {
-                    "text/plain" }, method = RequestMethod.POST)
+            "application/json" }, produces = { "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionFromUrl(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @RequestParam(value = "fileUrl") String fileUrl,
@@ -602,8 +622,7 @@ public interface EusApi {
             @ApiResponse(code = 404, message = "TJob not found"),
             @ApiResponse(code = 500, message = "Server Error") })
     @RequestMapping(value = "/execution/{key}/browserfile/session/{sessionId}", consumes = {
-            "application/json" }, produces = {
-                    "text/plain" }, method = RequestMethod.POST)
+            "application/json" }, produces = { "text/plain" }, method = RequestMethod.POST)
     ResponseEntity<String> uploadFileToSessionExecutionFromUrl(
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
@@ -627,8 +646,8 @@ public interface EusApi {
             @ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
             @ApiResponse(code = 404, message = "No such element", response = String.class) })
-    @RequestMapping(value = "/crossbrowser/**", produces = {
-            "application/json" }, method = { GET, POST, DELETE })
+    @RequestMapping(value = "/crossbrowser/**", produces = { "application/json" }, method = { GET,
+            POST, DELETE })
     ResponseEntity<String> crossBrowserSession(HttpEntity<String> httpEntity,
             HttpServletRequest request);
 
@@ -755,8 +774,7 @@ public interface EusApi {
             throws Exception;
 
     /**
-     * GET
-     * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
+     * GET /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv
      *
      * Get generated WebRTC QoE Meter CSV
      * 
@@ -796,8 +814,7 @@ public interface EusApi {
             throws Exception;
 
     /**
-     * GET
-     * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/metric
+     * GET /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/metric
      *
      * Get WebRTC QoE Meter metric
      * 
@@ -815,5 +832,117 @@ public interface EusApi {
             @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
             @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier)
             throws Exception;
+
+    // Add time To QoE Metrics
+
+    /**
+     * POST /session/{sessionId}/webrtc/qoe/meter/{identifier}/metrics/time
+     *
+     * Post start time of the video in ms (after padding) + video duration in ms
+     * 
+     * @throws Exception
+     */
+    @ApiOperation(value = "Post start time of the video (after padding) + video duration", notes = "", response = String.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/metrics/time", produces = {
+            "application/json" }, consumes = { "application/json" }, method = { POST })
+    ResponseEntity<String> postWebRTCQoEMeterMetricsTime(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier,
+            @ApiParam(value = "Object that stores start time and video duration", required = true) @RequestBody VideoTimeInfo body)
+            throws Exception;
+
+    /**
+     * POST
+     * /execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/metrics/time
+     *
+     * Post start time of the video (after padding) + video duration
+     * 
+     * @throws Exception
+     */
+    @ApiOperation(value = "Post start time of the video (after padding) + video duration", notes = "", response = String.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/metrics/time", produces = {
+            "application/json" }, consumes = { "application/json" }, method = { POST })
+    ResponseEntity<String> executionPostWebRTCQoEMeterMetricsTime(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier,
+            @ApiParam(value = "Object that stores start time and video duration", required = true) @RequestBody VideoTimeInfo body)
+            throws Exception;
+
+    /**
+     * GET /session/{sessionId}/webrtc/qoe/meter/create
+     *
+     * Start WebRTC QoE Meter process by session
+     */
+    @ApiOperation(value = "Creates a WebRTC QoE Meter process by session", notes = "Creates a WebRTC QoE Meter process by session. Use this instead of start when you has already the CSVs", response = String.class, tags = {
+            "QoE" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/create", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> createWebRTCQoEMeterService(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId)
+            throws Exception;
+
+    /**
+     * GET /execution/{key}/session/{sessionId}/webrtc/qoe/meter/create
+     *
+     * Creates WebRTC QoE Meter process by session
+     */
+    @ApiOperation(value = "Creates WebRTC QoE Meter process by session", notes = "Creates a WebRTC QoE Meter process by session. Use this instead of start when you has already the CSVs", response = String.class, tags = {
+            "Session Files" })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Invalid session identifier", response = String.class),
+            @ApiResponse(code = 500, message = "Internal server error", response = String.class) })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/create", produces = {
+            "application/json" }, method = { GET })
+    ResponseEntity<String> executionCreateWebRTCQoEMeterService(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId)
+            throws Exception;
+
+    @ApiOperation(value = "Uploads a QoE CSV to session by given identifier", notes = "Uploads a QoE CSV to session by given identifier.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", consumes = {
+            "application/json" }, produces = { "text/plain" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadCsvToQoESession(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName) throws Exception;
+
+    @ApiOperation(value = "Uploads a QoE CSV to session by given identifier", notes = "Uploads a QoE CSV to session by given identifier.", response = String.class, tags = {
+            "TJob Execution", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 202, message = "The request has been accepted, but the processing has not been completed"),
+            @ApiResponse(code = 400, message = "Invalid File supplied"),
+            @ApiResponse(code = 404, message = "TJob not found"),
+            @ApiResponse(code = 500, message = "Server Error") })
+    @RequestMapping(value = "/execution/{key}/session/{sessionId}/webrtc/qoe/meter/{identifier}/csv", consumes = {
+            "application/json" }, produces = { "text/plain" }, method = RequestMethod.POST)
+    ResponseEntity<String> uploadCsvToQoESessionExecution(
+            @ApiParam(value = "Session identifier (previously established)", required = true) @PathVariable("sessionId") String sessionId,
+            @ApiParam(value = "QoE Service identifier (previously established)", required = true) @PathVariable("identifier") String identifier,
+            @ApiParam(value = "The Key of the execution)", required = true) @PathVariable("key") String key,
+            @RequestParam(value = "fileUrl") String fileUrl,
+            @RequestParam(value = "fileName") String fileName) throws Exception;
 
 }

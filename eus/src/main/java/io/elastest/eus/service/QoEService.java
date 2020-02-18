@@ -2,9 +2,12 @@ package io.elastest.eus.service;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,12 +21,15 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.config.EusApplicationContextProvider;
 import io.elastest.eus.config.EusContextProperties;
+import io.elastest.eus.json.VideoTimeInfo;
 import io.elastest.eus.platform.manager.PlatformManager;
 import io.elastest.eus.services.model.WebRTCQoEMeter;
 import io.elastest.eus.session.SessionManager;
@@ -34,15 +40,17 @@ public class QoEService {
     final Logger log = getLogger(lookup().lookupClass());
     EusContextProperties contextProperties;
     EusFilesService eusFilesService;
+    EusLogstashService eusLogstashService;
 
     Map<String, WebRTCQoEMeter> webRTCQoEMeterMap = new HashMap<>();
 
     static boolean alreadyDestroyed = false;
 
     @Autowired
-    public QoEService(EusFilesService eusFilesService) {
+    public QoEService(EusFilesService eusFilesService, EusLogstashService eusLogstashService) {
         super();
         this.eusFilesService = eusFilesService;
+        this.eusLogstashService = eusLogstashService;
     }
 
     @PostConstruct
@@ -291,7 +299,7 @@ public class QoEService {
 
         if (webRTCQoEMeter != null) {
             try {
-                Map<String, byte[]> csvs = obtainQoEMetricsCSV(sessionManager, identifier);
+                Map<String, byte[]> csvs = obtainQoEMetricsCSVs(sessionManager, identifier);
                 webRTCQoEMeter.setCsvs(csvs);
             } catch (Exception e) {
                 log.error("Error on getting qoe csvs in {}: {}", identifier, e.getMessage());
@@ -313,13 +321,13 @@ public class QoEService {
     }
 
     // Obtain csvs from docker/k8s/aws and save in memory
-    private Map<String, byte[]> obtainQoEMetricsCSV(SessionManager sessionManager,
+    private Map<String, byte[]> obtainQoEMetricsCSVs(SessionManager sessionManager,
             String identifier) throws Exception {
-        log.debug("Getting QoE Metrics CSV files for session {}", sessionManager.getSessionId());
+        log.debug("Getting QoE Metrics CSV files for session {} for id {}",
+                sessionManager.getSessionId(), identifier);
 
         String serviceName = getRealServiceName(sessionManager, identifier);
         PlatformManager platformManager = sessionManager.getPlatformManager();
-
         Map<String, byte[]> csvFiles = new HashMap<String, byte[]>();
         List<String> csvFileNames = platformManager.getSubserviceFolderFilesList(serviceName,
                 identifier, contextProperties.EUS_SERVICE_WEBRTC_QOE_METER_SCRIPTS_PATH, ".csv");
@@ -350,11 +358,13 @@ public class QoEService {
 
                             // Save in folder
                             String path = eusFilesService.getEusQoeFilesPath(sessionManager);
-                            String newFileName = sessionManager.getIdForFiles() + "-" + csvName;
+                            String newFileName = getFinalCsvName(sessionManager, identifier,
+                                    csvName);
                             eusFilesService.saveByteArrayFileToPathInEUS(path, newFileName,
                                     csvByteArray);
                             currentCsv.close();
                         }
+
                     }
                 } catch (Exception e) {
                     log.debug("Error on processing CSV file with name {} for service {}: {}",
@@ -364,6 +374,11 @@ public class QoEService {
         }
 
         return csvFiles;
+    }
+
+    private String getFinalCsvName(SessionManager sessionManager, String identifier,
+            String csvName) {
+        return sessionManager.getIdForFiles() + "-" + identifier + "-" + csvName;
     }
 
     public boolean isCsvAlreadyGenerated(String identifier) throws Exception {
@@ -392,13 +407,14 @@ public class QoEService {
                 Double average = null;
 
                 if (csv.getKey().toLowerCase().contains("vmaf")) {
-                    average = this.getVMAFAverageMetricByCsv(csv.getValue());
+                    average = this.getVMAFAverageMetricByCsvAndSetNOfFrames(csv.getValue(),
+                            identifier);
                 } else {
                     average = this.getNonVMAFAverageMetricByCsv(csv.getValue());
                 }
 
-                String name = sessionManager.getIdForFiles() + "-" + csv.getKey().split("\\.")[0]
-                        + "-average.txt";
+                String name = sessionManager.getIdForFiles() + "-" + identifier + "-"
+                        + csv.getKey().split("\\.")[0] + "-average.txt";
                 metrics.put(name, average);
 
                 if (storeInFolder) {
@@ -432,9 +448,12 @@ public class QoEService {
         }
     }
 
-    private Double getVMAFAverageMetricByCsv(byte[] csv) throws IOException {
+    private Double getVMAFAverageMetricByCsvAndSetNOfFrames(byte[] csv, String identifier)
+            throws IOException {
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+
         Double average = 0.0;
-        int total = 0;
+        int nOfFrames = 0;
 
         InputStream is = null;
         BufferedReader bfReader = null;
@@ -446,12 +465,15 @@ public class QoEService {
             try {
                 Double lineAsNum = Double.valueOf(line);
                 average = average + lineAsNum;
-                total++;
+                nOfFrames++;
             } catch (Exception e) {
             }
         }
 
-        average = average / total;
+        average = average / nOfFrames;
+
+        webRTCQoEMeter.setNumberOfFrames(nOfFrames);
+
         if (is != null) {
             is.close();
         }
@@ -484,6 +506,101 @@ public class QoEService {
             is.close();
         }
         return average;
+    }
+
+    public void assignTimeToQoEMetrics(SessionManager sessionManager, String identifier,
+            VideoTimeInfo videoTimeInfo) {
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+        webRTCQoEMeter.setVideoTimeInfo(videoTimeInfo);
+        double timePerFrame = 1
+                / (webRTCQoEMeter.getNumberOfFrames() / videoTimeInfo.getVideoDuration());
+        Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
+        final ExecutionData execData = sessionManager.getElastestExecutionData();
+
+        if (execData != null && csvs != null) {
+            for (HashMap.Entry<String, byte[]> csv : csvs.entrySet()) {
+                if (csv.getKey().toLowerCase().contains("vmaf")) {
+                    // ADD LOGSTASH sendAtomicMetric()
+                    int total = 0;
+                    InputStream is = null;
+                    BufferedReader bfReader = null;
+                    is = new ByteArrayInputStream(csv.getValue());
+                    bfReader = new BufferedReader(new InputStreamReader(is));
+                    String line = null;
+                    try {
+                        while ((line = bfReader.readLine()) != null) {
+                            try {
+                                Double lineAsNum = Double.valueOf(line);
+                                double frameTimestamp = videoTimeInfo.getStartTime()
+                                        + (timePerFrame * total);
+                                eusLogstashService.sendAtomicMetric(sessionManager, "vmaf",
+                                        "percent", lineAsNum.toString().toString(), "qoe",
+                                        frameTimestamp, execData.getMonitoringIndex());
+                                total++;
+                            } catch (Exception e) {
+                            }
+                        }
+
+                        if (is != null) {
+                            is.close();
+                        }
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    public String createService(SessionManager sessionManager) throws Exception {
+        final ExecutionData execData = sessionManager.getElastestExecutionData();
+
+        WebRTCQoEMeter webRTCQoEMeter = new WebRTCQoEMeter();
+        webRTCQoEMeter.setIdentifier(
+                sessionManager.getPlatformManager().getWebRTCQoEMeterServiceName(execData));
+
+        log.debug("WebRTC QoE Meter service created! (No instance) Id: {}",
+                webRTCQoEMeter.getIdentifier());
+        addOrUpdateMap(webRTCQoEMeter);
+        sessionManager.addEusServiceModelToList(webRTCQoEMeter);
+
+        return webRTCQoEMeter.getIdentifier();
+    }
+
+    public ResponseEntity<String> uploadCsvFromUrlToQoEFolder(SessionManager sessionManager,
+            String identifier, String fileUrl, String csvName) throws Exception {
+        File csv;
+        String finalCsvName = getFinalCsvName(sessionManager, identifier, csvName);
+        try {
+            csv = eusFilesService.saveFileFromUrlToPathInEUS(
+                    eusFilesService.getEusQoeFilesPath(sessionManager), finalCsvName, fileUrl);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error on upload file: Already exists",
+                    HttpStatus.CONFLICT);
+        }
+
+        WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+
+        if (webRTCQoEMeter != null) {
+            try {
+                InputStream csvIS = new FileInputStream(csv);
+                byte[] csvByteArr = IOUtils.toByteArray(csvIS);
+
+                webRTCQoEMeter.getCsvs().put(csvName, csvByteArr);
+            } catch (Exception e) {
+                log.error("Error on getting qoe csvs in {}: {}", identifier, e.getMessage());
+            }
+
+            webRTCQoEMeter.setCsvGenerated(true);
+            addOrUpdateMap(webRTCQoEMeter);
+
+            getQoEAverageMetrics(sessionManager, identifier, true);
+        }
+
+        return new ResponseEntity<>(csvName, OK);
     }
 
 }

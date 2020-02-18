@@ -24,14 +24,21 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.google.gson.JsonObject;
 
 import io.elastest.eus.api.model.ExecutionData;
 import io.elastest.eus.session.SessionManager;
@@ -80,46 +87,6 @@ public class EusLogstashService {
     // }
     // }
 
-    public void sendBrowserConsoleToLogstash(String jsonMessages,
-            SessionManager sessionManager, String monitoringIndex) {
-        String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
-        log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
-        if (lsHttpApi == null || monitoringIndex == null) {
-            return;
-        }
-
-        try {
-            URL url = new URL(lsHttpApi);
-
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("POST");
-            http.setDoOutput(true);
-
-            String component = getComponent(sessionManager);
-
-            String body = "{" + "\"component\":\"" + component + "\""
-                    + ",\"exec\":\"" + monitoringIndex + "\""
-                    + ",\"stream\":\"console\"" + ",\"messages\":"
-                    + jsonMessages + "}";
-            byte[] out = body.getBytes(UTF_8);
-            log.debug("{} => Sending browser log to logstash ({}): {}",
-                    sessionManager.getSessionId(), lsHttpApi, body);
-            int length = out.length;
-
-            http.setFixedLengthStreamingMode(length);
-            http.setRequestProperty("Content-Type",
-                    "application/json; charset=UTF-8");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(out);
-            }
-        } catch (Exception e) {
-            log.error("Exception in send browser console log trace", e);
-        }
-
-    }
-
     public String getComponent(SessionManager sessionInfo) {
         String sessionId = sessionInfo.getSessionId();
         String component = etBrowserComponentPrefix;
@@ -151,8 +118,7 @@ public class EusLogstashService {
                 mapKeyDateCreationMap.put(key, new Date());
             }
 
-            String tJobPrefix = etExecData.getType() + "_"
-                    + etExecData.gettJobId();
+            String tJobPrefix = etExecData.getType() + "_" + etExecData.gettJobId();
 
             component += tJobPrefix + "_" + executionSessionMap.get(key);
 
@@ -195,6 +161,121 @@ public class EusLogstashService {
     public static String parseMsg(String msg) {
         // replace " to \" only if " is not preceded by \
         return msg.replaceAll("(?<!\\\\)\\\"", "\\\\\"");
+    }
+
+    public String getIso8601String() {
+        return "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    }
+
+    public DateFormat getIso8601DateFormat() {
+        return new SimpleDateFormat(getIso8601String());
+    }
+
+    public Date getIso8601DateFromStr(String timestamp, TimeZone timezone) throws ParseException {
+        DateFormat df = getIso8601DateFormat();
+        df.setTimeZone(timezone);
+
+        return df.parse(timestamp);
+    }
+
+    public Date getIso8601UTCDateFromStr(String timestamp) throws ParseException {
+        return this.getIso8601DateFromStr(timestamp, TimeZone.getTimeZone("GMT-0"));
+    }
+
+    public String getIso8601UTCStrFromDate(Date date) throws ParseException {
+        DateFormat df = new SimpleDateFormat(getIso8601String(), Locale.UK);
+        df.setTimeZone(TimeZone.getTimeZone("GMT-0"));
+        return df.format(date);
+    }
+
+    public void sendMonitoringTrace(String lsHttpApi, String body) throws Exception {
+        URL url = new URL(lsHttpApi);
+
+        URLConnection con = url.openConnection();
+        HttpURLConnection http = (HttpURLConnection) con;
+        http.setRequestMethod("POST");
+        http.setDoOutput(true);
+
+        byte[] out = body.getBytes(UTF_8);
+
+        int length = out.length;
+
+        http.setFixedLengthStreamingMode(length);
+        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        http.connect();
+        try (OutputStream os = http.getOutputStream()) {
+            os.write(out);
+        }
+    }
+
+    /* **************************** */
+    /* ******* Send methods ******* */
+    /* **************************** */
+
+    public void sendBrowserConsoleToLogstash(String jsonMessages, SessionManager sessionManager,
+            String monitoringIndex) {
+        String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
+        log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
+        if (lsHttpApi == null || monitoringIndex == null) {
+            return;
+        }
+
+        try {
+
+            String component = getComponent(sessionManager);
+
+            String body = "{" + "\"component\":\"" + component + "\"" + ",\"exec\":\""
+                    + monitoringIndex + "\"" + ",\"stream\":\"console\"" + ",\"messages\":"
+                    + jsonMessages + "}";
+            log.debug("{} => Sending browser log to logstash ({}): {}",
+                    sessionManager.getSessionId(), lsHttpApi, body);
+            sendMonitoringTrace(lsHttpApi, body);
+        } catch (Exception e) {
+            log.error("Exception in send browser console log trace", e);
+        }
+
+    }
+
+    public void sendAtomicMetric(SessionManager sessionManager, String metricName, String unit,
+            String value, String stream, String timestamp, String monitoringIndex)
+            throws Exception {
+        String lsHttpApi = dynamicDataService.getLogstashHttpsApi();
+        log.trace("lsHttpApi: {} etMonExec: {}", lsHttpApi, monitoringIndex);
+        if (lsHttpApi == null || monitoringIndex == null) {
+            return;
+        }
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("component", getComponent(sessionManager));
+        jsonObject.addProperty("exec", monitoringIndex);
+        jsonObject.addProperty("et_type", metricName);
+        jsonObject.addProperty("stream", stream);
+        jsonObject.addProperty("stream_type", "atomic_metric");
+        jsonObject.addProperty("unit", unit);
+        jsonObject.addProperty("metricName", metricName);
+        jsonObject.addProperty(metricName, value);
+
+        sendMonitoringTrace(lsHttpApi, jsonObject.toString());
+    }
+
+    public void sendAtomicMetric(SessionManager sessionManager, String metricName, String unit,
+            String value, String stream, long timestampMillis, String monitoringIndex)
+            throws Exception {
+        Date timestampAsDate = getIso8601UTCDateFromStr(new Long(timestampMillis).toString());
+        String timestamp = getIso8601UTCStrFromDate(timestampAsDate);
+
+        sendAtomicMetric(sessionManager, metricName, unit, value, stream, timestamp,
+                monitoringIndex);
+    }
+
+    public void sendAtomicMetric(SessionManager sessionManager, String metricName, String unit,
+            String value, String stream, double timestampMillis, String monitoringIndex)
+            throws Exception {
+        Date timestampAsDate = getIso8601UTCDateFromStr(new Double(timestampMillis).toString());
+        String timestamp = getIso8601UTCStrFromDate(timestampAsDate);
+
+        sendAtomicMetric(sessionManager, metricName, unit, value, stream, timestamp,
+                monitoringIndex);
     }
 
 }
