@@ -28,4 +28,8 @@ public class VideoTimeInfo {
         this.videoDuration = videoDuration;
     }
 
+    @Override
+    public String toString() {
+        return "VideoTimeInfo [startTime=" + startTime + ", videoDuration=" + videoDuration + "]";
+    }
 }

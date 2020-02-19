@@ -511,16 +511,20 @@ public class QoEService {
     public void assignTimeToQoEMetrics(SessionManager sessionManager, String identifier,
             VideoTimeInfo videoTimeInfo) {
         WebRTCQoEMeter webRTCQoEMeter = getWebRTCQoEMeter(identifier);
+        final ExecutionData execData = sessionManager.getElastestExecutionData();
+
         webRTCQoEMeter.setVideoTimeInfo(videoTimeInfo);
-        double timePerFrame = 1
+        log.debug("Received time for QoE Metrics with id {} => {} . Nº of frames {}", identifier,
+                videoTimeInfo, webRTCQoEMeter.getNumberOfFrames());
+
+        // Calculate time per frame
+        double timePerFrame = new Double(1)
                 / (webRTCQoEMeter.getNumberOfFrames() / videoTimeInfo.getVideoDuration());
         Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
-        final ExecutionData execData = sessionManager.getElastestExecutionData();
 
         if (execData != null && csvs != null) {
             for (HashMap.Entry<String, byte[]> csv : csvs.entrySet()) {
                 if (csv.getKey().toLowerCase().contains("vmaf")) {
-                    // ADD LOGSTASH sendAtomicMetric()
                     int total = 0;
                     InputStream is = null;
                     BufferedReader bfReader = null;
@@ -531,13 +535,14 @@ public class QoEService {
                         while ((line = bfReader.readLine()) != null) {
                             try {
                                 Double lineAsNum = Double.valueOf(line);
-                                double frameTimestamp = videoTimeInfo.getStartTime()
+                                double frameTimestamp = Double.valueOf(videoTimeInfo.getStartTime())
                                         + (timePerFrame * total);
                                 eusLogstashService.sendAtomicMetric(sessionManager, "vmaf",
                                         "percent", lineAsNum.toString().toString(), "qoe",
                                         frameTimestamp, execData.getMonitoringIndex());
                                 total++;
                             } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         }
 
@@ -548,7 +553,7 @@ public class QoEService {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-
+                    break;
                 }
             }
         }
@@ -572,6 +577,8 @@ public class QoEService {
 
     public ResponseEntity<String> uploadCsvFromUrlToQoEFolder(SessionManager sessionManager,
             String identifier, String fileUrl, String csvName) throws Exception {
+        log.debug("Starting upload of CSV file ({}) for QoE metrics with id {}", csvName,
+                identifier);
         File csv;
         String finalCsvName = getFinalCsvName(sessionManager, identifier, csvName);
         try {

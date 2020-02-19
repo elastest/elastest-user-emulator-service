@@ -191,6 +191,8 @@ public class EusLogstashService {
     public void sendMonitoringTrace(String lsHttpApi, String body) throws Exception {
         URL url = new URL(lsHttpApi);
 
+        log.debug("Sending monitoring trace to {}: {}", url, body);
+
         URLConnection con = url.openConnection();
         HttpURLConnection http = (HttpURLConnection) con;
         http.setRequestMethod("POST");
