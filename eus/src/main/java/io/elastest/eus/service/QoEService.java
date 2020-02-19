@@ -518,8 +518,8 @@ public class QoEService {
                 videoTimeInfo, webRTCQoEMeter.getNumberOfFrames());
 
         // Calculate time per frame
-        double timePerFrame = new Double(1)
-                / (webRTCQoEMeter.getNumberOfFrames() / videoTimeInfo.getVideoDuration());
+        double timePerFrame = 1.0 / (new Double(webRTCQoEMeter.getNumberOfFrames())
+                / new Double(videoTimeInfo.getVideoDuration()));
         Map<String, byte[]> csvs = getQoEMetricsCSV(sessionManager, identifier);
 
         if (execData != null && csvs != null) {
@@ -535,8 +535,8 @@ public class QoEService {
                         while ((line = bfReader.readLine()) != null) {
                             try {
                                 Double lineAsNum = Double.valueOf(line);
-                                double frameTimestamp = Double.valueOf(videoTimeInfo.getStartTime())
-                                        + (timePerFrame * total);
+                                long frameTimestamp = videoTimeInfo.getStartTime()
+                                        + (new Double(timePerFrame * total)).longValue();
                                 eusLogstashService.sendAtomicMetric(sessionManager, "vmaf",
                                         "percent", lineAsNum.toString().toString(), "qoe",
                                         frameTimestamp, execData.getMonitoringIndex());

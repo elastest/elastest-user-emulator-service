@@ -256,6 +256,7 @@ public class EusLogstashService {
         jsonObject.addProperty("unit", unit);
         jsonObject.addProperty("metricName", metricName);
         jsonObject.addProperty(metricName, value);
+        jsonObject.addProperty("@timestamp", timestamp);
 
         sendMonitoringTrace(lsHttpApi, jsonObject.toString());
     }
@@ -263,17 +264,7 @@ public class EusLogstashService {
     public void sendAtomicMetric(SessionManager sessionManager, String metricName, String unit,
             String value, String stream, long timestampMillis, String monitoringIndex)
             throws Exception {
-        Date timestampAsDate = getIso8601UTCDateFromStr(new Long(timestampMillis).toString());
-        String timestamp = getIso8601UTCStrFromDate(timestampAsDate);
-
-        sendAtomicMetric(sessionManager, metricName, unit, value, stream, timestamp,
-                monitoringIndex);
-    }
-
-    public void sendAtomicMetric(SessionManager sessionManager, String metricName, String unit,
-            String value, String stream, double timestampMillis, String monitoringIndex)
-            throws Exception {
-        Date timestampAsDate = getIso8601UTCDateFromStr(new Double(timestampMillis).toString());
+        Date timestampAsDate = new Date(timestampMillis);
         String timestamp = getIso8601UTCStrFromDate(timestampAsDate);
 
         sendAtomicMetric(sessionManager, metricName, unit, value, stream, timestamp,
