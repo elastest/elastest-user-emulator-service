@@ -1,6 +1,8 @@
 #!/bin/bash
 # File checked with ShellCheck (https://www.shellcheck.net/)
 
+# First of all: create a lock file that tells the host we're not ready yet
+touch /home/ubuntu/entrypoint.lock
 
 
 
@@ -125,6 +127,8 @@ done
 
 
 
+# Remove the lock file to tell the host we're now ready to rock
+rm -f /home/ubuntu/entrypoint.lock
 
 # Block here (wait for all background shell jobs to finish)
 wait
