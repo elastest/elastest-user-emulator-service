@@ -4,93 +4,107 @@
 
 FROM ubuntu:16.04
 
-ARG DEBIAN_FRONTEND=noninteractive
 ARG EB_VERSION
 ARG GIT_URL
 ARG GIT_COMMIT
 ARG BUILD_DATE
 
+# Disable Apt warnings for running in non-interactive mode
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 LABEL maintainer fede diaz nordri@gmail.com \
       org.label-schema.vendor="Elastest" \
       org.label-schema.url="https://elastest.io" \
       org.label-schema.name="Elastest browsers" \
-      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.description="Optimal resource util" \
       org.label-schema.version=$EB_VERSION \
       org.label-schema.vcs-url=$GIT_URL \
       org.label-schema.vcs-ref=$GIT_COMMIT \
       org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.docker.schema-version="1.0" 
+      org.label-schema.docker.schema-version="1.0"
 
 ########################################################
 # Base system
 ########################################################
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      curl \
-      xvfb \
-      libgconf-2-4 \
-      libnss3-dev \
-      x11vnc \
-      bsdtar \
-      python \
-      net-tools \
-      wget \
-      bzip2 \
-      libgtk-3-0 \
-      sudo \
-      software-properties-common \
-      xorg \
-      iproute2 \
-      pulseaudio && \
-    apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Packages:
+# - gnupg: for `apt-key`.
+# - procps: for `pgrep`, `pkill`.
+# - software-properties-common: for `add-apt-repository`.
+#
+# Notes:
+# - Disable "autospawn" feature of PulseAudio: it should be explicitly started
+#   by our entrypoint script, and not implicitly by other processes.
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+        bsdtar \
+        bzip2 \
+        curl \
+        gnupg \
+        iproute2 \
+        libgconf-2-4 \
+        libgtk-3-0 \
+        libnss3-dev \
+        net-tools \
+        procps \
+        pulseaudio \
+        python3 \
+        python3-distutils \
+        software-properties-common \
+        sudo \
+        wget \
+        x11vnc \
+        xorg \
+        xvfb xauth \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # Install websokify and noVNC
 ########################################################
-RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python3 get-pip.py && \
-    pip3 install --no-cache-dir \
-        setuptools && \
-    pip3 install -U https://github.com/novnc/websockify/archive/master.tar.gz && \
-    mkdir /usr/local/noVNC && \
-    curl -s -L https://github.com/x11vnc/noVNC/archive/master.tar.gz | \
-         bsdtar zxf - -C /usr/local/noVNC --strip-components 1 && \
-    rm -rf /tmp/* /var/tmp/*
+RUN curl -O "https://bootstrap.pypa.io/get-pip.py" \
+ && python3 get-pip.py \
+ && pip3 install --no-cache-dir --upgrade \
+        setuptools \
+ && pip3 install --no-cache-dir --upgrade \
+        https://github.com/novnc/websockify/archive/master.tar.gz \
+ && mkdir -p /usr/local/noVNC \
+ && curl -s -L "https://github.com/x11vnc/noVNC/archive/master.tar.gz" \
+        | bsdtar zxf - -C /usr/local/noVNC --strip-components 1
 
 ########################################################
 # Fluxbox
 ########################################################
-RUN apt-get update && \
-  apt-get install --yes fluxbox && \
-    apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Packages:
+# - fluxbox: to have a Window Manager inside the X11 server.
+# - hsetroot: to allow Fluxbox setting the desktop background.
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+        fluxbox hsetroot \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # ffmpeg
 ########################################################
-RUN add-apt-repository -y ppa:mc3man/xerus-media && \
-    apt-get update && \
-    apt-get install --yes ffmpeg && \
-    apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# RUN add-apt-repository -y ppa:mc3man/xerus-media && \
+#     apt-get update && \
+#     apt-get install --yes ffmpeg && \
+#     apt-get -y autoremove && \
+#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+        ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # Some files
 ########################################################
-# Creating user and setting the environment
-RUN adduser --uid 1000 --disabled-password --gecos "" --home /home/ubuntu ubuntu
-RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu
-RUN mkdir -p /home/ubuntu/.fluxbox
-ADD lastwallpaper /home/ubuntu/.fluxbox/lastwallpaper
-ADD overlay /home/ubuntu/.fluxbox/overlay
-ADD elastest-wallpaper.png /home/ubuntu/.fluxbox/elastest-wallpaper.png
-RUN chown -R ubuntu.ubuntu /home/ubuntu/.fluxbox
+# Create "ubuntu" user that will run PulseAudio, and set the environment
+RUN adduser --system --group --disabled-password --shell /bin/bash ubuntu \
+ && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/ubuntu \
+ && mkdir -p /home/ubuntu/.fluxbox
+COPY elastest-wallpaper.png lastwallpaper overlay /home/ubuntu/.fluxbox/
+RUN chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox
 # Recording script
-ADD start-video-recording.sh /usr/local/bin/start-video-recording.sh
-ADD stop-video-recording.sh /usr/local/bin/stop-video-recording.sh 
+COPY start-video-recording.sh stop-video-recording.sh /usr/local/bin/
 
 ########################################################
 # Entrypoint
 ########################################################
-ADD entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /usr/local/bin/

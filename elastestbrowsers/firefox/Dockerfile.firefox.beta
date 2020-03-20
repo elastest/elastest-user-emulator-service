@@ -1,6 +1,4 @@
-# X11 - Selenoid
-# Firefox beta
-
+# Firefox - Beta version
 FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
 ARG EB_VERSION
@@ -10,11 +8,15 @@ ARG BUILD_DATE
 ARG GD_VERSION
 ARG SELENOID_VERSION
 
+# Disable Apt warnings for running in non-interactive mode
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 LABEL maintainer fede diaz nordri@gmail.com \
       org.label-schema.vendor="Elastest" \
       org.label-schema.url="https://elastest.io" \
       org.label-schema.name="Elastest browsers" \
-      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.description="Optimal resource util" \
       org.label-schema.version=$EB_VERSION \
       org.label-schema.vcs-url=$GIT_URL \
       org.label-schema.vcs-ref=$GIT_COMMIT \
@@ -26,13 +28,10 @@ LABEL maintainer fede diaz nordri@gmail.com \
 ########################################################
 # Firefox
 ########################################################
-
-RUN  \
-        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21 && \
-        echo "deb http://ppa.launchpad.net/mozillateam/firefox-next/ubuntu xenial main" >> /etc/apt/sources.list.d/firefox-beta.list && \
-        apt-get update -qqy && \
-        apt-get -qqy --no-install-recommends install firefox && \
-        rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+RUN add-apt-repository --yes ppa:mozillateam/firefox-next \
+ && apt-get update && apt-get install --yes --no-install-recommends \
+        firefox \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # Selenoid

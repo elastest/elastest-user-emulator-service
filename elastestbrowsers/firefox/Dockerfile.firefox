@@ -1,4 +1,4 @@
-# Firefox
+# Firefox - Release version
 FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
 ARG VERSION
@@ -9,11 +9,15 @@ ARG BUILD_DATE
 ARG GD_VERSION
 ARG SELENOID_VERSION
 
+# Disable Apt warnings for running in non-interactive mode
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 LABEL maintainer fede diaz nordri@gmail.com \
       org.label-schema.vendor="Elastest" \
       org.label-schema.url="https://elastest.io" \
       org.label-schema.name="Elastest browsers" \
-      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.description="Optimal resource util" \
       org.label-schema.version=$EB_VERSION \
       org.label-schema.vcs-url=$GIT_URL \
       org.label-schema.vcs-ref=$GIT_COMMIT \
@@ -25,10 +29,9 @@ LABEL maintainer fede diaz nordri@gmail.com \
 ########################################################
 # Firefox
 ########################################################
-
-RUN  \
-        apt-get update && \
-        apt-get -y --no-install-recommends install firefox=$VERSION
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+        firefox=$VERSION \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # Selenoid

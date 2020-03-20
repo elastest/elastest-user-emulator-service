@@ -1,55 +1,95 @@
-#!/bin/bash -x
-set -e
+#!/usr/bin/env bash
+# File checked with ShellCheck (https://www.shellcheck.net/)
 
-OUTPUT=/workdir
-VERSIONS_FILE=$OUTPUT/versions.txt
+# Bash options for strict error checking
+set -o errexit -o errtrace -o pipefail -o nounset
+
+# Trace all commands
+set -o xtrace
+
+
+
+# Settings
+# ========
+
+WORKDIR="/workdir"
+OUTPUT_FILE="$WORKDIR/versions.txt"
+
+
+
+# Get browser details
+# ===================
+
+function get_apt_version {
+  local PACKAGE_NAME="${1:-}"
+  [[ -z "$PACKAGE_NAME" ]] && return 1
+  apt-cache --no-all-versions show "$PACKAGE_NAME" | awk '/Version:/{ print $2 }'
+}
+
+
 
 # Firefox
+# -------
+
 apt-get update
-FIREFOX_PKG=$(apt-cache madison firefox | head -n1 | awk '{ print $3 }')
-FIREFOX_VER=$(echo $FIREFOX_PKG | cut -d"." -f1)
+FIREFOX_PKG="$(get_apt_version firefox)"
+FIREFOX_VER="${FIREFOX_PKG%%.*}"
 
-# Firefox Beta
 add-apt-repository --yes ppa:mozillateam/firefox-next && apt-get update
-FIREFOX_BETA_PKG=$(apt-cache madison firefox | head -n1 | awk '{ print $3 }')
-FIREFOX_BETA_VER=$(echo $FIREFOX_BETA_PKG | cut -d"." -f1)
+FIREFOX_BETA_PKG="$(get_apt_version firefox)"
+FIREFOX_BETA_VER="${FIREFOX_BETA_PKG%%.*}"
 
-# Firefox Nightly
 add-apt-repository --yes ppa:ubuntu-mozilla-daily/ppa && apt-get update
-FIREFOX_NIGHTLY_PKG=$(apt-cache madison firefox-trunk | head -n1 | awk '{print $3'})
-FIREFOX_NIGHTLY_VER=$(echo $FIREFOX_NIGHTLY_PKG | cut -d"." -f1)
+FIREFOX_NIGHTLY_PKG="$(get_apt_version firefox-trunk)"
+FIREFOX_NIGHTLY_VER="${FIREFOX_NIGHTLY_PKG%%.*}"
+
+
 
 # Crome
-wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-        echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
-        apt-get update 
-CHROME_PKG=$(apt-cache madison google-chrome-stable | head -n1 | awk '{print $3}')
-CHROME_VER=$(echo $CHROME_PKG | cut -d"." -f1)
+# -----
 
-# Chrome beta
-CHROME_BETA_PKG=$(apt-cache madison google-chrome-beta | head -n1 | awk '{print $3}')
-CHROME_BETA_VER=$(echo $CHROME_BETA_PKG | cut -d"." -f1)
+wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | apt-key add -
+echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
+apt-get update
 
-# Chrome unstable
-CHROME_UNSTABLE_PKG=$(apt-cache madison google-chrome-unstable | head -n1 | awk '{print $3}')
-CHROME_UNSTABLE_VER=$(echo $CHROME_UNSTABLE_PKG | cut -d"." -f1)
+CHROME_PKG="$(get_apt_version google-chrome-stable)"
+CHROME_VER="${CHROME_PKG%%.*}"
 
-# Selenoid driver
-SELENOID_VERSION=$(curl --silent "https://api.github.com/repos/aerokube/selenoid/releases/latest" | grep '"tag_name":' |  sed -E 's/.*"([^"]+)".*/\1/')
-wget -O $OUTPUT/selenoid_linux_amd64 https://github.com/aerokube/selenoid/releases/download/${SELENOID_VERSION}/selenoid_linux_amd64
-chmod +x $OUTPUT/selenoid_linux_amd64
+CHROME_BETA_PKG="$(get_apt_version google-chrome-beta)"
+CHROME_BETA_VER="${CHROME_BETA_PKG%%.*}"
 
-# OUTPUT
-echo FIREFOX_PKG=$FIREFOX_PKG > $VERSIONS_FILE
-echo FIREFOX_VER=$FIREFOX_VER >> $VERSIONS_FILE
-echo FIREFOX_BETA_VER=$FIREFOX_BETA_VER >> $VERSIONS_FILE
-echo FIREFOX_NIGHTLY_VER=$FIREFOX_NIGHTLY_VER >> $VERSIONS_FILE
-echo CHROME_PKG=$CHROME_PKG >> $VERSIONS_FILE
-echo CHROME_VER=$CHROME_VER >> $VERSIONS_FILE
-echo CHROME_BETA_VER=$CHROME_BETA_VER >> $VERSIONS_FILE
-echo CHROME_UNSTABLE_VER=$CHROME_UNSTABLE_VER >> $VERSIONS_FILE
-echo SELENOID_VERSION=$SELENOID_VERSION >> $VERSIONS_FILE
+CHROME_UNSTABLE_PKG="$(get_apt_version google-chrome-unstable)"
+CHROME_UNSTABLE_VER="${CHROME_UNSTABLE_PKG%%.*}"
 
-cat $VERSIONS_FILE
 
-chmod -R 777 $OUTPUT
+
+# Selenoid
+# --------
+
+SELENOID_VERSION="$(wget -q -O - "https://api.github.com/repos/aerokube/selenoid/releases/latest" | grep '"tag_name":' |  sed -E 's/.*"([^"]+)".*/\1/')"
+wget -O "$WORKDIR/selenoid_linux_amd64" "https://github.com/aerokube/selenoid/releases/download/${SELENOID_VERSION}/selenoid_linux_amd64"
+chmod +x "$WORKDIR/selenoid_linux_amd64"
+
+
+
+# Write output file
+# =================
+
+tee "$OUTPUT_FILE" >/dev/null <<EOF
+FIREFOX_PKG=$FIREFOX_PKG
+FIREFOX_VER=$FIREFOX_VER
+FIREFOX_BETA_PKG=$FIREFOX_BETA_PKG
+FIREFOX_BETA_VER=$FIREFOX_BETA_VER
+FIREFOX_NIGHTLY_PKG=$FIREFOX_NIGHTLY_PKG
+FIREFOX_NIGHTLY_VER=$FIREFOX_NIGHTLY_VER
+CHROME_PKG=$CHROME_PKG
+CHROME_VER=$CHROME_VER
+CHROME_BETA_PKG=$CHROME_BETA_PKG
+CHROME_BETA_VER=$CHROME_BETA_VER
+CHROME_UNSTABLE_PKG=$CHROME_UNSTABLE_PKG
+CHROME_UNSTABLE_VER=$CHROME_UNSTABLE_VER
+SELENOID_VERSION=$SELENOID_VERSION
+EOF
+
+echo "Done! Output file contents:"
+cat "$OUTPUT_FILE"
