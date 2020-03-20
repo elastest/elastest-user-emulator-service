@@ -40,7 +40,10 @@ export DISPLAY=":99"
 
 echo "Start pulseaudio"
 
-pulseaudio --daemonize
+pulseaudio --daemonize \
+  --log-target=file:/home/ubuntu/pulseaudio.log \
+  --log-level=4 \
+  &
 
 while ! pgrep --exact pulseaudio >/dev/null; do
   echo "Wait for pulseaudio -- 500 ms..."
@@ -61,12 +64,15 @@ mkdir -p /home/ubuntu/selenoid-logs/
   --listen-tcp \
   --server-num="$DISPLAY_NUM" \
   --server-args="-ac -listen tcp -noreset -screen 0 $SCREEN_RESOLUTION" \
+  --error-file=/home/ubuntu/xvfb.log \
   /usr/local/bin/selenoid \
     -conf /etc/browsers.json \
     -disable-docker \
     -timeout 1h \
     -enable-file-upload \
-    -capture-driver-logs \
+    -save-all-logs \
+    -log-output-dir /home/ubuntu/selenoid-logs \
+    >/home/ubuntu/selenoid-logs/selenoid.log \
     &
 
 while ! pgrep --exact Xvfb >/dev/null; do
