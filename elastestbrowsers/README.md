@@ -10,10 +10,20 @@
 
 ## Procedures
 
-If you want to generate all the images just running 
+To generate the [utils-get_browsers_version](https://hub.docker.com/r/elastestbrowsers/utils-get_browsers_version) image, run:
 
-`./build_containers.sh`
+```
+cd GetVersions/
+./build.sh 4 false
+cd ..
+```
 
-To generate the *get versions* util:
+First argument is the version number, and second argument decides whether to try pushing the image to Docker Hub (`true`) or not (`false`).
 
-`cd GetVersions && ./build`
+To generate all browser images, run:
+
+```
+EB_VERSION=2.1.0 ./build_containers.sh
+```
+
+With `EB_VERSION` set to the version number that should be used to tag *ElastestBrowsers* Docker images.

@@ -1,13 +1,25 @@
-#!/bin/bash -x
-set -e
+#!/usr/bin/env bash
+# File checked with ShellCheck (https://www.shellcheck.net/)
 
-### Variables ###
-[ -d "$HOME/recordings" ] || mkdir $HOME/recordings
+# Bash options for strict error checking
+set -o errexit -o errtrace -o pipefail -o nounset
+
+# Trace all commands
+set -o xtrace
+
+
+
+REC_DIR="$HOME/recordings"
+if [[ ! -d "$REC_DIR" ]]; then
+  mkdir -p "$REC_DIR"
+  chmod 777 "$REC_DIR" # Ensure write permissions
+fi
+
 RESOLUTION="${RESOLUTION:-1440x1080}"
-DISPLAY=:99
 VIDEO_FORMAT="${VIDEO_FORMAT:-mp4}"
+DISPLAY=":99"
 
-if [ ! "$#" -eq 2 ]; then
+if [[ "$#" -ne 2 ]]; then
   echo "Usage: $0 -n VIDEO_NAME"
   exit 1
 fi
@@ -15,7 +27,7 @@ fi
 while getopts "n:" opt; do
   case "${opt}" in
     n)
-      VIDEO_NAME=${OPTARG}
+      VIDEO_NAME="${OPTARG}"
       ;;
     *)
       echo "Usage: $0 -n VIDEO_NAME"
@@ -24,11 +36,10 @@ while getopts "n:" opt; do
   esac
 done
 
-### Only one recording at a time
-FFMPEG_PID=$(ps ax | grep [f]fmpeg | awk '{ print $1'} )
-if [ ! -z "$FFMPEG_PID" ]; then
-	echo "There is a recording in progress..."
-	exit 1
+# Allow only one recording at the same time
+if pgrep --exact ffmpeg >/dev/null; then
+  echo "Abort: there is already a recording in progress"
+  exit 1
 fi
 
 touch /tmp/stop

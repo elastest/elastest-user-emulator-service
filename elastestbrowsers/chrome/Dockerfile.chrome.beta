@@ -1,4 +1,4 @@
-# Chrome
+# Chrome - Beta version
 FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
 ARG EB_VERSION
@@ -8,11 +8,15 @@ ARG BUILD_DATE
 ARG CD_VERSION
 ARG SELENOID_VERSION
 
+# Disable Apt warnings for running in non-interactive mode
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 LABEL maintainer fede diaz nordri@gmail.com \
       org.label-schema.vendor="Elastest" \
       org.label-schema.url="https://elastest.io" \
       org.label-schema.name="Elastest browsers" \
-      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.description="Optimal resource util" \
       org.label-schema.version=$EB_VERSION \
       org.label-schema.vcs-url=$GIT_URL \
       org.label-schema.vcs-ref=$GIT_COMMIT \
@@ -24,15 +28,13 @@ LABEL maintainer fede diaz nordri@gmail.com \
 ########################################################
 # Chrome
 ########################################################
-
-RUN  \
-        curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-        echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list && \
-        apt-get update && \
-        apt-get -y --no-install-recommends install google-chrome-beta && \
-        chown root:root /opt/google/chrome-beta/chrome-sandbox && \
-        chmod 4755 /opt/google/chrome-beta/chrome-sandbox && \
-        rm -Rf /tmp/* && rm -Rf /var/lib/apt/lists/* || true
+RUN wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | apt-key add - \
+ && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list \
+ && apt-get update && apt-get install --yes --no-install-recommends \
+        google-chrome-beta \
+ && rm -rf /var/lib/apt/lists/* \
+ && chown root:root /opt/google/chrome-beta/chrome-sandbox \
+ && chmod 4755 /opt/google/chrome-beta/chrome-sandbox
 
 ########################################################
 # Selenoid

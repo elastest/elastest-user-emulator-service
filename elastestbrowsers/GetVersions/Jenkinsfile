@@ -6,10 +6,9 @@ node {
       git 'https://github.com/elastest/elastest-user-emulator-service.git'
       stage "Build and publish Docker image"
 
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub',
-usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'elastestci-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
       sh 'docker login -u "$USERNAME" -p "$PASSWORD"'
-      sh 'cd elastestbrowsers/GetVersions && ./build.sh 3'
+      sh 'cd elastestbrowsers/GetVersions && ./build.sh 4 true'
     }
   }
 }

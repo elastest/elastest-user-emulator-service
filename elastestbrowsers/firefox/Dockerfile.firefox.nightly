@@ -1,6 +1,4 @@
-# X11 - Selenoid
-# Firefox nightly
-
+# Firefox - Nightly version
 FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
 ARG EB_VERSION
@@ -10,11 +8,15 @@ ARG BUILD_DATE
 ARG GD_VERSION
 ARG SELENOID_VERSION
 
+# Disable Apt warnings for running in non-interactive mode
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 LABEL maintainer fede diaz nordri@gmail.com \
       org.label-schema.vendor="Elastest" \
       org.label-schema.url="https://elastest.io" \
       org.label-schema.name="Elastest browsers" \
-      org.label-schema.description="Optimal resource util" \    
+      org.label-schema.description="Optimal resource util" \
       org.label-schema.version=$EB_VERSION \
       org.label-schema.vcs-url=$GIT_URL \
       org.label-schema.vcs-ref=$GIT_COMMIT \
@@ -26,12 +28,10 @@ LABEL maintainer fede diaz nordri@gmail.com \
 ########################################################
 # Firefox
 ########################################################
-
-RUN  \
-  wget -O /tmp/firefox-nightly.tar.bz2 "https://download.mozilla.org/?product=firefox-nightly-latest-l10n-ssl&os=linux64&lang=en-US" && \
-  tar jxf /tmp/firefox-nightly.tar.bz2 -C /usr/local/src/ && \
-  ln -s /usr/local/src/firefox/firefox /usr/local/bin/firefox && \
-  rm /tmp/firefox-nightly.tar.bz2
+RUN add-apt-repository --yes ppa:ubuntu-mozilla-daily/ppa \
+ && apt-get update && apt-get install --yes --no-install-recommends \
+        firefox-trunk \
+ && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # Selenoid
