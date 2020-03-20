@@ -55,7 +55,8 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
         x11vnc \
         xorg \
         xvfb xauth \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && sed -r -i "s/^;?\s*autospawn\s*=.*/autospawn = no/" /etc/pulse/client.conf
 
 ########################################################
 # Install websokify and noVNC
