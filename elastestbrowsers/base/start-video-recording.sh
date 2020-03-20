@@ -16,7 +16,6 @@ if [[ ! -d "$REC_DIR" ]]; then
 fi
 
 RESOLUTION="${RESOLUTION:-1440x1080}"
-VIDEO_FORMAT="${VIDEO_FORMAT:-mp4}"
 DISPLAY=":99"
 
 if [[ "$#" -ne 2 ]]; then
@@ -42,10 +41,46 @@ if pgrep --exact ffmpeg >/dev/null; then
   exit 1
 fi
 
-touch /tmp/stop
+REC_PATH="${REC_DIR}/${VIDEO_NAME}.mp4"
 
-# Force to be able to write the file on disk
-sudo chmod 777 $HOME/recordings
+# Start recording with FFmpeg
+#
+# NOTES:
+#
+#   -f x11grab -framerate 25
+#     This configures the input device (x11grab) to generate an input stream by
+#     capturing the screen 25 times per second.
+#
+#   -r 25
+#     This tells FFmpeg 2 things:
+#     1. That it should assume an input rate of 25 frames per second.
+#     2. That the input timestamps should be ignored, and instead new timestamps
+#        should be generated from scratch.
+#
+#   Other options:
+#     https://ffmpeg.org/ffmpeg-all.html#Video-Options
+#
 
-### Start recording with ffmpeg ###
-</tmp/stop ffmpeg -y -f alsa -i pulse -f x11grab -framerate 25 -video_size $RESOLUTION -i $DISPLAY -c:a libfdk_aac -c:v libx264 -preset ultrafast -crf 28 -refs 4 -qmin 4 -pix_fmt yuv420p -filter:v fps=25 $HOME/recordings/${VIDEO_NAME}.${VIDEO_FORMAT}
+# Record audio+video
+ffmpeg \
+  -nostdin \
+  -f alsa -ar 44100 -ac 2 \
+  -thread_queue_size 512 \
+  -i pulse \
+  -f x11grab -framerate 25 -r 25 -s "$RESOLUTION" \
+  -i "$DISPLAY" \
+  -codec:a aac \
+  -codec:v libx264 -preset ultrafast -tune stillimage -pix_fmt yuv420p \
+  -f mp4 -strict experimental \
+  -y "$REC_PATH" \
+  2>&1
+
+# Record video only
+# ffmpeg \
+#   -nostdin \
+#   -f x11grab -framerate 25 -r 25 -s "$RESOLUTION" \
+#   -i "$DISPLAY" \
+#   -codec:v libx264 -preset ultrafast -tune stillimage -pix_fmt yuv420p \
+#   -f mp4 -strict experimental \
+#   -y "$REC_PATH" \
+#   2>&1

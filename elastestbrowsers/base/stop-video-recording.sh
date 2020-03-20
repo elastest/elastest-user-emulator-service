@@ -1,11 +1,20 @@
-#!/bin/bash -x
-set -eu -o pipefail
+#!/usr/bin/env bash
+# File checked with ShellCheck (https://www.shellcheck.net/)
 
-echo 'q' > /tmp/stop
-rm /tmp/stop
+# Bash options for strict error checking
+set -o errexit -o errtrace -o pipefail -o nounset
 
-# Wait for ffmpeg to finish
-while [[ $(pgrep ffmpeg) ]]
-do
- sleep 1 
+# Trace all commands
+set -o xtrace
+
+
+
+# Send the SIGINT signal to FFmpeg, which means "stop processing"
+pkill --signal SIGINT --exact ffmpeg || true
+
+# Wait for FFmpeg to finish
+while pgrep --exact ffmpeg >/dev/null; do
+  sleep 0.500s
 done
+
+echo "FFmpeg recording is now finished"
