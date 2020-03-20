@@ -2,7 +2,7 @@
 # Base image for Elastest Browsers
 #
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ARG EB_VERSION
 ARG GIT_URL
