@@ -36,7 +36,6 @@ LABEL maintainer fede diaz nordri@gmail.com \
 # - Disable "autospawn" feature of PulseAudio: it should be explicitly started
 #   by our entrypoint script, and not implicitly by other processes.
 RUN apt-get update && apt-get install --yes --no-install-recommends \
-        bsdtar \
         bzip2 \
         curl \
         gnupg \
@@ -61,15 +60,15 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
 ########################################################
 # Install websokify and noVNC
 ########################################################
-RUN curl -O "https://bootstrap.pypa.io/get-pip.py" \
+RUN wget --no-verbose -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
  && python3 get-pip.py \
  && pip3 install --no-cache-dir --upgrade \
         setuptools \
  && pip3 install --no-cache-dir --upgrade \
-        https://github.com/novnc/websockify/archive/master.tar.gz \
+        "https://github.com/novnc/websockify/archive/master.tar.gz" \
  && mkdir -p /usr/local/noVNC \
- && curl -s -L "https://github.com/x11vnc/noVNC/archive/master.tar.gz" \
-        | bsdtar zxf - -C /usr/local/noVNC --strip-components 1
+ && wget --no-verbose -O - "https://github.com/x11vnc/noVNC/archive/master.tar.gz" \
+        | tar -C /usr/local/noVNC -zx --strip-components 1
 
 ########################################################
 # Fluxbox

@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
+# File checked with ShellCheck (https://www.shellcheck.net/)
 
 #/ Usage:
-#/   EB_VERSION=2.1.0 ./build_containers.sh
+#/
+#/ EB_VERSION="2.2.0" MODE="NIGHTLY" ./build_containers.sh
+#/
+#/ Environment:
+#/
+#/ * `EB_VERSION`
+#/   The version number that should be used to tag *ElastestBrowsers* Docker images.
+#/   Required.
+#/
+#/ * `MODE`
+#/   Whether to build all possible browser versions, or just the latest available ones:
+#/   - `MODE="NIGHTLY"`: build only the latest browser versions that are currently available in official repositories. This is the default.
+#/   - `MODE="FULL"`: build both the latest *and* all the older browser versions (which are defined with `FIREFOX_VERSIONS`).
+#/   Optional. Default: "NIGHTLY".
+#/
 
 # Bash options for strict error checking
 set -o errexit -o errtrace -o pipefail -o nounset
@@ -15,20 +30,21 @@ set -o xtrace
 # ========
 
 # Load old releases versions
-source browsers_oldreleases
+# shellcheck source=browser_old_versions.conf.sh
+source browser_old_versions.conf.sh
 
-# Export MODE="FULL" to generate all containers versions
+# Provide MODE="FULL" to enable generation of all browser versions
 MODE="${MODE:-NIGHTLY}"
 
 # Working directory
 WORKDIR="$PWD/workdir"
-[[ -d "$WORKDIR" ]] || mkdir -p "$WORKDIR"
+mkdir -p "$WORKDIR"
 rm -f "$WORKDIR"/*
 
 # Download file with WebDriver versions
 WEBDRIVER_VERSIONS_URL="https://raw.githubusercontent.com/bonigarcia/webdrivermanager/master/src/main/resources/versions.properties"
 WEBDRIVER_VERSIONS_FILE="$WORKDIR/webdriver_versions.properties"
-wget -O "$WEBDRIVER_VERSIONS_FILE" "$WEBDRIVER_VERSIONS_URL"
+wget --no-verbose -O "$WEBDRIVER_VERSIONS_FILE" "$WEBDRIVER_VERSIONS_URL"
 
 # Generate "versions.txt" file with browser versions, and download Selenoid
 docker run --rm -t -v "$WORKDIR:/workdir" elastestbrowsers/utils-get_browsers_version:4
@@ -46,15 +62,17 @@ GIT_URL="https://github.com/elastest/elastest-user-emulator-service"
 # ==============
 
 # Get Geckodriver
+# Argument: Major version
 function get_geckodriver {
-  local PARAM_VERSION="${1:-0.0.0}"
+  local ARG_VERSION_MAJ="${1:-0}"
 
-  GECKO_DRIVER_VERSION="$(grep -F "firefox${PARAM_VERSION}=" "$WEBDRIVER_VERSIONS_FILE" | cut -d"=" -f2)" || true
-  if [[ -z "$GECKO_DRIVER_VERSION" ]]; then
-    GECKO_DRIVER_VERSION="$(grep -E 'firefox[0-9]{2,3}=' "$WEBDRIVER_VERSIONS_FILE" | sort -r | head -n1 | cut -d"=" -f2)"
+  GECKO_DRIVER_VERSION="$(grep -F "firefox${ARG_VERSION_MAJ}=" "$WEBDRIVER_VERSIONS_FILE" | cut -d"=" -f2)" || true
+  if [[ -z "${GECKO_DRIVER_VERSION:-}" ]]; then
+    # Assume we need the latest available driver version
+    GECKO_DRIVER_VERSION="$(grep -E 'firefox[0-9]+=' "$WEBDRIVER_VERSIONS_FILE" | sort -r | head -n1 | cut -d"=" -f2)"
   fi
 
-  wget -O "$WORKDIR/geckodriver.tar.gz" "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_DRIVER_VERSION}/geckodriver-v${GECKO_DRIVER_VERSION}-linux64.tar.gz"
+  wget --no-verbose -O "$WORKDIR/geckodriver.tar.gz" "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_DRIVER_VERSION}/geckodriver-v${GECKO_DRIVER_VERSION}-linux64.tar.gz"
   tar xf "$WORKDIR/geckodriver.tar.gz" -C "$WORKDIR"
   rm "$WORKDIR/geckodriver.tar.gz"
   cp -p "$WORKDIR/geckodriver" image/selenoid/geckodriver
@@ -62,18 +80,20 @@ function get_geckodriver {
 }
 
 # Get Chromedriver
+# Argument: Major version
 function get_chromedriver {
-  local PARAM_VERSION="${1:-0.0.0}"
+  local ARG_VERSION_MAJ="${1:-0}"
 
-  CHROME_DRIVER_VERSION="$(grep -F "chrome${PARAM_VERSION}=" "$WEBDRIVER_VERSIONS_FILE" | cut -d"=" -f2)" || true
-  if [[ -z "$CHROME_DRIVER_VERSION" ]]; then
-    CHROME_DRIVER_VERSION="$(grep -E 'chrome[0-9]{2,3}=' "$WEBDRIVER_VERSIONS_FILE" | sort -r | head -n1 | cut -d"=" -f2)"
+  CHROME_DRIVER_VERSION="$(grep -F "chrome${ARG_VERSION_MAJ}=" "$WEBDRIVER_VERSIONS_FILE" | cut -d"=" -f2)" || true
+  if [[ -z "${CHROME_DRIVER_VERSION:-}" ]]; then
+    # Assume we need the latest available driver version
+    CHROME_DRIVER_VERSION="$(grep -E 'chrome[0-9]+=' "$WEBDRIVER_VERSIONS_FILE" | sort -r | head -n1 | cut -d"=" -f2)"
   fi
 
-  wget -O "$WORKDIR/chromedriver.zip" "https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip"
+  wget --no-verbose -O "$WORKDIR/chromedriver.zip" "https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip"
   unzip -o "$WORKDIR/chromedriver.zip" -d "$WORKDIR"
   rm "$WORKDIR/chromedriver.zip"
-  cp -p "$WORKDIR/chromedriver" image/selenoid/chromedriver
+  mv "$WORKDIR/chromedriver" image/selenoid/chromedriver
   chmod 755 image/selenoid/chromedriver
 }
 
@@ -88,16 +108,16 @@ docker build \
   --build-arg BUILD_DATE="$BUILD_DATE" \
   --build-arg GIT_COMMIT="$GIT_COMMIT" \
   --build-arg GIT_URL="$GIT_URL" \
-  --tag "elastestbrowsers/utils-x11-base:$EB_VERSION" \
+  --tag "elastestbrowsers/utils-x11-base:${EB_VERSION}" \
   .
-popd # pushd base/
+popd # base/
 
 
 
 # Build Firefox images
 # ====================
 
-cp -p workdir/selenoid_linux_amd64 firefox/image/selenoid/selenoid_linux_amd64
+cp -p "$WORKDIR/selenoid_linux_amd64" firefox/image/selenoid/selenoid_linux_amd64
 pushd firefox/
 
 
@@ -106,24 +126,24 @@ pushd firefox/
 # ---------------
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox >Dockerfile
-sed "s/VERSION/$FIREFOX_VER/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
-
-get_geckodriver "$FIREFOX_VER"
+sed "s/VERSION/$FIREFOX_VERSION_MAJ/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
+get_geckodriver "$FIREFOX_VERSION_MAJ"
 
 docker build \
-  --build-arg VERSION="$FIREFOX_PKG" \
+  --build-arg VERSION="$FIREFOX_VERSION" \
   --build-arg EB_VERSION="$EB_VERSION" \
   --build-arg BUILD_DATE="$BUILD_DATE" \
   --build-arg GIT_COMMIT="$GIT_COMMIT" \
   --build-arg GIT_URL="$GIT_URL" \
   --build-arg GD_VERSION="$GECKO_DRIVER_VERSION" \
   --build-arg SELENOID_VERSION="$SELENOID_VERSION" \
-  --tag "elastestbrowsers/firefox:${FIREFOX_VER}-${EB_VERSION}" \
+  --tag "elastestbrowsers/firefox:${FIREFOX_VERSION_MAJ}-${EB_VERSION}" \
+  --tag "elastestbrowsers/firefox:${FIREFOX_VERSION_MAJ}" \
   --tag "elastestbrowsers/firefox:latest-${EB_VERSION}" \
   --tag "elastestbrowsers/firefox:latest" \
-  --tag "elastestbrowsers/firefox:${FIREFOX_VER}" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json
 rm image/selenoid/geckodriver
 
@@ -134,8 +154,7 @@ rm image/selenoid/geckodriver
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.beta >Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json.beta
-
-get_geckodriver "$FIREFOX_BETA_VER"
+get_geckodriver "$FIREFOX_BETA_VERSION_MAJ"
 
 docker build \
   --build-arg EB_VERSION="$EB_VERSION" \
@@ -148,6 +167,7 @@ docker build \
   --tag "elastestbrowsers/firefox:beta" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json.beta
 rm image/selenoid/geckodriver
 
@@ -158,12 +178,7 @@ rm image/selenoid/geckodriver
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.nightly >Dockerfile
 sed "s/VERSION/nightly/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json.nightly
-
-if [[ -z "$FIREFOX_NIGHTLY_VER" ]]; then
-  get_geckodriver "$FIREFOX_BETA_VER"
-else
-  get_geckodriver "$FIREFOX_NIGHTLY_VER"
-fi
+get_geckodriver "$FIREFOX_NIGHTLY_VERSION_MAJ"
 
 docker build \
   --build-arg EB_VERSION="$EB_VERSION" \
@@ -176,6 +191,7 @@ docker build \
   --tag "elastestbrowsers/firefox:nightly" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json.nightly
 rm image/selenoid/geckodriver
 
@@ -185,21 +201,28 @@ rm image/selenoid/geckodriver
 # --------------------
 
 if [[ "$MODE" == "FULL" ]]; then
-  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.older_releases >Dockerfile
+  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.firefox.old_versions >Dockerfile
 
-  for V in $FIREFOX_OLD_VERSIONS; do
-    sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
+  for FIREFOX_VERSION in "${FIREFOX_VERSIONS[@]}"; do
+    FIREFOX_VERSION_MAJ="${FIREFOX_VERSION%%.*}"
+
+    sed "s/VERSION/$FIREFOX_VERSION/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
+
+    get_geckodriver "$FIREFOX_VERSION_MAJ"
 
     docker build \
-      --build-arg VERSION="$V" \
-      --tag "elastestbrowsers/firefox:${V}-${EB_VERSION}" \
+      --build-arg DOWNLOAD_URL="https://ftp.mozilla.org/pub/firefox/releases/${FIREFOX_VERSION}/linux-x86_64/en-US/firefox-${FIREFOX_VERSION}.tar.bz2" \
+      --tag "elastestbrowsers/firefox:${FIREFOX_VERSION_MAJ}-${EB_VERSION}" \
       .
 
     rm image/selenoid/browsers.json
+    rm image/selenoid/geckodriver
   done
+
+  rm Dockerfile
 fi
 
-popd # pushd firefox/
+popd # firefox/
 rm firefox/image/selenoid/selenoid_linux_amd64
 
 
@@ -207,7 +230,7 @@ rm firefox/image/selenoid/selenoid_linux_amd64
 # Build Chrome images
 # ===================
 
-cp -p workdir/selenoid_linux_amd64 chrome/image/selenoid/selenoid_linux_amd64
+cp -p "$WORKDIR/selenoid_linux_amd64" chrome/image/selenoid/selenoid_linux_amd64
 pushd chrome/
 
 
@@ -216,27 +239,26 @@ pushd chrome/
 # --------------
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome >Dockerfile
-sed "s/VERSION/$CHROME_VER/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
-
-get_chromedriver "$CHROME_VER"
+sed "s/VERSION/$CHROME_VERSION_MAJ/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
+get_chromedriver "$CHROME_VERSION_MAJ"
 
 docker build \
-  --build-arg VERSION="$CHROME_PKG" \
+  --build-arg VERSION="$CHROME_VERSION" \
   --build-arg EB_VERSION="$EB_VERSION" \
   --build-arg BUILD_DATE="$BUILD_DATE" \
   --build-arg GIT_COMMIT="$GIT_COMMIT" \
   --build-arg GIT_URL="$GIT_URL" \
   --build-arg CD_VERSION="$CHROME_DRIVER_VERSION" \
   --build-arg SELENOID_VERSION="$SELENOID_VERSION" \
-  --tag "elastestbrowsers/chrome:${CHROME_VER}-${EB_VERSION}" \
+  --tag "elastestbrowsers/chrome:${CHROME_VERSION_MAJ}-${EB_VERSION}" \
+  --tag "elastestbrowsers/chrome:${CHROME_VERSION_MAJ}" \
   --tag "elastestbrowsers/chrome:latest-${EB_VERSION}" \
   --tag "elastestbrowsers/chrome:latest" \
-  --tag "elastestbrowsers/chrome:${CHROME_VER}" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json
 rm image/selenoid/chromedriver
-rm "$WORKDIR/chromedriver"
 
 
 
@@ -245,8 +267,7 @@ rm "$WORKDIR/chromedriver"
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.beta >Dockerfile
 sed "s/VERSION/beta/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json.beta
-
-get_chromedriver "$CHROME_BETA_VER"
+get_chromedriver "$CHROME_BETA_VERSION_MAJ"
 
 docker build \
   --build-arg EB_VERSION="$EB_VERSION" \
@@ -259,9 +280,9 @@ docker build \
   --tag "elastestbrowsers/chrome:beta" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json.beta
 rm image/selenoid/chromedriver
-rm "$WORKDIR/chromedriver"
 
 
 
@@ -270,11 +291,7 @@ rm "$WORKDIR/chromedriver"
 
 sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.unstable >Dockerfile
 sed "s/VERSION/unstable/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json.unstable
-
-if [[ -z "${CHROME_NIGHTLY_VER:-}" ]]; then
-  CHROME_NIGHTLY_VER="$((CHROME_BETA_VER + 1))"
-fi
-get_chromedriver "$CHROME_NIGHTLY_VER"
+get_chromedriver "$CHROME_UNSTABLE_VERSION_MAJ"
 
 docker build \
   --build-arg EB_VERSION="$EB_VERSION" \
@@ -287,9 +304,9 @@ docker build \
   --tag "elastestbrowsers/chrome:unstable" \
   .
 
+rm Dockerfile
 rm image/selenoid/browsers.json.unstable
 rm image/selenoid/chromedriver
-rm "$WORKDIR/chromedriver"
 
 
 
@@ -297,40 +314,38 @@ rm "$WORKDIR/chromedriver"
 # -------------------
 
 if [[ "$MODE" == "FULL" ]]; then
-  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.older_releases >Dockerfile
+  sed "s/@@EB_VERSION@@/$EB_VERSION/" Dockerfile.chrome.old_versions >Dockerfile
 
-  for V in $CHROME_OLD_VERSIONS; do
-    TAG_VER="$(echo "$V" | cut -d"." -f1,2)"
-    TAG_VER_MAJOR="$(echo "$V" | cut -d"." -f1)"
-    if [[ "$TAG_VER_MAJOR" -lt 72 ]]; then
-      sed "s/VERSION/$V/g" image/selenoid/browsers.json-oldversions.templ >image/selenoid/browsers.json
+  for CHROME_VERSION in "${CHROME_VERSIONS[@]}"; do
+    CHROME_VERSION_MAJ="${CHROME_VERSION%%.*}"
+
+    if [[ "$CHROME_VERSION_MAJ" -lt 72 ]]; then
+      sed "s/VERSION/$CHROME_VERSION/g" image/selenoid/browsers.json.templ.old_versions >image/selenoid/browsers.json
     else
-      sed "s/VERSION/$V/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
+      sed "s/VERSION/$CHROME_VERSION/g" image/selenoid/browsers.json.templ >image/selenoid/browsers.json
     fi
 
-    case "$TAG_VER" in
-      "60.0") CHROMEDRIVER="2.33" ;;
-      "61.0") CHROMEDRIVER="2.34" ;;
-      "62.0") CHROMEDRIVER="2.34" ;;
-      "63.0") CHROMEDRIVER="2.36" ;;
-      *) CHROMEDRIVER="2.37" ;;
-    esac
+    get_chromedriver "$CHROME_VERSION_MAJ"
 
-    wget -O "$WORKDIR/chromedriver.zip" "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER/chromedriver_linux64.zip"
-    unzip "$WORKDIR/chromedriver.zip" -d image/selenoid
-    rm chromedriver.zip
+    if [[ "$CHROME_VERSION_MAJ" -lt 69 ]]; then
+      DOWNLOAD_URL="https://www.slimjet.com/chrome/download-chrome.php?file=lnx%2Fchrome64_${CHROME_VERSION}.deb"
+    else
+      DOWNLOAD_URL="https://www.slimjet.com/chrome/download-chrome.php?file=files%2F${CHROME_VERSION}%2Fgoogle-chrome-stable_current_amd64.deb"
+    fi
 
     docker build \
-      --build-arg VERSION="$V" \
-      --tag "elastestbrowsers/chrome:${TAG_VER}-${EB_VERSION}" \
+      --build-arg DOWNLOAD_URL="$DOWNLOAD_URL" \
+      --tag "elastestbrowsers/chrome:${CHROME_VERSION_MAJ}-${EB_VERSION}" \
       .
 
-    rm image/selenoid/chromedriver
     rm image/selenoid/browsers.json
+    rm image/selenoid/chromedriver
   done
+
+  rm Dockerfile
 fi
 
-popd # pushd chrome/
+popd # chrome/
 rm chrome/image/selenoid/selenoid_linux_amd64
 
 
