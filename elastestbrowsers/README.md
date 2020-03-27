@@ -20,10 +20,16 @@ cd ..
 
 First argument is the version number, and second argument decides whether to try pushing the image to Docker Hub (`true`) or not (`false`).
 
-To generate all browser images, run:
+To generate Docker images with the currently available browser versions, run:
 
 ```
-EB_VERSION=2.1.0 ./build_containers.sh
+EB_VERSION="2.1.0" MODE="NIGHTLY" ./build_containers.sh
 ```
 
-With `EB_VERSION` set to the version number that should be used to tag *ElastestBrowsers* Docker images.
+Alternatively, to build images for *all* available browser versions, old and new, run:
+
+```
+EB_VERSION="2.1.0" MODE="FULL" ./build_containers.sh
+```
+
+For detailed descriptions of each parameter, read the script's header.

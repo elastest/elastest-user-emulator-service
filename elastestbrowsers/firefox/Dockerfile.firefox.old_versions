@@ -1,26 +1,25 @@
-# Chrome - Older releases
+# Firefox - Older releases
 FROM elastestbrowsers/utils-x11-base:@@EB_VERSION@@
 
-ARG VERSION
+ARG DOWNLOAD_URL
 
 # Disable Apt warnings for running in non-interactive mode
 ARG DEBIAN_FRONTEND=noninteractive
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 
 ########################################################
-# Chrome
+# Firefox
 ########################################################
-RUN curl -L -o google-chrome.deb -O "https://www.slimjet.com/chrome/download-chrome.php?file=lnx%2Fchrome64_${VERSION}.deb" \
- && dpkg -i google-chrome.deb || true \
- && apt-get update && apt-get install --fix-broken --yes \
- && rm -rf /var/lib/apt/lists/* \
- && rm google-chrome.deb
+RUN wget --no-verbose -O firefox.tar "$DOWNLOAD_URL" \
+ && tar -C /opt -xf firefox.tar \
+ && ln -s /opt/firefox/firefox /usr/local/bin \
+ && rm firefox.tar
 
 ########################################################
 # Selenoid
 ########################################################
 ADD image/selenoid/selenoid_linux_amd64 /usr/local/bin/selenoid
-ADD image/selenoid/chromedriver /usr/local/bin/chromedriver
+ADD image/selenoid/geckodriver /usr/local/bin/geckodriver
 ADD image/selenoid/browsers.json /etc/browsers.json
 
 USER ubuntu

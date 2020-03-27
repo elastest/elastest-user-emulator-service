@@ -1,86 +1,98 @@
-#!/bin/bash 
-set -eu -o pipefail
+#!/usr/bin/env bash
+# File checked with ShellCheck (https://www.shellcheck.net/)
 
-MODE=${MODE:-NIGHTLY}
+# Bash options for strict error checking
+set -o errexit -o errtrace -o pipefail -o nounset
+
+# Trace all commands
+set -o xtrace
+
+
+
+# Load old releases versions
+# shellcheck source=browser_old_versions.conf.sh
+source browser_old_versions.conf.sh
+
+# Provide MODE="FULL" to enable generation of all browser versions
+MODE="${MODE:-NIGHTLY}"
+
 DOCKER_OPS="--rm -d --cap-add=SYS_ADMIN -p 4444:4444 -p 5900:5900"
 LOG_RESULTS=output.log
 > $LOG_RESULTS
-# Load old releases versions
-. browsers_oldreleases
 EXIT_RES=0
 
 # Firefox
-for BROWSER_VERSION in latest-${EB_VERSION} nightly-${EB_VERSION} beta-${EB_VERSION}
+for FIREFOX_VERSION in latest-${EB_VERSION} nightly-${EB_VERSION} beta-${EB_VERSION}
 do
 	echo "**********************************"
-	echo "* Testing firefox $BROWSER_VERSION"
+	echo "* Testing firefox $FIREFOX_VERSION"
 	echo "**********************************"
 	docker rm -f firefox || true
-	docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$BROWSER_VERSION
+	docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$FIREFOX_VERSION
 	sleep 5
 	CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' firefox)
 	RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"firefox","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 	docker stop firefox
-	if [[ "$RES" == *200 ]] 
+	if [[ "$RES" == *200 ]]
 	then
-		echo "Firefox $BROWSER_VERSION -- Ok!" | tee -a $LOG_RESULTS
+		echo "Firefox $FIREFOX_VERSION -- Ok!" | tee -a $LOG_RESULTS
 	else
-		echo "Firefox $BROWSER_VERSION -- Fail" | tee -a $LOG_RESULTS
+		echo "Firefox $FIREFOX_VERSION -- Fail" | tee -a $LOG_RESULTS
 		RES=1
 	fi
 done
 
 # Testing Old Version
 if [ "$MODE" == "FULL" ]; then
-	for BROWSER_VERSION in $FIREFOX_OLD_VERSIONS
+	for FIREFOX_VERSION in "${FIREFOX_VERSIONS[@]}"
 	do
 		echo "**********************************"
-		echo "* Testing firefox $BROWSER_VERSION"
+		echo "* Testing firefox $FIREFOX_VERSION"
 		echo "**********************************"
 		docker rm -f firefox || true
-		docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$BROWSER_VERSION-${EB_VERSION}
+		docker run --name firefox $DOCKER_OPS elastestbrowsers/firefox:$FIREFOX_VERSION-${EB_VERSION}
 		sleep 5
 		CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' firefox)
 		RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"firefox","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 		docker stop firefox
-		if [[ "$RES" == *200 ]] 
+		if [[ "$RES" == *200 ]]
 		then
-			echo "Firefox $BROWSER_VERSION-${EB_VERSION} -- Ok!" | tee -a $LOG_RESULTS
+			echo "Firefox $FIREFOX_VERSION-${EB_VERSION} -- Ok!" | tee -a $LOG_RESULTS
 		else
-			echo "Firefox $BROWSER_VERSION-${EB_VERSION} -- Fail" | tee -a $LOG_RESULTS
+			echo "Firefox $FIREFOX_VERSION-${EB_VERSION} -- Fail" | tee -a $LOG_RESULTS
 			EXIT_RES=1
 		fi
 	done
 fi
 
 # Chrome
-for BROWSER_VERSION in latest-${EB_VERSION} unstable-${EB_VERSION} beta-${EB_VERSION}
+for CHROME_VERSION in latest-${EB_VERSION} unstable-${EB_VERSION} beta-${EB_VERSION}
 do
 	echo "*********************************"
-	echo "* Testing chrome $BROWSER_VERSION"
+	echo "* Testing chrome $CHROME_VERSION"
 	echo "*********************************"
 	docker rm -f chrome || true
-	docker run --name chrome $DOCKER_OPS elastestbrowsers/chrome:$BROWSER_VERSION
+	docker run --name chrome $DOCKER_OPS elastestbrowsers/chrome:$CHROME_VERSION
 	sleep 5
 	CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' chrome)
 	RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"chrome","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 	docker stop chrome
 	if [[ "$RES" == *200 ]]
 	then
-		echo "Chrome $BROWSER_VERSION -- Ok!" | tee -a $LOG_RESULTS
+		echo "Chrome $CHROME_VERSION -- Ok!" | tee -a $LOG_RESULTS
 	else
-		echo "Chrome $BROWSER_VERSION -- Fail" | tee -a $LOG_RESULTS
+		echo "Chrome $CHROME_VERSION -- Fail" | tee -a $LOG_RESULTS
 		EXIT_RES=1
 	fi
 done
 
 # Testing Old Version
 if [ "$MODE" == "FULL" ]; then
-	for BROWSER_VERSION in $CHROME_OLD_VERSIONS
+	for CHROME_VERSION in "${CHROME_OLD_VERSIONS[@]}"
 	do
-		V=$(echo $BROWSER_VERSION | cut -d"." -f1,2)
+		V=$(echo $CHROME_VERSION | cut -d"." -f1,2)
 		echo "**********************************"
-		echo "* Testing Chrome $BROWSER_VERSION"
+		echo "* Testing Chrome $CHROME_VERSION"
 		echo "**********************************"
 		docker rm -f chrome || true
 		docker run --name chrome $DOCKER_OPS elastestbrowsers/chrome:$V-${EB_VERSION}
@@ -88,11 +100,11 @@ if [ "$MODE" == "FULL" ]; then
 		CONTAINER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{ .IPAddress}}{{end}}' chrome)
 		RES=$(curl --silent -X POST -d '{"desiredCapabilities":{"browserName":"chrome","version":"","platform":"ANY"}}' --write-out "%{http_code}\\n" http://$CONTAINER_IP:4444/wd/hub/session)
 		docker stop chrome
-		if [[ "$RES" == *200 ]] 
+		if [[ "$RES" == *200 ]]
 		then
-			echo "Chrome $BROWSER_VERSION-${EB_VERSION} -- Ok!" | tee -a $LOG_RESULTS
+			echo "Chrome $CHROME_VERSION-${EB_VERSION} -- Ok!" | tee -a $LOG_RESULTS
 		else
-			echo "Chrome $BROWSER_VERSION-${EB_VERSION} -- Fail" | tee -a $LOG_RESULTS
+			echo "Chrome $CHROME_VERSION-${EB_VERSION} -- Fail" | tee -a $LOG_RESULTS
 			RES=1
 		fi
 	done
@@ -103,4 +115,3 @@ echo "## TEST RESULTS ##"
 cat $LOG_RESULTS
 
 exit $EXIT_RES
-
