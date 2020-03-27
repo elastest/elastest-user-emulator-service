@@ -3,7 +3,7 @@
 
 #/ Usage:
 #/
-#/ EB_VERSION="2.2.0" MODE="NIGHTLY" ./build_containers.sh
+#/ EB_VERSION="2.1.0" MODE="NIGHTLY" ./build_containers.sh
 #/
 #/ Environment:
 #/
@@ -17,6 +17,15 @@
 #/   - `MODE="FULL"`: build both the latest *and* all the older browser versions (which are defined with `FIREFOX_VERSIONS`).
 #/   Optional. Default: "NIGHTLY".
 #/
+#/ * `FIREFOX_VERSIONS`
+#/   Space-separated list of old Firefox versions that should be built when `MODE="FULL"`.
+#/   All values must be full version numbers from `browser_old_versions.conf.sh`.
+#/   Optional. Default: Values loaded from `browser_old_versions.conf.sh`.
+#/
+#/ * `CHROME_VERSIONS`
+#/   Space-separated list of old Chrome versions that should be built when `MODE="FULL"`.
+#/   All values must be full version numbers from `browser_old_versions.conf.sh`.
+#/   Optional. Default: Values loaded from `browser_old_versions.conf.sh`.
 
 # Bash options for strict error checking
 set -o errexit -o errtrace -o pipefail -o nounset
@@ -29,9 +38,16 @@ set -o xtrace
 # Settings
 # ========
 
-# Load old releases versions
-# shellcheck source=browser_old_versions.conf.sh
-source browser_old_versions.conf.sh
+# Load old browser versions, if not provided with a variable
+if [[ -n "${FIREFOX_VERSIONS:-}" || -n "${CHROME_VERSIONS:-}" ]]; then
+  # Reload *_VERSIONS variables into Bash arrays
+  # For syntax, see: https://github.com/koalaman/shellcheck/wiki/SC2206
+  IFS=' ' read -r -a FIREFOX_VERSIONS <<< "$FIREFOX_VERSIONS"
+  IFS=' ' read -r -a CHROME_VERSIONS <<< "$CHROME_VERSIONS"
+else
+  # shellcheck source=browser_old_versions.conf.sh
+  source browser_old_versions.conf.sh
+fi
 
 # Provide MODE="FULL" to enable generation of all browser versions
 MODE="${MODE:-NIGHTLY}"

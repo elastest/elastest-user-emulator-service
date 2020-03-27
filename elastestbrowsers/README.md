@@ -32,4 +32,13 @@ Alternatively, to build images for *all* available browser versions, old and new
 EB_VERSION="2.1.0" MODE="FULL" ./build_containers.sh
 ```
 
+You can also select which old browser versions get built when `MODE="FULL"`, by using the variables *FIREFOX_VERSIONS* and/or *CHROME_VERSIONS*. For example:
+
+```
+EB_VERSION="2.1.0" MODE="FULL" \
+FIREFOX_VERSIONS="70.0.1" \
+CHROME_VERSIONS="71.0.3578.80" \
+./build_containers.sh
+```
+
 For detailed descriptions of each parameter, read the script's header.
