@@ -35,7 +35,7 @@ LABEL maintainer fede diaz nordri@gmail.com \
 # Notes:
 # - Disable "autospawn" feature of PulseAudio: it should be explicitly started
 #   by our entrypoint script, and not implicitly by other processes.
-RUN apt-get update && apt-get install --yes --no-install-recommends \
+RUN apt-get -q update && apt-get -q install --no-install-recommends --yes \
         bzip2 \
         curl \
         gnupg \
@@ -76,19 +76,14 @@ RUN wget --no-verbose -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
 # Packages:
 # - fluxbox: to have a Window Manager inside the X11 server.
 # - hsetroot: to allow Fluxbox setting the desktop background.
-RUN apt-get update && apt-get install --yes --no-install-recommends \
+RUN apt-get -q update && apt-get -q install --no-install-recommends --yes \
         fluxbox hsetroot \
  && rm -rf /var/lib/apt/lists/*
 
 ########################################################
 # ffmpeg
 ########################################################
-# RUN add-apt-repository -y ppa:mc3man/xerus-media && \
-#     apt-get update && \
-#     apt-get install --yes ffmpeg && \
-#     apt-get -y autoremove && \
-#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN apt-get update && apt-get install --yes --no-install-recommends \
+RUN apt-get -q update && apt-get -q install --no-install-recommends --yes \
         ffmpeg \
  && rm -rf /var/lib/apt/lists/*
 

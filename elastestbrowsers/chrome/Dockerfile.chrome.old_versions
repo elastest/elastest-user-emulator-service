@@ -12,7 +12,7 @@ ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 ########################################################
 RUN wget --no-verbose -O google-chrome.deb "$DOWNLOAD_URL" \
  && dpkg -i google-chrome.deb || true \
- && apt-get update && apt-get install --fix-broken --yes \
+ && apt-get -q update && apt-get -q install --fix-broken --yes \
  && rm -rf /var/lib/apt/lists/* \
  && rm google-chrome.deb
 

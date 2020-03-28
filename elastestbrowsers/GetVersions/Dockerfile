@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install --yes --no-install-recommends \
+RUN apt-get -q update && apt-get -q install --no-install-recommends --yes \
         gnupg \
         software-properties-common \
         wget \
