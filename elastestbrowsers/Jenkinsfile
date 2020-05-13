@@ -1,4 +1,4 @@
-node('dev-docker-64-slave-4') {
+node {
   try {
     stage "Container Prep"
       def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
