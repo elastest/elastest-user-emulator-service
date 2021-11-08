@@ -132,3 +132,5 @@ rm -f /home/ubuntu/entrypoint.lock
 
 # Block here (wait for all background shell jobs to finish)
 wait
+
+echo "All done!"
