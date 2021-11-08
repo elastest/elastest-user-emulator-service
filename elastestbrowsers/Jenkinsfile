@@ -1,4 +1,4 @@
-node {
+node("dev-docker-64-slave-1") {
   try {
     stage "Container Prep"
       def mycontainer = docker.image('elastest/ci-docker-siblings:latest')
@@ -9,10 +9,10 @@ node {
         stage "Build Docker image"
           echo ("Building...")
           sh  'cd elastestbrowsers && ./build_containers.sh'
-          
+
         stage "Testing image"
           echo ("testing...")
-          sh 'cd elastestbrowsers && ./testing.sh'         
+          sh 'cd elastestbrowsers && ./testing.sh'
 
           stage "Publish"
             echo ("Publishing...")
@@ -28,7 +28,7 @@ node {
     throw e
   }
 }
- 
+
 def notifyFailed() {
   emailext (
       subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
